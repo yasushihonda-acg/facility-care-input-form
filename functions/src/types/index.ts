@@ -11,6 +11,12 @@ import {Timestamp} from "firebase-admin/firestore";
 
 export interface SyncPlanDataRequest {
   triggeredBy?: "manual" | "scheduled";
+  /**
+   * 差分同期フラグ
+   * - true: 差分同期（新規レコードのみ追加、削除なし）
+   * - false/undefined: 完全同期（洗い替え）
+   */
+  incremental?: boolean;
 }
 
 export interface SubmitCareRecordRequest {

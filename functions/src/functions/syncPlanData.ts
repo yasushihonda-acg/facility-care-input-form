@@ -1,7 +1,12 @@
 /**
  * Flow A: 記録同期関数
- * Sheet A（記録の結果）からデータを取得し、Firestoreへ洗い替え同期
+ * Sheet A（記録の結果）からデータを取得し、Firestoreへ同期
  *
+ * 同期方式:
+ * - 差分同期 (incremental: true): 新規レコードのみ追加、削除なし（15分間隔）
+ * - 完全同期 (incremental: false): 洗い替えでデータ整合性担保（日次午前3時）
+ *
+ * 詳細は docs/SYNC_CONCURRENCY.md 参照
  * 各シートの列構造は docs/SHEET_A_STRUCTURE.md を参照
  */
 
@@ -114,8 +119,11 @@ async function syncPlanDataHandler(
 
     const requestBody = req.body as SyncPlanDataRequest;
     const triggeredBy = requestBody.triggeredBy || "manual";
+    // incremental: true で差分同期、false で完全同期（洗い替え）
+    const incremental = requestBody.incremental === true;
+    const syncMode = incremental ? "incremental" : "full";
 
-    functions.logger.info("syncPlanData started", {triggeredBy});
+    functions.logger.info("syncPlanData started", {triggeredBy, syncMode, incremental});
 
     // 全シート名を取得
     const sheetNames = await getSheetASheetNames();
@@ -146,11 +154,11 @@ async function syncPlanDataHandler(
           );
 
         if (records.length > 0) {
-          await syncToFirestore(sheetName, records);
+          await syncToFirestore(sheetName, records, incremental);
           totalRecords += records.length;
           syncedSheets.push(sheetName);
           functions.logger.info(
-            `Synced ${records.length} records from ${sheetName}`
+            `[${syncMode.toUpperCase()}] Synced ${records.length} records from ${sheetName}`
           );
         }
       } catch (sheetError) {

@@ -279,18 +279,27 @@ service cloud.firestore {
 
 | 項目 | 仕様 |
 |------|------|
-| 自動同期間隔 | 15分 |
-| 手動同期 | アプリ内ボタンで即座に実行 |
+| 差分同期 | 15分ごと（Cloud Scheduler）- 新規レコードのみ追加 |
+| 完全同期 | 日次 午前3時（Cloud Scheduler）- 洗い替え |
+| 手動更新 | Firestoreキャッシュ再取得のみ（**同期は行わない**） |
 | 同期対象 | Sheet A 全11シート（13,603件） |
-| 同期方式 | 洗い替え（Firestore全置換） |
+| 同期トリガー | **Cloud Schedulerのみ**（競合防止） |
+| 重複防止 | **決定論的ドキュメントID**により原理的に排除 |
 
-> **注意**: 同期処理の競合防止については [SYNC_CONCURRENCY.md](./SYNC_CONCURRENCY.md) を参照。
-> 複数の同期が同時実行されるとデータ重複が発生するリスクがあります。
+> **重要**: 同期処理の競合防止のため、`syncPlanData`はCloud Schedulerからのみ呼び出されます。
+> - **差分同期**（15分）: 新規レコードのみ追加、削除なし
+> - **完全同期**（日次）: 洗い替えでデータ整合性担保
+> - **コスト削減**: 月$144 → $5-15（90%以上削減）
+> 詳細は [SYNC_CONCURRENCY.md](./SYNC_CONCURRENCY.md) を参照。
 
 ### 10.4 システム構成（デモ版）
 
 ```mermaid
 graph LR
+    subgraph "Scheduler"
+        CS[Cloud Scheduler<br/>15分間隔]
+    end
+
     subgraph "Client"
         PWA[PWA<br/>React + Vite]
     end
@@ -305,12 +314,14 @@ graph LR
         FS[(Firestore)]
     end
 
-    PWA -->|"15分 or 手動"| CF_SYNC
+    CS -->|"15分ごと"| CF_SYNC
     CF_SYNC -->|"Read"| SA
     CF_SYNC -->|"Write"| FS
     PWA -->|"表示用"| CF_GET
     CF_GET -->|"Read"| FS
 ```
+
+> **注**: PWAからsyncPlanDataへの直接呼び出しは廃止。Cloud Schedulerが唯一の同期トリガー。
 
 詳細は [DEMO_PWA_SPEC.md](./DEMO_PWA_SPEC.md) を参照。
 

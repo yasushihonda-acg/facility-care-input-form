@@ -95,6 +95,8 @@ export const COLLECTIONS = {
   PLAN_DATA: "plan_data",
   /** Flow C: 家族要望 */
   FAMILY_REQUESTS: "family_requests",
+  /** 同期メタデータ（最終同期日時管理） */
+  SYNC_METADATA: "sync_metadata",
 } as const;
 
 /**

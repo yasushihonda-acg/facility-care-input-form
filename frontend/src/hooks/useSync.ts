@@ -1,175 +1,126 @@
 /**
- * 同期処理フック
+ * データ更新フック
  *
- * 競合防止対策（SYNC_CONCURRENCY.md Phase 1 実装）:
- * - 同期中は再実行をブロック（isPending チェック）
- * - クールダウン期間（30秒）の間は手動同期をブロック
- * - タブ間での同期状態共有（localStorage + storage イベント）
+ * 設計変更（SYNC_CONCURRENCY.md Phase 2）:
+ * - Cloud Schedulerが唯一の同期トリガー（15分差分 + 日次完全同期）
+ * - フロントエンドはFirestoreキャッシュの再取得のみ
+ * - syncPlanDataの直接呼び出しは廃止（競合防止）
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useQueryClient, useMutation } from '@tanstack/react-query';
-import { syncPlanData } from '../api';
+import { useQueryClient } from '@tanstack/react-query';
 
-const SYNC_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
-const STALE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
-const SYNC_COOLDOWN_MS = 30 * 1000; // 30 seconds - 連続同期防止
+const REFRESH_COOLDOWN_MS = 10 * 1000; // 10 seconds - 連続更新防止
 
 // localStorage keys
-const LS_LAST_SYNCED_AT = 'lastSyncedAt';
-const LS_SYNC_IN_PROGRESS = 'syncInProgress';
+const LS_LAST_REFRESHED_AT = 'lastRefreshedAt';
 
 export function useSync() {
   const queryClient = useQueryClient();
-  const intervalRef = useRef<number | null>(null);
-  const [isOtherTabSyncing, setIsOtherTabSyncing] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
+  const cooldownTimerRef = useRef<number | null>(null);
 
-  const syncMutation = useMutation({
-    mutationFn: syncPlanData,
-    onMutate: () => {
-      // 同期開始をlocalStorageに記録（タブ間共有）
-      localStorage.setItem(LS_SYNC_IN_PROGRESS, Date.now().toString());
-    },
-    onSuccess: () => {
-      // Invalidate plan data queries to refetch
-      queryClient.invalidateQueries({ queryKey: ['planData'] });
-      localStorage.setItem(LS_LAST_SYNCED_AT, new Date().toISOString());
-    },
-    onSettled: () => {
-      // 同期完了（成功・失敗問わず）でフラグをクリア
-      localStorage.removeItem(LS_SYNC_IN_PROGRESS);
-    },
-  });
-
-  const getLastSyncedAt = useCallback((): Date | null => {
-    const stored = localStorage.getItem(LS_LAST_SYNCED_AT);
+  const getLastRefreshedAt = useCallback((): Date | null => {
+    const stored = localStorage.getItem(LS_LAST_REFRESHED_AT);
     return stored ? new Date(stored) : null;
   }, []);
 
   /**
-   * 同期可能かどうかをチェック
-   * - 自タブで同期中でない
-   * - 他タブで同期中でない
+   * 更新可能かどうかをチェック
+   * - 更新中でない
    * - クールダウン期間を過ぎている
    */
-  const canSync = useCallback((): boolean => {
-    // 自タブで同期中
-    if (syncMutation.isPending) {
+  const canRefresh = useCallback((): boolean => {
+    if (isRefreshing) {
       return false;
     }
 
-    // 他タブで同期中
-    const syncInProgress = localStorage.getItem(LS_SYNC_IN_PROGRESS);
-    if (syncInProgress) {
-      const syncStartTime = parseInt(syncInProgress, 10);
-      // 5分以上経過していれば古いフラグとみなしてクリア
-      if (Date.now() - syncStartTime > 5 * 60 * 1000) {
-        localStorage.removeItem(LS_SYNC_IN_PROGRESS);
-      } else {
-        return false;
-      }
-    }
-
-    // クールダウン期間チェック（手動同期の連打防止）
-    const lastSync = getLastSyncedAt();
-    if (lastSync && Date.now() - lastSync.getTime() < SYNC_COOLDOWN_MS) {
+    const lastRefresh = getLastRefreshedAt();
+    if (lastRefresh && Date.now() - lastRefresh.getTime() < REFRESH_COOLDOWN_MS) {
       return false;
     }
 
     return true;
-  }, [syncMutation.isPending, getLastSyncedAt]);
+  }, [isRefreshing, getLastRefreshedAt]);
 
   /**
-   * クールダウン残り時間（秒）を取得
+   * クールダウン残り時間を計算・更新
    */
-  const getCooldownRemaining = useCallback((): number => {
-    const lastSync = getLastSyncedAt();
-    if (!lastSync) return 0;
-    const elapsed = Date.now() - lastSync.getTime();
-    const remaining = Math.max(0, SYNC_COOLDOWN_MS - elapsed);
-    return Math.ceil(remaining / 1000);
-  }, [getLastSyncedAt]);
-
-  const isStale = useCallback((): boolean => {
-    const lastSync = getLastSyncedAt();
-    if (!lastSync) return true;
-    return Date.now() - lastSync.getTime() > STALE_THRESHOLD_MS;
-  }, [getLastSyncedAt]);
+  const updateCooldown = useCallback(() => {
+    const lastRefresh = getLastRefreshedAt();
+    if (!lastRefresh) {
+      setCooldownRemaining(0);
+      return;
+    }
+    const elapsed = Date.now() - lastRefresh.getTime();
+    const remaining = Math.max(0, REFRESH_COOLDOWN_MS - elapsed);
+    setCooldownRemaining(Math.ceil(remaining / 1000));
+  }, [getLastRefreshedAt]);
 
   /**
-   * 同期を実行（保護付き）
-   * @param force クールダウンを無視して強制実行（自動同期用）
+   * Firestoreキャッシュを再取得（同期処理は呼び出さない）
    */
-  const triggerSync = useCallback((force = false) => {
-    if (syncMutation.isPending) {
+  const refresh = useCallback(async () => {
+    if (!canRefresh()) {
+      console.log('[useSync] Refresh blocked by cooldown or already refreshing');
       return;
     }
 
-    // 他タブで同期中かチェック
-    const syncInProgress = localStorage.getItem(LS_SYNC_IN_PROGRESS);
-    if (syncInProgress) {
-      const syncStartTime = parseInt(syncInProgress, 10);
-      if (Date.now() - syncStartTime < 5 * 60 * 1000) {
-        console.log('[useSync] Another tab is syncing, skipping');
-        return;
-      }
+    setIsRefreshing(true);
+
+    try {
+      // Invalidate queries to refetch from Firestore
+      await queryClient.invalidateQueries({ queryKey: ['planData'] });
+
+      // 更新完了を記録
+      localStorage.setItem(LS_LAST_REFRESHED_AT, new Date().toISOString());
+
+      console.log('[useSync] Cache refreshed successfully');
+    } catch (error) {
+      console.error('[useSync] Refresh error:', error);
+    } finally {
+      setIsRefreshing(false);
+      updateCooldown();
     }
+  }, [canRefresh, queryClient, updateCooldown]);
 
-    // 手動同期の場合はクールダウンをチェック
-    if (!force) {
-      const lastSync = getLastSyncedAt();
-      if (lastSync && Date.now() - lastSync.getTime() < SYNC_COOLDOWN_MS) {
-        console.log('[useSync] Cooldown period, skipping');
-        return;
+  // クールダウンタイマー
+  useEffect(() => {
+    updateCooldown();
+
+    cooldownTimerRef.current = window.setInterval(() => {
+      updateCooldown();
+    }, 1000);
+
+    return () => {
+      if (cooldownTimerRef.current) {
+        clearInterval(cooldownTimerRef.current);
       }
-    }
+    };
+  }, [updateCooldown]);
 
-    syncMutation.mutate();
-  }, [syncMutation, getLastSyncedAt]);
-
-  // 他タブのlocalStorage変更を監視
+  // 他タブでの更新を監視
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === LS_SYNC_IN_PROGRESS) {
-        setIsOtherTabSyncing(!!e.newValue);
-      }
-      if (e.key === LS_LAST_SYNCED_AT && e.newValue) {
-        // 他タブで同期完了したらデータを再取得
+      if (e.key === LS_LAST_REFRESHED_AT && e.newValue) {
+        // 他タブで更新されたらデータを再取得
         queryClient.invalidateQueries({ queryKey: ['planData'] });
+        updateCooldown();
       }
     };
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, [queryClient]);
-
-  // Auto-sync on mount if stale
-  useEffect(() => {
-    if (isStale()) {
-      triggerSync(true); // 自動同期はクールダウン無視
-    }
-  }, [isStale, triggerSync]);
-
-  // Set up interval for auto-sync
-  useEffect(() => {
-    intervalRef.current = window.setInterval(() => {
-      triggerSync(true); // 自動同期はクールダウン無視
-    }, SYNC_INTERVAL_MS);
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [triggerSync]);
+  }, [queryClient, updateCooldown]);
 
   return {
-    sync: () => triggerSync(false), // 手動同期はクールダウンチェックあり
-    isSyncing: syncMutation.isPending || isOtherTabSyncing,
-    canSync: canSync(),
-    cooldownRemaining: getCooldownRemaining(),
-    lastSyncedAt: getLastSyncedAt(),
-    error: syncMutation.error?.message ?? null,
-    syncResult: syncMutation.data,
+    sync: refresh, // 互換性維持のためsyncという名前を保持
+    isSyncing: isRefreshing,
+    canSync: canRefresh(),
+    cooldownRemaining,
+    lastSyncedAt: getLastRefreshedAt(),
+    error: null, // 同期エラーはCloud Scheduler側で処理
+    syncResult: null, // 同期結果はCloud Scheduler側で記録
   };
 }

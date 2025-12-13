@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSync } from '../hooks/useSync';
 
 interface HeaderProps {
@@ -8,36 +8,23 @@ interface HeaderProps {
 }
 
 export function Header({ title, showBack, onBack }: HeaderProps) {
-  const { sync, isSyncing, canSync, cooldownRemaining, lastSyncedAt, syncResult, error } = useSync();
+  const { sync, isSyncing, canSync, cooldownRemaining, lastSyncedAt } = useSync();
   const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const prevSyncingRef = useRef(isSyncing);
 
-  // 同期完了時のトースト表示
+  // 更新完了時のトースト表示
   useEffect(() => {
-    if (syncResult && !isSyncing) {
-      const data = syncResult.data;
-      if (data) {
-        setToastMessage(`${data.syncedSheets.length}シート ${data.totalRecords.toLocaleString()}件を同期しました`);
-        setToastType('success');
-        setShowToast(true);
-      }
-    }
-  }, [syncResult, isSyncing]);
-
-  // エラー時のトースト表示
-  useEffect(() => {
-    if (error) {
-      setToastMessage(`同期エラー: ${error}`);
-      setToastType('error');
+    // isSyncing が true → false に変わった時のみトースト表示
+    if (prevSyncingRef.current && !isSyncing) {
       setShowToast(true);
     }
-  }, [error]);
+    prevSyncingRef.current = isSyncing;
+  }, [isSyncing]);
 
   // トースト自動非表示
   useEffect(() => {
     if (showToast) {
-      const timer = setTimeout(() => setShowToast(false), 4000);
+      const timer = setTimeout(() => setShowToast(false), 3000);
       return () => clearTimeout(timer);
     }
   }, [showToast]);
@@ -108,20 +95,20 @@ export function Header({ title, showBack, onBack }: HeaderProps) {
               />
             </svg>
             <span className="text-sm font-medium">
-              {isSyncing ? '同期中...' : cooldownRemaining > 0 ? `${cooldownRemaining}秒` : '同期'}
+              {isSyncing ? '更新中...' : cooldownRemaining > 0 ? `${cooldownRemaining}秒` : '更新'}
             </span>
           </button>
         </div>
 
-        {/* 同期ステータスバッジ */}
+        {/* 更新ステータスバッジ */}
         <div className="px-4 pb-3 flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/15 rounded-full text-xs">
             <span className={`w-2 h-2 rounded-full ${isSyncing ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}`} />
-            {isSyncing ? '同期中...' : `最終同期: ${formatTime(lastSyncedAt)}`}
+            {isSyncing ? '更新中...' : `最終更新: ${formatTime(lastSyncedAt)}`}
           </span>
           {isSyncing && (
             <span className="text-xs text-white/60">
-              スプレッドシートから取得中
+              データを取得中
             </span>
           )}
         </div>
@@ -130,26 +117,15 @@ export function Header({ title, showBack, onBack }: HeaderProps) {
       {/* トースト通知 */}
       {showToast && (
         <div
-          className={`
-            fixed top-24 left-1/2 -translate-x-1/2 z-50
-            px-4 py-3 rounded-xl shadow-card-hover
-            transition-all duration-300 max-w-sm
-            ${toastType === 'success' ? 'bg-secondary text-white' : 'bg-error text-white'}
-          `}
+          className="fixed top-24 left-1/2 -translate-x-1/2 z-50 px-4 py-3 rounded-xl shadow-card-hover transition-all duration-300 max-w-sm bg-secondary text-white"
         >
           <div className="flex items-center gap-3">
-            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${toastType === 'success' ? 'bg-white/20' : 'bg-white/20'}`}>
-              {toastType === 'success' ? (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              )}
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/20">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
             </div>
-            <span className="text-sm font-medium">{toastMessage}</span>
+            <span className="text-sm font-medium">データを更新しました</span>
           </div>
         </div>
       )}

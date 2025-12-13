@@ -35,43 +35,57 @@
 
 ## 3. データ同期仕様
 
+> **重要**: 同期処理の競合防止・コスト最適化については [SYNC_CONCURRENCY.md](./SYNC_CONCURRENCY.md) を参照。
+
 ### 3.1 同期タイミング
 
-| トリガー | 間隔 | 処理 |
-|----------|------|------|
-| 自動同期 | 15分ごと | バックグラウンドで`syncPlanData` API呼び出し |
-| 手動同期 | ユーザー操作時 | 画面上のボタンタップで即座に同期実行 |
-| アプリ起動時 | 初回起動 | 前回同期から5分以上経過していれば自動同期 |
+| トリガー | 間隔 | 処理 | 方式 |
+|----------|------|------|------|
+| **Cloud Scheduler** | 15分ごと | `syncPlanData` API（`incremental:true`） | **差分同期** |
+| **Cloud Scheduler** | 日次（午前3時） | `syncPlanData` API（`incremental:false`） | **完全同期** |
+| 手動更新ボタン | ユーザー操作時 | Firestoreキャッシュ再取得 | 表示更新のみ |
+| アプリ起動時 | 初回起動 | Firestoreから最新データ取得 | 表示更新のみ |
+
+**設計変更（2025-12-14）**:
+- フロントエンドからの`syncPlanData`呼び出しを廃止
+- Cloud Schedulerが唯一の同期トリガーとなり、競合を原理的に排除
+- **差分同期**（15分）+ **日次完全同期**でコスト90%削減
+- 決定論的ドキュメントIDにより重複を原理的に防止
+- 詳細は [SYNC_CONCURRENCY.md](./SYNC_CONCURRENCY.md) を参照
 
 ### 3.2 同期フロー
 
 ```mermaid
 sequenceDiagram
-    participant PWA as PWA (Frontend)
+    participant CS15 as Cloud Scheduler<br/>(15分)
+    participant CS3 as Cloud Scheduler<br/>(午前3時)
     participant CF as Cloud Functions
     participant SA as Sheet A
     participant FS as Firestore
+    participant PWA as PWA (Frontend)
 
-    alt 自動同期（15分ごと）
-        PWA->>CF: POST /syncPlanData
-        CF->>SA: 全シート読み取り
-        SA-->>CF: データ返却
-        CF->>FS: 洗い替え同期
-        CF-->>PWA: 同期結果（件数・シート名）
-    end
+    Note over CS15: 15分ごとに差分同期
+    CS15->>CF: POST /syncPlanData {incremental:true}
+    CF->>FS: 最終同期時刻取得
+    CF->>SA: 全シート読み取り
+    SA-->>CF: データ返却
+    CF->>CF: 新規レコードのみフィルタ
+    CF->>FS: 新規レコード追加（削除なし）
+    CF-->>CS15: 完了
 
-    alt 手動同期
-        Note over PWA: ユーザーが同期ボタンをタップ
-        PWA->>CF: POST /syncPlanData
-        CF->>SA: 全シート読み取り
-        SA-->>CF: データ返却
-        CF->>FS: 洗い替え同期
-        CF-->>PWA: 同期結果
-        PWA->>CF: GET /getPlanData
-        CF->>FS: データ取得
-        FS-->>CF: plan_dataコレクション
-        CF-->>PWA: データ表示用JSON
-    end
+    Note over CS3: 午前3時に完全同期
+    CS3->>CF: POST /syncPlanData {incremental:false}
+    CF->>SA: 全シート読み取り
+    SA-->>CF: データ返却
+    CF->>FS: 洗い替え同期
+    CF-->>CS3: 完了
+
+    Note over PWA: ユーザーが「更新」ボタンをタップ
+    PWA->>CF: GET /getPlanData
+    CF->>FS: データ取得
+    FS-->>CF: plan_dataコレクション
+    CF-->>PWA: 最新データ表示
+    Note over PWA: syncPlanDataは呼ばない
 ```
 
 ### 3.3 同期対象シート

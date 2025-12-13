@@ -820,6 +820,85 @@ Accent: #14B8A6 (Teal)
 
 ---
 
+## Phase 4.8: 同期競合防止 + コスト最適化 🔄 実装中
+
+**目的**:
+1. 複数ユーザー・複数デバイスからの同時同期によるデータ重複を防止
+2. Firestoreコストを90%以上削減
+
+> **詳細**: [SYNC_CONCURRENCY.md](./SYNC_CONCURRENCY.md) を参照
+
+### 4.8-1. 問題（インシデント 2025-12-14）
+
+- Firestoreの`plan_data`コレクションで全レコードが2重に保存
+- 原因: 複数の`syncPlanData`処理が同時実行（Race Condition）
+- フロントエンドでの対策（localStorage）は同一ブラウザ内のみ有効で不十分
+
+### 4.8-2. 採用設計: Cloud Scheduler + 差分同期 + 日次洗い替え
+
+MoE多角的評価の結果、以下の設計を採用:
+
+| 項目 | 変更前 | 変更後 |
+|------|--------|--------|
+| 15分自動同期 | PWAのsetInterval（洗い替え） | **Cloud Scheduler（差分同期）** |
+| 日次同期 | なし | **Cloud Scheduler（完全同期/午前3時）** |
+| 手動同期 | syncPlanData API呼び出し | **Firestoreキャッシュ再取得のみ** |
+| 競合リスク | 複数トリガーで競合 | **単一トリガーで競合なし** |
+| 重複防止 | なし | **決定論的ドキュメントID** |
+| 月間コスト | 約$144 | **約$5-15（90%削減）** |
+
+### 4.8-3. 実装タスク
+
+| タスク | 状態 |
+|--------|------|
+| `syncPlanData.ts` incremental パラメータ追加 | 未実装 |
+| `firestoreService.ts` 差分同期ロジック追加 | 未実装 |
+| `firestoreService.ts` 決定論的ID生成追加 | 未実装 |
+| `sync_metadata` コレクション対応 | 未実装 |
+| Cloud Scheduler ジョブ作成（差分/完全） | 未実装 |
+| `useSync.ts` 簡素化 | 未実装 |
+| `Header.tsx` UI変更（同期→更新） | 未実装 |
+| デプロイ・検証 | 未実装 |
+
+### 4.8-4. Cloud Scheduler コマンド
+
+```bash
+# 15分ごと差分同期
+gcloud scheduler jobs create http sync-plan-data-incremental \
+  --location=asia-northeast1 \
+  --schedule="*/15 * * * *" \
+  --uri="https://asia-northeast1-facility-care-input-form.cloudfunctions.net/syncPlanData" \
+  --http-method=POST \
+  --headers="Content-Type=application/json" \
+  --message-body='{"triggeredBy":"scheduler","incremental":true}' \
+  --time-zone="Asia/Tokyo" \
+  --description="15分ごとの差分同期"
+
+# 日次完全同期（午前3時）
+gcloud scheduler jobs create http sync-plan-data-full \
+  --location=asia-northeast1 \
+  --schedule="0 3 * * *" \
+  --uri="https://asia-northeast1-facility-care-input-form.cloudfunctions.net/syncPlanData" \
+  --http-method=POST \
+  --headers="Content-Type=application/json" \
+  --message-body='{"triggeredBy":"scheduler","incremental":false}' \
+  --time-zone="Asia/Tokyo" \
+  --description="日次の完全同期（午前3時）"
+```
+
+### Phase 4.8 完了条件
+
+- [ ] バックエンド差分同期ロジック実装
+- [ ] 決定論的ドキュメントID実装
+- [ ] Cloud Scheduler ジョブ作成（差分/完全）
+- [ ] フロントエンドから`syncPlanData`呼び出しを削除
+- [ ] 「更新」ボタンがFirestoreキャッシュ再取得のみ実行
+- [ ] シミュレーション・競合テスト合格
+- [ ] デプロイ・動作検証完了
+- [ ] ドキュメント更新完了
+
+---
+
 ## マイルストーンサマリー
 
 ```
@@ -832,8 +911,9 @@ Phase 4.2: テーブルビュー     ██████████████�
 Phase 4.3: 全シート同期       ████████████████████ 100% (完了)
 Phase 4.4: シート順序修正     ████████████████████ 100% (完了)
 Phase 4.5: デザイン改善       ░░░░░░░░░░░░░░░░░░░░   0% (計画中)
+Phase 4.8: 同期競合防止       ████████░░░░░░░░░░░░  40% (実装中)
                              ─────────────────────
-                             合計: 40+ tasks
+                             合計: 45+ tasks
 ```
 
 | Phase | タスク数 | 主な成果物 | 状態 |
@@ -847,6 +927,7 @@ Phase 4.5: デザイン改善       ░░░░░░░░░░░░░░�
 | Phase 4.3 | 5 | 全シート同期（バッチ分割）、年月フィルタUI | ✅ 完了 |
 | Phase 4.4 | 5 | シート表示順序修正（SHEET_A_ORDER） | ✅ 完了 |
 | Phase 4.5 | 5 | デザイン改善（カラー、タイポ、アイコン） | 📋 計画中 |
+| Phase 4.8 | 5 | 同期競合防止（Cloud Scheduler） | 🔄 実装中 |
 
 ---
 

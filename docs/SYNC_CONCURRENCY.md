@@ -2,7 +2,7 @@
 
 > **作成日**: 2025-12-14
 > **更新日**: 2025-12-14
-> **関連インシデント**: Firestoreデータ重複問題（2025-12-14発生・解決）
+> **関連インシデント**: Firestoreデータ重複問題（2025-12-14発生）
 
 ---
 
@@ -30,290 +30,450 @@ Firestoreの`plan_data`コレクションにおいて、全レコードが2重�
 結果: プロセスAとBの両方がデータを挿入 → 2倍の重複
 ```
 
-**ログ証跡**:
-```
-Deleting 3006 docs in 8 batches: 口腔ケア  ← 実際のレコード数の2倍
-Inserting 1503 records in 4 batches for 口腔ケア
-```
+### 1.3 根本原因
 
-### 1.3 解決方法
-
-再同期を実行し、洗い替え処理でデータを正常化。
-
----
-
-## 2. 現状の同期アーキテクチャ
-
-### 2.1 現在の実装
-
-```typescript
-// firestoreService.ts - syncPlanData
-async function syncPlanData(sheetName, records) {
-  // 1. 既存データを削除（バッチ分割）
-  const existingDocs = await collection.where("sheetName", "==", sheetName).get();
-  for (batch of existingDocs) {
-    await batch.delete();
-  }
-
-  // 2. 新しいデータを追加（バッチ分割）
-  for (batch of records) {
-    await batch.set();
-  }
-}
-```
-
-**問題点**:
-- 削除と追加の間に他のプロセスが介入可能
-- 排他制御がない
-- 同期状態の管理がない
-
-### 2.2 同期のトリガーポイント
+複数のトリガーポイントから`syncPlanData`が呼び出される設計:
 
 | トリガー | 発生条件 | リスク |
 |----------|----------|--------|
-| 手動同期ボタン | ユーザー操作 | 連打による多重実行 |
-| 15分自動同期 | PWAのsetInterval | ブラウザタブ多重起動時 |
-| Cloud Scheduler | 定期実行（未実装） | 他トリガーとの競合 |
+| 手動同期ボタン | ユーザー操作 | **複数ユーザーが同時押下** |
+| 15分自動同期 | PWAのsetInterval | **複数タブ・デバイスで同時発火** |
+
+**重要**: フロントエンド（localStorage）での制御は**同一ブラウザ内のみ有効**。異なるデバイス・ユーザー間では共有されない。
 
 ---
 
-## 3. 再発防止策（設計）
+## 2. MoE多角的評価
 
-### 3.1 短期対策（Phase 1）：フロントエンドでの制御 ✅ 実装済み
+### 2.1 評価軸と重み
 
-**実装コスト**: 低
-**効果**: 手動同期の連打防止
+| 評価軸 | 重み | 説明 |
+|--------|------|------|
+| **安定性・安全性** | 高 | 競合によるデータ破損を防止 |
+| **コストパフォーマンス** | 高 | 実装コスト・ランニングコスト |
+| **実装複雑度** | 中 | 保守・デバッグの容易さ |
+| **保守性** | 中 | 将来の変更対応のしやすさ |
+| **ユーザー体験** | 中 | ユーザーの利便性 |
 
-**実装ファイル**: `frontend/src/hooks/useSync.ts`
+### 2.2 候補案比較
 
-```typescript
-// useSync.ts - 競合防止機能
-const SYNC_COOLDOWN_MS = 30 * 1000; // 30秒クールダウン
+| 案 | 概要 | 安定性 | コスト | 複雑度 | 保守性 | UX | 総合 |
+|----|------|--------|--------|--------|--------|-----|------|
+| A: Cloud Scheduler単一（洗い替え） | Schedulerのみ、全件洗い替え | ◎ | × | ◎ | ◎ | △ | △ |
+| B: Firestore分散ロック | バックエンドでロック | ○ | △ | △ | △ | ○ | △ |
+| C: 差分同期のみ | 常に差分追加 | △ | ◎ | △ | △ | ○ | △ |
+| **D: Scheduler + 差分同期 + 日次洗い替え** | 差分15分、洗い替え日次 | **◎** | **◎** | **○** | **◎** | **○** | **◎** |
 
-// localStorage keys
-const LS_LAST_SYNCED_AT = 'lastSyncedAt';
-const LS_SYNC_IN_PROGRESS = 'syncInProgress';
+### 2.3 最終採用：案D
 
-// 同期可能かどうかをチェック
-const canSync = useCallback((): boolean => {
-  // 自タブで同期中
-  if (syncMutation.isPending) return false;
+**「Cloud Scheduler + 差分同期（15分） + 日次洗い替え」を採用**
 
-  // 他タブで同期中（localStorage経由）
-  const syncInProgress = localStorage.getItem(LS_SYNC_IN_PROGRESS);
-  if (syncInProgress) return false;
+**評価結果**:
+| 評価軸 | 評価 | 根拠 |
+|--------|------|------|
+| **安定性** | ◎ | Cloud Scheduler単一トリガーで競合を原理的に排除 |
+| **コストパフォーマンス** | ◎ | 差分同期で月$144→$5-15（90%以上削減） |
+| **実装複雑度** | ○ | 差分ロジック追加だが、フロントエンド簡素化で相殺 |
+| **保守性** | ◎ | 単純なアーキテクチャ、障害点が少ない |
+| **UX** | ○ | 「更新」ボタンで最新データ即時表示 |
 
-  // クールダウン期間チェック
-  const lastSync = getLastSyncedAt();
-  if (lastSync && Date.now() - lastSync.getTime() < SYNC_COOLDOWN_MS) {
-    return false;
-  }
-  return true;
-}, [...]);
+---
 
-// storageイベントで他タブの同期を検知
-useEffect(() => {
-  const handleStorageChange = (e: StorageEvent) => {
-    if (e.key === LS_SYNC_IN_PROGRESS) {
-      setIsOtherTabSyncing(!!e.newValue);
-    }
-  };
-  window.addEventListener('storage', handleStorageChange);
-  return () => window.removeEventListener('storage', handleStorageChange);
-}, []);
+## 3. 最終設計：Cloud Scheduler + 差分同期
+
+### 3.1 同期方式一覧
+
+| 処理 | トリガー | 方式 | 頻度 | 目的 |
+|------|----------|------|------|------|
+| **差分同期** | Cloud Scheduler | 新規レコードのみ追加 | 15分ごと | 最新データ反映 |
+| **完全同期** | Cloud Scheduler | 洗い替え | 日次（午前3時） | データ整合性担保 |
+| **手動更新** | ユーザー操作 | Firestoreキャッシュ再取得 | 任意 | 最新表示 |
+
+### 3.2 アーキテクチャ図
+
+```mermaid
+sequenceDiagram
+    participant CS15 as Cloud Scheduler<br/>(15分)
+    participant CS3 as Cloud Scheduler<br/>(午前3時)
+    participant CF as syncPlanData
+    participant SA as Sheet A
+    participant FS as Firestore
+    participant PWA as PWA Frontend
+
+    Note over CS15: 15分ごとに差分同期
+    CS15->>CF: POST {incremental: true}
+    CF->>FS: 最終同期時刻取得
+    FS-->>CF: lastSyncedAt
+    CF->>SA: 全シート読み取り
+    SA-->>CF: データ返却
+    CF->>CF: lastSyncedAt以降のレコードをフィルタ
+    CF->>FS: 新規レコードのみ追加（削除なし）
+    CF->>FS: sync_metadata更新
+    CF-->>CS15: 完了
+
+    Note over CS3: 午前3時に完全同期
+    CS3->>CF: POST {incremental: false}
+    CF->>SA: 全シート読み取り
+    SA-->>CF: データ返却
+    CF->>FS: 既存データ削除
+    CF->>FS: 全レコード挿入
+    CF->>FS: sync_metadata更新
+    CF-->>CS3: 完了
+
+    Note over PWA: ユーザーが「更新」ボタンをタップ
+    PWA->>CF: GET /getPlanData
+    CF->>FS: データ取得
+    FS-->>CF: plan_dataコレクション
+    CF-->>PWA: 最新データ表示
+    Note over PWA: syncPlanDataは呼ばない
 ```
 
-**実装済み対策**:
-- ✅ 同期中は再実行をブロック（isPending チェック）
-- ✅ クールダウン期間（30秒）の間は手動同期をブロック
-- ✅ タブ間での同期状態共有（localStorage + storage イベント）
-- ✅ 同期ボタンにクールダウン残り秒数を表示
-- ✅ 自動同期（15分間隔）はクールダウンを無視
+### 3.3 差分同期ロジック
 
-### 3.2 中期対策（Phase 2）：バックエンドでの排他制御
-
-**実装コスト**: 中
-**効果**: サーバー側での確実な排他制御
-
-#### 3.2.1 Firestoreでのロック実装
+#### 3.3.1 差分検出の仕組み
 
 ```typescript
-// syncLockService.ts
-const LOCK_COLLECTION = 'sync_locks';
-const LOCK_TIMEOUT_MS = 5 * 60 * 1000; // 5分
-
-async function acquireSyncLock(sheetName: string): Promise<boolean> {
-  const lockRef = db.collection(LOCK_COLLECTION).doc(sheetName);
-
-  return db.runTransaction(async (transaction) => {
-    const lockDoc = await transaction.get(lockRef);
-    const now = Timestamp.now();
-
-    if (lockDoc.exists) {
-      const lockData = lockDoc.data();
-      const lockAge = now.toMillis() - lockData.acquiredAt.toMillis();
-
-      // タイムアウトしていなければロック取得失敗
-      if (lockAge < LOCK_TIMEOUT_MS) {
-        return false;
-      }
-    }
-
-    // ロック取得
-    transaction.set(lockRef, {
-      acquiredAt: now,
-      executionId: generateExecutionId(),
-    });
-    return true;
-  });
+// syncPlanData.ts
+interface SyncRequest {
+  triggeredBy: 'scheduler' | 'recovery';
+  incremental?: boolean; // true: 差分, false: 完全
 }
 
-async function releaseSyncLock(sheetName: string): Promise<void> {
-  await db.collection(LOCK_COLLECTION).doc(sheetName).delete();
-}
-```
-
-#### 3.2.2 同期処理への統合
-
-```typescript
-// syncPlanData.ts（改修後）
-async function syncPlanDataHandler(req, res) {
-  const sheetNames = await getSheetASheetNames();
+async function syncPlanDataHandler(req: Request, res: Response) {
+  const { triggeredBy, incremental = true } = req.body as SyncRequest;
 
   for (const sheetName of sheetNames) {
-    // ロック取得
-    const lockAcquired = await acquireSyncLock(sheetName);
-    if (!lockAcquired) {
-      logger.warn(`Skipping ${sheetName}: another sync in progress`);
-      continue;
-    }
-
-    try {
-      // 同期処理
-      await syncToFirestore(sheetName, records);
-    } finally {
-      // ロック解放
-      await releaseSyncLock(sheetName);
+    if (incremental) {
+      // 差分同期
+      await syncIncremental(sheetName, records);
+    } else {
+      // 完全同期（洗い替え）
+      await syncFull(sheetName, records);
     }
   }
+
+  // sync_metadata更新
+  await updateSyncMetadata(triggeredBy, incremental);
 }
 ```
 
-### 3.3 長期対策（Phase 3）：アーキテクチャ改善
-
-**実装コスト**: 高
-**効果**: 根本的な競合問題の解消
-
-#### 3.3.1 差分同期への移行
-
-現在の「洗い替え」から「差分同期」へ移行し、削除フェーズを不要にする。
+#### 3.3.2 差分同期の実装
 
 ```typescript
-// 差分同期の概念
-async function differentialSync(sheetName, records) {
-  // タイムスタンプベースのユニークキーを生成
-  for (const record of records) {
-    const docId = generateDeterministicId(sheetName, record.timestamp, record.staffName);
-    await collection.doc(docId).set(record, { merge: true });
-  }
+// firestoreService.ts
+async function syncIncremental(sheetName: string, records: PlanDataRecord[]): Promise<number> {
+  const db = getFirestore();
 
-  // 古いデータのみ削除（オプション）
-  // ...
-}
-```
+  // 1. 最終同期時刻を取得
+  const metadataRef = db.collection('sync_metadata').doc('latest');
+  const metadata = await metadataRef.get();
+  const lastSyncedAt = metadata.exists
+    ? metadata.data()?.lastSyncedAt?.toDate()
+    : new Date(0); // 初回は全件
 
-#### 3.3.2 Cloud Tasks によるキュー制御
-
-```typescript
-// 同期リクエストをCloud Tasksキューに投入
-async function enqueueSyncTask(sheetName: string) {
-  const client = new CloudTasksClient();
-  await client.createTask({
-    parent: queuePath,
-    task: {
-      httpRequest: {
-        url: `${FUNCTION_URL}/syncSheet`,
-        body: Buffer.from(JSON.stringify({ sheetName })),
-      },
-    },
+  // 2. 最終同期以降の新規レコードをフィルタ
+  const newRecords = records.filter(record => {
+    const recordTime = parseTimestamp(record.timestamp);
+    return recordTime > lastSyncedAt;
   });
-}
-```
 
-キューの設定で同時実行数を1に制限することで、競合を防止。
+  if (newRecords.length === 0) {
+    logger.info(`No new records for ${sheetName}`);
+    return 0;
+  }
 
----
+  // 3. 新規レコードのみ追加（削除なし）
+  const collectionRef = db.collection('plan_data');
+  const chunks = chunkArray(newRecords, BATCH_SIZE);
 
-## 4. 実装優先度
-
-| Phase | 対策 | 優先度 | 状態 |
-|-------|------|--------|------|
-| 1 | フロントエンド同期ボタンのデバウンス | 高 | ✅ 実装済み (2025-12-14) |
-| 1 | クールダウン期間（30秒） | 高 | ✅ 実装済み (2025-12-14) |
-| 1 | タブ間同期状態共有 | 中 | ✅ 実装済み (2025-12-14) |
-| 2 | Firestore分散ロック | 中 | 未実装（本番移行前に検討） |
-| 3 | 差分同期 | 低 | 未実装（将来検討） |
-| 3 | Cloud Tasks キュー | 低 | 未実装（将来検討） |
-
----
-
-## 5. 監視・検知
-
-### 5.1 重複検知クエリ
-
-定期的に以下のクエリで重複を検知：
-
-```javascript
-// Firestoreで重複チェック（管理者向け）
-const duplicates = await db.collection('plan_data')
-  .where('sheetName', '==', targetSheet)
-  .get()
-  .then(snapshot => {
-    const counts = {};
-    snapshot.docs.forEach(doc => {
-      const key = `${doc.data().timestamp}_${doc.data().staffName}`;
-      counts[key] = (counts[key] || 0) + 1;
+  for (const chunk of chunks) {
+    const batch = db.batch();
+    chunk.forEach(record => {
+      // 決定論的なドキュメントIDを生成（重複防止）
+      const docId = generateDeterministicId(sheetName, record.timestamp, record.staffName);
+      const docRef = collectionRef.doc(docId);
+      batch.set(docRef, record, { merge: true }); // 既存があればマージ
     });
-    return Object.entries(counts).filter(([_, count]) => count > 1);
-  });
+    await batch.commit();
+  }
+
+  logger.info(`Inserted ${newRecords.length} new records for ${sheetName}`);
+  return newRecords.length;
+}
+
+// 決定論的なドキュメントID生成
+function generateDeterministicId(sheetName: string, timestamp: string, staffName: string): string {
+  const hash = crypto.createHash('md5')
+    .update(`${sheetName}_${timestamp}_${staffName}`)
+    .digest('hex')
+    .substring(0, 20);
+  return hash;
+}
 ```
 
-### 5.2 ログ監視
+#### 3.3.3 完全同期（洗い替え）の実装
 
-Cloud Loggingで以下のパターンを監視：
-- `Deleting X docs` の X が `Inserting Y records` の Y の2倍以上
-- 同一シートに対する同期開始ログが短時間に複数回出現
+```typescript
+// firestoreService.ts
+async function syncFull(sheetName: string, records: PlanDataRecord[]): Promise<number> {
+  const db = getFirestore();
+  const collectionRef = db.collection('plan_data');
+
+  // 1. 既存データ削除
+  const existing = await collectionRef.where('sheetName', '==', sheetName).get();
+  const deleteChunks = chunkArray(existing.docs, BATCH_SIZE);
+  for (const chunk of deleteChunks) {
+    const batch = db.batch();
+    chunk.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+  }
+
+  // 2. 全レコード挿入（決定論的ID使用）
+  const insertChunks = chunkArray(records, BATCH_SIZE);
+  for (const chunk of insertChunks) {
+    const batch = db.batch();
+    chunk.forEach(record => {
+      const docId = generateDeterministicId(sheetName, record.timestamp, record.staffName);
+      const docRef = collectionRef.doc(docId);
+      batch.set(docRef, record);
+    });
+    await batch.commit();
+  }
+
+  logger.info(`Full sync: ${records.length} records for ${sheetName}`);
+  return records.length;
+}
+```
+
+### 3.4 sync_metadata コレクション
+
+```typescript
+// Firestore: sync_metadata/latest
+interface SyncMetadata {
+  lastSyncedAt: Timestamp;      // 最終同期時刻
+  syncType: 'incremental' | 'full';
+  triggeredBy: 'scheduler' | 'recovery';
+  totalRecords: number;         // 処理レコード数
+  syncDuration: number;         // 処理時間（ms）
+  sheets: {
+    [sheetName: string]: {
+      recordCount: number;
+      newRecords: number;       // 差分同期時の新規追加数
+    }
+  }
+}
+```
+
+### 3.5 Cloud Scheduler 設定
+
+#### 3.5.1 差分同期ジョブ（15分ごと）
+
+```bash
+gcloud scheduler jobs create http sync-plan-data-incremental \
+  --location=asia-northeast1 \
+  --schedule="*/15 * * * *" \
+  --uri="https://asia-northeast1-facility-care-input-form.cloudfunctions.net/syncPlanData" \
+  --http-method=POST \
+  --headers="Content-Type=application/json" \
+  --message-body='{"triggeredBy":"scheduler","incremental":true}' \
+  --time-zone="Asia/Tokyo" \
+  --description="15分ごとの差分同期"
+```
+
+#### 3.5.2 完全同期ジョブ（日次午前3時）
+
+```bash
+gcloud scheduler jobs create http sync-plan-data-full \
+  --location=asia-northeast1 \
+  --schedule="0 3 * * *" \
+  --uri="https://asia-northeast1-facility-care-input-form.cloudfunctions.net/syncPlanData" \
+  --http-method=POST \
+  --headers="Content-Type=application/json" \
+  --message-body='{"triggeredBy":"scheduler","incremental":false}' \
+  --time-zone="Asia/Tokyo" \
+  --description="日次の完全同期（午前3時）"
+```
+
+### 3.6 フロントエンド変更
+
+#### 3.6.1 useSync.ts（簡素化）
+
+```typescript
+// useSync.ts - 簡素化版
+import { useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { getSyncMetadata } from '../api';
+
+export function useSync() {
+  const queryClient = useQueryClient();
+
+  // sync_metadataから最終同期情報を取得
+  const { data: syncMetadata } = useQuery({
+    queryKey: ['syncMetadata'],
+    queryFn: getSyncMetadata,
+    refetchInterval: 60 * 1000, // 1分ごとに更新
+  });
+
+  // 「更新」ボタン = Firestoreキャッシュ再取得のみ
+  const refresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['planData'] });
+    queryClient.invalidateQueries({ queryKey: ['syncMetadata'] });
+  }, [queryClient]);
+
+  return {
+    refresh,
+    isRefreshing: queryClient.isFetching({ queryKey: ['planData'] }) > 0,
+    lastSyncedAt: syncMetadata?.lastSyncedAt ?? null,
+    syncType: syncMetadata?.syncType ?? null,
+  };
+}
+```
+
+#### 3.6.2 Header.tsx（UI変更）
+
+```typescript
+// Header.tsx - UI変更
+// 「同期」→「更新」
+// 「同期中...」→「読み込み中...」
+// 「最終同期: HH:MM」→「データ更新: HH:MM（自動同期: 15分ごと）」
+
+<button onClick={refresh} disabled={isRefreshing}>
+  {isRefreshing ? '読み込み中...' : '更新'}
+</button>
+
+<span>
+  データ更新: {formatTime(lastSyncedAt)}
+  <small>（自動同期: 15分ごと）</small>
+</span>
+```
+
+### 3.7 重複防止の保証
+
+**決定論的ドキュメントIDにより重複を原理的に防止**:
+
+| シナリオ | 結果 |
+|----------|------|
+| 同じレコードを2回挿入 | 同じIDなのでマージ（重複なし） |
+| 差分同期後に完全同期 | 同じIDなので上書き（重複なし） |
+| 完全同期が2回実行 | 削除→挿入だが、IDが同じなので整合性維持 |
 
 ---
 
-## 6. 復旧手順
+## 4. コスト比較
 
-重複が発生した場合の復旧手順：
+| 方式 | 15分ごとの書き込み | 月間書き込み数 | 月間コスト概算 |
+|------|-------------------|----------------|----------------|
+| **洗い替えのみ** | 27,200件（削除+挿入） | 約260万件 | 約$144 |
+| **差分同期+日次洗い替え** | 平均50件 + 日次27,200件 | 約12万件 | 約$5-15 |
 
-1. **確認**: APIで重複状態を確認
-   ```bash
-   curl -s "https://...cloudfunctions.net/getPlanData?sheetName=食事" | \
-     jq '[.data.records[].timestamp] | unique | length'
-   ```
-
-2. **再同期**: 手動で同期を実行（他の同期が走っていないことを確認）
-   ```bash
-   curl -X POST "https://...cloudfunctions.net/syncPlanData" \
-     -H "Content-Type: application/json" \
-     -d '{"triggeredBy": "recovery"}'
-   ```
-
-3. **検証**: 重複が解消されたことを確認
-   ```bash
-   # totalCount と uniqueTimestamps が一致することを確認
-   curl -s "https://...cloudfunctions.net/getPlanData?sheetName=食事" | \
-     jq '{totalCount: .data.totalCount, uniqueTimestamps: ([.data.records[].timestamp] | unique | length)}'
-   ```
+**削減率: 90%以上**
 
 ---
 
-## 7. 関連ドキュメント
+## 5. 実装チェックリスト
 
-- [ARCHITECTURE.md](./ARCHITECTURE.md) - システム全体設計
-- [DEMO_PWA_SPEC.md](./DEMO_PWA_SPEC.md) - 同期仕様
-- [API_SPEC.md](./API_SPEC.md) - syncPlanData API仕様
+### 5.1 バックエンド
+
+- [ ] `syncPlanData.ts` に `incremental` パラメータ追加
+- [ ] `firestoreService.ts` に `syncIncremental` 関数追加
+- [ ] `firestoreService.ts` に `generateDeterministicId` 関数追加
+- [ ] `sync_metadata` コレクションへの書き込み追加
+- [ ] `getSyncMetadata` API追加
+
+### 5.2 インフラ
+
+- [ ] Cloud Scheduler `sync-plan-data-incremental` ジョブ作成
+- [ ] Cloud Scheduler `sync-plan-data-full` ジョブ作成
+
+### 5.3 フロントエンド
+
+- [ ] `useSync.ts` 簡素化（syncPlanData呼び出し削除）
+- [ ] `api/index.ts` に `getSyncMetadata` 追加
+- [ ] `Header.tsx` UI変更（「同期」→「更新」）
+- [ ] 15分自動同期のsetInterval削除
+
+### 5.4 検証
+
+- [ ] 差分同期のシミュレーション
+- [ ] 完全同期のシミュレーション
+- [ ] 重複データなしの確認
+- [ ] Firebase Hosting デプロイ
+
+---
+
+## 6. シミュレーション手順
+
+### 6.1 重複データ修正（初回完全同期）
+
+```bash
+# 現在の重複状態を確認
+curl -s "https://asia-northeast1-facility-care-input-form.cloudfunctions.net/getPlanData?sheetName=%E9%A3%9F%E4%BA%8B" | \
+  jq '{totalCount: .data.totalCount, uniqueTimestamps: ([.data.records[].timestamp] | unique | length)}'
+
+# 完全同期を実行
+curl -X POST "https://asia-northeast1-facility-care-input-form.cloudfunctions.net/syncPlanData" \
+  -H "Content-Type: application/json" \
+  -d '{"triggeredBy":"recovery","incremental":false}'
+
+# 重複解消を確認（totalCount = uniqueTimestamps であること）
+curl -s "https://asia-northeast1-facility-care-input-form.cloudfunctions.net/getPlanData?sheetName=%E9%A3%9F%E4%BA%8B" | \
+  jq '{totalCount: .data.totalCount, uniqueTimestamps: ([.data.records[].timestamp] | unique | length)}'
+```
+
+### 6.2 差分同期のテスト
+
+```bash
+# 差分同期を実行
+curl -X POST "https://asia-northeast1-facility-care-input-form.cloudfunctions.net/syncPlanData" \
+  -H "Content-Type: application/json" \
+  -d '{"triggeredBy":"scheduler","incremental":true}'
+
+# 重複がないことを確認
+curl -s "https://asia-northeast1-facility-care-input-form.cloudfunctions.net/getPlanData?sheetName=%E9%A3%9F%E4%BA%8B" | \
+  jq '{totalCount: .data.totalCount, uniqueTimestamps: ([.data.records[].timestamp] | unique | length)}'
+```
+
+### 6.3 競合テスト
+
+```bash
+# 同時に2回実行しても重複しないことを確認
+curl -X POST "https://...cloudfunctions.net/syncPlanData" -d '{"incremental":true}' &
+curl -X POST "https://...cloudfunctions.net/syncPlanData" -d '{"incremental":true}' &
+wait
+
+# 重複なしを確認
+curl -s "https://...cloudfunctions.net/getPlanData?sheetName=%E9%A3%9F%E4%BA%8B" | \
+  jq '{totalCount: .data.totalCount, uniqueTimestamps: ([.data.records[].timestamp] | unique | length)}'
+```
+
+---
+
+## 7. 復旧手順
+
+重複が発生した場合の復旧手順:
+
+```bash
+# 1. 重複状態を確認
+curl -s "https://asia-northeast1-facility-care-input-form.cloudfunctions.net/getPlanData?sheetName=%E9%A3%9F%E4%BA%8B" | \
+  jq '{totalCount: .data.totalCount, uniqueTimestamps: ([.data.records[].timestamp] | unique | length)}'
+
+# 2. 完全同期を実行（洗い替え）
+curl -X POST "https://asia-northeast1-facility-care-input-form.cloudfunctions.net/syncPlanData" \
+  -H "Content-Type: application/json" \
+  -d '{"triggeredBy":"recovery","incremental":false}'
+
+# 3. 重複解消を確認
+curl -s "https://asia-northeast1-facility-care-input-form.cloudfunctions.net/getPlanData?sheetName=%E9%A3%9F%E4%BA%8B" | \
+  jq '{totalCount: .data.totalCount, uniqueTimestamps: ([.data.records[].timestamp] | unique | length)}'
+```
+
+---
+
+## 8. 関連ドキュメント
+
+| ドキュメント | 内容 |
+|--------------|------|
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | システム全体設計 |
+| [DEMO_PWA_SPEC.md](./DEMO_PWA_SPEC.md) | 同期仕様 |
+| [API_SPEC.md](./API_SPEC.md) | syncPlanData API仕様 |
+| [ROADMAP.md](./ROADMAP.md) | 開発ロードマップ |
