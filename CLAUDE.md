@@ -4,6 +4,39 @@
 
 ---
 
+## 開発方針
+
+### ドキュメントドリブン開発
+
+**重要**: 本プロジェクトはドキュメントドリブンで進めること。
+
+1. **作業前**: 必ず `docs/CURRENT_STATUS.md` と関連ドキュメントを確認
+2. **作業中**: ドキュメントに記載された手順・仕様に従う
+3. **作業後**: `docs/CURRENT_STATUS.md` を更新して進捗を反映
+4. **判断基準**: 不明点はドキュメントを参照し、記載がなければユーザーに確認
+
+### Gitコミット・Push（必須）
+
+**重要**: 作業完了時は必ずコミット＆リモートへpushすること。
+
+1. **タイミング**: 機能実装完了時、ドキュメント更新時、区切りのいいタイミング
+2. **コミット**: 変更内容を適切なメッセージでコミット
+3. **Push**: `git push origin main` でリモートリポジトリに反映
+4. **確認**: 会話クリア前に必ず未pushの変更がないか確認
+
+### 主要ドキュメント
+
+| ファイル | 用途 |
+|----------|------|
+| `docs/CURRENT_STATUS.md` | 現在の進捗・次のタスク（**再開時に最初に読む**） |
+| `docs/DEMO_PWA_SPEC.md` | デモ版PWA仕様（読み取り専用） |
+| `docs/ROADMAP.md` | 開発ロードマップ・Phase別手順 |
+| `docs/ARCHITECTURE.md` | システム設計・データフロー |
+| `docs/BUSINESS_RULES.md` | 業務ルール・Bot連携ハック |
+| `docs/API_SPEC.md` | API仕様書 |
+
+---
+
 ## アカウント設定
 
 ### GitHub
@@ -27,12 +60,15 @@
 
 ## サービスアカウント
 
+**注意**: 本プロジェクトでは単一のサービスアカウントを使用。不要なSAは作成しないこと。
+
 | 項目 | 値 |
 |------|-----|
 | 名前 | `facility-care-sa` |
 | メール | `facility-care-sa@facility-care-input-form.iam.gserviceaccount.com` |
 | キーファイル | `keys/sa-key.json` (Git管理外) |
-| 権限 | `roles/datastore.user`, `roles/cloudfunctions.invoker` |
+| 用途 | Cloud Functions実行、CI/CD、スプレッドシート連携 |
+| 権限 | `roles/datastore.user`, `roles/cloudfunctions.invoker`, `roles/firebase.admin`, `roles/cloudfunctions.developer`, `roles/run.admin`, `roles/iam.serviceAccountUser` |
 
 ---
 

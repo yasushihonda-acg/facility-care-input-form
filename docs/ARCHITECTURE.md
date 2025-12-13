@@ -242,7 +242,62 @@ service cloud.firestore {
 
 ---
 
-## 10. 次のステップ
+## 10. デモ版PWA仕様
+
+### 10.1 概要
+
+デモ版では**読み取り専用**のPWAを提供し、Sheet A（記録の結果）の全シートデータをモバイルで閲覧可能にする。
+
+### 10.2 機能スコープ
+
+| 機能 | デモ版 | 将来版 |
+|------|--------|--------|
+| シート閲覧（全11シート） | ✅ | ✅ |
+| 15分ごと自動同期 | ✅ | ✅ |
+| 手動同期 | ✅ | ✅ |
+| 実績入力（Sheet B書き込み） | ❌ | ✅ |
+| 画像アップロード | ❌ | ✅ |
+| 家族要望送信 | ❌ | ✅ |
+
+### 10.3 同期仕様
+
+| 項目 | 仕様 |
+|------|------|
+| 自動同期間隔 | 15分 |
+| 手動同期 | アプリ内ボタンで即座に実行 |
+| 同期対象 | Sheet A 全11シート（13,603件） |
+| 同期方式 | 洗い替え（Firestore全置換） |
+
+### 10.4 システム構成（デモ版）
+
+```mermaid
+graph LR
+    subgraph "Client"
+        PWA[PWA<br/>React + Vite]
+    end
+
+    subgraph "Backend"
+        CF_SYNC[syncPlanData]
+        CF_GET[getPlanData]
+    end
+
+    subgraph "Data"
+        SA[(Sheet A<br/>Read-Only)]
+        FS[(Firestore)]
+    end
+
+    PWA -->|"15分 or 手動"| CF_SYNC
+    CF_SYNC -->|"Read"| SA
+    CF_SYNC -->|"Write"| FS
+    PWA -->|"表示用"| CF_GET
+    CF_GET -->|"Read"| FS
+```
+
+詳細は [DEMO_PWA_SPEC.md](./DEMO_PWA_SPEC.md) を参照。
+
+---
+
+## 11. 次のステップ
 
 詳細は [ROADMAP.md](./ROADMAP.md) を参照してください。
 
@@ -251,7 +306,7 @@ service cloud.firestore {
 3. ✅ API_SPEC.md 作成
 4. ✅ ROADMAP.md 作成
 5. ✅ SETUP.md 作成
-6. ⬜ Phase 1: 基盤構築（GCP/Firebase）
-7. ⬜ Phase 2: バックエンド実装
-8. ⬜ Phase 3: デプロイ・検証
-9. ⬜ Phase 4: デモ準備・公開
+6. ✅ Phase 1: 基盤構築（GCP/Firebase）
+7. ✅ Phase 2: バックエンド実装
+8. ✅ Phase 3: デプロイ・検証（Sheet A読み取り完了）
+9. ⬜ Phase 4: デモ版PWA開発・公開

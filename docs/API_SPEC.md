@@ -21,10 +21,8 @@
 ### 2.1 ベースURL
 
 ```
-https://{region}-{project-id}.cloudfunctions.net
+https://asia-northeast1-facility-care-input-form.cloudfunctions.net
 ```
-
-例: `https://asia-northeast1-kamachi-care-app.cloudfunctions.net`
 
 ### 2.2 共通ヘッダー
 
@@ -70,18 +68,44 @@ https://{region}-{project-id}.cloudfunctions.net
 
 ## 3. エンドポイント一覧
 
-| メソッド | パス | 説明 | データフロー |
-|----------|------|------|--------------|
-| POST | `/syncPlanData` | 記録データを同期 | Flow A |
-| POST | `/submitCareRecord` | ケア実績を入力 | Flow B |
-| POST | `/submitFamilyRequest` | 家族要望を送信 | Flow C |
-| POST | `/uploadCareImage` | 画像をアップロード | 画像連携 |
-| GET | `/getPlanData` | 同期済み記録を取得 | - |
-| GET | `/getFamilyRequests` | 家族要望一覧を取得 | - |
+| メソッド | パス | 説明 | データフロー | デモ版 |
+|----------|------|------|--------------|--------|
+| GET | `/healthCheck` | ヘルスチェック | - | ✅ |
+| POST | `/syncPlanData` | 記録データを同期 | Flow A | ✅ |
+| GET | `/getPlanData` | 同期済み記録を取得 | - | ✅ |
+| POST | `/submitCareRecord` | ケア実績を入力 | Flow B | ❌ |
+| POST | `/submitFamilyRequest` | 家族要望を送信 | Flow C | ❌ |
+| POST | `/uploadCareImage` | 画像をアップロード | 画像連携 | ❌ |
+| GET | `/getFamilyRequests` | 家族要望一覧を取得 | - | ❌ |
+
+> **デモ版**: 読み取り専用PWAで使用するエンドポイント
 
 ---
 
 ## 4. API詳細
+
+### 4.0 GET /healthCheck
+
+システムの正常動作を確認します。
+
+#### リクエスト
+
+```http
+GET /healthCheck
+```
+
+#### レスポンス
+
+```json
+{
+  "status": "ok",
+  "timestamp": "2025-12-13T07:30:00.000Z",
+  "project": "facility-care-input-form",
+  "version": "1.0.0"
+}
+```
+
+---
 
 ### 4.1 POST /syncPlanData
 
@@ -475,11 +499,32 @@ export interface GetFamilyRequestsResponse {
 
 ## 6. cURLサンプル
 
-### 6.1 ケア実績を入力（間食 - Bot連携ハック適用）
+### 6.1 ヘルスチェック
+
+```bash
+curl https://asia-northeast1-facility-care-input-form.cloudfunctions.net/healthCheck
+```
+
+### 6.2 記録データを同期（デモ版で使用）
 
 ```bash
 curl -X POST \
-  https://asia-northeast1-kamachi-care-app.cloudfunctions.net/submitCareRecord \
+  https://asia-northeast1-facility-care-input-form.cloudfunctions.net/syncPlanData \
+  -H "Content-Type: application/json" \
+  -d '{"triggeredBy": "manual"}'
+```
+
+### 6.3 同期済みデータを取得（デモ版で使用）
+
+```bash
+curl https://asia-northeast1-facility-care-input-form.cloudfunctions.net/getPlanData
+```
+
+### 6.4 ケア実績を入力（将来版）
+
+```bash
+curl -X POST \
+  https://asia-northeast1-facility-care-input-form.cloudfunctions.net/submitCareRecord \
   -H "Content-Type: application/json" \
   -d '{
     "staffId": "S001",
@@ -490,11 +535,11 @@ curl -X POST \
   }'
 ```
 
-### 6.2 家族要望を送信
+### 6.5 家族要望を送信（将来版）
 
 ```bash
 curl -X POST \
-  https://asia-northeast1-kamachi-care-app.cloudfunctions.net/submitFamilyRequest \
+  https://asia-northeast1-facility-care-input-form.cloudfunctions.net/submitFamilyRequest \
   -H "Content-Type: application/json" \
   -d '{
     "userId": "F001",
@@ -505,19 +550,11 @@ curl -X POST \
   }'
 ```
 
-### 6.3 記録データを同期
-
-```bash
-curl -X POST \
-  https://asia-northeast1-kamachi-care-app.cloudfunctions.net/syncPlanData \
-  -H "Content-Type: application/json" \
-  -d '{"triggeredBy": "manual"}'
-```
-
 ---
 
 ## 7. 変更履歴
 
-| 日付 | バージョン | 変更内容 | 担当 |
-|------|------------|----------|------|
-| 2024-XX-XX | 1.0.0 | 初版作成 | - |
+| 日付 | バージョン | 変更内容 |
+|------|------------|----------|
+| 2025-12-13 | 1.1.0 | デモ版対応（healthCheck追加、URL更新） |
+| 2025-12-XX | 1.0.0 | 初版作成 |

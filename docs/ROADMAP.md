@@ -306,85 +306,125 @@ curl -X POST https://[REGION]-[PROJECT].cloudfunctions.net/submitFamilyRequest \
 
 ---
 
-## Phase 4: デモ準備
+## Phase 4: デモ版PWA開発
 
-関係者へのデモンストレーションを準備する。
+読み取り専用のPWAアプリケーションを開発し、モバイルでSheet Aデータを閲覧可能にする。
 
-### 4-1. 動作確認用スクリプト
+### 4-1. PWA基盤構築
 
 ```bash
-# scripts/demo-test.sh
-#!/bin/bash
-BASE_URL="https://[REGION]-facility-care-demo.cloudfunctions.net"
+# フロントエンドプロジェクト作成
+npm create vite@latest frontend -- --template react-ts
+cd frontend
+npm install
 
-echo "=== 1. 記録同期テスト ==="
-curl -s -X POST $BASE_URL/syncPlanData -H "Content-Type: application/json" -d '{}' | jq
+# PWA関連パッケージ
+npm install vite-plugin-pwa workbox-window
 
-echo "=== 2. ケア実績入力テスト（間食） ==="
-curl -s -X POST $BASE_URL/submitCareRecord -H "Content-Type: application/json" \
-  -d '{"staffId":"S001","residentId":"R001","recordType":"snack","content":"プリン","timestamp":"2024-01-15T15:00:00Z"}' | jq
-
-echo "=== 3. 家族要望送信テスト ==="
-curl -s -X POST $BASE_URL/submitFamilyRequest -H "Content-Type: application/json" \
-  -d '{"userId":"F001","residentId":"R001","category":"meal","content":"柔らかい食事希望","priority":"medium"}' | jq
+# UI・状態管理
+npm install @tanstack/react-query tailwindcss
+npx tailwindcss init -p
 ```
 
-**成果物**: `scripts/demo-test.sh`
+**成果物**: `frontend/` ディレクトリ、PWA設定完了
 
-### 4-2. デモシナリオ作成
+### 4-2. 画面実装
 
-| # | シナリオ | 操作 | 期待結果 |
-|---|----------|------|----------|
-| 1 | 記録同期 | syncPlanData実行 | Firestoreにデータ反映 |
-| 2 | 通常の食事記録 | submitCareRecord (meal) | Sheet Bに行追加 |
-| 3 | 間食記録（Bot連携） | submitCareRecord (snack) | Sheet Bに行追加 + 重要フラグ |
-| 4 | 家族要望送信 | submitFamilyRequest | Firestoreに保存 |
-| 5 | 画像付き記録 | uploadCareImage + submitCareRecord | Drive + Sheet B |
+| 画面 | 機能 |
+|------|------|
+| HOME | シート一覧（11シート）、同期ステータス、手動同期ボタン |
+| SHEET_DETAIL | 選択シートのデータテーブル表示 |
 
-**成果物**: `docs/DEMO_SCENARIO.md`
+**成果物**: React コンポーネント群
 
-### 4-3. ドキュメント整備
+### 4-3. 同期機能実装
 
-- README.md 更新（デプロイ済みURLを記載）
-- SETUP.md 完成版
-- トラブルシューティングガイド
+| 機能 | 実装 |
+|------|------|
+| 自動同期 | 15分ごと（setInterval / React Query refetchInterval） |
+| 手動同期 | ボタンクリックで即座にAPI呼び出し |
+| 同期状態表示 | 最終同期日時、同期中インジケータ |
 
-**成果物**: 更新されたドキュメント群
+```typescript
+// React Query による同期設定例
+const { data, refetch, isFetching } = useQuery({
+  queryKey: ['planData'],
+  queryFn: fetchPlanData,
+  refetchInterval: 15 * 60 * 1000, // 15分
+  staleTime: 5 * 60 * 1000, // 5分間はキャッシュ使用
+});
+```
 
-### 4-4. デモ実施
+**成果物**: 同期ロジック、UI表示
 
-- 関係者へURLとシナリオを共有
-- デモ実施
-- フィードバック収集
+### 4-4. Firebase Hosting デプロイ
 
-**成果物**: デモ完了、フィードバックリスト
+```bash
+# Firebase Hosting 初期化（既存プロジェクト）
+firebase init hosting
+# public: frontend/dist
+# SPA: Yes
+
+# ビルド＆デプロイ
+cd frontend
+npm run build
+cd ..
+firebase deploy --only hosting
+```
+
+**成果物**: `https://facility-care-input-form.web.app` でPWA公開
+
+### 4-5. モバイル実機テスト
+
+| テスト項目 | 確認内容 |
+|------------|----------|
+| ホーム画面追加 | PWAとしてインストール可能 |
+| シート一覧表示 | 全11シートが表示される |
+| データ閲覧 | 各シートのデータが正しく表示 |
+| 手動同期 | ボタンタップで同期実行 |
+| 自動同期 | 15分後にデータ更新 |
+| オフライン | 最終取得データが表示 |
+
+**成果物**: テスト結果レポート
 
 ### Phase 4 完了条件
 
-- [ ] デモスクリプトが全て成功
-- [ ] デモシナリオが文書化済み
-- [ ] 関係者にURL共有済み
-- [ ] デモ実施完了
+- [ ] PWAがFirebase Hostingにデプロイ済み
+- [ ] 全11シートのデータが閲覧可能
+- [ ] 15分ごと自動同期が動作
+- [ ] 手動同期ボタンが動作
+- [ ] モバイルでホーム画面に追加可能
+- [ ] 関係者へURL共有・デモ実施完了
+
+### Phase 4 デモシナリオ
+
+| # | シナリオ | 操作 | 期待結果 |
+|---|----------|------|----------|
+| 1 | アプリ起動 | PWA URLにアクセス | シート一覧が表示 |
+| 2 | シート選択 | 「食事」をタップ | 食事データ一覧表示 |
+| 3 | 手動同期 | 同期ボタンをタップ | 最新データに更新 |
+| 4 | 自動同期確認 | 15分待機 | 自動的にデータ更新 |
+| 5 | ホーム画面追加 | ブラウザメニュー | アプリとしてインストール |
 
 ---
 
 ## マイルストーンサマリー
 
 ```
-Phase 1: 基盤構築        ████████░░░░░░░░░░░░  (5 tasks)
-Phase 2: バックエンド実装  ████████████░░░░░░░░  (6 tasks)
-Phase 3: デプロイ・検証    ████████████████░░░░  (4 tasks)
-Phase 4: デモ準備         ████████████████████  (4 tasks)
+Phase 1: 基盤構築        ████████████████████ 100% (完了)
+Phase 2: バックエンド実装  ████████████████████ 100% (完了)
+Phase 3: デプロイ・検証    ████████████████░░░░  80% (Sheet B共有待ち)
+Phase 4: デモ版PWA開発    ░░░░░░░░░░░░░░░░░░░░   0% (次フェーズ)
                          ─────────────────────
-                         合計: 19 tasks → デモ公開
+                         合計: 20 tasks → デモ公開
 ```
 
-| Phase | タスク数 | 主な成果物 |
-|-------|----------|------------|
-| Phase 1 | 5 | GCP/Firebase環境、ローカル開発環境 |
-| Phase 2 | 6 | Cloud Run functions（4エンドポイント） |
-| Phase 3 | 4 | 本番デプロイ、連携テスト完了 |
-| Phase 4 | 4 | デモスクリプト、シナリオ、実施完了 |
+| Phase | タスク数 | 主な成果物 | 状態 |
+|-------|----------|------------|------|
+| Phase 1 | 5 | GCP/Firebase環境、ローカル開発環境 | ✅ 完了 |
+| Phase 2 | 6 | Cloud Functions（7エンドポイント） | ✅ 完了 |
+| Phase 3 | 4 | 本番デプロイ、Sheet A読み取り確認 | 🔄 80% |
+| Phase 4 | 5 | デモ版PWA（読み取り専用） | ⬜ 未着手 |
 
 ---
 

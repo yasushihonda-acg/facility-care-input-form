@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月13日
+> **最終更新**: 2025年12月13日 (デモ版PWA仕様確定)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -26,128 +26,136 @@
 | ロードマップ作成 | ✅ 完了 | `docs/ROADMAP.md` |
 | セットアップ手順書 | ✅ 完了 | `docs/SETUP.md` |
 | GitHubリポジトリ作成 | ✅ 完了 | `yasushihonda-acg/facility-care-input-form` |
-| Phase 1-1: GCPプロジェクト作成 | ✅ 完了 | `facility-care-input-form` |
-| Phase 1-2: Firebase初期化 | ✅ 完了 | `firebase.json`, `.firebaserc`, `functions/` |
-| Phase 1-3: API有効化 | ✅ 完了 | Firestore, Sheets, Drive, Cloud Functions, Cloud Run |
-| Phase 1-4: サービスアカウント設定 | ✅ 完了 | `facility-care-sa@facility-care-input-form.iam.gserviceaccount.com` |
-| Phase 1-5: ローカル開発環境構築 | ✅ 完了 | Emulator動作確認済み |
+| Phase 1: 基盤構築 | ✅ 完了 | GCP/Firebase環境構築済み |
+| Phase 2: バックエンド実装 | ✅ 完了 | 全7エンドポイント実装済み |
+| Phase 3-1: Firestoreルールデプロイ | ✅ 完了 | Dev Mode (全開放) |
+| Phase 3-2: Cloud Functionsデプロイ | ✅ 完了 | asia-northeast1 |
+| Phase 3-3: エンドポイント疎通確認 | ✅ 完了 | healthCheck OK |
+| Phase 3-4: Sheet A読み取り確認 | ✅ 完了 | 11シート・13,603件同期成功 |
 
-| GitHub Actions CI/CD | ✅ 完了 | `.github/workflows/ci.yml`, `deploy.yml` |
-| healthCheck関数デプロイ | ✅ 完了 | `us-central1` |
+### 次のタスク ⬜ Phase 4: デモ版PWA開発
 
-### 次のタスク ⬜
+**デモ版PWA（読み取り専用）の開発**
 
-**Phase 2-1: バックエンド実装 - ディレクトリ構造作成**
+Sheet A（全11シート）を閲覧できるモバイルPWAアプリを開発する。
 
-```bash
-cd /Users/yyyhhh/facility-care-input-form/functions/src
-mkdir -p config functions services types
-```
+#### デモ版機能
 
-詳細手順: [docs/ROADMAP.md](./ROADMAP.md) の「Phase 2」セクション
+| 機能 | 説明 |
+|------|------|
+| シート一覧表示 | 全11シートをリスト表示 |
+| データ閲覧 | 各シートの記録データをテーブル表示 |
+| 自動同期 | 15分ごとにバックグラウンドでデータ更新 |
+| 手動同期 | アプリ内ボタンで即座にデータ更新 |
+
+#### 開発ステップ
+
+1. `npm create vite@latest frontend -- --template react-ts`
+2. PWA設定（vite-plugin-pwa）
+3. 画面実装（HOME、SHEET_DETAIL）
+4. 同期機能実装（15分自動 + 手動）
+5. Firebase Hosting デプロイ
+
+詳細: [docs/DEMO_PWA_SPEC.md](./DEMO_PWA_SPEC.md)
+
+---
+
+### 後回し ⏸️ (デモ版対象外)
+
+**Sheet B へのサービスアカウント共有**
+
+実績入力機能はデモ版対象外のため、Sheet B共有は後回し。
+
+| サービスアカウント | 共有先 | 権限 | 状態 |
+|-------------------|--------|------|------|
+| `facility-care-sa@facility-care-input-form.iam.gserviceaccount.com` | Sheet B | 編集者 | ⏸️ 後回し |
 
 ---
 
 ## 開発ロードマップ進捗
 
 ```
-Phase 1: 基盤構築 + CI/CD ████████████████████ 100% (完了)
-Phase 2: バックエンド実装  ░░░░░░░░░░░░░░░░░░░░  0% (未着手)
-Phase 3: デプロイ・検証    ░░░░░░░░░░░░░░░░░░░░  0% (未着手)
-Phase 4: デモ準備         ░░░░░░░░░░░░░░░░░░░░  0% (未着手)
+Phase 1: 基盤構築 + CI/CD   ████████████████████ 100% (完了)
+Phase 2: バックエンド実装    ████████████████████ 100% (完了)
+Phase 3: デプロイ・検証      ████████████████████ 100% (Sheet A読み取り完了)
+Phase 4: デモ版PWA開発      ░░░░░░░░░░░░░░░░░░░░   0% (次のタスク)
 ```
 
 詳細: [docs/ROADMAP.md](./ROADMAP.md)
 
 ---
 
-## 再開時の手順
+## デプロイ済みエンドポイント
 
-### 1. リポジトリクローン（新環境の場合）
+ベースURL: `https://asia-northeast1-facility-care-input-form.cloudfunctions.net`
 
-```bash
-git clone https://github.com/yasushihonda-acg/facility-care-input-form.git
-cd facility-care-input-form
-```
-
-### 2. アカウント設定
-
-```bash
-# GitHub
-gh auth switch --user yasushihonda-acg
-
-# GCP
-gcloud config set account yasushi.honda@aozora-cg.com
-gcloud config set project facility-care-input-form
-
-# Firebase
-firebase use facility-care-input-form
-```
-
-### 3. ドキュメント確認
-
-```bash
-# 現在のステータス確認
-cat docs/CURRENT_STATUS.md
-
-# ロードマップ確認
-cat docs/ROADMAP.md
-```
-
-### 4. 次のタスク実行
-
-このファイルの「次のタスク」セクションに記載されたコマンドを実行
+| メソッド | パス | 説明 | 状態 |
+|----------|------|------|------|
+| GET | `/healthCheck` | ヘルスチェック | ✅ 動作確認済み |
+| POST | `/syncPlanData` | 記録データを同期 | ✅ 動作確認済み (13,603件同期) |
+| POST | `/submitCareRecord` | ケア実績を入力 | ⏳ Sheet B共有待ち |
+| POST | `/submitFamilyRequest` | 家族要望を送信 | ✅ 動作可能 |
+| POST | `/uploadCareImage` | 画像をアップロード | ⏳ Drive権限未確認 |
+| GET | `/getPlanData` | 同期済み記録を取得 | ✅ 動作可能 |
+| GET | `/getFamilyRequests` | 家族要望一覧を取得 | ✅ 動作可能 |
 
 ---
 
-## ドキュメント一覧
+## 実装済みファイル構造
 
-| ファイル | 内容 | いつ読むか |
-|----------|------|------------|
-| `CURRENT_STATUS.md` | 現在の進捗（本ファイル） | 再開時に最初に読む |
-| `ROADMAP.md` | 開発ロードマップ | 全体像を把握したい時 |
-| `SETUP.md` | 環境構築手順 | Phase 1 実行時 |
-| `ARCHITECTURE.md` | システム設計 | 技術的な仕様を確認したい時 |
-| `BUSINESS_RULES.md` | 業務ルール | Bot連携など特殊仕様を確認したい時 |
-| `API_SPEC.md` | API仕様 | エンドポイント実装時 |
+```
+functions/src/
+├── index.ts                    # エントリポイント
+├── config/
+│   └── sheets.ts               # スプレッドシートID、Bot連携定数
+├── types/
+│   └── index.ts                # 型定義（API仕様書ベース）
+├── services/
+│   ├── sheetsService.ts        # Google Sheets API ラッパー
+│   ├── firestoreService.ts     # Firestore CRUD操作
+│   └── driveService.ts         # Google Drive API ラッパー
+└── functions/
+    ├── healthCheck.ts          # ヘルスチェック
+    ├── syncPlanData.ts         # Flow A: 記録同期
+    ├── submitCareRecord.ts     # Flow B: 実績入力（Bot連携ハック実装）
+    ├── submitFamilyRequest.ts  # Flow C: 家族要望
+    ├── uploadCareImage.ts      # 画像アップロード
+    ├── getPlanData.ts          # 記録データ取得
+    └── getFamilyRequests.ts    # 家族要望取得
+```
 
 ---
 
 ## 重要な情報
 
-### GCPプロジェクト
-
-| 項目 | 値 |
-|------|-----|
-| プロジェクトID | `facility-care-input-form` |
-| プロジェクト番号 | `672520607884` |
-| リージョン | `asia-northeast1` (東京) |
-
 ### サービスアカウント
 
-| 項目 | 値 |
-|------|-----|
-| 名前 | `facility-care-sa` |
-| メールアドレス | `facility-care-sa@facility-care-input-form.iam.gserviceaccount.com` |
-| キーファイル | `keys/sa-key.json` (Git管理外) |
+**統一済み**: 全用途で単一のサービスアカウントを使用
 
-### スプレッドシートID
+| 用途 | サービスアカウント |
+|------|-------------------|
+| Cloud Functions / CI/CD / スプレッドシート連携 | `facility-care-sa@facility-care-input-form.iam.gserviceaccount.com` |
 
-| 用途 | Sheet ID | アクセス権 | SA共有状態 |
-|------|----------|------------|------------|
-| Sheet A（記録の結果） | `1Gf8QTbGyKB7rn5QQa5cYOg1NNYWMV8lzqySdbDkfG-w` | Read-Only | 完了 |
-| Sheet B（実績入力先） | `1OrpUVoDfUECXCTrKOGKLwN_4OQ9dlg7cUTCPGLDGHV0` | Write-Only | ペンディング |
+### スプレッドシート共有状態
 
-### GitHubアカウント
-
-- **リポジトリ所有者**: `yasushihonda-acg`
-- **ghコマンド認証**: `gh auth switch --user yasushihonda-acg` で切り替え
+| シート | ID | 必要な権限 | 共有状態 |
+|--------|-----|-----------|----------|
+| Sheet A (記録の結果) | `1Gf8QTbGyKB7rn5QQa5cYOg1NNYWMV8lzqySdbDkfG-w` | 閲覧者 | ✅ 完了 |
+| Sheet B (実績入力先) | `1OrpUVoDfUECXCTrKOGKLwN_4OQ9dlg7cUTCPGLDGHV0` | 編集者 | ⏳ ペンディング |
 
 ### Dev Mode設定
 
-- 認証: なし（`--allow-unauthenticated`）
+- 認証: なし（`allUsers` に `cloudfunctions.invoker` 付与済み）
 - Firestore: 全開放（`allow read, write: if true;`）
 - 本番移行時に必ず認証を実装すること
+
+---
+
+## 再開時の手順
+
+1. `docs/CURRENT_STATUS.md` を読んで現在の進捗を確認
+2. 「次のタスク」セクションのユーザー作業待ちを確認
+3. 作業完了後、テストコマンドで動作確認
 
 ---
 
@@ -158,11 +166,4 @@ cat docs/ROADMAP.md
 ```
 facility-care-input-form プロジェクトの開発を継続してください。
 docs/CURRENT_STATUS.md を読んで、次のタスクから再開してください。
-```
-
-または、特定のPhaseから開始する場合：
-
-```
-facility-care-input-form プロジェクトの Phase 2-1 (バックエンド実装) を実行してください。
-docs/ROADMAP.md の手順に従ってください。
 ```
