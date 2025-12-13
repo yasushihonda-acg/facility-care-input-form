@@ -64,6 +64,8 @@
 | [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) | システム全体設計・データフロー定義 |
 | [docs/BUSINESS_RULES.md](./docs/BUSINESS_RULES.md) | 業務ルール・Bot連携ハック・FAXデータ仕様 |
 | [docs/API_SPEC.md](./docs/API_SPEC.md) | API仕様書（Dev Mode） |
+| [docs/ROADMAP.md](./docs/ROADMAP.md) | 開発ロードマップ（Phase 1〜4） |
+| [docs/SETUP.md](./docs/SETUP.md) | 環境セットアップガイド（CLI版） |
 
 ## 開発モード (Dev Mode)
 

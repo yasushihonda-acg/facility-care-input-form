@@ -231,10 +231,27 @@ service cloud.firestore {
 
 ---
 
-## 9. 次のステップ
+## 9. 関連ドキュメント
+
+| ドキュメント | 内容 |
+|--------------|------|
+| [ROADMAP.md](./ROADMAP.md) | 開発ロードマップ（Phase 1〜4） |
+| [SETUP.md](./SETUP.md) | 環境セットアップガイド（CLI版） |
+| [BUSINESS_RULES.md](./BUSINESS_RULES.md) | 業務ルール・Bot連携ハック |
+| [API_SPEC.md](./API_SPEC.md) | API仕様書（Dev Mode） |
+
+---
+
+## 10. 次のステップ
+
+詳細は [ROADMAP.md](./ROADMAP.md) を参照してください。
 
 1. ✅ ドキュメント作成（本ファイル）
 2. ✅ BUSINESS_RULES.md 作成
 3. ✅ API_SPEC.md 作成
-4. ⬜ 実装開始（src/配下）
-5. ⬜ デプロイ・検証
+4. ✅ ROADMAP.md 作成
+5. ✅ SETUP.md 作成
+6. ⬜ Phase 1: 基盤構築（GCP/Firebase）
+7. ⬜ Phase 2: バックエンド実装
+8. ⬜ Phase 3: デプロイ・検証
+9. ⬜ Phase 4: デモ準備・公開
