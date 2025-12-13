@@ -123,12 +123,17 @@ facility-care-input-form/
 ## CI/CD (GitHub Actions)
 
 ### ワークフロー
-- **lint-and-build.yml**: PR時にLint・ビルドチェック
-- **deploy.yml**: mainブランチへのマージ時に自動デプロイ
+- **ci.yml**: push/PR時にLint・ビルドチェック
+- **deploy.yml**: mainブランチへのマージ時に自動デプロイ (functions/, firestore変更時のみ)
 
-### シークレット設定
-- `GCP_SA_KEY`: サービスアカウントキー（Base64エンコード）
-- `FIREBASE_TOKEN`: Firebaseデプロイ用トークン
+### シークレット設定 (設定済み)
+- `GCP_SA_KEY`: サービスアカウントキー (JSON)
+
+### サービスアカウント権限 (CI/CD用に追加済み)
+- `roles/firebase.admin`
+- `roles/cloudfunctions.developer`
+- `roles/run.admin`
+- `roles/iam.serviceAccountUser`
 
 ---
 
