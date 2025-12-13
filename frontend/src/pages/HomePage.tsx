@@ -1,18 +1,33 @@
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
 import { Header } from '../components/Header';
-import { SheetCard } from '../components/SheetCard';
+import { RecordCard } from '../components/RecordCard';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { ErrorMessage } from '../components/ErrorMessage';
-import { useSheetList } from '../hooks/usePlanData';
+import { useSheetList, useSheetRecords } from '../hooks/usePlanData';
 import { useSync } from '../hooks/useSync';
 
 export function HomePage() {
-  const navigate = useNavigate();
-  const { sheets, isLoading, error } = useSheetList();
+  const { sheets, isLoading: sheetsLoading, error: sheetsError } = useSheetList();
   const { lastSyncedAt } = useSync();
+  const [selectedSheet, setSelectedSheet] = useState<string>('');
+  const tabsRef = useRef<HTMLDivElement>(null);
 
-  const handleSheetClick = (sheetName: string) => {
-    navigate(`/sheet/${encodeURIComponent(sheetName)}`);
+  // 最初のシートを選択
+  useEffect(() => {
+    if (sheets.length > 0 && !selectedSheet) {
+      setSelectedSheet(sheets[0].sheetName);
+    }
+  }, [sheets, selectedSheet]);
+
+  // 選択中のシートのレコードを取得
+  const {
+    records,
+    isLoading: recordsLoading,
+    error: recordsError
+  } = useSheetRecords(selectedSheet);
+
+  const handleTabClick = (sheetName: string) => {
+    setSelectedSheet(sheetName);
   };
 
   const getNextSyncMinutes = () => {
@@ -22,42 +37,112 @@ export function HomePage() {
     return Math.ceil(remaining / 60000);
   };
 
+  const selectedSheetInfo = sheets.find(s => s.sheetName === selectedSheet);
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header title="介護記録ビューア" />
 
-      <main className="p-4">
-        {isLoading && <LoadingSpinner message="データを読み込み中..." />}
-
-        {error && (
+      {/* エラー表示 */}
+      {sheetsError && (
+        <div className="p-4">
           <ErrorMessage
-            message={error}
+            message={sheetsError}
             onRetry={() => window.location.reload()}
           />
-        )}
+        </div>
+      )}
 
-        {!isLoading && !error && (
-          <>
-            {sheets.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
+      {/* シート読み込み中 */}
+      {sheetsLoading && (
+        <div className="flex-1 flex items-center justify-center">
+          <LoadingSpinner message="シート一覧を読み込み中..." />
+        </div>
+      )}
+
+      {/* メインコンテンツ */}
+      {!sheetsLoading && !sheetsError && (
+        <>
+          {sheets.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center text-gray-500">
                 <p>データがありません</p>
                 <p className="text-sm mt-2">同期ボタンを押してデータを取得してください</p>
               </div>
-            ) : (
-              <div className="space-y-3">
-                {sheets.map((sheet) => (
-                  <SheetCard
-                    key={sheet.sheetName}
-                    sheet={sheet}
-                    onClick={() => handleSheetClick(sheet.sheetName)}
-                  />
-                ))}
+            </div>
+          ) : (
+            <>
+              {/* タブバー */}
+              <div
+                ref={tabsRef}
+                className="bg-white border-b border-gray-200 overflow-x-auto sticky top-0 z-10"
+              >
+                <div className="flex min-w-max">
+                  {sheets.map((sheet) => (
+                    <button
+                      key={sheet.sheetName}
+                      onClick={() => handleTabClick(sheet.sheetName)}
+                      className={`
+                        px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors
+                        ${selectedSheet === sheet.sheetName
+                          ? 'border-blue-500 text-blue-600 bg-blue-50'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                        }
+                      `}
+                    >
+                      {sheet.sheetName}
+                      <span className="ml-1 text-xs text-gray-400">
+                        ({sheet.recordCount})
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
-            )}
-          </>
-        )}
-      </main>
 
+              {/* シート情報バー */}
+              {selectedSheetInfo && (
+                <div className="px-4 py-2 bg-gray-100 border-b border-gray-200">
+                  <span className="text-sm text-gray-600">
+                    {selectedSheetInfo.recordCount.toLocaleString()}件のレコード
+                  </span>
+                </div>
+              )}
+
+              {/* レコード一覧 */}
+              <main className="flex-1 p-4 pb-20 overflow-auto">
+                {recordsLoading && (
+                  <LoadingSpinner message="レコードを読み込み中..." />
+                )}
+
+                {recordsError && (
+                  <ErrorMessage
+                    message={recordsError}
+                    onRetry={() => window.location.reload()}
+                  />
+                )}
+
+                {!recordsLoading && !recordsError && (
+                  <>
+                    {records.length === 0 ? (
+                      <div className="text-center py-12 text-gray-500">
+                        <p>このシートにはデータがありません</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {records.map((record) => (
+                          <RecordCard key={record.id} record={record} />
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </main>
+            </>
+          )}
+        </>
+      )}
+
+      {/* フッター */}
       <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 text-center text-xs text-gray-400">
         次回自動同期: {getNextSyncMinutes()}分後
       </footer>

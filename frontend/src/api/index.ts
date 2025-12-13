@@ -1,8 +1,8 @@
-import type { SyncResponse, GetPlanDataResponse } from '../types';
+import type { ApiResponse, SyncPlanDataResponse, GetPlanDataResponse } from '../types';
 
 const API_BASE = 'https://asia-northeast1-facility-care-input-form.cloudfunctions.net';
 
-export async function syncPlanData(): Promise<SyncResponse> {
+export async function syncPlanData(): Promise<ApiResponse<SyncPlanDataResponse>> {
   const response = await fetch(`${API_BASE}/syncPlanData`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -16,7 +16,7 @@ export async function syncPlanData(): Promise<SyncResponse> {
   return response.json();
 }
 
-export async function getPlanData(sheetName?: string): Promise<GetPlanDataResponse> {
+export async function getPlanData(sheetName?: string): Promise<ApiResponse<GetPlanDataResponse>> {
   const url = new URL(`${API_BASE}/getPlanData`);
   if (sheetName) {
     url.searchParams.set('sheetName', sheetName);

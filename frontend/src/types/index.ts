@@ -1,36 +1,51 @@
-// Sheet record types
-export interface SheetRecord {
-  id: string;
-  sheetName: string;
-  data: Record<string, unknown>;
-  syncedAt: string;
+// API response wrapper
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: {
+    code: string;
+    message: string;
+  };
+  timestamp: string;
 }
 
+// Sheet summary (from backend)
 export interface SheetSummary {
   sheetName: string;
   recordCount: number;
-  lastSyncedAt: string | null;
+  headers: string[];
 }
 
-// API response types
-export interface SyncResponse {
-  success: boolean;
-  data: {
-    syncedSheets: string[];
-    totalRecords: number;
-    syncDuration: number;
-  };
+// Plan data record (from backend)
+export interface PlanDataRecord {
+  id: string;
+  sheetName: string;
+  /** A列: タイムスタンプ */
   timestamp: string;
+  /** B列: 入力者名（スタッフ） */
+  staffName: string;
+  /** C列: 利用者名（一部シートはD列） */
+  residentName: string;
+  /** D列以降: 列名→値のマップ */
+  data: Record<string, string>;
+  /** 元データ配列（デバッグ・互換性用） */
+  rawRow: string[];
+  syncedAt: string;
 }
 
+// getPlanData response
 export interface GetPlanDataResponse {
-  success: boolean;
-  data: {
-    sheets: SheetSummary[];
-    records: SheetRecord[];
-    totalRecords: number;
-  };
-  timestamp: string;
+  sheets: SheetSummary[];
+  records: PlanDataRecord[];
+  totalCount: number;
+  lastSyncedAt: string;
+}
+
+// syncPlanData response
+export interface SyncPlanDataResponse {
+  syncedSheets: string[];
+  totalRecords: number;
+  syncDuration: number;
 }
 
 // Sync state

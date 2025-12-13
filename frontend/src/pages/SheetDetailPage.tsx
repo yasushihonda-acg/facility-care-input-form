@@ -9,7 +9,7 @@ export function SheetDetailPage() {
   const { sheetName } = useParams<{ sheetName: string }>();
   const navigate = useNavigate();
   const decodedSheetName = sheetName ? decodeURIComponent(sheetName) : '';
-  const { records, totalRecords, isLoading, error } = useSheetRecords(decodedSheetName);
+  const { records, totalCount, isLoading, error } = useSheetRecords(decodedSheetName);
 
   const handleBack = () => {
     navigate('/');
@@ -21,7 +21,7 @@ export function SheetDetailPage() {
 
       <div className="px-4 py-2 bg-white border-b border-gray-200">
         <span className="text-sm text-gray-600">
-          {totalRecords.toLocaleString()}件
+          {totalCount.toLocaleString()}件
         </span>
       </div>
 

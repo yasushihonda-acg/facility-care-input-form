@@ -10,7 +10,6 @@ import {
   PlanData,
   FamilyRequest,
   SubmitFamilyRequestRequest,
-  GetPlanDataRequest,
   GetFamilyRequestsRequest,
 } from "../types";
 
@@ -65,32 +64,57 @@ export async function syncPlanData(
 }
 
 /**
+ * 記録データ取得オプション
+ */
+interface GetPlanDataOptions {
+  sheetName?: string;
+  limit?: number;
+}
+
+/**
+ * 記録データ取得結果（IDを含む）
+ */
+interface PlanDataWithId extends PlanData {
+  id: string;
+}
+
+/**
  * 記録データを取得
  *
- * @param request 取得条件
+ * @param options 取得条件
  */
 export async function getPlanData(
-  request: GetPlanDataRequest
-): Promise<{ records: PlanData[]; totalCount: number; lastSyncedAt: string }> {
+  options: GetPlanDataOptions = {}
+): Promise<{
+  records: PlanDataWithId[];
+  totalCount: number;
+  lastSyncedAt: string;
+}> {
   const db = getFirestore();
   let query: admin.firestore.Query = db.collection(COLLECTIONS.PLAN_DATA);
 
-  if (request.residentId) {
-    query = query.where("residentId", "==", request.residentId);
+  // シート名でフィルタ
+  if (options.sheetName) {
+    query = query.where("sheetName", "==", options.sheetName);
   }
 
-  query = query.orderBy("syncedAt", "desc");
+  // タイムスタンプ降順でソート
+  query = query.orderBy("timestamp", "desc");
 
-  const limit = request.limit || 100;
+  // 取得件数制限
+  const limit = options.limit || 1000;
   query = query.limit(limit);
 
   const snapshot = await query.get();
-  const records: PlanData[] = [];
+  const records: PlanDataWithId[] = [];
   let lastSyncedAt = "";
 
   snapshot.docs.forEach((doc) => {
     const data = doc.data() as PlanData;
-    records.push(data);
+    records.push({
+      ...data,
+      id: doc.id,
+    });
 
     // 最新の同期日時を記録
     if (data.syncedAt) {

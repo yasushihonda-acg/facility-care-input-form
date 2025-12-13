@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月13日 (Phase 4 デモ版PWAデプロイ完了)
+> **最終更新**: 2025年12月13日 (Phase 4.1 タブUI・汎用データモデル実装完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -30,19 +30,34 @@
 | GitHubリポジトリ作成 | 完了 | `yasushihonda-acg/facility-care-input-form` |
 | Phase 1: 基盤構築 | 完了 | GCP/Firebase環境構築済み |
 | Phase 2: バックエンド実装 | 完了 | 全7エンドポイント実装済み |
-| Phase 3: デプロイ・検証 | 完了 | Sheet A読み取り (11シート・13,603件) |
+| Phase 3: デプロイ・検証 | 完了 | Sheet A読み取り検証済み |
 | Phase 4: デモ版PWA開発 | 完了 | Firebase Hostingデプロイ完了 |
+| Phase 4.1: タブUI・汎用データモデル | 完了 | シート別タブ表示対応 |
 
-### 次のタスク: デモ実施・フィードバック収集
+### 最新の実装内容 (Phase 4.1)
 
-**デモ版PWAの動作確認・フィードバック収集**
+**汎用データモデル対応**:
+- スプレッドシートの列構造を解析し、ドキュメント化 (`docs/SHEET_A_STRUCTURE.md`)
+- 固定スキーマから汎用型 (列名をキーとしたマップ) に変更
+- 各シートのヘッダー行を読み取り、列名→値のマッピングで保存
 
-PWAが公開されました。以下の内容でデモ・検証を行います：
+**タブUI実装**:
+- ホーム画面に横スクロール可能なタブバーを追加
+- タブをタップするとそのシートのレコード一覧を表示
+- 各シートのレコード件数をバッジ表示
 
-1. **モバイル実機テスト**: スマートフォンで https://facility-care-input-form.web.app にアクセス
-2. **PWAインストール確認**: ホーム画面に追加できるか確認
-3. **同期機能テスト**: 手動同期ボタンが正常に動作するか確認
-4. **シートデータ閲覧**: 全11シートのデータが表示されるか確認
+**同期UX改善**:
+- 同期成功時のトースト通知 (〇シート △件を同期しました)
+- 同期エラー時のエラートースト表示
+- 同期中のアニメーション表示
+
+### 次のタスク
+
+**データ表示の改善・追加機能**
+
+1. **検索・フィルタ機能**: 利用者名やスタッフ名でレコードをフィルタ
+2. **詳細表示**: レコードカードをタップすると詳細モーダルを表示
+3. **オフラインキャッシュ強化**: ServiceWorkerでAPI応答をキャッシュ
 
 ---
 
@@ -65,6 +80,7 @@ Phase 1: 基盤構築 + CI/CD   ████████████████
 Phase 2: バックエンド実装    ████████████████████ 100% (完了)
 Phase 3: デプロイ・検証      ████████████████████ 100% (完了)
 Phase 4: デモ版PWA開発      ████████████████████ 100% (完了)
+Phase 4.1: タブUI・汎用モデル ████████████████████ 100% (完了)
 ```
 
 詳細: [docs/ROADMAP.md](./ROADMAP.md)
@@ -78,8 +94,9 @@ Phase 4: デモ版PWA開発      ███████████████�
 | 項目 | 値 |
 |------|-----|
 | URL | https://facility-care-input-form.web.app |
-| 技術スタック | React + Vite + TailwindCSS + TanStack Query |
+| 技術スタック | React + Vite + TailwindCSS v4 + TanStack Query |
 | PWA対応 | Service Worker、オフラインキャッシュ対応 |
+| UI | タブ形式シート切り替え、トースト通知 |
 
 ### Cloud Functions
 
@@ -88,12 +105,27 @@ Phase 4: デモ版PWA開発      ███████████████�
 | メソッド | パス | 説明 | 状態 |
 |----------|------|------|------|
 | GET | `/healthCheck` | ヘルスチェック | 動作確認済み |
-| POST | `/syncPlanData` | 記録データを同期 | 動作確認済み (13,603件同期) |
+| POST | `/syncPlanData` | 記録データを同期 (汎用モデル) | 動作確認済み |
 | POST | `/submitCareRecord` | ケア実績を入力 | Sheet B共有待ち |
 | POST | `/submitFamilyRequest` | 家族要望を送信 | 動作可能 |
 | POST | `/uploadCareImage` | 画像をアップロード | Drive権限未確認 |
-| GET | `/getPlanData` | 同期済み記録を取得 | 動作可能 |
+| GET | `/getPlanData` | 同期済み記録を取得 (シート別フィルタ対応) | 動作可能 |
 | GET | `/getFamilyRequests` | 家族要望一覧を取得 | 動作可能 |
+
+### 同期済みデータ
+
+最終同期: 2025-12-13
+
+| シート名 | レコード数 |
+|----------|------------|
+| バイタル | - |
+| 血糖値インスリン投与 | - |
+| 往診録 | - |
+| 体重 | - |
+| カンファレンス録 | - |
+| **合計** | **2,488件** |
+
+※ 一部のシート (11シート中5シート) のみ同期されました。残りのシートは空シートの可能性があります。
 
 ---
 
@@ -103,38 +135,45 @@ Phase 4: デモ版PWA開発      ███████████████�
 facility-care-input-form/
 ├── frontend/                     # デモ版PWA (React + Vite)
 │   ├── src/
-│   │   ├── api/                  # API呼び出し
-│   │   ├── components/           # UIコンポーネント
-│   │   ├── hooks/                # カスタムフック（同期・データ取得）
-│   │   ├── pages/                # ページコンポーネント
-│   │   ├── types/                # 型定義
-│   │   ├── App.tsx               # ルーティング
-│   │   ├── main.tsx              # エントリポイント
-│   │   └── index.css             # TailwindCSS
+│   │   ├── api/index.ts          # API呼び出し (汎用型対応)
+│   │   ├── components/
+│   │   │   ├── Header.tsx        # ヘッダー (同期ボタン + トースト)
+│   │   │   ├── RecordCard.tsx    # レコードカード (汎用データ表示)
+│   │   │   ├── SheetCard.tsx     # シートカード
+│   │   │   ├── LoadingSpinner.tsx
+│   │   │   └── ErrorMessage.tsx
+│   │   ├── hooks/
+│   │   │   ├── useSync.ts        # 同期処理 (15分自動同期)
+│   │   │   └── usePlanData.ts    # データ取得
+│   │   ├── pages/
+│   │   │   ├── HomePage.tsx      # タブUI実装
+│   │   │   └── SheetDetailPage.tsx
+│   │   ├── types/index.ts        # 型定義 (PlanDataRecord等)
+│   │   ├── App.tsx
+│   │   ├── main.tsx
+│   │   └── index.css             # TailwindCSS v4
 │   ├── public/                   # PWAアイコン等
 │   ├── vite.config.ts            # Vite + PWA設定
 │   └── package.json
 ├── functions/src/                # Cloud Functions
 │   ├── index.ts                  # エントリポイント
-│   ├── config/
-│   │   └── sheets.ts             # スプレッドシートID、Bot連携定数
-│   ├── types/
-│   │   └── index.ts              # 型定義
+│   ├── config/sheets.ts
+│   ├── types/index.ts            # 汎用型定義 (PlanData, PlanDataRecord)
 │   ├── services/
-│   │   ├── sheetsService.ts      # Google Sheets API ラッパー
-│   │   ├── firestoreService.ts   # Firestore CRUD操作
-│   │   └── driveService.ts       # Google Drive API ラッパー
+│   │   ├── sheetsService.ts      # Google Sheets API
+│   │   ├── firestoreService.ts   # Firestore (汎用モデル対応)
+│   │   └── driveService.ts
 │   └── functions/
-│       ├── healthCheck.ts        # ヘルスチェック
-│       ├── syncPlanData.ts       # Flow A: 記録同期
-│       ├── submitCareRecord.ts   # Flow B: 実績入力
-│       ├── submitFamilyRequest.ts# Flow C: 家族要望
-│       ├── uploadCareImage.ts    # 画像アップロード
-│       ├── getPlanData.ts        # 記録データ取得
-│       └── getFamilyRequests.ts  # 家族要望取得
-├── docs/                         # ドキュメント
-├── firebase.json                 # Firebase設定（Hosting追加済み）
-└── firestore.rules               # Firestoreルール
+│       ├── syncPlanData.ts       # 汎用パーシング実装
+│       ├── getPlanData.ts        # シート別フィルタ対応
+│       └── ...
+├── docs/
+│   ├── CURRENT_STATUS.md         # このファイル
+│   ├── SHEET_A_STRUCTURE.md      # スプレッドシート構造ドキュメント
+│   ├── SYNC_STRATEGY.md          # 同期戦略設計書
+│   └── ...
+├── firebase.json
+└── firestore.rules
 ```
 
 ---

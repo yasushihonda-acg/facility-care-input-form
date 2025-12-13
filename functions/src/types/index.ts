@@ -96,16 +96,37 @@ export interface UploadCareImageResponse {
   thumbnailUrl: string;
 }
 
+/**
+ * シート別の集計情報
+ */
+export interface SheetSummary {
+  sheetName: string;
+  recordCount: number;
+  headers: string[];
+}
+
+/**
+ * 汎用レコード型（シート構造に依存しない）
+ * 列名をキーとしたデータを保持
+ */
 export interface PlanDataRecord {
-  residentId: string;
+  id: string;
+  sheetName: string;
+  /** A列: タイムスタンプ */
+  timestamp: string;
+  /** B列: 入力者名（スタッフ） */
+  staffName: string;
+  /** C列: 利用者名（一部シートはD列） */
   residentName: string;
-  mealRestrictions: string[];
-  instructions: string;
-  conditionalBan: string;
+  /** D列以降: 列名→値のマップ */
+  data: Record<string, string>;
+  /** 元データ配列（デバッグ・互換性用） */
+  rawRow: string[];
   syncedAt: string;
 }
 
 export interface GetPlanDataResponse {
+  sheets: SheetSummary[];
   records: PlanDataRecord[];
   totalCount: number;
   lastSyncedAt: string;
@@ -134,20 +155,26 @@ export interface GetFamilyRequestsResponse {
 
 /**
  * Flow A: 記録参照フロー用データ
- * Sheet A から同期されたデータ
+ * Sheet A から同期されたデータ（汎用型）
+ *
+ * シート構造に依存せず、列名をキーとしてデータを保持
  */
 export interface PlanData {
-  residentId: string;
-  residentName: string;
   sheetName: string;
-  mealRestrictions: string[];
-  /** 詳細指示（非定型テキスト - FAXデータ仕様により正規化禁止） */
-  instructions: string;
-  /** 条件付き禁止（非定型テキスト - FAXデータ仕様により正規化禁止） */
-  conditionalBan: string;
+  /** A列: タイムスタンプ */
+  timestamp: string;
+  /** B列: 入力者名（スタッフ） */
+  staffName: string;
+  /** C列: 利用者名（一部シートはD列） */
+  residentName: string;
+  /** D列以降: 列名→値のマップ（列ヘッダーがキー） */
+  data: Record<string, string>;
+  /** 元データ配列 */
+  rawRow: string[];
+  /** ヘッダー行（列名一覧） */
+  headers: string[];
+  /** Firestore同期日時 */
   syncedAt: Timestamp;
-  /** 元データ全体（スプレッドシートの列データ） */
-  rawData: Record<string, string>;
 }
 
 /**

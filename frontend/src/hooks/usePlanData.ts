@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { getPlanData } from '../api';
+import type { SheetSummary, PlanDataRecord } from '../types';
 
 export function usePlanData(sheetName?: string) {
   return useQuery({
@@ -10,7 +11,11 @@ export function usePlanData(sheetName?: string) {
   });
 }
 
-export function useSheetList() {
+export function useSheetList(): {
+  sheets: SheetSummary[];
+  isLoading: boolean;
+  error: string | null;
+} {
   const { data, isLoading, error } = usePlanData();
 
   return {
@@ -20,12 +25,17 @@ export function useSheetList() {
   };
 }
 
-export function useSheetRecords(sheetName: string) {
+export function useSheetRecords(sheetName: string): {
+  records: PlanDataRecord[];
+  totalCount: number;
+  isLoading: boolean;
+  error: string | null;
+} {
   const { data, isLoading, error } = usePlanData(sheetName);
 
   return {
     records: data?.data?.records ?? [],
-    totalRecords: data?.data?.totalRecords ?? 0,
+    totalCount: data?.data?.totalCount ?? 0,
     isLoading,
     error: error?.message ?? null,
   };

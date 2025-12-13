@@ -9,9 +9,9 @@ import {getPlanData} from "../services/firestoreService";
 import {FUNCTIONS_CONFIG} from "../config/sheets";
 import {
   ApiResponse,
-  GetPlanDataRequest,
   GetPlanDataResponse,
   PlanDataRecord,
+  SheetSummary,
   ErrorCodes,
 } from "../types";
 
@@ -49,15 +49,13 @@ async function getPlanDataHandler(
     }
 
     // クエリパラメータの取得
-    const request: GetPlanDataRequest = {
-      residentId: req.query.residentId as string | undefined,
-      limit: req.query.limit ?
-        parseInt(req.query.limit as string, 10) :
-        undefined,
-    };
+    const sheetName = req.query.sheetName as string | undefined;
+    const limit = req.query.limit ?
+      parseInt(req.query.limit as string, 10) :
+      undefined;
 
     // limitのバリデーション
-    if (request.limit !== undefined && (isNaN(request.limit) || request.limit < 1)) {
+    if (limit !== undefined && (isNaN(limit) || limit < 1)) {
       const response: ApiResponse<null> = {
         success: false,
         error: {
@@ -70,22 +68,47 @@ async function getPlanDataHandler(
       return;
     }
 
-    functions.logger.info("getPlanData started", request);
+    functions.logger.info("getPlanData started", {sheetName, limit});
 
     // Firestoreからデータを取得
-    const result = await getPlanData(request);
+    const result = await getPlanData({sheetName, limit});
 
     // レスポンス用にデータを変換
     const records: PlanDataRecord[] = result.records.map((record) => ({
-      residentId: record.residentId,
+      id: record.id || "",
+      sheetName: record.sheetName,
+      timestamp: record.timestamp,
+      staffName: record.staffName,
       residentName: record.residentName,
-      mealRestrictions: record.mealRestrictions,
-      instructions: record.instructions,
-      conditionalBan: record.conditionalBan,
+      data: record.data,
+      rawRow: record.rawRow,
       syncedAt: record.syncedAt.toDate().toISOString(),
     }));
 
+    // シート別の集計を作成
+    const sheetMap = new Map<string, {count: number; headers: string[]}>();
+    for (const record of result.records) {
+      const existing = sheetMap.get(record.sheetName);
+      if (existing) {
+        existing.count++;
+      } else {
+        sheetMap.set(record.sheetName, {
+          count: 1,
+          headers: record.headers || [],
+        });
+      }
+    }
+
+    const sheets: SheetSummary[] = Array.from(sheetMap.entries()).map(
+      ([name, info]) => ({
+        sheetName: name,
+        recordCount: info.count,
+        headers: info.headers,
+      })
+    );
+
     const responseData: GetPlanDataResponse = {
+      sheets,
       records,
       totalCount: result.totalCount,
       lastSyncedAt: result.lastSyncedAt,
@@ -99,6 +122,7 @@ async function getPlanDataHandler(
 
     functions.logger.info("getPlanData completed", {
       totalCount: result.totalCount,
+      sheetCount: sheets.length,
     });
 
     res.status(200).json(response);
@@ -109,7 +133,7 @@ async function getPlanDataHandler(
       success: false,
       error: {
         code: ErrorCodes.FIRESTORE_ERROR,
-        message: error instanceof Error ? error.message : "Unknown error occurred",
+        message: error instanceof Error ? error.message : "Unknown error",
       },
       timestamp: new Date().toISOString(),
     };

@@ -20,6 +20,7 @@ module.exports = {
   ignorePatterns: [
     "/lib/**/*",
     "/generated/**/*",
+    "/scripts/**/*",
     ".eslintrc.js",
   ],
   plugins: [
