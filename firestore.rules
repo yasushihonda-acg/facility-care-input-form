@@ -1,0 +1,10 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Dev Mode: 全開放（本番移行時に認証を実装すること）
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

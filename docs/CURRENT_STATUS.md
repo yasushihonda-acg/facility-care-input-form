@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2024年12月13日
+> **最終更新**: 2025年12月13日
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -26,34 +26,29 @@
 | ロードマップ作成 | ✅ 完了 | `docs/ROADMAP.md` |
 | セットアップ手順書 | ✅ 完了 | `docs/SETUP.md` |
 | GitHubリポジトリ作成 | ✅ 完了 | `yasushihonda-acg/facility-care-input-form` |
+| Phase 1-1: GCPプロジェクト作成 | ✅ 完了 | `facility-care-input-form` |
+| Phase 1-2: Firebase初期化 | ✅ 完了 | `firebase.json`, `.firebaserc`, `functions/` |
+| Phase 1-3: API有効化 | ✅ 完了 | Firestore, Sheets, Drive, Cloud Functions, Cloud Run |
+| Phase 1-4: サービスアカウント設定 | ✅ 完了 | `facility-care-sa@facility-care-input-form.iam.gserviceaccount.com` |
+| Phase 1-5: ローカル開発環境構築 | ✅ 完了 | Emulator動作確認済み |
 
 ### 次のタスク ⬜
 
-**Phase 1-1: GCPプロジェクト作成**
+**Phase 2-1: バックエンド実装 - ディレクトリ構造作成**
 
 ```bash
-# 1. プロジェクトID設定（ユニークな名前に変更可）
-PROJECT_ID="facility-care-demo-$(date +%Y%m%d)"
-
-# 2. プロジェクト作成
-gcloud projects create $PROJECT_ID --name="Facility Care Demo"
-
-# 3. プロジェクト選択
-gcloud config set project $PROJECT_ID
-
-# 4. 請求先アカウントのリンク
-gcloud billing accounts list
-gcloud billing projects link $PROJECT_ID --billing-account=YOUR_BILLING_ACCOUNT_ID
+cd /Users/yyyhhh/facility-care-input-form/functions/src
+mkdir -p config functions services types
 ```
 
-詳細手順: [docs/SETUP.md](./SETUP.md) の「Phase 1-1」セクション
+詳細手順: [docs/ROADMAP.md](./ROADMAP.md) の「Phase 2」セクション
 
 ---
 
 ## 開発ロードマップ進捗
 
 ```
-Phase 1: 基盤構築        ░░░░░░░░░░░░░░░░░░░░  0% (未着手)
+Phase 1: 基盤構築        ████████████████████ 100% (完了)
 Phase 2: バックエンド実装  ░░░░░░░░░░░░░░░░░░░░  0% (未着手)
 Phase 3: デプロイ・検証    ░░░░░░░░░░░░░░░░░░░░  0% (未着手)
 Phase 4: デモ準備         ░░░░░░░░░░░░░░░░░░░░  0% (未着手)
@@ -72,7 +67,21 @@ git clone https://github.com/yasushihonda-acg/facility-care-input-form.git
 cd facility-care-input-form
 ```
 
-### 2. ドキュメント確認
+### 2. アカウント設定
+
+```bash
+# GitHub
+gh auth switch --user yasushihonda-acg
+
+# GCP
+gcloud config set account yasushi.honda@aozora-cg.com
+gcloud config set project facility-care-input-form
+
+# Firebase
+firebase use facility-care-input-form
+```
+
+### 3. ドキュメント確認
 
 ```bash
 # 現在のステータス確認
@@ -80,12 +89,9 @@ cat docs/CURRENT_STATUS.md
 
 # ロードマップ確認
 cat docs/ROADMAP.md
-
-# セットアップ手順確認
-cat docs/SETUP.md
 ```
 
-### 3. 次のタスク実行
+### 4. 次のタスク実行
 
 このファイルの「次のタスク」セクションに記載されたコマンドを実行
 
@@ -106,12 +112,28 @@ cat docs/SETUP.md
 
 ## 重要な情報
 
+### GCPプロジェクト
+
+| 項目 | 値 |
+|------|-----|
+| プロジェクトID | `facility-care-input-form` |
+| プロジェクト番号 | `672520607884` |
+| リージョン | `asia-northeast1` (東京) |
+
+### サービスアカウント
+
+| 項目 | 値 |
+|------|-----|
+| 名前 | `facility-care-sa` |
+| メールアドレス | `facility-care-sa@facility-care-input-form.iam.gserviceaccount.com` |
+| キーファイル | `keys/sa-key.json` (Git管理外) |
+
 ### スプレッドシートID
 
-| 用途 | Sheet ID | アクセス権 |
-|------|----------|------------|
-| Sheet A（記録の結果） | `1Gf8QTbGyKB7rn5QQa5cYOg1NNYWMV8lzqySdbDkfG-w` | Read-Only |
-| Sheet B（実績入力先） | `1OrpUVoDfUECXCTrKOGKLwN_4OQ9dlg7cUTCPGLDGHV0` | Write-Only |
+| 用途 | Sheet ID | アクセス権 | SA共有状態 |
+|------|----------|------------|------------|
+| Sheet A（記録の結果） | `1Gf8QTbGyKB7rn5QQa5cYOg1NNYWMV8lzqySdbDkfG-w` | Read-Only | 完了 |
+| Sheet B（実績入力先） | `1OrpUVoDfUECXCTrKOGKLwN_4OQ9dlg7cUTCPGLDGHV0` | Write-Only | ペンディング |
 
 ### GitHubアカウント
 
@@ -138,6 +160,6 @@ docs/CURRENT_STATUS.md を読んで、次のタスクから再開してくださ
 または、特定のPhaseから開始する場合：
 
 ```
-facility-care-input-form プロジェクトの Phase 1-1 (GCPプロジェクト作成) を実行してください。
-docs/SETUP.md の手順に従ってください。
+facility-care-input-form プロジェクトの Phase 2-1 (バックエンド実装) を実行してください。
+docs/ROADMAP.md の手順に従ってください。
 ```
