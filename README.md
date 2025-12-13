@@ -57,15 +57,24 @@
 - **Role**: Firestoreで完結
 - **概要**: ご家族からの詳細なケア要望を管理
 
+## クイックスタート（開発再開）
+
+> **開発を再開する場合は、まず現在のステータスを確認してください。**
+
+```bash
+cat docs/CURRENT_STATUS.md
+```
+
 ## ドキュメント
 
 | ファイル | 内容 |
 |----------|------|
+| [docs/CURRENT_STATUS.md](./docs/CURRENT_STATUS.md) | **現在の進捗状況（再開時に最初に読む）** |
+| [docs/ROADMAP.md](./docs/ROADMAP.md) | 開発ロードマップ（Phase 1〜4） |
+| [docs/SETUP.md](./docs/SETUP.md) | 環境セットアップガイド（CLI版） |
 | [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) | システム全体設計・データフロー定義 |
 | [docs/BUSINESS_RULES.md](./docs/BUSINESS_RULES.md) | 業務ルール・Bot連携ハック・FAXデータ仕様 |
 | [docs/API_SPEC.md](./docs/API_SPEC.md) | API仕様書（Dev Mode） |
-| [docs/ROADMAP.md](./docs/ROADMAP.md) | 開発ロードマップ（Phase 1〜4） |
-| [docs/SETUP.md](./docs/SETUP.md) | 環境セットアップガイド（CLI版） |
 
 ## 開発モード (Dev Mode)
 
