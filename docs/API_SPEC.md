@@ -1,0 +1,523 @@
+# API仕様書 (Dev Mode)
+
+## 1. 概要
+
+本ドキュメントは、蒲池様プロジェクトのCloud Run functions APIエンドポイント仕様を定義します。
+
+### 開発モード (Dev Mode) について
+
+| 項目 | 設定 |
+|------|------|
+| 認証 | なし (`--allow-unauthenticated`) |
+| ユーザー識別 | リクエストボディで `userId` / `staffId` を送信 |
+| CORS | 全オリジン許可 |
+
+> **注意**: 本仕様はプロトタイプ検証用です。本番環境では Firebase Authentication を実装してください。
+
+---
+
+## 2. 共通仕様
+
+### 2.1 ベースURL
+
+```
+https://{region}-{project-id}.cloudfunctions.net
+```
+
+例: `https://asia-northeast1-kamachi-care-app.cloudfunctions.net`
+
+### 2.2 共通ヘッダー
+
+| ヘッダー | 値 | 必須 |
+|----------|-----|------|
+| `Content-Type` | `application/json` | Yes |
+
+### 2.3 共通レスポンス形式
+
+#### 成功時
+```json
+{
+  "success": true,
+  "data": { ... },
+  "timestamp": "2024-01-15T12:00:00.000Z"
+}
+```
+
+#### エラー時
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Human readable error message"
+  },
+  "timestamp": "2024-01-15T12:00:00.000Z"
+}
+```
+
+### 2.4 共通エラーコード
+
+| コード | HTTPステータス | 説明 |
+|--------|----------------|------|
+| `INVALID_REQUEST` | 400 | リクエスト形式が不正 |
+| `MISSING_REQUIRED_FIELD` | 400 | 必須フィールドが欠落 |
+| `RESOURCE_NOT_FOUND` | 404 | リソースが見つからない |
+| `SHEETS_API_ERROR` | 500 | Google Sheets API エラー |
+| `FIRESTORE_ERROR` | 500 | Firestore エラー |
+| `INTERNAL_ERROR` | 500 | その他の内部エラー |
+
+---
+
+## 3. エンドポイント一覧
+
+| メソッド | パス | 説明 | データフロー |
+|----------|------|------|--------------|
+| POST | `/syncPlanData` | 記録データを同期 | Flow A |
+| POST | `/submitCareRecord` | ケア実績を入力 | Flow B |
+| POST | `/submitFamilyRequest` | 家族要望を送信 | Flow C |
+| POST | `/uploadCareImage` | 画像をアップロード | 画像連携 |
+| GET | `/getPlanData` | 同期済み記録を取得 | - |
+| GET | `/getFamilyRequests` | 家族要望一覧を取得 | - |
+
+---
+
+## 4. API詳細
+
+### 4.1 POST /syncPlanData
+
+記録スプレッドシート（Sheet A）からデータを取得し、Firestoreへ同期（洗い替え）します。
+
+#### リクエスト
+
+```http
+POST /syncPlanData
+Content-Type: application/json
+```
+
+```json
+{
+  "triggeredBy": "manual"
+}
+```
+
+| フィールド | 型 | 必須 | 説明 |
+|------------|-----|------|------|
+| `triggeredBy` | string | No | トリガー元（`manual` / `scheduled`） |
+
+#### レスポンス
+
+```json
+{
+  "success": true,
+  "data": {
+    "syncedSheets": ["Sheet1", "Sheet2", "Sheet3"],
+    "totalRecords": 45,
+    "syncDuration": 1234
+  },
+  "timestamp": "2024-01-15T12:00:00.000Z"
+}
+```
+
+| フィールド | 型 | 説明 |
+|------------|-----|------|
+| `syncedSheets` | string[] | 同期したシート名のリスト |
+| `totalRecords` | number | 同期したレコード総数 |
+| `syncDuration` | number | 処理時間（ミリ秒） |
+
+---
+
+### 4.2 POST /submitCareRecord
+
+スタッフがケア実績をスプレッドシート（Sheet B）に記録します。
+
+#### リクエスト
+
+```http
+POST /submitCareRecord
+Content-Type: application/json
+```
+
+```json
+{
+  "staffId": "S001",
+  "residentId": "R001",
+  "recordType": "snack",
+  "content": "おやつにプリンを提供",
+  "quantity": "1個",
+  "timestamp": "2024-01-15T15:00:00.000Z",
+  "imageUrl": "https://drive.google.com/...",
+  "notes": "ご本人の希望により提供"
+}
+```
+
+| フィールド | 型 | 必須 | 説明 |
+|------------|-----|------|------|
+| `staffId` | string | Yes | スタッフID |
+| `residentId` | string | Yes | 入居者ID |
+| `recordType` | enum | Yes | `meal` / `snack` / `hydration` |
+| `content` | string | Yes | 記録内容 |
+| `quantity` | string | No | 数量・分量 |
+| `timestamp` | string | Yes | 記録日時（ISO 8601） |
+| `imageUrl` | string | No | 添付画像URL |
+| `notes` | string | No | 備考 |
+
+#### recordType による処理分岐
+
+| recordType | 処理 |
+|------------|------|
+| `meal` | 通常記録（食事内容列に記載） |
+| `snack` | **Bot連携ハック適用**（特記事項列 + 重要度="重要"） |
+| `hydration` | 通常記録（水分摂取列に記載） |
+
+> **参照**: Bot連携ハックの詳細は [BUSINESS_RULES.md](./BUSINESS_RULES.md#2-bot連携ハック間食入力時の特殊処理) を参照
+
+#### レスポンス
+
+```json
+{
+  "success": true,
+  "data": {
+    "recordId": "REC_20240115_150000_S001",
+    "sheetRow": 156,
+    "botNotificationTriggered": true
+  },
+  "timestamp": "2024-01-15T15:00:01.000Z"
+}
+```
+
+| フィールド | 型 | 説明 |
+|------------|-----|------|
+| `recordId` | string | 生成されたレコードID |
+| `sheetRow` | number | 追記された行番号 |
+| `botNotificationTriggered` | boolean | Bot通知がトリガーされたか |
+
+---
+
+### 4.3 POST /submitFamilyRequest
+
+ご家族からのケア要望をFirestoreに保存します。
+
+#### リクエスト
+
+```http
+POST /submitFamilyRequest
+Content-Type: application/json
+```
+
+```json
+{
+  "userId": "F001",
+  "residentId": "R001",
+  "category": "meal",
+  "content": "父は最近、柔らかい食事を好むようになりました。可能であれば、おかずを少し細かく刻んでいただけると助かります。",
+  "priority": "medium",
+  "attachments": []
+}
+```
+
+| フィールド | 型 | 必須 | 説明 |
+|------------|-----|------|------|
+| `userId` | string | Yes | ご家族ユーザーID |
+| `residentId` | string | Yes | 対象入居者ID |
+| `category` | enum | Yes | カテゴリ（下記参照） |
+| `content` | string | Yes | 要望内容（自由記述） |
+| `priority` | enum | Yes | `low` / `medium` / `high` |
+| `attachments` | string[] | No | 添付ファイルURL |
+
+#### category 一覧
+
+| 値 | 説明 |
+|-----|------|
+| `meal` | 食事に関する要望 |
+| `daily_life` | 日常生活に関する要望 |
+| `medical` | 医療・健康に関する要望 |
+| `recreation` | レクリエーションに関する要望 |
+| `communication` | コミュニケーションに関する要望 |
+| `other` | その他 |
+
+#### レスポンス
+
+```json
+{
+  "success": true,
+  "data": {
+    "requestId": "REQ_F001_20240115_160000",
+    "status": "pending",
+    "estimatedReviewDate": "2024-01-17"
+  },
+  "timestamp": "2024-01-15T16:00:00.000Z"
+}
+```
+
+---
+
+### 4.4 POST /uploadCareImage
+
+ケア記録に添付する画像をGoogle Driveにアップロードします。
+
+#### リクエスト
+
+```http
+POST /uploadCareImage
+Content-Type: multipart/form-data
+```
+
+| フィールド | 型 | 必須 | 説明 |
+|------------|-----|------|------|
+| `image` | file | Yes | 画像ファイル（JPEG/PNG） |
+| `staffId` | string | Yes | スタッフID |
+| `residentId` | string | Yes | 入居者ID |
+| `recordType` | string | No | 関連するレコード種別 |
+
+#### レスポンス
+
+```json
+{
+  "success": true,
+  "data": {
+    "fileId": "1abc123def456",
+    "fileName": "R001_20240115_160000.jpg",
+    "publicUrl": "https://drive.google.com/uc?id=1abc123def456",
+    "thumbnailUrl": "https://drive.google.com/thumbnail?id=1abc123def456"
+  },
+  "timestamp": "2024-01-15T16:00:05.000Z"
+}
+```
+
+---
+
+### 4.5 GET /getPlanData
+
+Firestoreに同期済みの記録データを取得します。
+
+#### リクエスト
+
+```http
+GET /getPlanData?residentId=R001
+```
+
+| パラメータ | 型 | 必須 | 説明 |
+|------------|-----|------|------|
+| `residentId` | string | No | 特定の入居者で絞り込み |
+| `limit` | number | No | 取得件数上限（デフォルト: 100） |
+
+#### レスポンス
+
+```json
+{
+  "success": true,
+  "data": {
+    "records": [
+      {
+        "residentId": "R001",
+        "residentName": "山田太郎",
+        "mealRestrictions": ["キウイ", "そば"],
+        "instructions": "キウイは輪切り4等分をさらに半分に...",
+        "conditionalBan": "トマトは月・水・金のみ禁止...",
+        "syncedAt": "2024-01-15T06:00:00.000Z"
+      }
+    ],
+    "totalCount": 1,
+    "lastSyncedAt": "2024-01-15T06:00:00.000Z"
+  },
+  "timestamp": "2024-01-15T16:30:00.000Z"
+}
+```
+
+---
+
+### 4.6 GET /getFamilyRequests
+
+家族要望一覧を取得します。
+
+#### リクエスト
+
+```http
+GET /getFamilyRequests?userId=F001&status=pending
+```
+
+| パラメータ | 型 | 必須 | 説明 |
+|------------|-----|------|------|
+| `userId` | string | No | ご家族ユーザーIDで絞り込み |
+| `residentId` | string | No | 入居者IDで絞り込み |
+| `status` | enum | No | `pending` / `reviewed` / `implemented` |
+| `limit` | number | No | 取得件数上限（デフォルト: 50） |
+
+#### レスポンス
+
+```json
+{
+  "success": true,
+  "data": {
+    "requests": [
+      {
+        "requestId": "REQ_F001_20240115_160000",
+        "userId": "F001",
+        "residentId": "R001",
+        "category": "meal",
+        "content": "父は最近、柔らかい食事を好むようになりました...",
+        "priority": "medium",
+        "status": "pending",
+        "createdAt": "2024-01-15T16:00:00.000Z",
+        "updatedAt": "2024-01-15T16:00:00.000Z"
+      }
+    ],
+    "totalCount": 1
+  },
+  "timestamp": "2024-01-15T17:00:00.000Z"
+}
+```
+
+---
+
+## 5. TypeScript 型定義
+
+```typescript
+// types/api.ts
+
+// === Request Types ===
+
+export interface SyncPlanDataRequest {
+  triggeredBy?: 'manual' | 'scheduled';
+}
+
+export interface SubmitCareRecordRequest {
+  staffId: string;
+  residentId: string;
+  recordType: 'meal' | 'snack' | 'hydration';
+  content: string;
+  quantity?: string;
+  timestamp: string;
+  imageUrl?: string;
+  notes?: string;
+}
+
+export interface SubmitFamilyRequestRequest {
+  userId: string;
+  residentId: string;
+  category: 'meal' | 'daily_life' | 'medical' | 'recreation' | 'communication' | 'other';
+  content: string;
+  priority: 'low' | 'medium' | 'high';
+  attachments?: string[];
+}
+
+// === Response Types ===
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: {
+    code: string;
+    message: string;
+  };
+  timestamp: string;
+}
+
+export interface SyncPlanDataResponse {
+  syncedSheets: string[];
+  totalRecords: number;
+  syncDuration: number;
+}
+
+export interface SubmitCareRecordResponse {
+  recordId: string;
+  sheetRow: number;
+  botNotificationTriggered: boolean;
+}
+
+export interface SubmitFamilyRequestResponse {
+  requestId: string;
+  status: 'pending';
+  estimatedReviewDate: string;
+}
+
+export interface UploadCareImageResponse {
+  fileId: string;
+  fileName: string;
+  publicUrl: string;
+  thumbnailUrl: string;
+}
+
+export interface PlanDataRecord {
+  residentId: string;
+  residentName: string;
+  mealRestrictions: string[];
+  instructions: string;
+  conditionalBan: string;
+  syncedAt: string;
+}
+
+export interface GetPlanDataResponse {
+  records: PlanDataRecord[];
+  totalCount: number;
+  lastSyncedAt: string;
+}
+
+export interface FamilyRequestRecord {
+  requestId: string;
+  userId: string;
+  residentId: string;
+  category: string;
+  content: string;
+  priority: 'low' | 'medium' | 'high';
+  status: 'pending' | 'reviewed' | 'implemented';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GetFamilyRequestsResponse {
+  requests: FamilyRequestRecord[];
+  totalCount: number;
+}
+```
+
+---
+
+## 6. cURLサンプル
+
+### 6.1 ケア実績を入力（間食 - Bot連携ハック適用）
+
+```bash
+curl -X POST \
+  https://asia-northeast1-kamachi-care-app.cloudfunctions.net/submitCareRecord \
+  -H "Content-Type: application/json" \
+  -d '{
+    "staffId": "S001",
+    "residentId": "R001",
+    "recordType": "snack",
+    "content": "おやつにプリンを提供",
+    "timestamp": "2024-01-15T15:00:00.000Z"
+  }'
+```
+
+### 6.2 家族要望を送信
+
+```bash
+curl -X POST \
+  https://asia-northeast1-kamachi-care-app.cloudfunctions.net/submitFamilyRequest \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "F001",
+    "residentId": "R001",
+    "category": "meal",
+    "content": "柔らかい食事を希望します",
+    "priority": "medium"
+  }'
+```
+
+### 6.3 記録データを同期
+
+```bash
+curl -X POST \
+  https://asia-northeast1-kamachi-care-app.cloudfunctions.net/syncPlanData \
+  -H "Content-Type: application/json" \
+  -d '{"triggeredBy": "manual"}'
+```
+
+---
+
+## 7. 変更履歴
+
+| 日付 | バージョン | 変更内容 | 担当 |
+|------|------------|----------|------|
+| 2024-XX-XX | 1.0.0 | 初版作成 | - |
