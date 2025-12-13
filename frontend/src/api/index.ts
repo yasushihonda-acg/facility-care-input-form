@@ -1,0 +1,37 @@
+import type { SyncResponse, GetPlanDataResponse } from '../types';
+
+const API_BASE = 'https://asia-northeast1-facility-care-input-form.cloudfunctions.net';
+
+export async function syncPlanData(): Promise<SyncResponse> {
+  const response = await fetch(`${API_BASE}/syncPlanData`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ triggeredBy: 'manual' }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Sync failed: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+export async function getPlanData(sheetName?: string): Promise<GetPlanDataResponse> {
+  const url = new URL(`${API_BASE}/getPlanData`);
+  if (sheetName) {
+    url.searchParams.set('sheetName', sheetName);
+  }
+
+  const response = await fetch(url.toString());
+
+  if (!response.ok) {
+    throw new Error(`Failed to get data: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+export async function healthCheck(): Promise<{ status: string }> {
+  const response = await fetch(`${API_BASE}/healthCheck`);
+  return response.json();
+}
