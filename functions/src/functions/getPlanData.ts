@@ -6,7 +6,7 @@
 import * as functions from "firebase-functions";
 import {Request, Response} from "express";
 import {getPlanData} from "../services/firestoreService";
-import {FUNCTIONS_CONFIG} from "../config/sheets";
+import {FUNCTIONS_CONFIG, SHEET_A_ORDER} from "../config/sheets";
 import {
   ApiResponse,
   GetPlanDataResponse,
@@ -99,13 +99,21 @@ async function getPlanDataHandler(
       }
     }
 
-    const sheets: SheetSummary[] = Array.from(sheetMap.entries()).map(
-      ([name, info]) => ({
+    // シート順序でソート（SHEET_A_ORDER に基づく）
+    const sheets: SheetSummary[] = Array.from(sheetMap.entries())
+      .map(([name, info]) => ({
         sheetName: name,
         recordCount: info.count,
         headers: info.headers,
-      })
-    );
+      }))
+      .sort((a, b) => {
+        const indexA = SHEET_A_ORDER.indexOf(a.sheetName);
+        const indexB = SHEET_A_ORDER.indexOf(b.sheetName);
+        // 定義されていないシートは末尾に配置
+        const orderA = indexA === -1 ? SHEET_A_ORDER.length : indexA;
+        const orderB = indexB === -1 ? SHEET_A_ORDER.length : indexB;
+        return orderA - orderB;
+      });
 
     const responseData: GetPlanDataResponse = {
       sheets,
