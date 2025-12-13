@@ -169,7 +169,7 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
               type="text"
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
-              placeholder="入居者名・スタッフ名で検索..."
+              placeholder="キーワードで検索..."
               autoFocus
               className="w-full pl-9 pr-10 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
