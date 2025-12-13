@@ -79,30 +79,56 @@ async function syncPlanData(sheetName, records) {
 
 ## 3. 再発防止策（設計）
 
-### 3.1 短期対策（Phase 1）：フロントエンドでの制御
+### 3.1 短期対策（Phase 1）：フロントエンドでの制御 ✅ 実装済み
 
 **実装コスト**: 低
 **効果**: 手動同期の連打防止
 
-```typescript
-// useSync.ts - 同期ボタンのデバウンス
-const [isSyncing, setIsSyncing] = useState(false);
+**実装ファイル**: `frontend/src/hooks/useSync.ts`
 
-const handleSync = async () => {
-  if (isSyncing) return; // 二重実行防止
-  setIsSyncing(true);
-  try {
-    await syncPlanData();
-  } finally {
-    setIsSyncing(false);
+```typescript
+// useSync.ts - 競合防止機能
+const SYNC_COOLDOWN_MS = 30 * 1000; // 30秒クールダウン
+
+// localStorage keys
+const LS_LAST_SYNCED_AT = 'lastSyncedAt';
+const LS_SYNC_IN_PROGRESS = 'syncInProgress';
+
+// 同期可能かどうかをチェック
+const canSync = useCallback((): boolean => {
+  // 自タブで同期中
+  if (syncMutation.isPending) return false;
+
+  // 他タブで同期中（localStorage経由）
+  const syncInProgress = localStorage.getItem(LS_SYNC_IN_PROGRESS);
+  if (syncInProgress) return false;
+
+  // クールダウン期間チェック
+  const lastSync = getLastSyncedAt();
+  if (lastSync && Date.now() - lastSync.getTime() < SYNC_COOLDOWN_MS) {
+    return false;
   }
-};
+  return true;
+}, [...]);
+
+// storageイベントで他タブの同期を検知
+useEffect(() => {
+  const handleStorageChange = (e: StorageEvent) => {
+    if (e.key === LS_SYNC_IN_PROGRESS) {
+      setIsOtherTabSyncing(!!e.newValue);
+    }
+  };
+  window.addEventListener('storage', handleStorageChange);
+  return () => window.removeEventListener('storage', handleStorageChange);
+}, []);
 ```
 
-**追加対策**:
-- 同期ボタンのdisabled状態管理
-- 最終同期時刻から一定時間（例：30秒）は再実行不可
-- ブラウザタブ間の同期状態共有（localStorage使用）
+**実装済み対策**:
+- ✅ 同期中は再実行をブロック（isPending チェック）
+- ✅ クールダウン期間（30秒）の間は手動同期をブロック
+- ✅ タブ間での同期状態共有（localStorage + storage イベント）
+- ✅ 同期ボタンにクールダウン残り秒数を表示
+- ✅ 自動同期（15分間隔）はクールダウンを無視
 
 ### 3.2 中期対策（Phase 2）：バックエンドでの排他制御
 
@@ -220,13 +246,14 @@ async function enqueueSyncTask(sheetName: string) {
 
 ## 4. 実装優先度
 
-| Phase | 対策 | 優先度 | 実装時期 |
-|-------|------|--------|----------|
-| 1 | フロントエンド同期ボタンのデバウンス | 高 | 即時 |
-| 1 | タブ間同期状態共有 | 中 | 次回リリース |
-| 2 | Firestore分散ロック | 中 | 本番移行前 |
-| 3 | 差分同期 | 低 | 将来検討 |
-| 3 | Cloud Tasks キュー | 低 | 将来検討 |
+| Phase | 対策 | 優先度 | 状態 |
+|-------|------|--------|------|
+| 1 | フロントエンド同期ボタンのデバウンス | 高 | ✅ 実装済み (2025-12-14) |
+| 1 | クールダウン期間（30秒） | 高 | ✅ 実装済み (2025-12-14) |
+| 1 | タブ間同期状態共有 | 中 | ✅ 実装済み (2025-12-14) |
+| 2 | Firestore分散ロック | 中 | 未実装（本番移行前に検討） |
+| 3 | 差分同期 | 低 | 未実装（将来検討） |
+| 3 | Cloud Tasks キュー | 低 | 未実装（将来検討） |
 
 ---
 

@@ -8,7 +8,7 @@ interface HeaderProps {
 }
 
 export function Header({ title, showBack, onBack }: HeaderProps) {
-  const { sync, isSyncing, lastSyncedAt, syncResult, error } = useSync();
+  const { sync, isSyncing, canSync, cooldownRemaining, lastSyncedAt, syncResult, error } = useSync();
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
@@ -90,8 +90,9 @@ export function Header({ title, showBack, onBack }: HeaderProps) {
 
           <button
             onClick={sync}
-            disabled={isSyncing}
-            className="flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur rounded-xl hover:bg-white/30 disabled:opacity-50 transition-all shadow-sm"
+            disabled={isSyncing || !canSync}
+            className="flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur rounded-xl hover:bg-white/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+            title={!canSync && cooldownRemaining > 0 ? `${cooldownRemaining}秒後に再実行可能` : undefined}
           >
             <svg
               className={`w-5 h-5 ${isSyncing ? 'animate-spin' : ''}`}
@@ -106,7 +107,9 @@ export function Header({ title, showBack, onBack }: HeaderProps) {
                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
               />
             </svg>
-            <span className="text-sm font-medium">{isSyncing ? '同期中...' : '同期'}</span>
+            <span className="text-sm font-medium">
+              {isSyncing ? '同期中...' : cooldownRemaining > 0 ? `${cooldownRemaining}秒` : '同期'}
+            </span>
           </button>
         </div>
 
