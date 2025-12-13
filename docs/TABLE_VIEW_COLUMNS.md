@@ -277,6 +277,32 @@
 
 ---
 
+## レイアウト仕様
+
+### カラム幅の設計
+
+テーブルのカラム幅は内容に応じて最適化する。`min-w-max`を使わず、適切な固定幅を設定する。
+
+| カラム種別 | 幅の目安 | 理由 |
+|-----------|---------|------|
+| 日時 | 140px | "2025/12/13 9:28:18" が収まる最小幅 |
+| 時間帯/タイミング | 80px | "朝食後" など短いテキスト |
+| 数値（割/cc/kg等） | 80px | 数値は短い |
+| 担当/担当医 | 100px | 人名は短め |
+| 内容プレビュー | flex-1 | 残りの幅を使用 |
+| バッジ付きカラム | 120px | バッジ表示分の余裕 |
+
+### ソート機能
+
+全カラムでソートをサポート。ヘッダークリックでソート切り替え。
+
+**ソートアルゴリズム**:
+- 日時: 文字列比較（YYYY/MM/DD HH:MM:SS形式）
+- 数値: 数値比較（空文字は0扱い）
+- 文字列: `localeCompare('ja')` による日本語対応比較
+
+---
+
 ## 実装仕様
 
 ### データ構造
@@ -291,9 +317,11 @@ interface SheetColumnConfig {
 interface ColumnDef {
   originalHeader: string;  // 元のヘッダー名（データキー）
   displayLabel: string;    // 表示用ラベル
-  width?: string;          // カラム幅（例: "100px", "auto"）
+  width?: string;          // カラム幅（例: "140px", "80px", "flex-1"）
   truncate?: number;       // 文字数制限（超過時は"..."で省略）
   badge?: BadgeConfig;     // バッジ表示設定
+  sortable?: boolean;      // ソート可能か（デフォルト: true）
+  sortType?: 'string' | 'number' | 'date';  // ソート種別
 }
 
 interface BadgeConfig {

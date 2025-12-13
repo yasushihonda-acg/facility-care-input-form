@@ -9,7 +9,6 @@ interface DataTableProps {
   sheetName: string;
 }
 
-type SortField = 'timestamp' | 'staffName';
 type SortDirection = 'asc' | 'desc';
 
 const ITEMS_PER_PAGE = 50;
@@ -17,7 +16,8 @@ const ITEMS_PER_PAGE = 50;
 export function DataTable({ records, headers, sheetName }: DataTableProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [sortField, setSortField] = useState<SortField>('timestamp');
+  // ソートカラムはoriginalHeaderで管理（デフォルトはタイムスタンプ）
+  const [sortColumn, setSortColumn] = useState<string>('タイムスタンプ');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedRecord, setSelectedRecord] = useState<PlanDataRecord | null>(null);
@@ -34,27 +34,52 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
     );
   }, [records, searchQuery]);
 
+  // 現在のソートカラムの設定を取得
+  const currentSortColumnConfig = useMemo(() => {
+    return columnConfig.find(col => col.originalHeader === sortColumn);
+  }, [columnConfig, sortColumn]);
+
   // ソート
   const sortedRecords = useMemo(() => {
     return [...filteredRecords].sort((a, b) => {
+      // ソート対象のカラム値を取得
       let valueA: string = '';
       let valueB: string = '';
 
-      switch (sortField) {
-        case 'timestamp':
-          valueA = a.timestamp || '';
-          valueB = b.timestamp || '';
-          break;
-        case 'staffName':
-          valueA = a.staffName || '';
-          valueB = b.staffName || '';
-          break;
+      if (sortColumn === 'タイムスタンプ') {
+        valueA = a.timestamp || '';
+        valueB = b.timestamp || '';
+      } else if (sortColumn === 'あなたの名前は？') {
+        valueA = a.staffName || '';
+        valueB = b.staffName || '';
+      } else {
+        valueA = a.data[sortColumn] || '';
+        valueB = b.data[sortColumn] || '';
       }
 
-      const comparison = valueA.localeCompare(valueB, 'ja');
+      // sortTypeに基づいてソート
+      const sortType = currentSortColumnConfig?.sortType || 'string';
+      let comparison = 0;
+
+      switch (sortType) {
+        case 'number':
+          // 数値ソート（空文字は0扱い）
+          const numA = parseFloat(valueA) || 0;
+          const numB = parseFloat(valueB) || 0;
+          comparison = numA - numB;
+          break;
+        case 'date':
+          // 日付ソート（文字列比較でOK: YYYY/MM/DD HH:MM:SS形式）
+          comparison = valueA.localeCompare(valueB, 'ja');
+          break;
+        default:
+          // 文字列ソート
+          comparison = valueA.localeCompare(valueB, 'ja');
+      }
+
       return sortDirection === 'asc' ? comparison : -comparison;
     });
-  }, [filteredRecords, sortField, sortDirection]);
+  }, [filteredRecords, sortColumn, sortDirection, currentSortColumnConfig]);
 
   // ページネーション
   const totalPages = Math.ceil(sortedRecords.length / ITEMS_PER_PAGE);
@@ -76,18 +101,20 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
     setCurrentPage(1);
   };
 
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
+  // 任意カラムでのソート切り替え
+  const handleSort = (originalHeader: string) => {
+    if (sortColumn === originalHeader) {
       setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
     } else {
-      setSortField(field);
+      setSortColumn(originalHeader);
       setSortDirection('desc');
     }
     setCurrentPage(1);
   };
 
-  const getSortIcon = (field: SortField) => {
-    if (sortField !== field) return '↕';
+  // ソートアイコン取得
+  const getSortIcon = (originalHeader: string) => {
+    if (sortColumn !== originalHeader) return '↕';
     return sortDirection === 'asc' ? '↑' : '↓';
   };
 
@@ -161,19 +188,27 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
 
         {/* ソートドロップダウン */}
         <select
-          value={`${sortField}-${sortDirection}`}
+          value={`${sortColumn}-${sortDirection}`}
           onChange={(e) => {
-            const [field, dir] = e.target.value.split('-') as [SortField, SortDirection];
-            setSortField(field);
+            const lastDash = e.target.value.lastIndexOf('-');
+            const col = e.target.value.slice(0, lastDash);
+            const dir = e.target.value.slice(lastDash + 1) as SortDirection;
+            setSortColumn(col);
             setSortDirection(dir);
             setCurrentPage(1);
           }}
           className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
         >
-          <option value="timestamp-desc">日時 (新しい順)</option>
-          <option value="timestamp-asc">日時 (古い順)</option>
-          <option value="staffName-asc">担当 (A-Z)</option>
-          <option value="staffName-desc">担当 (Z-A)</option>
+          {columnConfig.map((col) => (
+            <>
+              <option key={`${col.originalHeader}-desc`} value={`${col.originalHeader}-desc`}>
+                {col.displayLabel} (降順)
+              </option>
+              <option key={`${col.originalHeader}-asc`} value={`${col.originalHeader}-asc`}>
+                {col.displayLabel} (昇順)
+              </option>
+            </>
+          ))}
         </select>
 
         {/* 件数表示 */}
@@ -242,34 +277,31 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
 
       {/* テーブル */}
       <div className="flex-1 overflow-auto">
-        <table className="w-full min-w-max border-collapse">
+        <table className="w-full border-collapse table-fixed">
           <thead className="sticky top-0 z-10">
             <tr className="bg-gray-100">
               {columnConfig.map((column) => (
                 <th
                   key={column.originalHeader}
                   className="px-3 py-2 text-left text-xs font-semibold text-gray-600 border-b border-gray-200 whitespace-nowrap"
+                  style={{
+                    width: column.width === 'flex-1' ? 'auto' : column.width,
+                    minWidth: column.width === 'flex-1' ? '120px' : column.width
+                  }}
                 >
-                  {column.originalHeader === 'タイムスタンプ' ? (
-                    <button
-                      onClick={() => handleSort('timestamp')}
-                      className="flex items-center gap-1 hover:text-blue-600"
-                    >
-                      {column.displayLabel} <span className="text-gray-400">{getSortIcon('timestamp')}</span>
-                    </button>
-                  ) : column.originalHeader === 'あなたの名前は？' ? (
-                    <button
-                      onClick={() => handleSort('staffName')}
-                      className="flex items-center gap-1 hover:text-blue-600"
-                    >
-                      {column.displayLabel} <span className="text-gray-400">{getSortIcon('staffName')}</span>
-                    </button>
-                  ) : (
-                    column.displayLabel
-                  )}
+                  <button
+                    onClick={() => handleSort(column.originalHeader)}
+                    className="flex items-center gap-1 hover:text-blue-600"
+                  >
+                    {column.displayLabel}
+                    <span className="text-gray-400">{getSortIcon(column.originalHeader)}</span>
+                  </button>
                 </th>
               ))}
-              <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 border-b border-gray-200">
+              <th
+                className="px-3 py-2 text-left text-xs font-semibold text-gray-600 border-b border-gray-200"
+                style={{ width: '50px' }}
+              >
                 詳細
               </th>
             </tr>
@@ -292,7 +324,11 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
                   return (
                     <td
                       key={column.originalHeader}
-                      className="px-3 py-2 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap max-w-48"
+                      className="px-3 py-2 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap"
+                      style={{
+                        width: column.width === 'flex-1' ? 'auto' : column.width,
+                        maxWidth: column.width === 'flex-1' ? '300px' : column.width
+                      }}
                     >
                       {badgeClass ? (
                         <span className={`px-2 py-0.5 text-xs rounded-full border ${badgeClass}`}>
