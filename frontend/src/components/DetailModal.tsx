@@ -75,7 +75,7 @@ export function DetailModal({ record, sheetName, headers, onClose }: DetailModal
                 <span className="text-sm text-gray-500 font-medium col-span-1 break-words">
                   {label}
                 </span>
-                <span className="text-sm text-gray-800 col-span-2 break-words">
+                <span className="text-sm text-gray-800 col-span-2 break-words whitespace-pre-line">
                   {value || <span className="text-gray-400">-</span>}
                 </span>
               </div>
