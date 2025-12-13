@@ -538,6 +538,130 @@ firebase deploy --only hosting
 
 ---
 
+## Phase 4.3: 全シート同期 + 年月フィルタ ✅ 完了
+
+**目的**: Firestoreバッチ制限を解消し、全11シートを同期可能にする。年・月フィルタUIで大量データを効率的に閲覧可能にする。
+
+### 4.3-1. バックエンド修正（バッチ分割）
+
+**問題**: Firestoreのバッチ書き込みは500件/バッチまでの制限があり、大量データ（食事1,482件など）でエラーが発生している。
+
+**解決策**: 400件ずつバッチを分割して書き込み
+
+```typescript
+// firestoreService.ts
+const BATCH_SIZE = 400;
+
+async function syncSheetData(sheetName: string, records: PlanDataRecord[]): Promise<number> {
+  const db = getFirestore();
+  const collectionRef = db.collection('plan_data');
+
+  // 1. 既存データ削除（シート単位）
+  const existing = await collectionRef.where('sheetName', '==', sheetName).get();
+  const deleteChunks = chunkArray(existing.docs, BATCH_SIZE);
+  for (const chunk of deleteChunks) {
+    const batch = db.batch();
+    chunk.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+  }
+
+  // 2. 新規データ追加（バッチ分割）
+  const insertChunks = chunkArray(records, BATCH_SIZE);
+  for (const chunk of insertChunks) {
+    const batch = db.batch();
+    chunk.forEach(record => {
+      const docRef = collectionRef.doc();
+      batch.set(docRef, record);
+    });
+    await batch.commit();
+  }
+
+  return records.length;
+}
+
+function chunkArray<T>(array: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
+}
+```
+
+**影響範囲**:
+- `functions/src/services/firestoreService.ts` - `syncPlanData`関数の修正
+
+### 4.3-2. フロントエンド修正（年・月フィルタUI）
+
+**新規コンポーネント**:
+
+| コンポーネント | 役割 |
+|----------------|------|
+| `YearPaginator.tsx` | 年切り替え（◀ 2025年 ▶） |
+| `MonthFilter.tsx` | 月フィルタタブ（全月/1月〜12月） |
+| `MonthGroupHeader.tsx` | 月グループセパレーター |
+
+**状態管理**:
+
+```typescript
+// HomePage.tsx
+const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+const [selectedMonth, setSelectedMonth] = useState<number | null>(null); // null = 全月
+
+// フィルタ適用
+const filteredRecords = useMemo(() => {
+  return records.filter(record => {
+    const date = new Date(record.timestamp);
+    if (date.getFullYear() !== selectedYear) return false;
+    if (selectedMonth !== null && date.getMonth() + 1 !== selectedMonth) return false;
+    return true;
+  });
+}, [records, selectedYear, selectedMonth]);
+```
+
+**画面レイアウト（DEMO_PWA_SPEC.md参照）**:
+
+```
++--------------------------------------------------+
+|  介護記録ビューア                   [🔄 同期]    |
++--------------------------------------------------+
+|  [◀] [2025年] [▶]                               |  ← 年ページネーション
++--------------------------------------------------+
+|  [全月] [1月] [2月] ... [12月]  →                |  ← 月フィルタ
++--------------------------------------------------+
+|  [食事] [水分] [排便] [バイタル] [...]  →        |  ← シートタブ
++--------------------------------------------------+
+```
+
+### 4.3-3. データ確認
+
+現在のシート別・年別データ量（実測値）:
+
+| シート | 2024年 | 2025年 | 合計 | バッチ数 |
+|--------|--------|--------|------|----------|
+| 排便・排尿 | 675 | 1,985 | 2,660 | 7 |
+| 水分摂取量 | 441 | 1,626 | 2,067 | 6 |
+| 特記事項 | 389 | 1,533 | 1,922 | 5 |
+| 口腔ケア | 409 | 1,094 | 1,503 | 4 |
+| 内服 | 393 | 1,097 | 1,490 | 4 |
+| 食事 | 392 | 1,090 | 1,482 | 4 |
+| 血糖値インスリン投与 | 379 | 1,077 | 1,456 | 4 |
+| バイタル | 139 | 450 | 589 | 2 |
+| 体重 | 58 | 339 | 397 | 1 |
+| 往診録 | 14 | 33 | 47 | 1 |
+| カンファレンス録 | - | 1 | 1 | 1 |
+| **合計** | **3,289** | **10,325** | **13,614** | **39** |
+
+### Phase 4.3 完了条件 ✅
+
+- [x] バッチ分割実装でエラーなく全シート同期
+- [x] 全11シートがフロントエンドで閲覧可能
+- [x] 年ページネーションが動作
+- [x] 月フィルタが動作
+- [x] Firebase Hostingへ再デプロイ
+
+---
+
 ## マイルストーンサマリー
 
 ```
@@ -547,8 +671,9 @@ Phase 3: デプロイ・検証      ██████████████�
 Phase 4: デモ版PWA開発      ████████████████████ 100% (完了)
 Phase 4.1: タブUI・汎用モデル ████████████████████ 100% (完了)
 Phase 4.2: テーブルビュー    ████████████████████ 100% (完了)
+Phase 4.3: 全シート同期      ████████████████████ 100% (完了)
                             ─────────────────────
-                            合計: 30 tasks → デモ版完成
+                            合計: 35 tasks
 ```
 
 | Phase | タスク数 | 主な成果物 | 状態 |
@@ -559,6 +684,7 @@ Phase 4.2: テーブルビュー    ██████████████�
 | Phase 4 | 5 | デモ版PWA（読み取り専用） | ✅ 完了 |
 | Phase 4.1 | 5 | タブUI、汎用データモデル、同期通知 | ✅ 完了 |
 | Phase 4.2 | 6 | テーブルビュー、検索、ソート、詳細モーダル | ✅ 完了 |
+| Phase 4.3 | 5 | 全シート同期（バッチ分割）、年月フィルタUI | ✅ 完了 |
 
 ---
 

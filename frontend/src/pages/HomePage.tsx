@@ -1,8 +1,10 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Header } from '../components/Header';
 import { DataTable } from '../components/DataTable';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { ErrorMessage } from '../components/ErrorMessage';
+import { YearPaginator } from '../components/YearPaginator';
+import { MonthFilter } from '../components/MonthFilter';
 import { useSheetList, useSheetRecords } from '../hooks/usePlanData';
 import { useSync } from '../hooks/useSync';
 
@@ -10,6 +12,8 @@ export function HomePage() {
   const { sheets, isLoading: sheetsLoading, error: sheetsError } = useSheetList();
   const { lastSyncedAt } = useSync();
   const [selectedSheet, setSelectedSheet] = useState<string>('');
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
 
   // 最初のシートを選択
@@ -26,8 +30,66 @@ export function HomePage() {
     error: recordsError
   } = useSheetRecords(selectedSheet);
 
+  // 年の抽出
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    records.forEach(record => {
+      if (record.timestamp) {
+        const match = record.timestamp.match(/^(\d{4})/);
+        if (match) {
+          years.add(parseInt(match[1], 10));
+        }
+      }
+    });
+    return Array.from(years).sort((a, b) => b - a);
+  }, [records]);
+
+  // 選択年が利用可能年にない場合、最新年に変更
+  useEffect(() => {
+    if (availableYears.length > 0 && !availableYears.includes(selectedYear)) {
+      setSelectedYear(availableYears[0]);
+    }
+  }, [availableYears, selectedYear]);
+
+  // 年でフィルタされたレコード
+  const yearFilteredRecords = useMemo(() => {
+    return records.filter(record => {
+      if (!record.timestamp) return false;
+      const match = record.timestamp.match(/^(\d{4})/);
+      return match && parseInt(match[1], 10) === selectedYear;
+    });
+  }, [records, selectedYear]);
+
+  // 月ごとの件数
+  const monthCounts = useMemo(() => {
+    const counts: Record<number, number> = {};
+    yearFilteredRecords.forEach(record => {
+      if (record.timestamp) {
+        const match = record.timestamp.match(/^\d{4}\/(\d{1,2})/);
+        if (match) {
+          const month = parseInt(match[1], 10);
+          counts[month] = (counts[month] || 0) + 1;
+        }
+      }
+    });
+    return counts;
+  }, [yearFilteredRecords]);
+
+  // 年+月でフィルタされたレコード
+  const filteredRecords = useMemo(() => {
+    if (selectedMonth === null) {
+      return yearFilteredRecords;
+    }
+    return yearFilteredRecords.filter(record => {
+      if (!record.timestamp) return false;
+      const match = record.timestamp.match(/^\d{4}\/(\d{1,2})/);
+      return match && parseInt(match[1], 10) === selectedMonth;
+    });
+  }, [yearFilteredRecords, selectedMonth]);
+
   const handleTabClick = (sheetName: string) => {
     setSelectedSheet(sheetName);
+    setSelectedMonth(null); // シート変更時は月フィルタをリセット
   };
 
   const getNextSyncMinutes = () => {
@@ -72,7 +134,23 @@ export function HomePage() {
             </div>
           ) : (
             <div className="flex-1 flex flex-col min-h-0">
-              {/* タブバー */}
+              {/* 年ページネーション */}
+              {availableYears.length > 0 && (
+                <YearPaginator
+                  selectedYear={selectedYear}
+                  availableYears={availableYears}
+                  onYearChange={setSelectedYear}
+                />
+              )}
+
+              {/* 月フィルタ */}
+              <MonthFilter
+                selectedMonth={selectedMonth}
+                monthCounts={monthCounts}
+                onMonthChange={setSelectedMonth}
+              />
+
+              {/* シートタブバー */}
               <div
                 ref={tabsRef}
                 className="bg-white border-b border-gray-200 overflow-x-auto flex-shrink-0"
@@ -118,7 +196,7 @@ export function HomePage() {
 
                 {!recordsLoading && !recordsError && selectedSheetInfo && (
                   <DataTable
-                    records={records}
+                    records={filteredRecords}
                     headers={selectedSheetInfo.headers}
                     sheetName={selectedSheet}
                   />

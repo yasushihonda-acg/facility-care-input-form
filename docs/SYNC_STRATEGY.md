@@ -268,7 +268,37 @@ interface SheetRecord {
 | 1ドキュメントのサイズ | 1MB |
 | バッチ書き込み | 500操作/バッチ |
 
-13,600件 / 500 = 28バッチ → 実装時に分割必要
+13,600件 / 500 = 28バッチ → **バッチ分割実装が必須**
+
+#### バッチ分割実装（必須）
+
+```typescript
+const BATCH_SIZE = 400; // 安全マージンを持たせて400件
+
+async function syncSheetData(records: PlanDataRecord[]): Promise<void> {
+  // 既存データ削除
+  await deleteExistingData(sheetName);
+
+  // 400件ずつバッチ書き込み
+  for (let i = 0; i < records.length; i += BATCH_SIZE) {
+    const batch = db.batch();
+    const chunk = records.slice(i, i + BATCH_SIZE);
+
+    for (const record of chunk) {
+      const docRef = db.collection('plan_data').doc();
+      batch.set(docRef, record);
+    }
+
+    await batch.commit();
+    console.log(`Committed batch ${Math.floor(i / BATCH_SIZE) + 1}`);
+  }
+}
+```
+
+**実装ポイント**:
+- `BATCH_SIZE = 400` でFirestoreの500件制限に安全マージン
+- 各シートごとに削除→挿入の洗い替え
+- バッチごとにログ出力で進捗確認可能
 
 ### 8.3 差分同期の実装方法
 

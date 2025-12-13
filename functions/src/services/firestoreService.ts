@@ -25,7 +25,23 @@ function getFirestore(): admin.firestore.Firestore {
 // =============================================================================
 
 /**
- * 記録データを Firestore に保存（洗い替え）
+ * バッチサイズ（Firestore制限は500、安全マージンで400）
+ */
+const BATCH_SIZE = 400;
+
+/**
+ * 配列を指定サイズのチャンクに分割
+ */
+function chunkArray<T>(array: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
+}
+
+/**
+ * 記録データを Firestore に保存（洗い替え・バッチ分割対応）
  * Sheet A から同期されたデータを保存
  *
  * @param sheetName シート名
@@ -36,30 +52,47 @@ export async function syncPlanData(
   records: Omit<PlanData, "syncedAt">[]
 ): Promise<number> {
   const db = getFirestore();
-  const batch = db.batch();
   const collection = db.collection(COLLECTIONS.PLAN_DATA);
 
-  // 既存データを削除（洗い替え）
+  // 1. 既存データを削除（バッチ分割）
   const existingDocs = await collection
     .where("sheetName", "==", sheetName)
     .get();
 
-  existingDocs.docs.forEach((doc) => {
-    batch.delete(doc.ref);
-  });
+  if (existingDocs.docs.length > 0) {
+    const deleteChunks = chunkArray(existingDocs.docs, BATCH_SIZE);
+    const docCount = existingDocs.docs.length;
+    console.log(`Deleting ${docCount} docs in ${deleteChunks.length} batches: ${sheetName}`);
 
-  // 新しいデータを追加
+    for (let i = 0; i < deleteChunks.length; i++) {
+      const batch = db.batch();
+      deleteChunks[i].forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+      console.log(`Delete batch ${i + 1}/${deleteChunks.length} completed for ${sheetName}`);
+    }
+  }
+
+  // 2. 新しいデータを追加（バッチ分割）
   const syncedAt = Timestamp.now();
-  records.forEach((record) => {
-    const docRef = collection.doc();
-    batch.set(docRef, {
-      ...record,
-      sheetName,
-      syncedAt,
-    });
-  });
+  const insertChunks = chunkArray(records, BATCH_SIZE);
+  console.log(`Inserting ${records.length} records in ${insertChunks.length} batches for ${sheetName}`);
 
-  await batch.commit();
+  for (let i = 0; i < insertChunks.length; i++) {
+    const batch = db.batch();
+    insertChunks[i].forEach((record) => {
+      const docRef = collection.doc();
+      batch.set(docRef, {
+        ...record,
+        sheetName,
+        syncedAt,
+      });
+    });
+    await batch.commit();
+    console.log(`Insert batch ${i + 1}/${insertChunks.length} completed for ${sheetName}`);
+  }
+
   return records.length;
 }
 
