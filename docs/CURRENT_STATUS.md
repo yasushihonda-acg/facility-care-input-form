@@ -32,6 +32,9 @@
 | Phase 1-4: サービスアカウント設定 | ✅ 完了 | `facility-care-sa@facility-care-input-form.iam.gserviceaccount.com` |
 | Phase 1-5: ローカル開発環境構築 | ✅ 完了 | Emulator動作確認済み |
 
+| GitHub Actions CI/CD | ✅ 完了 | `.github/workflows/ci.yml`, `deploy.yml` |
+| healthCheck関数デプロイ | ✅ 完了 | `us-central1` |
+
 ### 次のタスク ⬜
 
 **Phase 2-1: バックエンド実装 - ディレクトリ構造作成**
@@ -48,7 +51,7 @@ mkdir -p config functions services types
 ## 開発ロードマップ進捗
 
 ```
-Phase 1: 基盤構築        ████████████████████ 100% (完了)
+Phase 1: 基盤構築 + CI/CD ████████████████████ 100% (完了)
 Phase 2: バックエンド実装  ░░░░░░░░░░░░░░░░░░░░  0% (未着手)
 Phase 3: デプロイ・検証    ░░░░░░░░░░░░░░░░░░░░  0% (未着手)
 Phase 4: デモ準備         ░░░░░░░░░░░░░░░░░░░░  0% (未着手)
