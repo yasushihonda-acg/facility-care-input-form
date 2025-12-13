@@ -160,19 +160,33 @@ graph TD
 
 ### Firestore Collections
 
-#### `plan_data` (Flow A 同期先)
+#### `plan_data` (Flow A 同期先) - 汎用データモデル
+
+> **注意**: 各シートのカラム構造が異なるため、固定スキーマではなく汎用データモデルを採用しています。
+
 ```typescript
-interface PlanData {
-  residentId: string;          // 入居者ID
-  residentName: string;        // 入居者名
-  sheetName: string;           // 元シート名
-  mealRestrictions: string[];  // 食事制限
-  instructions: string;        // 詳細指示（非定型テキスト）
-  conditionalBan: string;      // 条件付き禁止（非定型テキスト）
-  syncedAt: Timestamp;         // 同期日時
-  rawData: Record<string, any>; // 元データ全体
+interface PlanDataRecord {
+  id: string;                    // ドキュメントID（sheetName_rowIndex形式）
+  sheetName: string;             // 元シート名
+  timestamp: string;             // 日時列（各シートの1列目）
+  staffName: string;             // スタッフ名（検出された場合）
+  residentName: string;          // 入居者名（検出された場合）
+  data: Record<string, string>;  // 列名→値のマッピング（汎用データ）
+  rawRow: string[];              // 元データ行（配列形式）
+  syncedAt: Timestamp;           // 同期日時
 }
 ```
+
+**汎用データモデルの特徴**:
+- `data` フィールドに各シートのヘッダー行を解析し、列名をキーとしたマップで保存
+- シートごとに異なるカラム構造を柔軟に扱える
+- フロントエンドでシート別にカラムを動的表示可能
+
+**同期時のパース処理**:
+1. 各シートの1行目をヘッダーとして取得
+2. 2行目以降をデータ行として処理
+3. ヘッダー名と値を `data` マップにマッピング
+4. 共通フィールド (`timestamp`, `staffName`, `residentName`) を個別に抽出
 
 #### `family_requests` (Flow C)
 ```typescript
@@ -309,4 +323,6 @@ graph LR
 6. ✅ Phase 1: 基盤構築（GCP/Firebase）
 7. ✅ Phase 2: バックエンド実装
 8. ✅ Phase 3: デプロイ・検証（Sheet A読み取り完了）
-9. ⬜ Phase 4: デモ版PWA開発・公開
+9. ✅ Phase 4: デモ版PWA開発・公開
+10. ✅ Phase 4.1: タブUI・汎用データモデル実装
+11. ⬜ Phase 4.2: テーブルビュー・検索・ソート機能

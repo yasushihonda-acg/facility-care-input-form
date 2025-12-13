@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Header } from '../components/Header';
-import { RecordCard } from '../components/RecordCard';
+import { DataTable } from '../components/DataTable';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { useSheetList, useSheetRecords } from '../hooks/usePlanData';
@@ -71,11 +71,11 @@ export function HomePage() {
               </div>
             </div>
           ) : (
-            <>
+            <div className="flex-1 flex flex-col min-h-0">
               {/* タブバー */}
               <div
                 ref={tabsRef}
-                className="bg-white border-b border-gray-200 overflow-x-auto sticky top-0 z-10"
+                className="bg-white border-b border-gray-200 overflow-x-auto flex-shrink-0"
               >
                 <div className="flex min-w-max">
                   {sheets.map((sheet) => (
@@ -99,45 +99,32 @@ export function HomePage() {
                 </div>
               </div>
 
-              {/* シート情報バー */}
-              {selectedSheetInfo && (
-                <div className="px-4 py-2 bg-gray-100 border-b border-gray-200">
-                  <span className="text-sm text-gray-600">
-                    {selectedSheetInfo.recordCount.toLocaleString()}件のレコード
-                  </span>
-                </div>
-              )}
-
-              {/* レコード一覧 */}
-              <main className="flex-1 p-4 pb-20 overflow-auto">
+              {/* テーブルエリア */}
+              <div className="flex-1 flex flex-col min-h-0 pb-12">
                 {recordsLoading && (
-                  <LoadingSpinner message="レコードを読み込み中..." />
+                  <div className="flex-1 flex items-center justify-center">
+                    <LoadingSpinner message="レコードを読み込み中..." />
+                  </div>
                 )}
 
                 {recordsError && (
-                  <ErrorMessage
-                    message={recordsError}
-                    onRetry={() => window.location.reload()}
-                  />
+                  <div className="p-4">
+                    <ErrorMessage
+                      message={recordsError}
+                      onRetry={() => window.location.reload()}
+                    />
+                  </div>
                 )}
 
-                {!recordsLoading && !recordsError && (
-                  <>
-                    {records.length === 0 ? (
-                      <div className="text-center py-12 text-gray-500">
-                        <p>このシートにはデータがありません</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {records.map((record) => (
-                          <RecordCard key={record.id} record={record} />
-                        ))}
-                      </div>
-                    )}
-                  </>
+                {!recordsLoading && !recordsError && selectedSheetInfo && (
+                  <DataTable
+                    records={records}
+                    headers={selectedSheetInfo.headers}
+                    sheetName={selectedSheet}
+                  />
                 )}
-              </main>
-            </>
+              </div>
+            </div>
           )}
         </>
       )}

@@ -312,39 +312,77 @@ Content-Type: multipart/form-data
 
 ### 4.5 GET /getPlanData
 
-Firestoreに同期済みの記録データを取得します。
+Firestoreに同期済みの記録データを取得します。シート名でフィルタ可能。
 
 #### リクエスト
 
 ```http
-GET /getPlanData?residentId=R001
+GET /getPlanData
+GET /getPlanData?sheetName=バイタル
+GET /getPlanData?sheetName=バイタル&limit=50
 ```
 
 | パラメータ | 型 | 必須 | 説明 |
 |------------|-----|------|------|
-| `residentId` | string | No | 特定の入居者で絞り込み |
-| `limit` | number | No | 取得件数上限（デフォルト: 100） |
+| `sheetName` | string | No | シート名で絞り込み（未指定時は全シートのサマリーを返す） |
+| `limit` | number | No | 取得件数上限（デフォルト: 1000） |
 
-#### レスポンス
+#### レスポンス（シート名未指定 = サマリーモード）
 
 ```json
 {
   "success": true,
   "data": {
-    "records": [
+    "sheets": [
       {
-        "residentId": "R001",
-        "residentName": "山田太郎",
-        "mealRestrictions": ["キウイ", "そば"],
-        "instructions": "キウイは輪切り4等分をさらに半分に...",
-        "conditionalBan": "トマトは月・水・金のみ禁止...",
-        "syncedAt": "2024-01-15T06:00:00.000Z"
+        "sheetName": "バイタル",
+        "recordCount": 523,
+        "headers": ["日時", "スタッフ名", "入居者名", "体温", "血圧", "脈拍"]
+      },
+      {
+        "sheetName": "体重",
+        "recordCount": 145,
+        "headers": ["日時", "スタッフ名", "入居者名", "体重", "備考"]
       }
     ],
-    "totalCount": 1,
-    "lastSyncedAt": "2024-01-15T06:00:00.000Z"
+    "records": [],
+    "totalCount": 2488,
+    "lastSyncedAt": "2025-12-13T12:00:00.000Z"
   },
-  "timestamp": "2024-01-15T16:30:00.000Z"
+  "timestamp": "2025-12-13T16:30:00.000Z"
+}
+```
+
+#### レスポンス（シート名指定 = レコード取得モード）
+
+```json
+{
+  "success": true,
+  "data": {
+    "sheets": [],
+    "records": [
+      {
+        "id": "バイタル_0",
+        "sheetName": "バイタル",
+        "timestamp": "2025-01-15 09:00",
+        "staffName": "田中花子",
+        "residentName": "山田太郎",
+        "data": {
+          "日時": "2025-01-15 09:00",
+          "スタッフ名": "田中花子",
+          "入居者名": "山田太郎",
+          "体温": "36.5",
+          "血圧": "120/80",
+          "脈拍": "72"
+        },
+        "rawRow": ["2025-01-15 09:00", "田中花子", "山田太郎", "36.5", "120/80", "72"],
+        "syncedAt": "2025-12-13T12:00:00.000Z"
+      }
+    ],
+    "totalCount": 523,
+    "lastSyncedAt": "2025-12-13T12:00:00.000Z"
+  },
+  "timestamp": "2025-12-13T16:30:00.000Z"
 }
 ```
 
@@ -462,19 +500,30 @@ export interface UploadCareImageResponse {
   thumbnailUrl: string;
 }
 
+// === 汎用データモデル (Phase 4.1+) ===
+
 export interface PlanDataRecord {
-  residentId: string;
-  residentName: string;
-  mealRestrictions: string[];
-  instructions: string;
-  conditionalBan: string;
-  syncedAt: string;
+  id: string;                    // ドキュメントID
+  sheetName: string;             // シート名
+  timestamp: string;             // 日時
+  staffName: string;             // スタッフ名
+  residentName: string;          // 入居者名
+  data: Record<string, string>;  // 列名→値のマップ（汎用データ）
+  rawRow: string[];              // 元データ行
+  syncedAt: string;              // 同期日時
+}
+
+export interface SheetSummary {
+  sheetName: string;             // シート名
+  recordCount: number;           // レコード数
+  headers: string[];             // ヘッダー（列名配列）
 }
 
 export interface GetPlanDataResponse {
-  records: PlanDataRecord[];
-  totalCount: number;
-  lastSyncedAt: string;
+  sheets: SheetSummary[];        // シートサマリー一覧（サマリーモード時）
+  records: PlanDataRecord[];     // レコード一覧（レコード取得モード時）
+  totalCount: number;            // 総レコード数
+  lastSyncedAt: string;          // 最終同期日時
 }
 
 export interface FamilyRequestRecord {
@@ -556,5 +605,6 @@ curl -X POST \
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
+| 2025-12-13 | 1.2.0 | getPlanData汎用データモデル対応、シート別フィルタ機能追加 |
 | 2025-12-13 | 1.1.0 | デモ版対応（healthCheck追加、URL更新） |
 | 2025-12-XX | 1.0.0 | 初版作成 |
