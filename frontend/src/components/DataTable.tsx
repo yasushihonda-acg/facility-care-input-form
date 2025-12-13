@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import type { PlanDataRecord } from '../types';
 import { DetailModal } from './DetailModal';
+import { getSheetColumns, type ColumnDef } from '../config/tableColumns';
 
 interface DataTableProps {
   records: PlanDataRecord[];
@@ -8,7 +9,7 @@ interface DataTableProps {
   sheetName: string;
 }
 
-type SortField = 'timestamp' | 'staffName' | 'residentName';
+type SortField = 'timestamp' | 'staffName';
 type SortDirection = 'asc' | 'desc';
 
 const ITEMS_PER_PAGE = 50;
@@ -21,24 +22,15 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedRecord, setSelectedRecord] = useState<PlanDataRecord | null>(null);
 
-  // 表示するカラム（最初の数個を優先表示）
-  const displayHeaders = useMemo(() => {
-    // 常に表示する基本カラム
-    const baseColumns = ['日時', 'スタッフ名', '入居者名'];
-    // 残りのカラムから最大3つ追加
-    const additionalColumns = headers
-      .filter(h => !baseColumns.some(b => h.includes(b)))
-      .slice(0, 3);
-    return [...baseColumns, ...additionalColumns];
-  }, [headers]);
+  // シート別の表示カラム設定を取得
+  const columnConfig = useMemo(() => getSheetColumns(sheetName), [sheetName]);
 
-  // フィルタリング
+  // フィルタリング（スタッフ名で検索）
   const filteredRecords = useMemo(() => {
     if (!searchQuery.trim()) return records;
     const query = searchQuery.toLowerCase();
     return records.filter(record =>
-      record.staffName?.toLowerCase().includes(query) ||
-      record.residentName?.toLowerCase().includes(query)
+      record.staffName?.toLowerCase().includes(query)
     );
   }, [records, searchQuery]);
 
@@ -56,10 +48,6 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
         case 'staffName':
           valueA = a.staffName || '';
           valueB = b.staffName || '';
-          break;
-        case 'residentName':
-          valueA = a.residentName || '';
-          valueB = b.residentName || '';
           break;
       }
 
@@ -103,11 +91,46 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
     return sortDirection === 'asc' ? '↑' : '↓';
   };
 
-  const getCellValue = (record: PlanDataRecord, header: string): string => {
-    if (header === '日時' || header.includes('日時')) return record.timestamp || '';
-    if (header === 'スタッフ名' || header.includes('スタッフ')) return record.staffName || '';
-    if (header === '入居者名' || header.includes('入居者') || header.includes('利用者')) return record.residentName || '';
-    return record.data[header] || '';
+  // カラム設定からセル値を取得
+  const getCellValue = (record: PlanDataRecord, column: ColumnDef): string => {
+    const { originalHeader } = column;
+
+    // タイムスタンプはrecord.timestampから取得
+    if (originalHeader === 'タイムスタンプ') {
+      return record.timestamp || '';
+    }
+
+    // スタッフ名はrecord.staffNameから取得
+    if (originalHeader === 'あなたの名前は？') {
+      return record.staffName || '';
+    }
+
+    // それ以外はrecord.dataから取得
+    return record.data[originalHeader] || '';
+  };
+
+  // バッジ表示用のスタイルクラスを取得
+  const getBadgeClass = (value: string, column: ColumnDef): string | null => {
+    if (!column.badge) return null;
+    if (!value.includes(column.badge.condition)) return null;
+
+    const colorClasses: Record<string, string> = {
+      red: 'bg-red-100 text-red-700 border-red-200',
+      yellow: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+      green: 'bg-green-100 text-green-700 border-green-200',
+      blue: 'bg-blue-100 text-blue-700 border-blue-200',
+    };
+
+    return colorClasses[column.badge.color] || null;
+  };
+
+  // セル表示値をフォーマット（truncate対応）
+  const formatCellValue = (value: string, column: ColumnDef): string => {
+    if (!value) return '-';
+    if (column.truncate && value.length > column.truncate) {
+      return value.slice(0, column.truncate) + '...';
+    }
+    return value;
   };
 
   return (
@@ -149,10 +172,8 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
         >
           <option value="timestamp-desc">日時 (新しい順)</option>
           <option value="timestamp-asc">日時 (古い順)</option>
-          <option value="residentName-asc">入居者名 (A-Z)</option>
-          <option value="residentName-desc">入居者名 (Z-A)</option>
-          <option value="staffName-asc">スタッフ名 (A-Z)</option>
-          <option value="staffName-desc">スタッフ名 (Z-A)</option>
+          <option value="staffName-asc">担当 (A-Z)</option>
+          <option value="staffName-desc">担当 (Z-A)</option>
         </select>
 
         {/* 件数表示 */}
@@ -224,34 +245,27 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
         <table className="w-full min-w-max border-collapse">
           <thead className="sticky top-0 z-10">
             <tr className="bg-gray-100">
-              {displayHeaders.map((header) => (
+              {columnConfig.map((column) => (
                 <th
-                  key={header}
+                  key={column.originalHeader}
                   className="px-3 py-2 text-left text-xs font-semibold text-gray-600 border-b border-gray-200 whitespace-nowrap"
                 >
-                  {header.includes('日時') ? (
+                  {column.originalHeader === 'タイムスタンプ' ? (
                     <button
                       onClick={() => handleSort('timestamp')}
                       className="flex items-center gap-1 hover:text-blue-600"
                     >
-                      {header} <span className="text-gray-400">{getSortIcon('timestamp')}</span>
+                      {column.displayLabel} <span className="text-gray-400">{getSortIcon('timestamp')}</span>
                     </button>
-                  ) : header.includes('スタッフ') ? (
+                  ) : column.originalHeader === 'あなたの名前は？' ? (
                     <button
                       onClick={() => handleSort('staffName')}
                       className="flex items-center gap-1 hover:text-blue-600"
                     >
-                      {header} <span className="text-gray-400">{getSortIcon('staffName')}</span>
-                    </button>
-                  ) : header.includes('入居者') || header.includes('利用者') ? (
-                    <button
-                      onClick={() => handleSort('residentName')}
-                      className="flex items-center gap-1 hover:text-blue-600"
-                    >
-                      {header} <span className="text-gray-400">{getSortIcon('residentName')}</span>
+                      {column.displayLabel} <span className="text-gray-400">{getSortIcon('staffName')}</span>
                     </button>
                   ) : (
-                    header
+                    column.displayLabel
                   )}
                 </th>
               ))}
@@ -270,14 +284,26 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
                   ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
                 `}
               >
-                {displayHeaders.map((header) => (
-                  <td
-                    key={header}
-                    className="px-3 py-2 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap max-w-32 truncate"
-                  >
-                    {getCellValue(record, header) || '-'}
-                  </td>
-                ))}
+                {columnConfig.map((column) => {
+                  const value = getCellValue(record, column);
+                  const badgeClass = getBadgeClass(value, column);
+                  const displayValue = formatCellValue(value, column);
+
+                  return (
+                    <td
+                      key={column.originalHeader}
+                      className="px-3 py-2 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap max-w-48"
+                    >
+                      {badgeClass ? (
+                        <span className={`px-2 py-0.5 text-xs rounded-full border ${badgeClass}`}>
+                          {displayValue}
+                        </span>
+                      ) : (
+                        <span className="truncate block">{displayValue}</span>
+                      )}
+                    </td>
+                  );
+                })}
                 <td className="px-3 py-2 text-sm border-b border-gray-100">
                   <button
                     onClick={(e) => {
