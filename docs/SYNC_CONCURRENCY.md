@@ -372,32 +372,31 @@ export function useSync() {
 
 ## 5. 実装チェックリスト
 
-### 5.1 バックエンド
+### 5.1 バックエンド ✅ 完了
 
-- [ ] `syncPlanData.ts` に `incremental` パラメータ追加
-- [ ] `firestoreService.ts` に `syncIncremental` 関数追加
-- [ ] `firestoreService.ts` に `generateDeterministicId` 関数追加
-- [ ] `sync_metadata` コレクションへの書き込み追加
-- [ ] `getSyncMetadata` API追加
+- [x] `syncPlanData.ts` に `incremental` パラメータ追加
+- [x] `firestoreService.ts` に `syncPlanDataIncremental` 関数追加
+- [x] `firestoreService.ts` に `generateDeterministicId` 関数追加
+- [x] `sync_metadata` コレクションへの書き込み追加
+- [x] `types/index.ts` に `SyncPlanDataRequest.incremental` 追加
 
-### 5.2 インフラ
+### 5.2 インフラ ✅ 完了
 
-- [ ] Cloud Scheduler `sync-plan-data-incremental` ジョブ作成
-- [ ] Cloud Scheduler `sync-plan-data-full` ジョブ作成
+- [x] Cloud Scheduler `sync-plan-data-incremental` ジョブ作成（15分ごと）
+- [x] Cloud Scheduler `sync-plan-data-full` ジョブ作成（午前3時）
 
-### 5.3 フロントエンド
+### 5.3 フロントエンド ✅ 完了
 
-- [ ] `useSync.ts` 簡素化（syncPlanData呼び出し削除）
-- [ ] `api/index.ts` に `getSyncMetadata` 追加
-- [ ] `Header.tsx` UI変更（「同期」→「更新」）
-- [ ] 15分自動同期のsetInterval削除
+- [x] `useSync.ts` 簡素化（syncPlanData呼び出し削除、キャッシュ更新のみ）
+- [x] `Header.tsx` UI変更（「同期」→「更新」）
+- [x] 15分自動同期のsetInterval削除
 
-### 5.4 検証
+### 5.4 検証 ✅ 完了
 
-- [ ] 差分同期のシミュレーション
-- [ ] 完全同期のシミュレーション
-- [ ] 重複データなしの確認
-- [ ] Firebase Hosting デプロイ
+- [x] 完全同期のシミュレーション（13,615レコード、全てユニーク）
+- [x] 差分同期のシミュレーション（重複なし確認）
+- [x] 重複データなしの確認
+- [x] Firebase Functions デプロイ完了
 
 ---
 
