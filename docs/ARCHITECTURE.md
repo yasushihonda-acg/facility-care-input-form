@@ -253,6 +253,8 @@ service cloud.firestore {
 | [SETUP.md](./SETUP.md) | 環境セットアップガイド（CLI版） |
 | [BUSINESS_RULES.md](./BUSINESS_RULES.md) | 業務ルール・Bot連携ハック |
 | [API_SPEC.md](./API_SPEC.md) | API仕様書（Dev Mode） |
+| [SYNC_CONCURRENCY.md](./SYNC_CONCURRENCY.md) | 同期処理の競合防止設計 |
+| [TABLE_VIEW_COLUMNS.md](./TABLE_VIEW_COLUMNS.md) | テーブルビュー表示カラム設計 |
 
 ---
 
@@ -281,6 +283,9 @@ service cloud.firestore {
 | 手動同期 | アプリ内ボタンで即座に実行 |
 | 同期対象 | Sheet A 全11シート（13,603件） |
 | 同期方式 | 洗い替え（Firestore全置換） |
+
+> **注意**: 同期処理の競合防止については [SYNC_CONCURRENCY.md](./SYNC_CONCURRENCY.md) を参照。
+> 複数の同期が同時実行されるとデータ重複が発生するリスクがあります。
 
 ### 10.4 システム構成（デモ版）
 
