@@ -92,6 +92,24 @@ export function HomePage() {
     setSelectedMonth(null); // シート変更時は月フィルタをリセット
   };
 
+  // シート別アイコン定義（DESIGN_GUIDELINES.md準拠）
+  const getSheetIcon = (sheetName: string) => {
+    const icons: Record<string, string> = {
+      '食事': '🍽️',
+      '水分摂取量': '💧',
+      '排便・排尿': '🚻',
+      'バイタル': '❤️',
+      '口腔ケア': '🦷',
+      '内服': '💊',
+      '特記事項': '📝',
+      '血糖値インスリン投与': '💉',
+      '往診録': '🩺',
+      '体重': '⚖️',
+      'カンファレンス録': '👥',
+    };
+    return icons[sheetName] || '📋';
+  };
+
   const getNextSyncMinutes = () => {
     if (!lastSyncedAt) return 15;
     const elapsed = Date.now() - lastSyncedAt.getTime();
@@ -153,24 +171,31 @@ export function HomePage() {
               {/* シートタブバー */}
               <div
                 ref={tabsRef}
-                className="bg-white border-b border-gray-200 overflow-x-auto flex-shrink-0"
+                className="bg-white border-b border-gray-200 overflow-x-auto flex-shrink-0 shadow-sm"
               >
-                <div className="flex min-w-max">
+                <div className="flex min-w-max gap-1 p-2">
                   {sheets.map((sheet) => (
                     <button
                       key={sheet.sheetName}
                       onClick={() => handleTabClick(sheet.sheetName)}
                       className={`
-                        px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors
+                        flex items-center gap-1.5 px-3 py-2 text-sm font-medium whitespace-nowrap rounded-lg transition-all
                         ${selectedSheet === sheet.sheetName
-                          ? 'border-blue-500 text-blue-600 bg-blue-50'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                          ? 'bg-primary text-white shadow-card'
+                          : 'text-gray-600 hover:bg-gray-100'
                         }
                       `}
                     >
-                      {sheet.sheetName}
-                      <span className="ml-1 text-xs text-gray-400">
-                        ({sheet.recordCount})
+                      <span className="text-base">{getSheetIcon(sheet.sheetName)}</span>
+                      <span className="hidden sm:inline">{sheet.sheetName}</span>
+                      <span className={`
+                        ml-1 px-1.5 py-0.5 text-xs rounded-full
+                        ${selectedSheet === sheet.sheetName
+                          ? 'bg-white/20 text-white'
+                          : 'bg-gray-200 text-gray-500'
+                        }
+                      `}>
+                        {sheet.recordCount}
                       </span>
                     </button>
                   ))}

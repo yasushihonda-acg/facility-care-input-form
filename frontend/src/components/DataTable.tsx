@@ -15,6 +15,7 @@ const ITEMS_PER_PAGE = 50;
 
 export function DataTable({ records, headers, sheetName }: DataTableProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [sortField, setSortField] = useState<SortField>('timestamp');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [currentPage, setCurrentPage] = useState(1);
@@ -80,6 +81,13 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
     setCurrentPage(1);
   };
 
+  // 検索クリア・閉じる
+  const handleCloseSearch = () => {
+    setSearchQuery('');
+    setIsSearchOpen(false);
+    setCurrentPage(1);
+  };
+
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
@@ -104,17 +112,66 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* 検索・ソートバー */}
-      <div className="flex flex-wrap gap-2 p-3 bg-white border-b border-gray-200">
-        {/* 検索入力 */}
-        <div className="flex-1 min-w-48">
-          <div className="relative">
+      {/* ソートバー + 検索トグル */}
+      <div className="flex items-center gap-2 p-3 bg-white border-b border-gray-200">
+        {/* 検索トグルボタン */}
+        <button
+          onClick={() => setIsSearchOpen(!isSearchOpen)}
+          className={`
+            p-2 rounded-lg transition-colors
+            ${isSearchOpen || searchQuery
+              ? 'bg-blue-100 text-blue-600'
+              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+            }
+          `}
+          title="検索"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        </button>
+
+        {/* ソートドロップダウン */}
+        <select
+          value={`${sortField}-${sortDirection}`}
+          onChange={(e) => {
+            const [field, dir] = e.target.value.split('-') as [SortField, SortDirection];
+            setSortField(field);
+            setSortDirection(dir);
+            setCurrentPage(1);
+          }}
+          className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="timestamp-desc">日時 (新しい順)</option>
+          <option value="timestamp-asc">日時 (古い順)</option>
+          <option value="residentName-asc">入居者名 (A-Z)</option>
+          <option value="residentName-desc">入居者名 (Z-A)</option>
+          <option value="staffName-asc">スタッフ名 (A-Z)</option>
+          <option value="staffName-desc">スタッフ名 (Z-A)</option>
+        </select>
+
+        {/* 件数表示 */}
+        <span className="text-xs text-gray-500 whitespace-nowrap">
+          {filteredRecords.length}件
+        </span>
+      </div>
+
+      {/* 折りたたみ式検索バー */}
+      {isSearchOpen && (
+        <div className="flex items-center gap-2 p-3 bg-gray-50 border-b border-gray-200">
+          <div className="flex-1 relative">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               placeholder="入居者名・スタッフ名で検索..."
-              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              autoFocus
+              className="w-full pl-9 pr-10 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
             <svg
               className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
@@ -129,33 +186,36 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
               />
             </svg>
+            {searchQuery && (
+              <button
+                onClick={() => handleSearch('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
           </div>
+          <button
+            onClick={handleCloseSearch}
+            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded-lg"
+            title="閉じる"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
+      )}
 
-        {/* ソートドロップダウン */}
-        <select
-          value={`${sortField}-${sortDirection}`}
-          onChange={(e) => {
-            const [field, dir] = e.target.value.split('-') as [SortField, SortDirection];
-            setSortField(field);
-            setSortDirection(dir);
-            setCurrentPage(1);
-          }}
-          className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="timestamp-desc">日時 (新しい順)</option>
-          <option value="timestamp-asc">日時 (古い順)</option>
-          <option value="residentName-asc">入居者名 (A-Z)</option>
-          <option value="residentName-desc">入居者名 (Z-A)</option>
-          <option value="staffName-asc">スタッフ名 (A-Z)</option>
-          <option value="staffName-desc">スタッフ名 (Z-A)</option>
-        </select>
-      </div>
-
-      {/* 検索結果件数 */}
+      {/* 検索結果件数（検索中のみ） */}
       {searchQuery && (
-        <div className="px-3 py-1 bg-blue-50 text-blue-700 text-xs">
-          「{searchQuery}」の検索結果: {filteredRecords.length}件
+        <div className="px-3 py-1 bg-blue-50 text-blue-700 text-xs flex items-center justify-between">
+          <span>「{searchQuery}」の検索結果: {filteredRecords.length}件</span>
+          {filteredRecords.length === 0 && (
+            <span className="text-blue-500">該当するデータがありません</span>
+          )}
         </div>
       )}
 
