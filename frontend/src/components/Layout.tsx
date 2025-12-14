@@ -16,7 +16,7 @@ export function Layout({ children, showFooter = true }: LayoutProps) {
         <div
           className="flex-shrink-0"
           style={{
-            height: 'calc(56px + env(safe-area-inset-bottom, 0))'
+            height: 'calc(64px + env(safe-area-inset-bottom, 0))'
           }}
         />
       )}
