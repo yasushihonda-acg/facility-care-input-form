@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月15日 (Phase 5.5 Google Chat Webhook連携 設計中)
+> **最終更新**: 2025年12月15日 (Phase 5.5 Google Chat Webhook連携 ✅完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -43,7 +43,7 @@
 | 4 | 設定API拡張（Webhook URL保存） | ✅ 完了 |
 | 5 | submitMealRecord修正（Webhook送信追加） | ✅ 完了 |
 | 6 | フロントエンド設定UI拡張 | ✅ 完了 |
-| 7 | デプロイ・動作確認 | ⏳ デプロイ中 |
+| 7 | デプロイ・動作確認 | ✅ 完了 |
 
 **管理者設定項目（追加）**:
 | 項目 | 説明 |
@@ -524,6 +524,7 @@ Phase 5.1: Sheet B SA接続        ███████████████
 Phase 5.2: 食事入力フォームAPI    ████████████████████ 100% (完了)
 Phase 5.3: グローバル初期値設定    ████████████████████ 100% (完了)
 Phase 5.4: 管理者初期値設定(admin) ████████████████████ 100% (完了)
+Phase 5.5: Google Chat Webhook連携 ████████████████████ 100% (完了)
 ```
 
 詳細: [docs/ROADMAP.md](./ROADMAP.md)
@@ -624,6 +625,7 @@ facility-care-input-form/
 │   ├── services/
 │   │   ├── sheetsService.ts      # Google Sheets API
 │   │   ├── firestoreService.ts   # Firestore (汎用モデル対応)
+│   │   ├── googleChatService.ts  # Google Chat Webhook送信 ← New!
 │   │   └── driveService.ts
 │   └── functions/
 │       ├── syncPlanData.ts       # 汎用パーシング実装
@@ -639,6 +641,7 @@ facility-care-input-form/
 │   ├── SYNC_CONCURRENCY.md       # 同期競合防止設計
 │   ├── DESIGN_GUIDELINES.md      # デザインガイドライン
 │   ├── TABLE_VIEW_COLUMNS.md     # テーブルビュー表示カラム設計
+│   ├── GOOGLE_CHAT_WEBHOOK_SPEC.md # Google Chat Webhook仕様 ← New!
 │   └── ...
 ├── firebase.json
 └── firestore.rules
