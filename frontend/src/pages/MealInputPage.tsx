@@ -80,6 +80,10 @@ export function MealInputPage() {
     if (form.dayServiceUsage === '利用中' && !form.dayServiceName) {
       newErrors.dayServiceName = 'デイサービスを選択してください。';
     }
+    // 条件付き必須: 注入の種類が「その他」の場合は入力必須
+    if (form.injectionType === 'その他' && !form.injectionTypeOther?.trim()) {
+      newErrors.injectionTypeOther = 'その他の注入種類を入力してください。';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -94,6 +98,11 @@ export function MealInputPage() {
     setIsSubmitting(true);
     try {
       // APIリクエストデータを構築
+      // 注入の種類: 「その他」の場合は入力値を使用
+      const injectionTypeValue = form.injectionType === 'その他'
+        ? form.injectionTypeOther
+        : form.injectionType;
+
       const requestData = {
         staffName: form.staffName,
         facility: form.facility,
@@ -104,7 +113,7 @@ export function MealInputPage() {
         ...(form.dayServiceName && { dayServiceName: form.dayServiceName }),
         ...(form.mainDishRatio && { mainDishRatio: form.mainDishRatio }),
         ...(form.sideDishRatio && { sideDishRatio: form.sideDishRatio }),
-        ...(form.injectionType && { injectionType: form.injectionType }),
+        ...(injectionTypeValue && { injectionType: injectionTypeValue }),
         ...(form.injectionAmount && { injectionAmount: form.injectionAmount }),
         ...(form.snack && { snack: form.snack }),
         ...(form.note && { note: form.note }),
@@ -373,7 +382,13 @@ export function MealInputPage() {
           </label>
           <select
             value={form.injectionType}
-            onChange={(e) => updateField('injectionType', e.target.value)}
+            onChange={(e) => {
+              updateField('injectionType', e.target.value);
+              // 「その他」以外を選択した場合、その他入力欄をクリア
+              if (e.target.value !== 'その他') {
+                updateField('injectionTypeOther', '');
+              }
+            }}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
           >
             <option value="">選んでください</option>
@@ -382,6 +397,27 @@ export function MealInputPage() {
             ))}
           </select>
         </div>
+
+        {/* その他の注入種類 ※条件付き表示 */}
+        {form.injectionType === 'その他' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              その他の注入種類は？ <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={form.injectionTypeOther || ''}
+              onChange={(e) => updateField('injectionTypeOther', e.target.value)}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary ${
+                errors.injectionTypeOther ? 'border-red-500' : 'border-gray-300'
+              }`}
+              placeholder="注入の種類を入力"
+            />
+            {errors.injectionTypeOther && (
+              <p className="mt-1 text-sm text-red-500">{errors.injectionTypeOther}</p>
+            )}
+          </div>
+        )}
 
         {/* 注入量 */}
         <div>

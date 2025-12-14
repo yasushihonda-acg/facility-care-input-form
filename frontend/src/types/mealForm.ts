@@ -17,6 +17,7 @@ export interface MealInputForm {
   mainDishRatio?: string;      // 主食の摂取量は何割ですか？
   sideDishRatio?: string;      // 副食の摂取量は何割ですか？
   injectionType?: string;      // 注入の種類は？
+  injectionTypeOther?: string; // その他の注入種類は？（injectionType='その他'の場合）
   injectionAmount?: string;    // 注入量は？
   snack?: string;              // 間食は何を食べましたか？
   note?: string;               // 特記事項
@@ -35,6 +36,7 @@ export const initialMealForm: MealInputForm = {
   mainDishRatio: '',
   sideDishRatio: '',
   injectionType: '',
+  injectionTypeOther: '',
   injectionAmount: '',
   snack: '',
   note: '',
@@ -71,9 +73,15 @@ export const INTAKE_RATIOS = [
 ] as const;
 
 export const INJECTION_TYPES = [
-  'エンシュア',
-  'ラコール',
-  'メイバランス',
+  'エンシュア リキッド',
+  'エンシュア H',
+  'ラコールNF 半固形剤',
+  'エネーボ',
+  'アイソカルサポート',
+  'イノラス',
+  'ラコールNF',
+  'エレンタール',
+  'リーナレン',
   'その他',
 ] as const;
 
