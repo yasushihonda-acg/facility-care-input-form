@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月14日 (Phase 5.1 Sheet B サービスアカウント接続完了)
+> **最終更新**: 2025年12月14日 (Phase 5.2 食事入力フォームAPI実装完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -264,49 +264,45 @@
 - カラム数: 15 ✅
 - カラム構成: ドキュメント通り ✅
 
----
+### Phase 5.2: 食事入力フォームAPI実装 ✅ 完了
 
-### 次のタスク: Phase 5.2 食事入力フォーム完成
+> **詳細**: [MEAL_INPUT_FORM_SPEC.md](./MEAL_INPUT_FORM_SPEC.md) / [SHEET_B_STRUCTURE.md](./SHEET_B_STRUCTURE.md)
 
-食事入力フォームをSheet Bに実際に書き込めるよう、以下の順序で実装を進める。
+**実装内容**:
 
-#### 推奨実装ステップ
+1. **フロントエンド修正** ✅
+   - `frontend/src/types/mealForm.ts` に `dayServiceName` フィールド追加
+   - `frontend/src/pages/MealInputPage.tsx` に条件付きフィールド「どこのデイサービスですか？」追加
+   - バリデーション追加（「利用中」選択時は必須）
+   - API呼び出し実装
 
-| Step | 内容 | 対象ファイル | 依存関係 |
-|------|------|-------------|---------|
-| 1 | フロントエンド修正 | `MealInputPage.tsx`, `mealForm.ts` | なし |
-| 2 | バックエンド型定義修正 | `functions/src/types/index.ts` | なし |
-| 3 | バックエンドAPI実装修正 | `sheetsService.ts`, `submitCareRecord.ts` | Step 2 |
-| 4 | 結合テスト | ローカル環境 | Step 1, 3 |
-| 5 | デプロイ・動作確認 | Firebase | Step 4 |
+2. **バックエンド型定義修正** ✅
+   - `functions/src/types/index.ts` に `SubmitMealRecordRequest` / `MealRecordRow` 追加
+   - Sheet B の15カラム構成に完全対応
 
-#### Step 1: フロントエンド修正
-- [ ] `frontend/src/types/mealForm.ts` に `dayServiceName` フィールド追加
-- [ ] `frontend/src/pages/MealInputPage.tsx` に条件付きフィールド「どこのデイサービスですか？」追加
-- [ ] バリデーション追加（「利用中」選択時は必須）
+3. **バックエンドAPI実装** ✅
+   - `functions/src/functions/submitMealRecord.ts` 新規作成
+   - `functions/src/services/sheetsService.ts` に `appendMealRecordToSheetB` 追加
+   - シート名「フォームの回答 1」対応
 
-#### Step 2: バックエンド型定義修正
-- [ ] `functions/src/types/index.ts` の `SubmitCareRecordRequest` を `MealInputForm` に合わせる
-- [ ] `CareRecordRow` を Sheet B の15カラム構成に合わせる
+4. **デプロイ・動作確認** ✅
+   - GitHub Actions経由でデプロイ完了
+   - curl検証: Sheet B書き込み成功（行番号26274, 26275）
 
-#### Step 3: バックエンドAPI実装修正
-- [ ] `functions/src/services/sheetsService.ts` のカラムマッピングを修正
-- [ ] `functions/src/functions/submitCareRecord.ts` のバリデーション・処理を修正
-- [ ] シート名を「フォームの回答 1」に変更
+**検証結果**:
+```bash
+# テスト1: 基本データ
+curl -X POST ".../submitMealRecord" -d '{"staffName":"テスト太郎","facility":"あおぞら荘",...}'
+→ {"success":true,"data":{"postId":"MEAL_20251214132211_5592","sheetRow":26274}}
 
-#### Step 4: 結合テスト
-- [ ] ローカルEmulator起動
-- [ ] フロントエンドからAPI呼び出し
-- [ ] Sheet Bへの書き込み確認
-
-#### Step 5: デプロイ・動作確認
-- [ ] `firebase deploy --only functions`
-- [ ] `firebase deploy --only hosting`
-- [ ] 本番環境で動作確認
+# テスト2: デイサービス利用中
+curl -X POST ".../submitMealRecord" -d '{"dayServiceUsage":"利用中","dayServiceName":"デイサービスあおぞら",...}'
+→ {"success":true,"data":{"postId":"MEAL_20251214132220_5143","sheetRow":26275}}
+```
 
 ---
 
-### オプション機能（Phase 5.2完了後）
+### 次のタスク: オプション機能
 
 | 機能 | 説明 | 優先度 |
 |------|------|--------|
@@ -368,7 +364,7 @@ Phase 4.8: テーブル最適化          ████████████�
 Phase 4.9: 同期競合防止+コスト最適化 ████████████████████ 100% (完了)
 Phase 5.0: 食事入力フォームUI     ████████████████████ 100% (完了)
 Phase 5.1: Sheet B SA接続        ████████████████████ 100% (完了)
-Phase 5.2: バックエンド実装修正    ░░░░░░░░░░░░░░░░░░░░   0% (次のタスク)
+Phase 5.2: 食事入力フォームAPI    ████████████████████ 100% (完了)
 ```
 
 詳細: [docs/ROADMAP.md](./ROADMAP.md)
@@ -394,7 +390,8 @@ Phase 5.2: バックエンド実装修正    ░░░░░░░░░░░�
 |----------|------|------|------|
 | GET | `/healthCheck` | ヘルスチェック | 動作確認済み |
 | POST | `/syncPlanData` | 記録データを同期 (汎用モデル) | 動作確認済み |
-| POST | `/submitCareRecord` | ケア実績を入力 | Sheet B共有待ち |
+| POST | `/submitMealRecord` | 食事記録を入力 | ✅ 動作確認済み |
+| POST | `/submitCareRecord` | ケア実績を入力 (deprecated) | 非推奨 |
 | POST | `/submitFamilyRequest` | 家族要望を送信 | 動作可能 |
 | POST | `/uploadCareImage` | 画像をアップロード | Drive権限未確認 |
 | GET | `/getPlanData` | 同期済み記録を取得 (シート別フィルタ対応) | 動作可能 |
