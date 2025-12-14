@@ -134,7 +134,17 @@ export async function appendMealRecordToSheetB(
  */
 function buildMealRecordRow(request: SubmitMealRecordRequest): MealRecordRow {
   const now = new Date();
-  const timestamp = now.toLocaleString("ja-JP", {timeZone: "Asia/Tokyo"});
+  // タイムスタンプ形式: "2025/12/14 18:08:50"
+  const timestamp = now.toLocaleString("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).replace(/\//g, "/"); // 形式を確認: YYYY/MM/DD HH:mm:ss
   const postId = generatePostId();
 
   // 重要フラグの変換（"重要" → "はい", "重要ではない" → "いいえ"）
