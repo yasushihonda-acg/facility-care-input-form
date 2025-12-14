@@ -32,9 +32,9 @@ export function MealInputPage() {
         ...prev,
         facility: settings.defaultFacility || prev.facility,
         residentName: settings.defaultResidentName || prev.residentName,
-        dayServiceName: settings.defaultDayServiceName || prev.dayServiceName,
-        // デイサービス利用は常に「利用中ではない」が初期値
+        // デイサービス利用は常に「利用中ではない」が初期値、デイサービス名は未選択
         dayServiceUsage: '利用中ではない',
+        dayServiceName: '',
       }));
     }
   }, [isSettingsLoading, settings]);
@@ -157,8 +157,9 @@ export function MealInputPage() {
           ...initialMealForm,
           facility: settings.defaultFacility || '',
           residentName: settings.defaultResidentName || '',
-          dayServiceName: settings.defaultDayServiceName || '',
+          // デイサービス利用は「利用中ではない」、デイサービス名は未選択
           dayServiceUsage: '利用中ではない',
+          dayServiceName: '',
         });
         setShowSuccess(false);
       }, 3000);
