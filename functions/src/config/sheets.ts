@@ -61,20 +61,31 @@ export const SHEET_B = {
 
 /**
  * Sheet B の列定義
- * Bot連携ハック対応のため、列位置を明示的に定義
+ * SHEET_B_STRUCTURE.md に基づく「フォームの回答 1」シートの構造
+ * Google Forms からの食事記録回答を受け取るシート
  */
 export const SHEET_B_COLUMNS = {
-  TIMESTAMP: 0, // A列: タイムスタンプ
-  STAFF_ID: 1, // B列: スタッフID
-  RESIDENT_ID: 2, // C列: 入居者ID
-  MEAL_CONTENT: 3, // D列: 食事内容
-  SNACK_CONTENT: 4, // E列: 間食内容（通常用）
-  HYDRATION_AMOUNT: 5, // F列: 水分摂取量
-  SPECIAL_NOTES: 6, // G列: 特記事項（Bot連携ハック用）
-  IMPORTANCE: 7, // H列: 重要度（Bot連携ハック用）
-  IMAGE_URL: 8, // I列: 画像URL
-  NOTES: 9, // J列: 備考
+  TIMESTAMP: 0,           // A列: タイムスタンプ（自動記録）
+  STAFF_NAME: 1,          // B列: あなたの名前は？
+  RESIDENT_NAME: 2,       // C列: ご利用者様のお名前は？
+  MEAL_TIME: 3,           // D列: 食事はいつのことですか？
+  MAIN_DISH_RATIO: 4,     // E列: 主食の摂取量は何割ですか？
+  SIDE_DISH_RATIO: 5,     // F列: 副食の摂取量は何割ですか？
+  INJECTION_AMOUNT: 6,    // G列: 注入量は何ccですか？
+  SNACK: 7,               // H列: 間食は何を食べましたか？
+  SPECIAL_NOTES: 8,       // I列: 特記事項
+  IS_IMPORTANT: 9,        // J列: 重要特記事項集計表に反映させますか？
+  FACILITY: 10,           // K列: 施設
+  DAY_SERVICE_USAGE: 11,  // L列: デイ利用有無
+  INJECTION_TYPE: 12,     // M列: 注入の種類
+  POST_ID: 13,            // N列: 投稿ID
+  DAY_SERVICE_NAME: 14,   // O列: どこのデイサービスですか？
 } as const;
+
+/**
+ * Sheet B のシート名
+ */
+export const SHEET_B_SHEET_NAME = "フォームの回答 1";
 
 /**
  * Bot連携ハック用の定数
