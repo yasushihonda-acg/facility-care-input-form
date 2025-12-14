@@ -18,13 +18,13 @@
 
 ## 現在の進捗
 
-### 🔄 進行中: Phase 5.5 Google Chat Webhook連携
+### ✅ 完了: Phase 5.5 Google Chat Webhook連携
 
 **背景**:
 - 食事記録入力時にGoogle Chatスペースへ自動通知したい
 - 「重要」フラグが付いた記録は別スペースにも追加通知
 
-**設計完了**: [GOOGLE_CHAT_WEBHOOK_SPEC.md](./GOOGLE_CHAT_WEBHOOK_SPEC.md)
+**設計書**: [GOOGLE_CHAT_WEBHOOK_SPEC.md](./GOOGLE_CHAT_WEBHOOK_SPEC.md)
 
 **通知フロー**:
 ```
@@ -33,46 +33,31 @@
     └─→ [重要Webhook] isImportant="重要" のみ追加通知
 ```
 
-**投稿メッセージ例**:
-```
-【七福の里220_大橋　建夫様(ID7948)】
-#食事🍚
-
-記録者：クエン
-
-摂取時間：夜
-
-食事摂取方法：経口
-
-主食摂取量：10割
-
-副食摂取量：10割
-
-特記事項：【ケアに関すること】
-
-【ACPiece】
-
-
-【投稿ID】：MEL20251211194443344007
-```
-
-**実装ステップ**:
+**実装完了**:
 
 | ステップ | 内容 | 状態 |
 |----------|------|------|
 | 1 | 設計書作成 | ✅ 完了 |
-| 2 | 型定義拡張 | ⏳ 未着手 |
-| 3 | Webhook送信サービス作成 | ⏳ 未着手 |
-| 4 | 設定API拡張（Webhook URL保存） | ⏳ 未着手 |
-| 5 | submitMealRecord修正（Webhook送信追加） | ⏳ 未着手 |
-| 6 | フロントエンド設定UI拡張 | ⏳ 未着手 |
-| 7 | デプロイ・動作確認 | ⏳ 未着手 |
+| 2 | 型定義拡張 | ✅ 完了 |
+| 3 | Webhook送信サービス作成 | ✅ 完了 |
+| 4 | 設定API拡張（Webhook URL保存） | ✅ 完了 |
+| 5 | submitMealRecord修正（Webhook送信追加） | ✅ 完了 |
+| 6 | フロントエンド設定UI拡張 | ✅ 完了 |
+| 7 | デプロイ・動作確認 | ⏳ デプロイ中 |
 
 **管理者設定項目（追加）**:
 | 項目 | 説明 |
 |------|------|
 | webhookUrl | 通常Webhook URL（全記録通知） |
 | importantWebhookUrl | 重要Webhook URL（重要記録のみ追加通知） |
+
+**実装ファイル**:
+- `functions/src/services/googleChatService.ts` - Webhook送信サービス（新規）
+- `functions/src/types/index.ts` - MealFormSettings, MealRecordForChat型拡張
+- `functions/src/functions/mealFormSettings.ts` - Webhook URL保存対応
+- `functions/src/functions/submitMealRecord.ts` - Webhook送信処理追加
+- `frontend/src/types/index.ts` - フロントエンド型定義拡張
+- `frontend/src/components/MealSettingsModal.tsx` - Webhook URL設定UI追加
 
 ---
 

@@ -307,6 +307,10 @@ export interface MealFormSettings {
   defaultResidentName: string;
   /** デフォルトデイサービス */
   defaultDayServiceName: string;
+  /** 通常Webhook URL（全記録通知先） */
+  webhookUrl?: string;
+  /** 重要Webhook URL（重要記録のみ追加通知先） */
+  importantWebhookUrl?: string;
   /** 最終更新日時 */
   updatedAt: string;
 }
@@ -319,6 +323,24 @@ export interface UpdateMealFormSettingsRequest {
   defaultFacility?: string;
   defaultResidentName?: string;
   defaultDayServiceName?: string;
+  webhookUrl?: string;
+  importantWebhookUrl?: string;
+}
+
+/**
+ * Google Chat Webhook送信用の食事記録データ
+ */
+export interface MealRecordForChat {
+  facility: string;
+  residentName: string;
+  staffName: string;
+  mealTime: string;
+  mainDishRatio?: string;
+  sideDishRatio?: string;
+  injectionType?: string;
+  injectionAmount?: string;
+  note?: string;
+  postId: string;
 }
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];

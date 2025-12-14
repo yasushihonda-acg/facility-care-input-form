@@ -6,11 +6,15 @@
 
 import * as functions from "firebase-functions";
 import {Request, Response} from "express";
+import {getFirestore} from "firebase-admin/firestore";
 import {appendMealRecordToSheetB} from "../services/sheetsService";
+import {notifyMealRecord} from "../services/googleChatService";
 import {FUNCTIONS_CONFIG} from "../config/sheets";
 import {
   ApiResponse,
   SubmitMealRecordRequest,
+  MealFormSettings,
+  MealRecordForChat,
   ErrorCodes,
 } from "../types";
 
@@ -147,6 +151,48 @@ async function submitMealRecordHandler(
 
     // Sheet B に追記
     const {sheetRow, postId} = await appendMealRecordToSheetB(mealRecord);
+
+    // Google Chat Webhook通知（非同期・エラーでも処理続行）
+    try {
+      // Firestoreから設定を取得
+      const db = getFirestore();
+      const settingsDoc = await db.collection("settings").doc("mealFormDefaults").get();
+      const settings = settingsDoc.exists
+        ? (settingsDoc.data() as MealFormSettings)
+        : null;
+
+      if (settings && (settings.webhookUrl || settings.importantWebhookUrl)) {
+        // Webhook送信用データを作成
+        const chatRecord: MealRecordForChat = {
+          facility: mealRecord.facility,
+          residentName: mealRecord.residentName,
+          staffName: mealRecord.staffName,
+          mealTime: mealRecord.mealTime,
+          mainDishRatio: mealRecord.mainDishRatio,
+          sideDishRatio: mealRecord.sideDishRatio,
+          injectionType: mealRecord.injectionType,
+          injectionAmount: mealRecord.injectionAmount,
+          note: mealRecord.note,
+          postId: postId,
+        };
+
+        // 重要フラグの判定
+        const isImportant = mealRecord.isImportant === "重要";
+
+        // Webhook送信（非同期で実行、結果を待たない）
+        notifyMealRecord(
+          chatRecord,
+          settings.webhookUrl,
+          settings.importantWebhookUrl,
+          isImportant
+        ).catch((webhookError) => {
+          functions.logger.warn("Webhook notification failed:", webhookError);
+        });
+      }
+    } catch (webhookError) {
+      // Webhookエラーは記録成功には影響させない
+      functions.logger.warn("Webhook setup failed:", webhookError);
+    }
 
     const responseData: SubmitMealRecordResponse = {
       postId,

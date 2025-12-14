@@ -18,6 +18,8 @@ export function MealSettingsModal({
     defaultFacility: settings.defaultFacility,
     defaultResidentName: settings.defaultResidentName,
     defaultDayServiceName: settings.defaultDayServiceName,
+    webhookUrl: settings.webhookUrl || '',
+    importantWebhookUrl: settings.importantWebhookUrl || '',
   });
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -28,6 +30,8 @@ export function MealSettingsModal({
       defaultFacility: settings.defaultFacility,
       defaultResidentName: settings.defaultResidentName,
       defaultDayServiceName: settings.defaultDayServiceName,
+      webhookUrl: settings.webhookUrl || '',
+      importantWebhookUrl: settings.importantWebhookUrl || '',
     });
   }, [settings]);
 
@@ -60,6 +64,8 @@ export function MealSettingsModal({
         defaultFacility: '',
         defaultResidentName: '',
         defaultDayServiceName: '',
+        webhookUrl: '',
+        importantWebhookUrl: '',
       });
       if (success) {
         setSaveMessage({ type: 'success', text: '設定をクリアしました' });
@@ -200,6 +206,56 @@ export function MealSettingsModal({
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
               placeholder="例: デイサービスあおぞら"
             />
+          </div>
+
+          {/* セパレーター */}
+          <div className="border-t border-gray-200 pt-4">
+            <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+              <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              Google Chat 通知設定
+            </h3>
+          </div>
+
+          {/* 通常Webhook URL */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              通常Webhook URL
+            </label>
+            <input
+              type="url"
+              value={localSettings.webhookUrl || ''}
+              onChange={(e) =>
+                setLocalSettings((prev) => ({
+                  ...prev,
+                  webhookUrl: e.target.value,
+                }))
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+              placeholder="https://chat.googleapis.com/v1/spaces/..."
+            />
+            <p className="mt-1 text-xs text-gray-500">全ての食事記録を通知</p>
+          </div>
+
+          {/* 重要Webhook URL */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              重要Webhook URL
+            </label>
+            <input
+              type="url"
+              value={localSettings.importantWebhookUrl || ''}
+              onChange={(e) =>
+                setLocalSettings((prev) => ({
+                  ...prev,
+                  importantWebhookUrl: e.target.value,
+                }))
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+              placeholder="https://chat.googleapis.com/v1/spaces/..."
+            />
+            <p className="mt-1 text-xs text-gray-500">「重要」選択時のみ追加通知</p>
           </div>
 
           {/* 保存メッセージ */}

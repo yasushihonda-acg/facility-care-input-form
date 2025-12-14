@@ -83,6 +83,10 @@ export interface MealFormSettings {
   defaultFacility: string;
   defaultResidentName: string;
   defaultDayServiceName: string;
+  /** 通常Webhook URL（全記録通知先） */
+  webhookUrl?: string;
+  /** 重要Webhook URL（重要記録のみ追加通知先） */
+  importantWebhookUrl?: string;
   updatedAt: string;
 }
 
@@ -91,4 +95,6 @@ export interface UpdateMealFormSettingsRequest {
   defaultFacility?: string;
   defaultResidentName?: string;
   defaultDayServiceName?: string;
+  webhookUrl?: string;
+  importantWebhookUrl?: string;
 }
