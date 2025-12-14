@@ -266,16 +266,52 @@
 
 ---
 
-### 次のタスク
+### 次のタスク: Phase 5.2 食事入力フォーム完成
 
-**Phase 5.2: バックエンド実装修正**:
-- `functions/src/config/sheets.ts` の `SHEET_B_COLUMNS` をドキュメントに合わせて修正
-- `functions/src/services/sheetsService.ts` のカラムマッピングを修正
-- `functions/src/functions/submitCareRecord.ts` のリクエスト型を `MealInputForm` に合わせる
+食事入力フォームをSheet Bに実際に書き込めるよう、以下の順序で実装を進める。
 
-**オプション機能**:
-1. CSVエクスポート: 表示中のデータをCSVでダウンロード
-2. オフラインキャッシュ強化: ServiceWorkerでAPI応答をキャッシュ
+#### 推奨実装ステップ
+
+| Step | 内容 | 対象ファイル | 依存関係 |
+|------|------|-------------|---------|
+| 1 | フロントエンド修正 | `MealInputPage.tsx`, `mealForm.ts` | なし |
+| 2 | バックエンド型定義修正 | `functions/src/types/index.ts` | なし |
+| 3 | バックエンドAPI実装修正 | `sheetsService.ts`, `submitCareRecord.ts` | Step 2 |
+| 4 | 結合テスト | ローカル環境 | Step 1, 3 |
+| 5 | デプロイ・動作確認 | Firebase | Step 4 |
+
+#### Step 1: フロントエンド修正
+- [ ] `frontend/src/types/mealForm.ts` に `dayServiceName` フィールド追加
+- [ ] `frontend/src/pages/MealInputPage.tsx` に条件付きフィールド「どこのデイサービスですか？」追加
+- [ ] バリデーション追加（「利用中」選択時は必須）
+
+#### Step 2: バックエンド型定義修正
+- [ ] `functions/src/types/index.ts` の `SubmitCareRecordRequest` を `MealInputForm` に合わせる
+- [ ] `CareRecordRow` を Sheet B の15カラム構成に合わせる
+
+#### Step 3: バックエンドAPI実装修正
+- [ ] `functions/src/services/sheetsService.ts` のカラムマッピングを修正
+- [ ] `functions/src/functions/submitCareRecord.ts` のバリデーション・処理を修正
+- [ ] シート名を「フォームの回答 1」に変更
+
+#### Step 4: 結合テスト
+- [ ] ローカルEmulator起動
+- [ ] フロントエンドからAPI呼び出し
+- [ ] Sheet Bへの書き込み確認
+
+#### Step 5: デプロイ・動作確認
+- [ ] `firebase deploy --only functions`
+- [ ] `firebase deploy --only hosting`
+- [ ] 本番環境で動作確認
+
+---
+
+### オプション機能（Phase 5.2完了後）
+
+| 機能 | 説明 | 優先度 |
+|------|------|--------|
+| CSVエクスポート | 表示中のデータをCSVでダウンロード | 中 |
+| オフラインキャッシュ強化 | ServiceWorkerでAPI応答をキャッシュ | 低 |
 
 ---
 
@@ -301,8 +337,8 @@
 
 | 項目 | 内容 |
 |------|------|
-| フィールド数 | 13 |
-| 必須フィールド | 6 |
+| フィールド数 | 14（条件付き1を含む） |
+| 必須フィールド | 6 + 条件付き必須1 |
 | 入力タイプ | テキスト、ドロップダウン、ラジオボタン、ファイル選択 |
 
 **食事入力フォームUI実装** ✅ 完了
