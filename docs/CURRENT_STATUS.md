@@ -404,12 +404,15 @@ POST /updateMealFormSettings?admin=true - 設定更新（adminパラメータ必
 ```bash
 # テスト1: 基本データ
 curl -X POST ".../submitMealRecord" -d '{"staffName":"テスト太郎","facility":"あおぞら荘",...}'
-→ {"success":true,"data":{"postId":"MEAL_20251214132211_5592","sheetRow":26274}}
+→ {"success":true,"data":{"postId":"MEL20251214132211230123456","sheetRow":26274}}
 
 # テスト2: デイサービス利用中
 curl -X POST ".../submitMealRecord" -d '{"dayServiceUsage":"利用中","dayServiceName":"デイサービスあおぞら",...}'
-→ {"success":true,"data":{"postId":"MEAL_20251214132220_5143","sheetRow":26275}}
+→ {"success":true,"data":{"postId":"MEL20251214132220143654321","sheetRow":26275}}
 ```
+
+> **投稿ID形式**: `MEL{YYYYMMDDHHmmssSSS}{6桁乱数}`（約26文字）
+> 既存システムの投稿IDプレフィックス（HYD, ORC, MED, NTC, WTM, CNF）に準拠
 
 ---
 

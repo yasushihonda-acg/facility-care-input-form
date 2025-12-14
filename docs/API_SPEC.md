@@ -198,7 +198,7 @@ Content-Type: application/json
 {
   "success": true,
   "data": {
-    "postId": "MEAL_20251214132211_5592",
+    "postId": "MEL20251214132211230123456",
     "sheetRow": 26274
   },
   "timestamp": "2025-12-14T13:22:13.230Z"
@@ -207,7 +207,7 @@ Content-Type: application/json
 
 | フィールド | 型 | 説明 |
 |------------|-----|------|
-| `postId` | string | 生成された投稿ID（MEAL_YYYYMMDD_HHmmss_XXXX形式） |
+| `postId` | string | 生成された投稿ID（MEL{YYYYMMDDHHmmssSSS}{6桁乱数}形式、約26文字） |
 | `sheetRow` | number | Sheet Bに追記された行番号 |
 
 > **参照**: フォーム仕様の詳細は [MEAL_INPUT_FORM_SPEC.md](./MEAL_INPUT_FORM_SPEC.md) を参照
