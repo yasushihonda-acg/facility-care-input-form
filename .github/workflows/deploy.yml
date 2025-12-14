@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'functions/**'
+      - 'frontend/**'
       - 'firestore.rules'
       - 'firestore.indexes.json'
       - 'firebase.json'
@@ -56,3 +57,14 @@ jobs:
 
       - name: Deploy Firestore Rules
         run: firebase deploy --only firestore:rules,firestore:indexes --project facility-care-input-form
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Deploy Hosting
+        run: firebase deploy --only hosting --project facility-care-input-form
