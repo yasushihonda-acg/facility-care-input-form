@@ -42,9 +42,9 @@ export function formatMealRecordMessage(record: MealRecordForChat): string {
   // - injectionType + injectionAmount → 「{injectionType}（{injectionAmount}）」
   let intakeMethod = "経口";
   if (record.injectionType) {
-    intakeMethod = record.injectionAmount
-      ? `${record.injectionType}（${record.injectionAmount}）`
-      : record.injectionType;
+    intakeMethod = record.injectionAmount ?
+      `${record.injectionType}（${record.injectionAmount}）` :
+      record.injectionType;
   }
 
   // メッセージ本文を組み立て

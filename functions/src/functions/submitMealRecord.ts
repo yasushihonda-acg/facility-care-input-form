@@ -157,9 +157,9 @@ async function submitMealRecordHandler(
       // Firestoreから設定を取得
       const db = getFirestore();
       const settingsDoc = await db.collection("settings").doc("mealFormDefaults").get();
-      const settings = settingsDoc.exists
-        ? (settingsDoc.data() as MealFormSettings)
-        : null;
+      const settings = settingsDoc.exists ?
+        (settingsDoc.data() as MealFormSettings) :
+        null;
 
       if (settings && (settings.webhookUrl || settings.importantWebhookUrl)) {
         // Webhook送信用データを作成
