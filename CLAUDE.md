@@ -35,6 +35,7 @@
 | `docs/BUSINESS_RULES.md` | 業務ルール・Bot連携ハック |
 | `docs/API_SPEC.md` | API仕様書 |
 | `docs/SHEET_B_STRUCTURE.md` | Sheet B（実績入力先）構造 |
+| `docs/MEAL_INPUT_FORM_SPEC.md` | 食事入力フォーム設計書 |
 
 ---
 
