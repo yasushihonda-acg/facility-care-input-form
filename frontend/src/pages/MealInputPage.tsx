@@ -3,13 +3,11 @@ import { Link, useSearchParams } from 'react-router-dom';
 import type { MealInputForm } from '../types/mealForm';
 import {
   initialMealForm,
-  FACILITIES,
   RESIDENTS,
   MEAL_TIMES,
   INTAKE_RATIOS,
   INJECTION_TYPES,
   INJECTION_AMOUNTS,
-  DAY_SERVICES,
 } from '../types/mealForm';
 import { submitMealRecord } from '../api';
 import { Layout } from '../components/Layout';
@@ -41,13 +39,13 @@ export function MealInputPage() {
     }
   }, [isSettingsLoading, settings]);
 
-  // 施設リスト（設定値が選択肢にない場合は動的追加）
+  // 施設リスト（初期値のみ表示）
   const availableFacilities = useMemo(() => {
-    const facilities: string[] = [...FACILITIES];
-    if (settings.defaultFacility && !facilities.includes(settings.defaultFacility)) {
-      facilities.unshift(settings.defaultFacility);
+    // 初期値が設定されている場合のみ、その値だけを選択肢として表示
+    if (settings.defaultFacility) {
+      return [settings.defaultFacility];
     }
-    return facilities;
+    return [];
   }, [settings.defaultFacility]);
 
   // 施設に連動した利用者リスト（設定値が選択肢にない場合は動的追加）
@@ -64,19 +62,13 @@ export function MealInputPage() {
     return residents;
   }, [form.facility, settings.defaultFacility, settings.defaultResidentName]);
 
-  // デイサービスリスト（設定値が選択肢にない場合は動的追加）
+  // デイサービスリスト（初期値のみ表示）
   const availableDayServices = useMemo(() => {
-    const services: string[] = [...DAY_SERVICES];
-    if (settings.defaultDayServiceName && !services.includes(settings.defaultDayServiceName)) {
-      // 「その他」の前に挿入
-      const otherIndex = services.indexOf('その他');
-      if (otherIndex >= 0) {
-        services.splice(otherIndex, 0, settings.defaultDayServiceName);
-      } else {
-        services.push(settings.defaultDayServiceName);
-      }
+    // 初期値が設定されている場合のみ、その値だけを選択肢として表示
+    if (settings.defaultDayServiceName) {
+      return [settings.defaultDayServiceName];
     }
-    return services;
+    return [];
   }, [settings.defaultDayServiceName]);
 
   // フィールド更新
