@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月14日 (Phase 4.9 同期競合防止 + コスト最適化)
+> **最終更新**: 2025年12月14日 (Phase 5.0 食事入力フォームUI実装)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -228,18 +228,49 @@
 | `sync-plan-data-incremental` | `*/15 * * * *` (15分毎) | 差分同期 |
 | `sync-plan-data-full` | `0 3 * * *` (午前3時) | 完全同期 |
 
+### Phase 5.0: 食事入力フォームUI実装 ✅ 完了
+
+> **詳細**: [SHEET_B_STRUCTURE.md](./SHEET_B_STRUCTURE.md) / [MEAL_INPUT_FORM_SPEC.md](./MEAL_INPUT_FORM_SPEC.md)
+
+**実装内容**:
+
+1. **型定義・定数** ✅
+   - `frontend/src/types/mealForm.ts`
+   - MealInputForm インターフェース
+   - 施設・利用者・摂取量等の選択肢定数
+
+2. **フォームUI** ✅
+   - `frontend/src/pages/MealInputPage.tsx`
+   - 13フィールド（必須6、任意7）
+   - 施設選択に連動した利用者リスト
+   - バリデーション・送信処理（デモ版）
+
+3. **ナビゲーション** ✅
+   - `/input/meal` ルート追加
+   - ホーム画面にFABボタン（+）追加
+
+**動作確認**:
+- URL: https://facility-care-input-form.web.app/input/meal
+- ホーム画面右下の「+」ボタンからアクセス可能
+
+**制約事項**:
+- 送信はデモ版（コンソールログ出力のみ）
+- Sheet Bへの実際の書き込みはサービスアカウント共有後に実装
+
+---
+
 ### 次のタスク
 
-現在、全てのデモ版機能が完了しています。
+**Sheet B連携（ブロック中）**:
+- 共有ドライブのセキュリティ制限により、サービスアカウントへの共有が不可
+- 代替案:
+  1. 個人ドライブにスプレッドシートをコピー
+  2. 管理者にセキュリティ設定変更を依頼
+  3. Firestore経由での間接書き込み
 
 **オプション機能**:
 1. CSVエクスポート: 表示中のデータをCSVでダウンロード
 2. オフラインキャッシュ強化: ServiceWorkerでAPI応答をキャッシュ
-
-### 将来の機能追加（オプション）
-
-1. **CSVエクスポート**: 表示中のデータをCSVでダウンロード
-2. **オフラインキャッシュ強化**: ServiceWorkerでAPI応答をキャッシュ
 
 ---
 
@@ -298,6 +329,7 @@ Phase 4.5: デザイン改善          █████████████�
 Phase 4.7: テーブルビュー表示カラム ████████████████████ 100% (完了)
 Phase 4.8: テーブル最適化          ████████████████████ 100% (完了)
 Phase 4.9: 同期競合防止+コスト最適化 ████████████████████ 100% (完了)
+Phase 5.0: 食事入力フォームUI     ████████████████████ 100% (完了)
 ```
 
 詳細: [docs/ROADMAP.md](./ROADMAP.md)
@@ -363,18 +395,24 @@ facility-care-input-form/
 │   │   ├── api/index.ts          # API呼び出し (汎用型対応)
 │   │   ├── components/
 │   │   │   ├── Header.tsx        # ヘッダー (同期ボタン + トースト)
-│   │   │   ├── RecordCard.tsx    # レコードカード (汎用データ表示)
-│   │   │   ├── SheetCard.tsx     # シートカード
-│   │   │   ├── LoadingSpinner.tsx
-│   │   │   └── ErrorMessage.tsx
+│   │   │   ├── DataTable.tsx     # テーブルビュー
+│   │   │   ├── DetailModal.tsx   # 詳細モーダル
+│   │   │   ├── YearPaginator.tsx # 年切り替え
+│   │   │   ├── MonthFilter.tsx   # 月フィルタ
+│   │   │   └── ...
+│   │   ├── config/
+│   │   │   └── tableColumns.ts   # シート別カラム設定
 │   │   ├── hooks/
-│   │   │   ├── useSync.ts        # 同期処理 (15分自動同期)
+│   │   │   ├── useSync.ts        # 同期処理
 │   │   │   └── usePlanData.ts    # データ取得
 │   │   ├── pages/
-│   │   │   ├── HomePage.tsx      # タブUI実装
+│   │   │   ├── HomePage.tsx      # ホーム（タブUI + FAB）
+│   │   │   ├── MealInputPage.tsx # 食事入力フォーム ← New!
 │   │   │   └── SheetDetailPage.tsx
-│   │   ├── types/index.ts        # 型定義 (PlanDataRecord等)
-│   │   ├── App.tsx
+│   │   ├── types/
+│   │   │   ├── index.ts          # 型定義 (PlanDataRecord等)
+│   │   │   └── mealForm.ts       # 食事フォーム型定義 ← New!
+│   │   ├── App.tsx               # ルーティング
 │   │   ├── main.tsx
 │   │   └── index.css             # TailwindCSS v4
 │   ├── public/                   # PWAアイコン等
@@ -393,12 +431,14 @@ facility-care-input-form/
 │       ├── getPlanData.ts        # シート別フィルタ対応
 │       └── ...
 ├── docs/
-│   ├── CURRENT_STATUS.md         # このファイル
-│   ├── SHEET_A_STRUCTURE.md      # スプレッドシート構造ドキュメント
+│   ├── CURRENT_STATUS.md         # このファイル（再開時に最初に読む）
+│   ├── SHEET_A_STRUCTURE.md      # Sheet A（読み取り）構造
+│   ├── SHEET_B_STRUCTURE.md      # Sheet B（書き込み）構造 ← New!
+│   ├── MEAL_INPUT_FORM_SPEC.md   # 食事入力フォーム設計書 ← New!
 │   ├── SYNC_STRATEGY.md          # 同期戦略設計書
-│   ├── SYNC_CONCURRENCY.md       # 同期競合防止設計（Phase 4.8）
-│   ├── DESIGN_GUIDELINES.md      # デザインガイドライン（Phase 4.5）
-│   ├── TABLE_VIEW_COLUMNS.md     # テーブルビュー表示カラム設計（Phase 4.7）
+│   ├── SYNC_CONCURRENCY.md       # 同期競合防止設計
+│   ├── DESIGN_GUIDELINES.md      # デザインガイドライン
+│   ├── TABLE_VIEW_COLUMNS.md     # テーブルビュー表示カラム設計
 │   └── ...
 ├── firebase.json
 └── firestore.rules

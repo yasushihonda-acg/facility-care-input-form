@@ -107,11 +107,17 @@ firebase use facility-care-input-form
 # Emulator起動
 firebase emulators:start --only functions,firestore
 
-# ビルド
+# Functions ビルド
 npm run build --prefix functions
 
-# Lint
+# Functions Lint
 npm run lint --prefix functions
+
+# Frontend ビルド
+cd frontend && npm run build
+
+# Frontend 開発サーバー
+cd frontend && npm run dev
 ```
 
 ### デプロイ
@@ -119,8 +125,14 @@ npm run lint --prefix functions
 # Functions デプロイ
 firebase deploy --only functions
 
+# Hosting デプロイ（フロントエンド）
+firebase deploy --only hosting
+
 # Firestore Rules デプロイ
 firebase deploy --only firestore:rules
+
+# 全てデプロイ
+firebase deploy
 ```
 
 ---
@@ -131,29 +143,31 @@ firebase deploy --only firestore:rules
 facility-care-input-form/
 ├── CLAUDE.md              # このファイル
 ├── README.md
-├── .firebaserc
-├── .gitignore
 ├── firebase.json
 ├── firestore.rules
-├── firestore.indexes.json
-├── docs/
-│   ├── CURRENT_STATUS.md  # 進捗管理（再開時に最初に読む）
-│   ├── ROADMAP.md         # 開発ロードマップ
-│   ├── SETUP.md           # 環境構築手順
-│   ├── ARCHITECTURE.md    # システム設計
-│   ├── BUSINESS_RULES.md  # 業務ルール
-│   └── API_SPEC.md        # API仕様
-├── functions/
+├── frontend/              # デモ版PWA (React + Vite + TailwindCSS)
 │   ├── src/
-│   │   └── index.ts
-│   ├── package.json
-│   ├── tsconfig.json
-│   ├── .eslintrc.js
-│   └── .env               # 環境変数（Git管理外）
+│   │   ├── pages/
+│   │   │   ├── HomePage.tsx       # ホーム（記録閲覧）
+│   │   │   └── MealInputPage.tsx  # 食事入力フォーム
+│   │   ├── components/            # UIコンポーネント
+│   │   ├── hooks/                 # カスタムフック
+│   │   ├── types/                 # 型定義
+│   │   └── config/                # 設定ファイル
+│   └── package.json
+├── functions/             # Cloud Functions
+│   ├── src/
+│   │   ├── index.ts               # エントリポイント
+│   │   ├── functions/             # 各エンドポイント
+│   │   └── services/              # サービス層
+│   └── package.json
+├── docs/
+│   ├── CURRENT_STATUS.md  # 進捗管理（**再開時に最初に読む**）
+│   ├── SHEET_B_STRUCTURE.md       # Sheet B構造
+│   ├── MEAL_INPUT_FORM_SPEC.md    # 食事フォーム設計
+│   └── ...                        # その他設計ドキュメント
 ├── keys/                  # サービスアカウントキー（Git管理外）
-│   └── sa-key.json
-└── .github/
-    └── workflows/         # CI/CD設定
+└── .github/workflows/     # CI/CD設定
 ```
 
 ---
