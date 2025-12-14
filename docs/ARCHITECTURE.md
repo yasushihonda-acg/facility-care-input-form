@@ -249,12 +249,18 @@ service cloud.firestore {
 
 | ドキュメント | 内容 |
 |--------------|------|
-| [ROADMAP.md](./ROADMAP.md) | 開発ロードマップ（Phase 1〜4） |
+| [CURRENT_STATUS.md](./CURRENT_STATUS.md) | **現在の進捗状況**（再開時に最初に読む） |
+| [ROADMAP.md](./ROADMAP.md) | 開発ロードマップ（Phase 1〜6） |
 | [SETUP.md](./SETUP.md) | 環境セットアップガイド（CLI版） |
 | [BUSINESS_RULES.md](./BUSINESS_RULES.md) | 業務ルール・Bot連携ハック |
 | [API_SPEC.md](./API_SPEC.md) | API仕様書（Dev Mode） |
 | [SYNC_CONCURRENCY.md](./SYNC_CONCURRENCY.md) | 同期処理の競合防止設計 |
 | [TABLE_VIEW_COLUMNS.md](./TABLE_VIEW_COLUMNS.md) | テーブルビュー表示カラム設計 |
+| [GOOGLE_CHAT_WEBHOOK_SPEC.md](./GOOGLE_CHAT_WEBHOOK_SPEC.md) | Google Chat Webhook仕様 |
+| [PHOTO_UPLOAD_SPEC.md](./PHOTO_UPLOAD_SPEC.md) | 写真アップロード仕様 |
+| [SETTINGS_MODAL_UI_SPEC.md](./SETTINGS_MODAL_UI_SPEC.md) | 設定モーダルUI仕様 |
+| [MEAL_INPUT_FORM_SPEC.md](./MEAL_INPUT_FORM_SPEC.md) | 食事入力フォーム設計 |
+| [SHEET_B_STRUCTURE.md](./SHEET_B_STRUCTURE.md) | Sheet B（書き込み先）構造 |
 
 ---
 
@@ -331,14 +337,26 @@ graph LR
 
 詳細は [ROADMAP.md](./ROADMAP.md) を参照してください。
 
-1. ✅ ドキュメント作成（本ファイル）
-2. ✅ BUSINESS_RULES.md 作成
-3. ✅ API_SPEC.md 作成
-4. ✅ ROADMAP.md 作成
-5. ✅ SETUP.md 作成
-6. ✅ Phase 1: 基盤構築（GCP/Firebase）
-7. ✅ Phase 2: バックエンド実装
-8. ✅ Phase 3: デプロイ・検証（Sheet A読み取り完了）
-9. ✅ Phase 4: デモ版PWA開発・公開
-10. ✅ Phase 4.1: タブUI・汎用データモデル実装
-11. ⬜ Phase 4.2: テーブルビュー・検索・ソート機能
+### 完了済みPhase
+
+| Phase | 内容 | 状態 |
+|-------|------|------|
+| Phase 1 | 基盤構築（GCP/Firebase） | ✅ 完了 |
+| Phase 2 | バックエンド実装 | ✅ 完了 |
+| Phase 3 | デプロイ・検証 | ✅ 完了 |
+| Phase 4 | デモ版PWA開発 | ✅ 完了 |
+| Phase 4.1〜4.9 | UI改善・同期最適化 | ✅ 完了 |
+| Phase 5.0〜5.2 | 食事入力フォーム | ✅ 完了 |
+| Phase 5.3〜5.4 | 管理者初期値設定 | ✅ 完了 |
+| Phase 5.5 | Google Chat Webhook連携 | ✅ 完了 |
+| Phase 5.6 | 写真アップロードフォルダ設定 | ✅ 完了 |
+| Phase 5.7 | 設定モーダルUI改善 | ✅ 完了 |
+| Phase 6.0 | フッターナビゲーション | ✅ 完了 |
+
+### 次のオプション機能
+
+| 機能 | 説明 | 優先度 |
+|------|------|--------|
+| 他入力フォーム | 水分・排泄・バイタル等 | 中 |
+| CSVエクスポート | 表示中のデータをダウンロード | 低 |
+| オフラインキャッシュ強化 | ServiceWorker改善 | 低 |

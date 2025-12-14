@@ -74,9 +74,11 @@ https://asia-northeast1-facility-care-input-form.cloudfunctions.net
 | POST | `/syncPlanData` | 記録データを同期 | Flow A | ✅ |
 | GET | `/getPlanData` | 同期済み記録を取得 | - | ✅ |
 | POST | `/submitMealRecord` | 食事記録を入力 | Flow B | ✅ |
+| GET | `/getMealFormSettings` | 食事フォーム設定を取得 | - | ✅ |
+| POST | `/updateMealFormSettings` | 食事フォーム設定を更新 | - | ✅ |
+| POST | `/uploadCareImage` | 画像をアップロード | 画像連携 | ✅ |
 | POST | `/submitCareRecord` | ケア実績を入力 (deprecated) | Flow B | ❌ |
 | POST | `/submitFamilyRequest` | 家族要望を送信 | Flow C | ❌ |
-| POST | `/uploadCareImage` | 画像をアップロード | 画像連携 | ❌ |
 | GET | `/getFamilyRequests` | 家族要望一覧を取得 | - | ❌ |
 
 > **デモ版**: PWAで使用するエンドポイント

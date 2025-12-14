@@ -26,16 +26,43 @@
 
 ### 主要ドキュメント
 
+#### 必読（再開時）
 | ファイル | 用途 |
 |----------|------|
-| `docs/CURRENT_STATUS.md` | 現在の進捗・次のタスク（**再開時に最初に読む**） |
-| `docs/DEMO_PWA_SPEC.md` | デモ版PWA仕様（読み取り専用） |
+| `docs/CURRENT_STATUS.md` | **現在の進捗・次のタスク**（再開時に最初に読む） |
 | `docs/ROADMAP.md` | 開発ロードマップ・Phase別手順 |
-| `docs/ARCHITECTURE.md` | システム設計・データフロー |
+
+#### 設計・仕様
+| ファイル | 用途 |
+|----------|------|
+| `docs/ARCHITECTURE.md` | システム全体設計・データフロー |
+| `docs/API_SPEC.md` | API仕様書（全エンドポイント） |
 | `docs/BUSINESS_RULES.md` | 業務ルール・Bot連携ハック |
-| `docs/API_SPEC.md` | API仕様書 |
-| `docs/SHEET_B_STRUCTURE.md` | Sheet B（実績入力先）構造 |
-| `docs/MEAL_INPUT_FORM_SPEC.md` | 食事入力フォーム設計書 |
+
+#### 機能別仕様
+| ファイル | 用途 |
+|----------|------|
+| `docs/MEAL_INPUT_FORM_SPEC.md` | 食事入力フォーム設計 |
+| `docs/GOOGLE_CHAT_WEBHOOK_SPEC.md` | Google Chat Webhook連携 |
+| `docs/PHOTO_UPLOAD_SPEC.md` | 写真アップロード・フォルダ設定 |
+| `docs/SETTINGS_MODAL_UI_SPEC.md` | 設定モーダルUI仕様 |
+| `docs/FOOTER_NAVIGATION_SPEC.md` | フッターナビゲーション仕様 |
+
+#### データ構造
+| ファイル | 用途 |
+|----------|------|
+| `docs/SHEET_A_STRUCTURE.md` | Sheet A（記録の結果/読み取り）構造 |
+| `docs/SHEET_B_STRUCTURE.md` | Sheet B（実績入力/書き込み）構造 |
+| `docs/TABLE_VIEW_COLUMNS.md` | テーブルビュー表示カラム設計 |
+
+#### その他
+| ファイル | 用途 |
+|----------|------|
+| `docs/DEMO_PWA_SPEC.md` | デモ版PWA仕様 |
+| `docs/DESIGN_GUIDELINES.md` | デザインガイドライン |
+| `docs/SYNC_STRATEGY.md` | 同期戦略設計 |
+| `docs/SYNC_CONCURRENCY.md` | 同期競合防止設計 |
+| `docs/SETUP.md` | 環境セットアップガイド |
 
 ---
 

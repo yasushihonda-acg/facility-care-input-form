@@ -820,7 +820,7 @@ Accent: #14B8A6 (Teal)
 
 ---
 
-## Phase 4.8: 同期競合防止 + コスト最適化 🔄 実装中
+## Phase 4.8: 同期競合防止 + コスト最適化 ✅ 完了
 
 **目的**:
 1. 複数ユーザー・複数デバイスからの同時同期によるデータ重複を防止
@@ -828,95 +828,170 @@ Accent: #14B8A6 (Teal)
 
 > **詳細**: [SYNC_CONCURRENCY.md](./SYNC_CONCURRENCY.md) を参照
 
-### 4.8-1. 問題（インシデント 2025-12-14）
+### Phase 4.8 完了条件 ✅
 
-- Firestoreの`plan_data`コレクションで全レコードが2重に保存
-- 原因: 複数の`syncPlanData`処理が同時実行（Race Condition）
-- フロントエンドでの対策（localStorage）は同一ブラウザ内のみ有効で不十分
+- [x] バックエンド差分同期ロジック実装
+- [x] 決定論的ドキュメントID実装
+- [x] Cloud Scheduler ジョブ作成（差分/完全）
+- [x] フロントエンドから`syncPlanData`呼び出しを削除
+- [x] 「更新」ボタンがFirestoreキャッシュ再取得のみ実行
+- [x] デプロイ・動作検証完了
+- [x] ドキュメント更新完了
 
-### 4.8-2. 採用設計: Cloud Scheduler + 差分同期 + 日次洗い替え
+---
 
-MoE多角的評価の結果、以下の設計を採用:
+## Phase 5.3: グローバル初期値設定（コード定数版） ✅ 完了
 
-| 項目 | 変更前 | 変更後 |
-|------|--------|--------|
-| 15分自動同期 | PWAのsetInterval（洗い替え） | **Cloud Scheduler（差分同期）** |
-| 日次同期 | なし | **Cloud Scheduler（完全同期/午前3時）** |
-| 手動同期 | syncPlanData API呼び出し | **Firestoreキャッシュ再取得のみ** |
-| 競合リスク | 複数トリガーで競合 | **単一トリガーで競合なし** |
-| 重複防止 | なし | **決定論的ドキュメントID** |
-| 月間コスト | 約$144 | **約$5-15（90%削減）** |
+**目的**: 食事入力フォームの初期値を全ユーザー共通で管理
 
-### 4.8-3. 実装タスク
+> **注意**: Phase 5.4でFirestore + API方式に置き換えられました
 
-| タスク | 状態 |
-|--------|------|
-| `syncPlanData.ts` incremental パラメータ追加 | 未実装 |
-| `firestoreService.ts` 差分同期ロジック追加 | 未実装 |
-| `firestoreService.ts` 決定論的ID生成追加 | 未実装 |
-| `sync_metadata` コレクション対応 | 未実装 |
-| Cloud Scheduler ジョブ作成（差分/完全） | 未実装 |
-| `useSync.ts` 簡素化 | 未実装 |
-| `Header.tsx` UI変更（同期→更新） | 未実装 |
-| デプロイ・検証 | 未実装 |
+### Phase 5.3 完了条件 ✅
 
-### 4.8-4. Cloud Scheduler コマンド
+- [x] 初期値をコード内定数として定義
+- [x] フォームに初期値を適用
 
-```bash
-# 15分ごと差分同期
-gcloud scheduler jobs create http sync-plan-data-incremental \
-  --location=asia-northeast1 \
-  --schedule="*/15 * * * *" \
-  --uri="https://asia-northeast1-facility-care-input-form.cloudfunctions.net/syncPlanData" \
-  --http-method=POST \
-  --headers="Content-Type=application/json" \
-  --message-body='{"triggeredBy":"scheduler","incremental":true}' \
-  --time-zone="Asia/Tokyo" \
-  --description="15分ごとの差分同期"
+---
 
-# 日次完全同期（午前3時）
-gcloud scheduler jobs create http sync-plan-data-full \
-  --location=asia-northeast1 \
-  --schedule="0 3 * * *" \
-  --uri="https://asia-northeast1-facility-care-input-form.cloudfunctions.net/syncPlanData" \
-  --http-method=POST \
-  --headers="Content-Type=application/json" \
-  --message-body='{"triggeredBy":"scheduler","incremental":false}' \
-  --time-zone="Asia/Tokyo" \
-  --description="日次の完全同期（午前3時）"
+## Phase 5.4: 管理者初期値設定（Firestore + API） ✅ 完了
+
+**目的**: 管理者がコード修正なしで初期値を変更可能にする
+
+### 5.4-1. 実装内容
+
+| 項目 | 内容 |
+|------|------|
+| バックエンドAPI | `getMealFormSettings` / `updateMealFormSettings` |
+| データ保存先 | Firestore `settings/mealFormDefaults` |
+| 管理者アクセス | `?admin=true` パラメータで設定UI表示 |
+
+### 5.4-2. 設定項目
+
+| 項目 | 説明 |
+|------|------|
+| defaultFacility | デフォルト施設名 |
+| defaultResidentName | デフォルト利用者名 |
+| defaultDayServiceName | デフォルトデイサービス名 |
+
+### Phase 5.4 完了条件 ✅
+
+- [x] Cloud Functions API実装
+- [x] Firestoreデータ保存
+- [x] フロントエンド設定モーダル作成
+- [x] デプロイ・動作確認
+
+---
+
+## Phase 5.5: Google Chat Webhook連携 ✅ 完了
+
+**目的**: 食事記録入力時にGoogle Chatスペースへ自動通知
+
+> **詳細**: [GOOGLE_CHAT_WEBHOOK_SPEC.md](./GOOGLE_CHAT_WEBHOOK_SPEC.md) を参照
+
+### 5.5-1. 通知フロー
+
+```
+[食事記録入力] → [Sheet B書き込み成功]
+    ├─→ [通常Webhook] 全記録を通知
+    └─→ [重要Webhook] isImportant="重要" のみ追加通知
 ```
 
-### Phase 4.8 完了条件
+### 5.5-2. 設定項目（追加）
 
-- [ ] バックエンド差分同期ロジック実装
-- [ ] 決定論的ドキュメントID実装
-- [ ] Cloud Scheduler ジョブ作成（差分/完全）
-- [ ] フロントエンドから`syncPlanData`呼び出しを削除
-- [ ] 「更新」ボタンがFirestoreキャッシュ再取得のみ実行
-- [ ] シミュレーション・競合テスト合格
-- [ ] デプロイ・動作検証完了
-- [ ] ドキュメント更新完了
+| 項目 | 説明 |
+|------|------|
+| webhookUrl | 通常Webhook URL（全記録通知） |
+| importantWebhookUrl | 重要Webhook URL（重要記録のみ追加通知） |
+
+### Phase 5.5 完了条件 ✅
+
+- [x] Webhook送信サービス作成 (`googleChatService.ts`)
+- [x] 設定API拡張（Webhook URL保存）
+- [x] submitMealRecord修正（Webhook送信追加）
+- [x] フロントエンド設定UI拡張
+- [x] デプロイ・動作確認
+
+---
+
+## Phase 5.6: 写真アップロードフォルダ設定 ✅ 完了
+
+**目的**: 写真アップロード先のGoogle Driveフォルダを管理者が指定可能にする
+
+> **詳細**: [PHOTO_UPLOAD_SPEC.md](./PHOTO_UPLOAD_SPEC.md) を参照
+
+### 5.6-1. アップロードフロー
+
+```
+[写真選択] → [POST /uploadCareImage]
+    ├─→ Firestore: driveUploadFolderId を取得
+    ├─→ 設定済み: {指定フォルダ}/{YYYY}/{MM}/{filename}
+    └─→ 未設定: CareRecordImages/{YYYY}/{MM}/{filename} (後方互換)
+```
+
+### 5.6-2. 設定項目（追加）
+
+| 項目 | 説明 |
+|------|------|
+| driveUploadFolderId | 写真保存先Google DriveフォルダID |
+
+### Phase 5.6 完了条件 ✅
+
+- [x] 型定義拡張（backend + frontend）
+- [x] driveService修正（フォルダID対応）
+- [x] uploadCareImage修正（設定読み取り）
+- [x] フロントエンド設定UI拡張
+- [x] デプロイ・動作確認
+
+---
+
+## Phase 5.7: 設定モーダルUI改善 ✅ 完了
+
+**目的**: 設定モーダルの誤操作防止とUX改善
+
+> **詳細**: [SETTINGS_MODAL_UI_SPEC.md](./SETTINGS_MODAL_UI_SPEC.md) を参照
+
+### 5.7-1. 変更内容
+
+| 要素 | Before | After |
+|------|--------|-------|
+| フッター左ボタン | クリア | キャンセル |
+| フッター右ボタン | 保存 | 保存（変更なし） |
+| クリア機能 | フッターボタン | 本文下部の赤テキストリンク |
+| クリア確認 | なし | 確認ダイアログ追加 |
+
+### Phase 5.7 完了条件 ✅
+
+- [x] フッターボタン配置変更
+- [x] クリアリンクを本文下部に移動
+- [x] 確認ダイアログ追加
+- [x] デプロイ・動作確認
 
 ---
 
 ## マイルストーンサマリー
 
 ```
-Phase 1: 基盤構築            ████████████████████ 100% (完了)
-Phase 2: バックエンド実装     ████████████████████ 100% (完了)
-Phase 3: デプロイ・検証       ████████████████████ 100% (完了)
-Phase 4: デモ版PWA開発       ████████████████████ 100% (完了)
-Phase 4.1: タブUI・汎用モデル  ████████████████████ 100% (完了)
-Phase 4.2: テーブルビュー     ████████████████████ 100% (完了)
-Phase 4.3: 全シート同期       ████████████████████ 100% (完了)
-Phase 4.4: シート順序修正     ████████████████████ 100% (完了)
-Phase 4.5: デザイン改善       ████████████████████ 100% (完了)
-Phase 4.9: 同期競合防止       ████████████████████ 100% (完了)
-Phase 5.0: 食事入力フォームUI ████████████████████ 100% (完了)
-Phase 5.1: Sheet B SA接続    ████████████████████ 100% (完了)
-Phase 5.2: 食事入力フォームAPI ████████████████████ 100% (完了)
-                             ─────────────────────
-                             合計: 50+ tasks
+Phase 1: 基盤構築              ████████████████████ 100% (完了)
+Phase 2: バックエンド実装       ████████████████████ 100% (完了)
+Phase 3: デプロイ・検証         ████████████████████ 100% (完了)
+Phase 4: デモ版PWA開発         ████████████████████ 100% (完了)
+Phase 4.1: タブUI・汎用モデル    ████████████████████ 100% (完了)
+Phase 4.2: テーブルビュー       ████████████████████ 100% (完了)
+Phase 4.3: 全シート同期         ████████████████████ 100% (完了)
+Phase 4.4: シート順序修正       ████████████████████ 100% (完了)
+Phase 4.5: デザイン改善         ████████████████████ 100% (完了)
+Phase 4.9: 同期競合防止         ████████████████████ 100% (完了)
+Phase 5.0: 食事入力フォームUI   ████████████████████ 100% (完了)
+Phase 5.1: Sheet B SA接続      ████████████████████ 100% (完了)
+Phase 5.2: 食事入力フォームAPI  ████████████████████ 100% (完了)
+Phase 5.3: グローバル初期値設定  ████████████████████ 100% (完了)
+Phase 5.4: 管理者初期値設定     ████████████████████ 100% (完了)
+Phase 5.5: Google Chat Webhook ████████████████████ 100% (完了)
+Phase 5.6: 写真フォルダ設定     ████████████████████ 100% (完了)
+Phase 5.7: 設定モーダルUI改善   ████████████████████ 100% (完了)
+Phase 6.0: フッターナビゲーション ████████████████████ 100% (完了)
+                               ─────────────────────
+                               合計: 70+ tasks
 ```
 
 | Phase | タスク数 | 主な成果物 | 状態 |
@@ -934,6 +1009,11 @@ Phase 5.2: 食事入力フォームAPI █████████████�
 | Phase 5.0 | 3 | 食事入力フォームUI | ✅ 完了 |
 | Phase 5.1 | 2 | Sheet B サービスアカウント接続 | ✅ 完了 |
 | Phase 5.2 | 5 | submitMealRecord API実装・動作確認 | ✅ 完了 |
+| Phase 5.3 | 2 | グローバル初期値設定（コード定数版） | ✅ 完了 |
+| Phase 5.4 | 4 | 管理者初期値設定（Firestore + API） | ✅ 完了 |
+| Phase 5.5 | 4 | Google Chat Webhook連携 | ✅ 完了 |
+| Phase 5.6 | 4 | 写真アップロードフォルダ設定 | ✅ 完了 |
+| Phase 5.7 | 2 | 設定モーダルUI改善 | ✅ 完了 |
 | Phase 6.0 | 4 | フッターナビゲーション基盤 | ✅ 完了 |
 | Phase 6.1 | - | ビュー分離（閲覧/入力） | ✅ 完了（6.0に統合） |
 
