@@ -24,6 +24,7 @@ export function MealSettingsModal({
   });
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   // 設定が変更されたら同期
   useEffect(() => {
@@ -58,7 +59,8 @@ export function MealSettingsModal({
     }
   };
 
-  const handleClear = async () => {
+  const handleClearConfirm = async () => {
+    setShowClearConfirm(false);
     setIsSaving(true);
     setSaveMessage(null);
     try {
@@ -314,16 +316,31 @@ export function MealSettingsModal({
             <p className="font-medium mb-1">注意</p>
             <p>この設定は全ユーザーに即座に反映されます。</p>
           </div>
+
+          {/* 全設定をクリア（危険な操作） */}
+          <div className="pt-2 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={() => setShowClearConfirm(true)}
+              disabled={isSaving}
+              className="flex items-center gap-1.5 text-sm text-red-500 hover:text-red-600 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              全設定をクリア
+            </button>
+          </div>
         </div>
 
         {/* フッター */}
         <div className="px-5 py-4 border-t border-gray-200 bg-gray-50 flex gap-3">
           <button
-            onClick={handleClear}
+            onClick={onClose}
             disabled={isSaving}
             className="flex-1 py-2.5 px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium disabled:opacity-50"
           >
-            クリア
+            キャンセル
           </button>
           <button
             onClick={handleSave}
@@ -334,6 +351,39 @@ export function MealSettingsModal({
           </button>
         </div>
       </div>
+
+      {/* クリア確認ダイアログ */}
+      {showClearConfirm && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowClearConfirm(false)}
+          />
+          <div className="relative bg-white rounded-xl shadow-2xl w-[85%] max-w-sm mx-4 p-5">
+            <h3 className="text-lg font-bold text-gray-800 mb-2">
+              全設定をクリアしますか？
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              この操作は取り消せません。<br />
+              全ての初期値設定が空になります。
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowClearConfirm(false)}
+                className="flex-1 py-2.5 px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleClearConfirm}
+                className="flex-1 py-2.5 px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium"
+              >
+                クリア
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
