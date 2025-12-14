@@ -107,3 +107,23 @@ export const DAY_SERVICES = [
   'デイサービスさくら',
   'その他',
 ] as const;
+
+/**
+ * グローバル初期値設定（全ユーザー共通）
+ *
+ * 注意: この値は全ユーザーに等しく適用されます。
+ * 変更する場合はコードを修正してデプロイが必要です。
+ *
+ * 現在の設定:
+ * - facility: 空（ユーザーが毎回選択）
+ * - residentName: 空（施設選択後に選択）
+ * - dayServiceName: 空（必要に応じて選択）
+ */
+export const GLOBAL_DEFAULTS = {
+  /** デフォルト施設（空文字 = 未選択） */
+  facility: '',
+  /** デフォルト利用者名（空文字 = 未選択） */
+  residentName: '',
+  /** デフォルトデイサービス（空文字 = 未選択） */
+  dayServiceName: '',
+} as const;
