@@ -156,12 +156,14 @@
 ## データフロー
 
 ```
-[PWAフォーム]
+[PWAフォーム: /input/meal]
     ↓ 入力・送信
-[Cloud Functions: submitCareRecord]
+[Cloud Functions: submitMealRecord]
     ↓ 書き込み
 [Sheet B: フォームの回答 1]
 ```
+
+> **API仕様**: 詳細は [API_SPEC.md](./API_SPEC.md#42-post-submitmealrecord) を参照
 
 ---
 

@@ -73,12 +73,13 @@ https://asia-northeast1-facility-care-input-form.cloudfunctions.net
 | GET | `/healthCheck` | ヘルスチェック | - | ✅ |
 | POST | `/syncPlanData` | 記録データを同期 | Flow A | ✅ |
 | GET | `/getPlanData` | 同期済み記録を取得 | - | ✅ |
-| POST | `/submitCareRecord` | ケア実績を入力 | Flow B | ❌ |
+| POST | `/submitMealRecord` | 食事記録を入力 | Flow B | ✅ |
+| POST | `/submitCareRecord` | ケア実績を入力 (deprecated) | Flow B | ❌ |
 | POST | `/submitFamilyRequest` | 家族要望を送信 | Flow C | ❌ |
 | POST | `/uploadCareImage` | 画像をアップロード | 画像連携 | ❌ |
 | GET | `/getFamilyRequests` | 家族要望一覧を取得 | - | ❌ |
 
-> **デモ版**: 読み取り専用PWAで使用するエンドポイント
+> **デモ版**: PWAで使用するエンドポイント
 
 ---
 
@@ -150,7 +151,72 @@ Content-Type: application/json
 
 ---
 
-### 4.2 POST /submitCareRecord
+### 4.2 POST /submitMealRecord
+
+スタッフが食事記録をスプレッドシート（Sheet B）に記録します。
+
+#### リクエスト
+
+```http
+POST /submitMealRecord
+Content-Type: application/json
+```
+
+```json
+{
+  "staffName": "田中花子",
+  "facility": "あおぞら荘",
+  "residentName": "山田 太郎",
+  "dayServiceUsage": "利用中ではない",
+  "mealTime": "昼",
+  "isImportant": "重要ではない",
+  "mainDishRatio": "8割",
+  "sideDishRatio": "7割",
+  "note": "食欲旺盛でした"
+}
+```
+
+| フィールド | 型 | 必須 | 説明 |
+|------------|-----|------|------|
+| `staffName` | string | Yes | 入力者名 |
+| `facility` | string | Yes | 施設名 |
+| `residentName` | string | Yes | 利用者名 |
+| `dayServiceUsage` | enum | Yes | `利用中` / `利用中ではない` |
+| `mealTime` | enum | Yes | `朝` / `昼` / `夜` |
+| `isImportant` | enum | Yes | `重要` / `重要ではない` |
+| `dayServiceName` | string | Conditional | デイサービス名（dayServiceUsage='利用中'の場合必須） |
+| `mainDishRatio` | string | No | 主食摂取量（0〜10割） |
+| `sideDishRatio` | string | No | 副食摂取量（0〜10割） |
+| `injectionType` | string | No | 注入の種類 |
+| `injectionAmount` | string | No | 注入量（cc） |
+| `snack` | string | No | 間食内容 |
+| `note` | string | No | 特記事項 |
+
+#### レスポンス
+
+```json
+{
+  "success": true,
+  "data": {
+    "postId": "MEAL_20251214132211_5592",
+    "sheetRow": 26274
+  },
+  "timestamp": "2025-12-14T13:22:13.230Z"
+}
+```
+
+| フィールド | 型 | 説明 |
+|------------|-----|------|
+| `postId` | string | 生成された投稿ID（MEAL_YYYYMMDD_HHmmss_XXXX形式） |
+| `sheetRow` | number | Sheet Bに追記された行番号 |
+
+> **参照**: フォーム仕様の詳細は [MEAL_INPUT_FORM_SPEC.md](./MEAL_INPUT_FORM_SPEC.md) を参照
+
+---
+
+### 4.3 POST /submitCareRecord (deprecated)
+
+> **⚠️ 非推奨**: このAPIは後方互換性のために残されています。新規実装では `/submitMealRecord` を使用してください。
 
 スタッフがケア実績をスプレッドシート（Sheet B）に記録します。
 
@@ -443,6 +509,28 @@ export interface SyncPlanDataRequest {
   triggeredBy?: 'manual' | 'scheduled';
 }
 
+export interface SubmitMealRecordRequest {
+  staffName: string;
+  facility: string;
+  residentName: string;
+  dayServiceUsage: '利用中' | '利用中ではない';
+  mealTime: '朝' | '昼' | '夜';
+  isImportant: '重要' | '重要ではない';
+  dayServiceName?: string;
+  mainDishRatio?: string;
+  sideDishRatio?: string;
+  injectionType?: string;
+  injectionAmount?: string;
+  snack?: string;
+  note?: string;
+}
+
+export interface SubmitMealRecordResponse {
+  postId: string;
+  sheetRow: number;
+}
+
+/** @deprecated Use SubmitMealRecordRequest instead */
 export interface SubmitCareRecordRequest {
   staffId: string;
   residentId: string;
@@ -569,18 +657,21 @@ curl -X POST \
 curl https://asia-northeast1-facility-care-input-form.cloudfunctions.net/getPlanData
 ```
 
-### 6.4 ケア実績を入力（将来版）
+### 6.4 食事記録を入力
 
 ```bash
 curl -X POST \
-  https://asia-northeast1-facility-care-input-form.cloudfunctions.net/submitCareRecord \
+  https://asia-northeast1-facility-care-input-form.cloudfunctions.net/submitMealRecord \
   -H "Content-Type: application/json" \
   -d '{
-    "staffId": "S001",
-    "residentId": "R001",
-    "recordType": "snack",
-    "content": "おやつにプリンを提供",
-    "timestamp": "2024-01-15T15:00:00.000Z"
+    "staffName": "田中花子",
+    "facility": "あおぞら荘",
+    "residentName": "山田 太郎",
+    "dayServiceUsage": "利用中ではない",
+    "mealTime": "昼",
+    "isImportant": "重要ではない",
+    "mainDishRatio": "8割",
+    "sideDishRatio": "7割"
   }'
 ```
 
@@ -605,6 +696,7 @@ curl -X POST \
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
+| 2025-12-14 | 1.3.0 | submitMealRecord追加、submitCareRecordをdeprecated化 |
 | 2025-12-13 | 1.2.0 | getPlanData汎用データモデル対応、シート別フィルタ機能追加 |
 | 2025-12-13 | 1.1.0 | デモ版対応（healthCheck追加、URL更新） |
 | 2025-12-XX | 1.0.0 | 初版作成 |
