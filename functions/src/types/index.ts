@@ -289,6 +289,36 @@ export const ErrorCodes = {
   FIRESTORE_ERROR: "FIRESTORE_ERROR",
   DRIVE_API_ERROR: "DRIVE_API_ERROR",
   INTERNAL_ERROR: "INTERNAL_ERROR",
+  UNAUTHORIZED: "UNAUTHORIZED",
 } as const;
+
+// =============================================================================
+// Global Settings Types (for meal form defaults)
+// =============================================================================
+
+/**
+ * 食事入力フォームのグローバル初期値設定
+ * 全ユーザーに等しく適用される
+ */
+export interface MealFormSettings {
+  /** デフォルト施設 */
+  defaultFacility: string;
+  /** デフォルト利用者名 */
+  defaultResidentName: string;
+  /** デフォルトデイサービス */
+  defaultDayServiceName: string;
+  /** 最終更新日時 */
+  updatedAt: string;
+}
+
+/**
+ * 設定更新リクエスト
+ * admin=true のクエリパラメータが必須
+ */
+export interface UpdateMealFormSettingsRequest {
+  defaultFacility?: string;
+  defaultResidentName?: string;
+  defaultDayServiceName?: string;
+}
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];

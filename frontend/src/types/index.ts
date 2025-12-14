@@ -77,3 +77,18 @@ export interface SubmitMealRecordResponse {
   postId: string;
   sheetRow: number;
 }
+
+// 食事入力フォームのグローバル初期値設定
+export interface MealFormSettings {
+  defaultFacility: string;
+  defaultResidentName: string;
+  defaultDayServiceName: string;
+  updatedAt: string;
+}
+
+// 設定更新リクエスト
+export interface UpdateMealFormSettingsRequest {
+  defaultFacility?: string;
+  defaultResidentName?: string;
+  defaultDayServiceName?: string;
+}

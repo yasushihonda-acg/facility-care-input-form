@@ -49,3 +49,9 @@ export {uploadCareImage} from "./functions/uploadCareImage";
 
 export {getPlanDataFunc as getPlanData} from "./functions/getPlanData";
 export {getFamilyRequestsFunc as getFamilyRequests} from "./functions/getFamilyRequests";
+
+// =============================================================================
+// グローバル設定
+// =============================================================================
+
+export {getMealFormSettings, updateMealFormSettings} from "./functions/mealFormSettings";

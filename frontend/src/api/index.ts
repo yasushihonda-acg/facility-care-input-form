@@ -4,6 +4,8 @@ import type {
   GetPlanDataResponse,
   SubmitMealRecordRequest,
   SubmitMealRecordResponse,
+  MealFormSettings,
+  UpdateMealFormSettingsRequest,
 } from '../types';
 
 const API_BASE = 'https://asia-northeast1-facility-care-input-form.cloudfunctions.net';
@@ -54,6 +56,41 @@ export async function submitMealRecord(
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.error?.message || `Submit failed: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 食事入力フォームのグローバル初期値設定を取得
+ * 全ユーザーがアクセス可能
+ */
+export async function getMealFormSettings(): Promise<ApiResponse<MealFormSettings>> {
+  const response = await fetch(`${API_BASE}/getMealFormSettings`);
+
+  if (!response.ok) {
+    throw new Error(`Failed to get settings: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 食事入力フォームのグローバル初期値設定を更新
+ * admin=true クエリパラメータが必須
+ */
+export async function updateMealFormSettings(
+  data: UpdateMealFormSettingsRequest
+): Promise<ApiResponse<MealFormSettings>> {
+  const response = await fetch(`${API_BASE}/updateMealFormSettings?admin=true`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Update failed: ${response.statusText}`);
   }
 
   return response.json();
