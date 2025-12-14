@@ -1,6 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import type { MealFormSettings, UpdateMealFormSettingsRequest } from '../types';
-import { FACILITIES, RESIDENTS, DAY_SERVICES } from '../types/mealForm';
 
 interface MealSettingsModalProps {
   isOpen: boolean;
@@ -31,21 +30,6 @@ export function MealSettingsModal({
       defaultDayServiceName: settings.defaultDayServiceName,
     });
   }, [settings]);
-
-  // 施設に連動した利用者リスト
-  const availableResidents = useMemo(() => {
-    return localSettings.defaultFacility
-      ? RESIDENTS[localSettings.defaultFacility] || []
-      : [];
-  }, [localSettings.defaultFacility]);
-
-  const handleFacilityChange = (facility: string) => {
-    setLocalSettings((prev) => ({
-      ...prev,
-      defaultFacility: facility,
-      defaultResidentName: '', // 施設変更時は利用者をリセット
-    }));
-  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -166,18 +150,18 @@ export function MealSettingsModal({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               デフォルト施設
             </label>
-            <select
+            <input
+              type="text"
               value={localSettings.defaultFacility || ''}
-              onChange={(e) => handleFacilityChange(e.target.value)}
+              onChange={(e) =>
+                setLocalSettings((prev) => ({
+                  ...prev,
+                  defaultFacility: e.target.value,
+                }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-            >
-              <option value="">選択なし</option>
-              {FACILITIES.map((f) => (
-                <option key={f} value={f}>
-                  {f}
-                </option>
-              ))}
-            </select>
+              placeholder="例: あおぞら荘"
+            />
           </div>
 
           {/* 利用者名 */}
@@ -185,7 +169,8 @@ export function MealSettingsModal({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               デフォルト利用者名
             </label>
-            <select
+            <input
+              type="text"
               value={localSettings.defaultResidentName || ''}
               onChange={(e) =>
                 setLocalSettings((prev) => ({
@@ -193,21 +178,9 @@ export function MealSettingsModal({
                   defaultResidentName: e.target.value,
                 }))
               }
-              disabled={!localSettings.defaultFacility}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
-            >
-              <option value="">選択なし</option>
-              {availableResidents.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-            {!localSettings.defaultFacility && (
-              <p className="mt-1 text-xs text-gray-400">
-                施設を選択すると利用者を選べます
-              </p>
-            )}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+              placeholder="例: 山田 太郎"
+            />
           </div>
 
           {/* デイサービス */}
@@ -215,7 +188,8 @@ export function MealSettingsModal({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               デフォルトデイサービス
             </label>
-            <select
+            <input
+              type="text"
               value={localSettings.defaultDayServiceName || ''}
               onChange={(e) =>
                 setLocalSettings((prev) => ({
@@ -224,14 +198,8 @@ export function MealSettingsModal({
                 }))
               }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-            >
-              <option value="">選択なし</option>
-              {DAY_SERVICES.map((ds) => (
-                <option key={ds} value={ds}>
-                  {ds}
-                </option>
-              ))}
-            </select>
+              placeholder="例: デイサービスあおぞら"
+            />
           </div>
 
           {/* 保存メッセージ */}
