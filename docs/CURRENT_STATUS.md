@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月15日 (Phase 5.3 グローバル初期値設定 完了)
+> **最終更新**: 2025年12月15日 (Phase 5.4 管理者初期値設定 完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -18,38 +18,62 @@
 
 ## 現在の進捗
 
-### ✅ 完了: Phase 5.3 グローバル初期値設定
+### ✅ 完了: Phase 5.4 管理者による初期値設定（admin パラメータ）
+
+**背景**:
+- Phase 5.3でコード内定数としてグローバル初期値を管理していた
+- ユーザー要件: 初期値変更をコード修正なしで管理者が変更できるようにしたい
+
+**実装内容**:
+
+1. **バックエンドAPI（Cloud Functions）** ✅
+   - `getMealFormSettings` - 設定取得（全ユーザー）
+   - `updateMealFormSettings` - 設定更新（admin=trueパラメータ必須）
+   - Firestore `settings/mealFormDefaults` に保存
+
+2. **フロントエンド** ✅
+   - `useMealFormSettings.ts` - 設定取得・更新フック
+   - `MealSettingsModal.tsx` - 設定モーダル（テキスト入力）
+   - `MealInputPage.tsx` - admin モード検知・設定適用
+
+3. **動的選択肢追加** ✅
+   - 設定された初期値が既存の選択肢（FACILITIES等）に含まれない場合
+   - 動的に選択肢に追加して表示・選択可能に
+
+**設計方針**:
+- 初期値はFirestoreに保存、全ユーザーに等しく適用
+- 管理者は `?admin=true` パラメータでアクセスして設定変更
+- 一般ユーザーは設定UIを見ることができない
+
+**アクセス方法**:
+- 通常モード: https://facility-care-input-form.web.app/input/meal
+- 管理者モード: https://facility-care-input-form.web.app/input/meal?admin=true
+
+**API仕様**:
+```
+GET  /getMealFormSettings          - 設定取得（認証不要）
+POST /updateMealFormSettings?admin=true - 設定更新（adminパラメータ必須）
+```
+
+**設定項目**:
+| 項目 | 説明 |
+|------|------|
+| defaultFacility | デフォルト施設名 |
+| defaultResidentName | デフォルト利用者名 |
+| defaultDayServiceName | デフォルトデイサービス名 |
+
+---
+
+### ✅ 完了: Phase 5.3 グローバル初期値設定（コード定数版）
+
+> **注意**: Phase 5.4で置き換えられました。現在はFirestore + API方式です。
 
 **背景**:
 - 食事入力フォームの初期値設定機能について、当初はユーザー個別設定（LocalStorage）で実装
 - ユーザー要件: 全ユーザー共通の初期値であるべき、各ユーザーが個別に変更できてはNG
 
 **実装内容**:
-
-1. **歯車アイコン・設定モーダル削除**
-   - `MealSettingsModal.tsx` 削除
-   - `useMealSettings.ts` 削除
-   - `MealInputPage.tsx` から設定機能を削除
-
-2. **グローバル初期値定数化**
-   - `frontend/src/types/mealForm.ts` に `GLOBAL_DEFAULTS` 追加
-   - 全ユーザーに等しく適用される初期値
-   - 変更はコード修正＋デプロイが必要（管理者のみ）
-
-**設計方針**:
-- 初期値は「コード内定数」として管理
-- 各ユーザーは初期値を変更できない
-- 初期値変更が必要な場合は管理者がコードを修正してデプロイ
-
-**グローバル初期値設定ファイル**:
-`frontend/src/types/mealForm.ts` の `GLOBAL_DEFAULTS`:
-```typescript
-export const GLOBAL_DEFAULTS = {
-  facility: '',         // デフォルト施設（空 = 未選択）
-  residentName: '',     // デフォルト利用者名
-  dayServiceName: '',   // デフォルトデイサービス
-} as const;
-```
+- 初期値は「コード内定数」として管理 → **Phase 5.4でFirestore方式に変更**
 
 ---
 
@@ -448,6 +472,7 @@ Phase 5.0: 食事入力フォームUI     ████████████�
 Phase 5.1: Sheet B SA接続        ████████████████████ 100% (完了)
 Phase 5.2: 食事入力フォームAPI    ████████████████████ 100% (完了)
 Phase 5.3: グローバル初期値設定    ████████████████████ 100% (完了)
+Phase 5.4: 管理者初期値設定(admin) ████████████████████ 100% (完了)
 ```
 
 詳細: [docs/ROADMAP.md](./ROADMAP.md)
@@ -479,6 +504,8 @@ Phase 5.3: グローバル初期値設定    ███████████�
 | POST | `/uploadCareImage` | 画像をアップロード | Drive権限未確認 |
 | GET | `/getPlanData` | 同期済み記録を取得 (シート別フィルタ対応) | 動作可能 |
 | GET | `/getFamilyRequests` | 家族要望一覧を取得 | 動作可能 |
+| GET | `/getMealFormSettings` | 食事フォーム初期値設定を取得 | ✅ 動作確認済み |
+| POST | `/updateMealFormSettings?admin=true` | 食事フォーム初期値設定を更新 | ✅ 動作確認済み |
 
 ### 同期済みデータ
 
@@ -518,12 +545,14 @@ facility-care-input-form/
 │   │   │   ├── DetailModal.tsx   # 詳細モーダル
 │   │   │   ├── YearPaginator.tsx # 年切り替え
 │   │   │   ├── MonthFilter.tsx   # 月フィルタ
+│   │   │   ├── MealSettingsModal.tsx # 初期値設定モーダル ← New!
 │   │   │   └── ...
 │   │   ├── config/
 │   │   │   └── tableColumns.ts   # シート別カラム設定
 │   │   ├── hooks/
 │   │   │   ├── useSync.ts        # 同期処理
-│   │   │   └── usePlanData.ts    # データ取得
+│   │   │   ├── usePlanData.ts    # データ取得
+│   │   │   └── useMealFormSettings.ts # 初期値設定取得 ← New!
 │   │   ├── pages/
 │   │   │   ├── HomePage.tsx      # ホーム（タブUI + FAB）
 │   │   │   ├── MealInputPage.tsx # 食事入力フォーム ← New!
@@ -548,6 +577,7 @@ facility-care-input-form/
 │   └── functions/
 │       ├── syncPlanData.ts       # 汎用パーシング実装
 │       ├── getPlanData.ts        # シート別フィルタ対応
+│       ├── mealFormSettings.ts   # 初期値設定API ← New!
 │       └── ...
 ├── docs/
 │   ├── CURRENT_STATUS.md         # このファイル（再開時に最初に読む）
