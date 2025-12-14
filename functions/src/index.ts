@@ -29,6 +29,7 @@ export {syncPlanData} from "./functions/syncPlanData";
 // =============================================================================
 
 export {submitCareRecord} from "./functions/submitCareRecord";
+export {submitMealRecord} from "./functions/submitMealRecord";
 
 // =============================================================================
 // Flow C: 家族要望

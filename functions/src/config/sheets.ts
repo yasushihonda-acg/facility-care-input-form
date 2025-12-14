@@ -65,21 +65,21 @@ export const SHEET_B = {
  * Google Forms からの食事記録回答を受け取るシート
  */
 export const SHEET_B_COLUMNS = {
-  TIMESTAMP: 0,           // A列: タイムスタンプ（自動記録）
-  STAFF_NAME: 1,          // B列: あなたの名前は？
-  RESIDENT_NAME: 2,       // C列: ご利用者様のお名前は？
-  MEAL_TIME: 3,           // D列: 食事はいつのことですか？
-  MAIN_DISH_RATIO: 4,     // E列: 主食の摂取量は何割ですか？
-  SIDE_DISH_RATIO: 5,     // F列: 副食の摂取量は何割ですか？
-  INJECTION_AMOUNT: 6,    // G列: 注入量は何ccですか？
-  SNACK: 7,               // H列: 間食は何を食べましたか？
-  SPECIAL_NOTES: 8,       // I列: 特記事項
-  IS_IMPORTANT: 9,        // J列: 重要特記事項集計表に反映させますか？
-  FACILITY: 10,           // K列: 施設
-  DAY_SERVICE_USAGE: 11,  // L列: デイ利用有無
-  INJECTION_TYPE: 12,     // M列: 注入の種類
-  POST_ID: 13,            // N列: 投稿ID
-  DAY_SERVICE_NAME: 14,   // O列: どこのデイサービスですか？
+  TIMESTAMP: 0, // A列: タイムスタンプ（自動記録）
+  STAFF_NAME: 1, // B列: あなたの名前は？
+  RESIDENT_NAME: 2, // C列: ご利用者様のお名前は？
+  MEAL_TIME: 3, // D列: 食事はいつのことですか？
+  MAIN_DISH_RATIO: 4, // E列: 主食の摂取量は何割ですか？
+  SIDE_DISH_RATIO: 5, // F列: 副食の摂取量は何割ですか？
+  INJECTION_AMOUNT: 6, // G列: 注入量は何ccですか？
+  SNACK: 7, // H列: 間食は何を食べましたか？
+  SPECIAL_NOTES: 8, // I列: 特記事項
+  IS_IMPORTANT: 9, // J列: 重要特記事項集計表に反映させますか？
+  FACILITY: 10, // K列: 施設
+  DAY_SERVICE_USAGE: 11, // L列: デイ利用有無
+  INJECTION_TYPE: 12, // M列: 注入の種類
+  POST_ID: 13, // N列: 投稿ID
+  DAY_SERVICE_NAME: 14, // O列: どこのデイサービスですか？
 } as const;
 
 /**

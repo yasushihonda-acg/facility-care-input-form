@@ -19,6 +19,35 @@ export interface SyncPlanDataRequest {
   incremental?: boolean;
 }
 
+/**
+ * 食事入力フォームのリクエスト型
+ * docs/MEAL_INPUT_FORM_SPEC.md に基づく
+ */
+export interface SubmitMealRecordRequest {
+  // 必須フィールド
+  staffName: string; // 入力者（あなた）は？
+  facility: string; // 利用者様のお住まいの施設は？
+  residentName: string; // 利用者名は？
+  dayServiceUsage: "利用中" | "利用中ではない"; // デイサービスの利用中ですか？
+  mealTime: "朝" | "昼" | "夜"; // 食事はいつのことですか？
+  isImportant: "重要" | "重要ではない"; // 重要特記事項集計表に反映させますか？
+
+  // 条件付き必須フィールド（dayServiceUsage='利用中'の場合必須）
+  dayServiceName?: string; // どこのデイサービスですか？
+
+  // 任意フィールド
+  mainDishRatio?: string; // 主食の摂取量は何割ですか？
+  sideDishRatio?: string; // 副食の摂取量は何割ですか？
+  injectionType?: string; // 注入の種類は？
+  injectionAmount?: string; // 注入量は？
+  snack?: string; // 間食は何を食べましたか？
+  note?: string; // 特記事項
+  // photo は別途アップロードAPI経由
+}
+
+/**
+ * @deprecated 旧型定義（後方互換性のため残存）
+ */
 export interface SubmitCareRecordRequest {
   staffId: string;
   residentId: string;
@@ -210,8 +239,30 @@ export interface FamilyRequest {
 // =============================================================================
 
 /**
- * Flow B: 実績入力フロー用の行データ
- * Sheet B に追記される行
+ * Flow B: 食事記録用の行データ
+ * Sheet B「フォームの回答 1」シートに追記される行
+ * docs/SHEET_B_STRUCTURE.md に基づく15カラム構成
+ */
+export interface MealRecordRow {
+  timestamp: string; // A列: タイムスタンプ（自動記録）
+  staffName: string; // B列: あなたの名前は？
+  residentName: string; // C列: ご利用者様のお名前は？
+  mealTime: string; // D列: 食事はいつのことですか？
+  mainDishRatio: string; // E列: 主食の摂取量は何割ですか？
+  sideDishRatio: string; // F列: 副食の摂取量は何割ですか？
+  injectionAmount: string; // G列: 注入量は何ccですか？
+  snack: string; // H列: 間食は何を食べましたか？
+  specialNotes: string; // I列: 特記事項
+  isImportant: string; // J列: 重要特記事項集計表に反映させますか？
+  facility: string; // K列: 施設
+  dayServiceUsage: string; // L列: デイ利用有無
+  injectionType: string; // M列: 注入の種類
+  postId: string; // N列: 投稿ID
+  dayServiceName: string; // O列: どこのデイサービスですか？
+}
+
+/**
+ * @deprecated 旧型定義（後方互換性のため残存）
  */
 export interface CareRecordRow {
   timestamp: string;
@@ -220,9 +271,7 @@ export interface CareRecordRow {
   mealContent: string;
   snackContent: string;
   hydrationAmount: string;
-  /** Bot連携ハック: 間食時に使用される特記事項列 */
   specialNotes: string;
-  /** Bot連携ハック: 間食時に "重要" がセットされる */
   importance: string;
   imageUrl: string;
   notes: string;

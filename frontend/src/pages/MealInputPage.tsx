@@ -9,7 +9,9 @@ import {
   INTAKE_RATIOS,
   INJECTION_TYPES,
   INJECTION_AMOUNTS,
+  DAY_SERVICES,
 } from '../types/mealForm';
+import { submitMealRecord } from '../api';
 
 export function MealInputPage() {
   const navigate = useNavigate();
@@ -37,6 +39,10 @@ export function MealInputPage() {
     if (field === 'facility') {
       setForm((prev) => ({ ...prev, residentName: '' }));
     }
+    // デイサービス利用状況変更時はデイサービス名をリセット
+    if (field === 'dayServiceUsage' && value === '利用中ではない') {
+      setForm((prev) => ({ ...prev, dayServiceName: '' }));
+    }
   };
 
   // バリデーション
@@ -52,6 +58,10 @@ export function MealInputPage() {
     if (!form.residentName) {
       newErrors.residentName = '利用者を選択してください。';
     }
+    // 条件付き必須: デイサービス利用中の場合はデイサービス名が必須
+    if (form.dayServiceUsage === '利用中' && !form.dayServiceName) {
+      newErrors.dayServiceName = 'デイサービスを選択してください。';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -65,9 +75,26 @@ export function MealInputPage() {
 
     setIsSubmitting(true);
     try {
-      // デモ版: 実際のAPI呼び出しはスキップ
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log('送信データ:', form);
+      // APIリクエストデータを構築
+      const requestData = {
+        staffName: form.staffName,
+        facility: form.facility,
+        residentName: form.residentName,
+        dayServiceUsage: form.dayServiceUsage,
+        mealTime: form.mealTime,
+        isImportant: form.isImportant,
+        ...(form.dayServiceName && { dayServiceName: form.dayServiceName }),
+        ...(form.mainDishRatio && { mainDishRatio: form.mainDishRatio }),
+        ...(form.sideDishRatio && { sideDishRatio: form.sideDishRatio }),
+        ...(form.injectionType && { injectionType: form.injectionType }),
+        ...(form.injectionAmount && { injectionAmount: form.injectionAmount }),
+        ...(form.snack && { snack: form.snack }),
+        ...(form.note && { note: form.note }),
+      };
+
+      const response = await submitMealRecord(requestData);
+      console.log('送信成功:', response);
+
       setShowSuccess(true);
       // 3秒後にフォームリセット
       setTimeout(() => {
@@ -76,7 +103,7 @@ export function MealInputPage() {
       }, 3000);
     } catch (error) {
       console.error('送信エラー:', error);
-      alert('送信に失敗しました。');
+      alert(error instanceof Error ? error.message : '送信に失敗しました。');
     } finally {
       setIsSubmitting(false);
     }
@@ -190,6 +217,30 @@ export function MealInputPage() {
             ))}
           </div>
         </div>
+
+        {/* どこのデイサービスですか？ ※条件付き表示 */}
+        {form.dayServiceUsage === '利用中' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              どこのデイサービスですか？ <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={form.dayServiceName}
+              onChange={(e) => updateField('dayServiceName', e.target.value)}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary ${
+                errors.dayServiceName ? 'border-red-500' : 'border-gray-300'
+              }`}
+            >
+              <option value="">選んでください</option>
+              {DAY_SERVICES.map((ds) => (
+                <option key={ds} value={ds}>{ds}</option>
+              ))}
+            </select>
+            {errors.dayServiceName && (
+              <p className="mt-1 text-sm text-red-500">{errors.dayServiceName}</p>
+            )}
+          </div>
+        )}
 
         {/* 食事時間帯 */}
         <div>

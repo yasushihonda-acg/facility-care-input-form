@@ -10,6 +10,9 @@ export interface MealInputForm {
   mealTime: '朝' | '昼' | '夜'; // 食事はいつのことですか？
   isImportant: '重要' | '重要ではない';  // 重要特記事項集計表に反映させますか？
 
+  // 条件付き必須フィールド（dayServiceUsage='利用中'の場合必須）
+  dayServiceName: string;      // どこのデイサービスですか？
+
   // 任意フィールド
   mainDishRatio?: string;      // 主食の摂取量は何割ですか？
   sideDishRatio?: string;      // 副食の摂取量は何割ですか？
@@ -26,6 +29,7 @@ export const initialMealForm: MealInputForm = {
   facility: '',
   residentName: '',
   dayServiceUsage: '利用中ではない',
+  dayServiceName: '',
   mealTime: '朝',
   isImportant: '重要ではない',
   mainDishRatio: '',
@@ -82,4 +86,12 @@ export const INJECTION_AMOUNTS = [
   '300cc',
   '350cc',
   '400cc',
+] as const;
+
+// デイサービス施設リスト
+export const DAY_SERVICES = [
+  'デイサービスあおぞら',
+  'デイサービスひまわり',
+  'デイサービスさくら',
+  'その他',
 ] as const;

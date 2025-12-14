@@ -54,3 +54,26 @@ export interface SyncState {
   lastSyncedAt: Date | null;
   error: string | null;
 }
+
+// submitMealRecord request
+export interface SubmitMealRecordRequest {
+  staffName: string;
+  facility: string;
+  residentName: string;
+  dayServiceUsage: '利用中' | '利用中ではない';
+  mealTime: '朝' | '昼' | '夜';
+  isImportant: '重要' | '重要ではない';
+  dayServiceName?: string;
+  mainDishRatio?: string;
+  sideDishRatio?: string;
+  injectionType?: string;
+  injectionAmount?: string;
+  snack?: string;
+  note?: string;
+}
+
+// submitMealRecord response
+export interface SubmitMealRecordResponse {
+  postId: string;
+  sheetRow: number;
+}

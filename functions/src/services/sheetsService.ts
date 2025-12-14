@@ -4,8 +4,8 @@
  */
 
 import {google, sheets_v4} from "googleapis";
-import {SHEET_A, SHEET_B, BOT_HACK} from "../config/sheets";
-import {SubmitCareRecordRequest, CareRecordRow} from "../types";
+import {SHEET_A, SHEET_B, SHEET_B_SHEET_NAME} from "../config/sheets";
+import {SubmitMealRecordRequest, MealRecordRow} from "../types";
 
 let sheetsClient: sheets_v4.Sheets | null = null;
 
@@ -82,23 +82,34 @@ export async function writeToSheetA(): Promise<never> {
 // =============================================================================
 
 /**
- * Sheet B にケア記録を追記
- * Bot連携ハック対応済み
- *
- * @param request ケア記録リクエスト
- * @return 追記された行番号
+ * 投稿IDを生成
+ * フォーマット: MEAL_{YYYYMMDD}_{HHmmss}_{ランダム4桁}
  */
-export async function appendCareRecordToSheetB(
-  request: SubmitCareRecordRequest
-): Promise<{ sheetRow: number; botNotificationTriggered: boolean }> {
+function generatePostId(): string {
+  const now = new Date();
+  const dateStr = now.toISOString().replace(/[-:T]/g, "").slice(0, 14);
+  const random = Math.floor(Math.random() * 10000).toString().padStart(4, "0");
+  return `MEAL_${dateStr}_${random}`;
+}
+
+/**
+ * Sheet B に食事記録を追記
+ * docs/SHEET_B_STRUCTURE.md に基づく15カラム構成
+ *
+ * @param request 食事入力フォームリクエスト
+ * @return 追記された行番号と投稿ID
+ */
+export async function appendMealRecordToSheetB(
+  request: SubmitMealRecordRequest
+): Promise<{ sheetRow: number; postId: string }> {
   const client = await getSheetsClient();
 
-  // 行データを構築（Bot連携ハック適用）
-  const row = buildCareRecordRow(request);
+  // 行データを構築
+  const row = buildMealRecordRow(request);
 
   const response = await client.spreadsheets.values.append({
     spreadsheetId: SHEET_B.id,
-    range: "Sheet1!A:J", // 追記先範囲
+    range: `'${SHEET_B_SHEET_NAME}'!A:O`, // 15カラム（A〜O列）
     valueInputOption: "USER_ENTERED",
     insertDataOption: "INSERT_ROWS",
     requestBody: {
@@ -111,46 +122,41 @@ export async function appendCareRecordToSheetB(
   const rowMatch = updatedRange.match(/(\d+)$/);
   const sheetRow = rowMatch ? parseInt(rowMatch[1], 10) : 0;
 
-  // Bot通知がトリガーされたかどうか（間食の場合）
-  const botNotificationTriggered = request.recordType === "snack";
-
-  return {sheetRow, botNotificationTriggered};
+  return {sheetRow, postId: row.postId};
 }
 
 /**
- * ケア記録リクエストから行データを構築
- * Bot連携ハック実装（BUSINESS_RULES.md 参照）
+ * 食事入力フォームリクエストから行データを構築
+ * docs/SHEET_B_STRUCTURE.md に基づく15カラム構成
  *
- * @param request ケア記録リクエスト
+ * @param request 食事入力フォームリクエスト
  * @return シートに追記する行データ
  */
-function buildCareRecordRow(request: SubmitCareRecordRequest): CareRecordRow {
-  const row: CareRecordRow = {
-    timestamp: request.timestamp,
-    staffId: request.staffId,
-    residentId: request.residentId,
-    mealContent: "",
-    snackContent: "",
-    hydrationAmount: "",
-    specialNotes: "",
-    importance: "",
-    imageUrl: request.imageUrl || "",
-    notes: request.notes || "",
-  };
+function buildMealRecordRow(request: SubmitMealRecordRequest): MealRecordRow {
+  const now = new Date();
+  const timestamp = now.toLocaleString("ja-JP", {timeZone: "Asia/Tokyo"});
+  const postId = generatePostId();
 
-  if (request.recordType === "snack") {
-    // ===== BOT連携ハック =====
-    // 間食の場合は専用列ではなく特記事項に入れ、
-    // 重要度を "重要" にセットしてBot通知をトリガー
-    // 参照: BUSINESS_RULES.md 2.2節
-    row.specialNotes = `${BOT_HACK.SNACK_PREFIX}${request.content}`;
-    row.importance = BOT_HACK.IMPORTANCE_FLAG;
-    // ========================
-  } else if (request.recordType === "meal") {
-    row.mealContent = request.content;
-  } else if (request.recordType === "hydration") {
-    row.hydrationAmount = request.content;
-  }
+  // 重要フラグの変換（"重要" → "はい", "重要ではない" → "いいえ"）
+  const isImportantValue = request.isImportant === "重要" ? "はい" : "いいえ";
+
+  const row: MealRecordRow = {
+    timestamp: timestamp, // A列
+    staffName: request.staffName, // B列
+    residentName: request.residentName, // C列
+    mealTime: request.mealTime, // D列
+    mainDishRatio: request.mainDishRatio || "", // E列
+    sideDishRatio: request.sideDishRatio || "", // F列
+    injectionAmount: request.injectionAmount || "", // G列
+    snack: request.snack || "", // H列
+    specialNotes: request.note || "", // I列
+    isImportant: isImportantValue, // J列
+    facility: request.facility, // K列
+    dayServiceUsage: request.dayServiceUsage, // L列
+    injectionType: request.injectionType || "", // M列
+    postId: postId, // N列
+    dayServiceName: request.dayServiceName || "", // O列
+  };
 
   return row;
 }
@@ -162,6 +168,20 @@ function buildCareRecordRow(request: SubmitCareRecordRequest): CareRecordRow {
 export async function readFromSheetB(): Promise<never> {
   throw new Error(
     "FORBIDDEN: Sheet B is write-only. Reading is not allowed. See BUSINESS_RULES.md"
+  );
+}
+
+/**
+ * @deprecated 旧API（後方互換性のため残存）
+ * 新しい食事記録には appendMealRecordToSheetB を使用してください
+ */
+export async function appendCareRecordToSheetB(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _record: unknown
+): Promise<{ sheetRow: number; botNotificationTriggered: boolean }> {
+  throw new Error(
+    "DEPRECATED: Use appendMealRecordToSheetB for meal records. " +
+    "This legacy API is no longer supported."
   );
 }
 

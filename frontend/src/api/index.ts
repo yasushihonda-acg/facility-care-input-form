@@ -1,4 +1,10 @@
-import type { ApiResponse, SyncPlanDataResponse, GetPlanDataResponse } from '../types';
+import type {
+  ApiResponse,
+  SyncPlanDataResponse,
+  GetPlanDataResponse,
+  SubmitMealRecordRequest,
+  SubmitMealRecordResponse,
+} from '../types';
 
 const API_BASE = 'https://asia-northeast1-facility-care-input-form.cloudfunctions.net';
 
@@ -33,5 +39,22 @@ export async function getPlanData(sheetName?: string): Promise<ApiResponse<GetPl
 
 export async function healthCheck(): Promise<{ status: string }> {
   const response = await fetch(`${API_BASE}/healthCheck`);
+  return response.json();
+}
+
+export async function submitMealRecord(
+  data: SubmitMealRecordRequest
+): Promise<ApiResponse<SubmitMealRecordResponse>> {
+  const response = await fetch(`${API_BASE}/submitMealRecord`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Submit failed: ${response.statusText}`);
+  }
+
   return response.json();
 }
