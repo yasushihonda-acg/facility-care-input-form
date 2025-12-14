@@ -86,6 +86,10 @@ export const INJECTION_AMOUNTS = [
   '300cc',
   '350cc',
   '400cc',
+  '450cc',
+  '500cc',
+  '550cc',
+  '600cc',
 ] as const;
 
 // デイサービス施設リスト
