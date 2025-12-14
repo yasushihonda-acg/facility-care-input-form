@@ -212,9 +212,104 @@ Content-Type: application/json
 
 > **参照**: フォーム仕様の詳細は [MEAL_INPUT_FORM_SPEC.md](./MEAL_INPUT_FORM_SPEC.md) を参照
 
+#### Webhook連携
+
+食事記録の送信成功時、設定されたGoogle Chat Webhookへ自動通知を送信します。
+
+- **通常Webhook**: 全ての記録を通知
+- **重要Webhook**: `isImportant="重要"` の場合のみ追加通知
+
+> **詳細**: [GOOGLE_CHAT_WEBHOOK_SPEC.md](./GOOGLE_CHAT_WEBHOOK_SPEC.md) を参照
+
 ---
 
-### 4.3 POST /submitCareRecord (deprecated)
+### 4.3 GET /getMealFormSettings
+
+食事入力フォームの管理者設定を取得します。
+
+#### リクエスト
+
+```http
+GET /getMealFormSettings
+```
+
+#### レスポンス
+
+```json
+{
+  "success": true,
+  "data": {
+    "defaultFacility": "七福の里",
+    "defaultResidentName": "",
+    "defaultDayServiceName": "",
+    "webhookUrl": "https://chat.googleapis.com/v1/spaces/.../messages?key=...",
+    "importantWebhookUrl": "https://chat.googleapis.com/v1/spaces/.../messages?key=...",
+    "updatedAt": "2025-12-15T10:00:00.000Z"
+  },
+  "timestamp": "2025-12-15T10:00:00.000Z"
+}
+```
+
+| フィールド | 型 | 説明 |
+|------------|-----|------|
+| `defaultFacility` | string | デフォルト施設名 |
+| `defaultResidentName` | string | デフォルト利用者名 |
+| `defaultDayServiceName` | string | デフォルトデイサービス名 |
+| `webhookUrl` | string | 通常Webhook URL (Google Chat) |
+| `importantWebhookUrl` | string | 重要記録用Webhook URL (Google Chat) |
+| `updatedAt` | string | 最終更新日時 |
+
+---
+
+### 4.4 POST /updateMealFormSettings
+
+食事入力フォームの管理者設定を更新します。
+
+#### リクエスト
+
+```http
+POST /updateMealFormSettings?admin=true
+Content-Type: application/json
+```
+
+> **注意**: `admin=true` クエリパラメータが必須です。
+
+```json
+{
+  "defaultFacility": "七福の里",
+  "webhookUrl": "https://chat.googleapis.com/v1/spaces/.../messages?key=...",
+  "importantWebhookUrl": "https://chat.googleapis.com/v1/spaces/.../messages?key=..."
+}
+```
+
+| フィールド | 型 | 必須 | 説明 |
+|------------|-----|------|------|
+| `defaultFacility` | string | No | デフォルト施設名 |
+| `defaultResidentName` | string | No | デフォルト利用者名 |
+| `defaultDayServiceName` | string | No | デフォルトデイサービス名 |
+| `webhookUrl` | string | No | 通常Webhook URL |
+| `importantWebhookUrl` | string | No | 重要記録用Webhook URL |
+
+#### レスポンス
+
+```json
+{
+  "success": true,
+  "data": {
+    "defaultFacility": "七福の里",
+    "defaultResidentName": "",
+    "defaultDayServiceName": "",
+    "webhookUrl": "https://chat.googleapis.com/v1/spaces/.../messages?key=...",
+    "importantWebhookUrl": "https://chat.googleapis.com/v1/spaces/.../messages?key=...",
+    "updatedAt": "2025-12-15T10:00:00.000Z"
+  },
+  "timestamp": "2025-12-15T10:00:00.000Z"
+}
+```
+
+---
+
+### 4.5 POST /submitCareRecord (deprecated)
 
 > **⚠️ 非推奨**: このAPIは後方互換性のために残されています。新規実装では `/submitMealRecord` を使用してください。
 
