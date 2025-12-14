@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import type { MealInputForm } from '../types/mealForm';
 import {
   initialMealForm,
@@ -12,9 +12,9 @@ import {
   DAY_SERVICES,
 } from '../types/mealForm';
 import { submitMealRecord } from '../api';
+import { Layout } from '../components/Layout';
 
 export function MealInputPage() {
-  const navigate = useNavigate();
   const [form, setForm] = useState<MealInputForm>(initialMealForm);
   const [errors, setErrors] = useState<Partial<Record<keyof MealInputForm, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -110,11 +110,23 @@ export function MealInputPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <Layout>
       {/* ヘッダー */}
-      <header className="sticky top-0 z-20 bg-gray-700 text-white shadow-md">
-        <div className="flex items-center justify-between px-4 py-3">
-          <h1 className="text-lg font-bold">食事</h1>
+      <header className="sticky top-0 z-20 bg-gradient-to-r from-primary to-primary-dark text-white shadow-header">
+        <div className="flex items-center gap-3 px-4 py-3">
+          <Link
+            to="/input"
+            className="p-1 -ml-1 rounded-full hover:bg-white/10 transition-colors"
+            aria-label="入力メニューに戻る"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </Link>
+          <div>
+            <h1 className="text-lg font-bold">食事記録</h1>
+            <p className="text-xs text-white/70">食事の摂取量を記録します</p>
+          </div>
         </div>
       </header>
 
@@ -413,17 +425,16 @@ export function MealInputPage() {
           </button>
         </div>
 
-        {/* トップへ戻る */}
+        {/* 入力メニューへ戻る */}
         <div className="text-center pt-2 pb-8">
-          <button
-            type="button"
-            onClick={() => navigate('/')}
+          <Link
+            to="/input"
             className="text-primary hover:underline text-sm"
           >
-            トップへ戻る
-          </button>
+            入力メニューへ戻る
+          </Link>
         </div>
       </form>
-    </div>
+    </Layout>
   );
 }
