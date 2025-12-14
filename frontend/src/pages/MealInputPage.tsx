@@ -115,9 +115,9 @@ export function MealInputPage() {
       <header className="sticky top-0 z-20 bg-gradient-to-r from-primary to-primary-dark text-white shadow-header">
         <div className="flex items-center gap-3 px-4 py-3">
           <Link
-            to="/input"
+            to="/view"
             className="p-1 -ml-1 rounded-full hover:bg-white/10 transition-colors"
-            aria-label="入力メニューに戻る"
+            aria-label="記録閲覧に戻る"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -425,13 +425,13 @@ export function MealInputPage() {
           </button>
         </div>
 
-        {/* 入力メニューへ戻る */}
+        {/* 記録閲覧へ戻る */}
         <div className="text-center pt-2 pb-8">
           <Link
-            to="/input"
+            to="/view"
             className="text-primary hover:underline text-sm"
           >
-            入力メニューへ戻る
+            記録閲覧へ戻る
           </Link>
         </div>
       </form>

@@ -52,7 +52,7 @@ export function FooterNav({ className = '' }: FooterNavProps) {
 
         {/* 記録入力タブ */}
         <NavLink
-          to="/input"
+          to="/input/meal"
           className={({ isActive }) => `
             flex-1 flex flex-col items-center justify-center gap-1 relative transition-all duration-200
             ${isActive
