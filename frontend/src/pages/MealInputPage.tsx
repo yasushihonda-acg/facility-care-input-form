@@ -388,6 +388,10 @@ export function MealInputPage() {
               if (e.target.value !== 'その他') {
                 updateField('injectionTypeOther', '');
               }
+              // 注入の種類を変更した場合、注入量をリセット
+              if (e.target.value !== form.injectionType) {
+                updateField('injectionAmount', '');
+              }
             }}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
           >
@@ -419,22 +423,24 @@ export function MealInputPage() {
           </div>
         )}
 
-        {/* 注入量 */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            注入量は？
-          </label>
-          <select
-            value={form.injectionAmount}
-            onChange={(e) => updateField('injectionAmount', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-          >
-            <option value="">選んでください</option>
-            {INJECTION_AMOUNTS.map((a) => (
-              <option key={a} value={a}>{a}</option>
-            ))}
-          </select>
-        </div>
+        {/* 注入量 ※注入の種類が選択されている場合のみ表示 */}
+        {form.injectionType && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              注入量は？
+            </label>
+            <select
+              value={form.injectionAmount}
+              onChange={(e) => updateField('injectionAmount', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+            >
+              <option value="">選んでください</option>
+              {INJECTION_AMOUNTS.map((a) => (
+                <option key={a} value={a}>{a}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* 間食 */}
         <div>
