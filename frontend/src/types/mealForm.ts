@@ -57,17 +57,17 @@ export const RESIDENTS: Record<string, string[]> = {
 export const MEAL_TIMES = ['朝', '昼', '夜'] as const;
 
 export const INTAKE_RATIOS = [
-  '0割',
-  '1割',
-  '2割',
-  '3割',
-  '4割',
-  '5割',
-  '6割',
-  '7割',
-  '8割',
-  '9割',
-  '10割（全量）',
+  '0',
+  '1',
+  '2',
+  '3',
+  '4',
+  '5',
+  '6',
+  '7',
+  '8',
+  '9',
+  '10',
 ] as const;
 
 export const INJECTION_TYPES = [
