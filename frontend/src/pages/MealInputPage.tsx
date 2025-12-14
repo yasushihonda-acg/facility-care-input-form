@@ -41,10 +41,43 @@ export function MealInputPage() {
     }
   }, [isSettingsLoading, settings]);
 
-  // 施設に連動した利用者リスト
+  // 施設リスト（設定値が選択肢にない場合は動的追加）
+  const availableFacilities = useMemo(() => {
+    const facilities: string[] = [...FACILITIES];
+    if (settings.defaultFacility && !facilities.includes(settings.defaultFacility)) {
+      facilities.unshift(settings.defaultFacility);
+    }
+    return facilities;
+  }, [settings.defaultFacility]);
+
+  // 施設に連動した利用者リスト（設定値が選択肢にない場合は動的追加）
   const availableResidents = useMemo(() => {
-    return form.facility ? RESIDENTS[form.facility] || [] : [];
-  }, [form.facility]);
+    const residents = form.facility ? RESIDENTS[form.facility] || [] : [];
+    // 設定値のデフォルト利用者がリストにない場合は追加
+    if (
+      settings.defaultResidentName &&
+      form.facility === settings.defaultFacility &&
+      !residents.includes(settings.defaultResidentName)
+    ) {
+      return [settings.defaultResidentName, ...residents];
+    }
+    return residents;
+  }, [form.facility, settings.defaultFacility, settings.defaultResidentName]);
+
+  // デイサービスリスト（設定値が選択肢にない場合は動的追加）
+  const availableDayServices = useMemo(() => {
+    const services: string[] = [...DAY_SERVICES];
+    if (settings.defaultDayServiceName && !services.includes(settings.defaultDayServiceName)) {
+      // 「その他」の前に挿入
+      const otherIndex = services.indexOf('その他');
+      if (otherIndex >= 0) {
+        services.splice(otherIndex, 0, settings.defaultDayServiceName);
+      } else {
+        services.push(settings.defaultDayServiceName);
+      }
+    }
+    return services;
+  }, [settings.defaultDayServiceName]);
 
   // フィールド更新
   const updateField = <K extends keyof MealInputForm>(
@@ -262,7 +295,7 @@ export function MealInputPage() {
               }`}
             >
               <option value="">選んでください</option>
-              {FACILITIES.map((f) => (
+              {availableFacilities.map((f) => (
                 <option key={f} value={f}>{f}</option>
               ))}
             </select>
@@ -330,7 +363,7 @@ export function MealInputPage() {
                 }`}
               >
                 <option value="">選んでください</option>
-                {DAY_SERVICES.map((ds) => (
+                {availableDayServices.map((ds) => (
                   <option key={ds} value={ds}>{ds}</option>
                 ))}
               </select>
