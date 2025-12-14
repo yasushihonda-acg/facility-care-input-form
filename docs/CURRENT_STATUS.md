@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月15日 (Phase 5.5 Google Chat Webhook連携 ✅完了)
+> **最終更新**: 2025年12月15日 (Phase 5.6 写真アップロードフォルダ設定 ✅完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -17,6 +17,60 @@
 ---
 
 ## 現在の進捗
+
+### ✅ 完了: Phase 5.6 写真アップロードフォルダ設定
+
+**背景**:
+- 写真アップロード時の保存先フォルダをハードコードではなく管理者が指定可能にしたい
+- 既存の共有フォルダを使用できるようにする
+
+**設計書**: [PHOTO_UPLOAD_SPEC.md](./PHOTO_UPLOAD_SPEC.md)
+
+**アップロードフロー**:
+```
+[写真選択] → [POST /uploadCareImage]
+    ├─→ Firestore: driveUploadFolderId を取得
+    ├─→ 設定済み: {指定フォルダ}/{YYYY}/{MM}/{filename}
+    └─→ 未設定: CareRecordImages/{YYYY}/{MM}/{filename} (後方互換)
+```
+
+**実装完了**:
+
+| ステップ | 内容 | 状態 |
+|----------|------|------|
+| 1 | 型定義拡張（backend + frontend） | ✅ 完了 |
+| 2 | 設定API拡張（mealFormSettings.ts） | ✅ 完了 |
+| 3 | driveService修正（フォルダID対応） | ✅ 完了 |
+| 4 | uploadCareImage修正（設定読み取り） | ✅ 完了 |
+| 5 | フロントエンド設定UI拡張 | ✅ 完了 |
+| 6 | デプロイ・動作確認 | ✅ 完了 |
+
+**管理者設定項目（追加）**:
+| 項目 | 説明 |
+|------|------|
+| driveUploadFolderId | 写真保存先Google DriveフォルダID |
+
+**フォルダID取得方法**:
+```
+URL: https://drive.google.com/drive/folders/1ABC123xyz
+フォルダID: 1ABC123xyz
+```
+
+**サービスアカウント権限**:
+管理者が指定するフォルダに編集者権限を付与:
+```
+facility-care-sa@facility-care-input-form.iam.gserviceaccount.com
+```
+
+**実装ファイル**:
+- `functions/src/types/index.ts` - driveUploadFolderId 追加
+- `functions/src/functions/mealFormSettings.ts` - フォルダID保存対応
+- `functions/src/services/driveService.ts` - 指定フォルダ対応
+- `functions/src/functions/uploadCareImage.ts` - 設定読み取り追加
+- `frontend/src/types/index.ts` - フロントエンド型定義拡張
+- `frontend/src/components/MealSettingsModal.tsx` - フォルダID設定UI追加
+
+---
 
 ### ✅ 完了: Phase 5.5 Google Chat Webhook連携
 
@@ -525,6 +579,7 @@ Phase 5.2: 食事入力フォームAPI    ████████████�
 Phase 5.3: グローバル初期値設定    ████████████████████ 100% (完了)
 Phase 5.4: 管理者初期値設定(admin) ████████████████████ 100% (完了)
 Phase 5.5: Google Chat Webhook連携 ████████████████████ 100% (完了)
+Phase 5.6: 写真アップロードフォルダ設定 ████████████████████ 100% (完了)
 ```
 
 詳細: [docs/ROADMAP.md](./ROADMAP.md)
@@ -641,7 +696,8 @@ facility-care-input-form/
 │   ├── SYNC_CONCURRENCY.md       # 同期競合防止設計
 │   ├── DESIGN_GUIDELINES.md      # デザインガイドライン
 │   ├── TABLE_VIEW_COLUMNS.md     # テーブルビュー表示カラム設計
-│   ├── GOOGLE_CHAT_WEBHOOK_SPEC.md # Google Chat Webhook仕様 ← New!
+│   ├── GOOGLE_CHAT_WEBHOOK_SPEC.md # Google Chat Webhook仕様
+│   ├── PHOTO_UPLOAD_SPEC.md       # 写真アップロード仕様 ← New!
 │   └── ...
 ├── firebase.json
 └── firestore.rules

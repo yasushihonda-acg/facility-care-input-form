@@ -7,6 +7,7 @@ import * as functions from "firebase-functions";
 import {Request, Response} from "express";
 import Busboy from "busboy";
 import {Readable} from "stream";
+import {getFirestore} from "firebase-admin/firestore";
 import {
   uploadImage,
   generateFileName,
@@ -16,6 +17,7 @@ import {FUNCTIONS_CONFIG} from "../config/sheets";
 import {
   ApiResponse,
   UploadCareImageResponse,
+  MealFormSettings,
   ErrorCodes,
 } from "../types";
 
@@ -218,12 +220,33 @@ async function uploadCareImageHandler(
       fileSize: file.buffer.length,
     });
 
+    // Firestoreから設定を取得（フォルダIDを取得）
+    let targetFolderId: string | undefined;
+    try {
+      const db = getFirestore();
+      const settingsDoc = await db.collection("settings").doc("mealFormDefaults").get();
+      if (settingsDoc.exists) {
+        const settings = settingsDoc.data() as MealFormSettings;
+        if (settings.driveUploadFolderId) {
+          targetFolderId = settings.driveUploadFolderId;
+          functions.logger.info("Using configured folder ID:", targetFolderId);
+        }
+      }
+    } catch (settingsError) {
+      functions.logger.warn("Failed to get settings, using default folder:", settingsError);
+    }
+
     // ファイル名を生成
     const extension = getExtensionFromMimeType(file.mimeType);
     const fileName = generateFileName(fields.residentId, extension);
 
-    // Driveにアップロード
-    const uploadResult = await uploadImage(file.buffer, fileName, file.mimeType);
+    // Driveにアップロード（フォルダID指定）
+    const uploadResult = await uploadImage(
+      file.buffer,
+      fileName,
+      file.mimeType,
+      targetFolderId
+    );
 
     const responseData: UploadCareImageResponse = {
       fileId: uploadResult.fileId,

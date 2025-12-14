@@ -87,6 +87,8 @@ export interface MealFormSettings {
   webhookUrl?: string;
   /** 重要Webhook URL（重要記録のみ追加通知先） */
   importantWebhookUrl?: string;
+  /** 写真保存先Google DriveフォルダID */
+  driveUploadFolderId?: string;
   updatedAt: string;
 }
 
@@ -97,4 +99,5 @@ export interface UpdateMealFormSettingsRequest {
   defaultDayServiceName?: string;
   webhookUrl?: string;
   importantWebhookUrl?: string;
+  driveUploadFolderId?: string;
 }

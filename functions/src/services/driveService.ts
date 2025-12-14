@@ -31,12 +31,14 @@ async function getDriveClient(): Promise<drive_v3.Drive> {
  * @param fileBuffer 画像データ
  * @param fileName ファイル名
  * @param mimeType MIMEタイプ
+ * @param targetFolderId オプション: 指定されたフォルダID（未指定時は自動フォルダ）
  * @return アップロード結果
  */
 export async function uploadImage(
   fileBuffer: Buffer,
   fileName: string,
-  mimeType: string
+  mimeType: string,
+  targetFolderId?: string
 ): Promise<{
   fileId: string;
   fileName: string;
@@ -45,8 +47,15 @@ export async function uploadImage(
 }> {
   const client = await getDriveClient();
 
-  // 日付ベースのフォルダを取得または作成
-  const folderId = await getOrCreateDateFolder();
+  // フォルダID決定: 指定がある場合はその配下、なければ自動フォルダ
+  let folderId: string;
+  if (targetFolderId) {
+    // 指定フォルダ配下に年/月フォルダを作成
+    folderId = await getOrCreateDateFolderUnder(targetFolderId);
+  } else {
+    // 自動フォルダ（後方互換）
+    folderId = await getOrCreateDateFolder();
+  }
 
   // ファイルをアップロード
   const fileMetadata = {
@@ -85,7 +94,7 @@ export async function uploadImage(
 }
 
 /**
- * 日付ベースのフォルダを取得または作成
+ * 日付ベースのフォルダを取得または作成（自動フォルダ: 後方互換）
  * 構造: CareRecordImages/{YYYY}/{MM}/
  */
 async function getOrCreateDateFolder(): Promise<string> {
@@ -101,6 +110,26 @@ async function getOrCreateDateFolder(): Promise<string> {
 
   // 年フォルダを取得または作成
   const yearFolderId = await getOrCreateFolder(year, rootFolderId);
+
+  // 月フォルダを取得または作成
+  const monthFolderId = await getOrCreateFolder(month, yearFolderId);
+
+  return monthFolderId;
+}
+
+/**
+ * 指定フォルダ配下に年/月フォルダを作成
+ * 構造: {targetFolderId}/{YYYY}/{MM}/
+ *
+ * @param targetFolderId 親フォルダID（管理者が設定した共有フォルダ）
+ */
+async function getOrCreateDateFolderUnder(targetFolderId: string): Promise<string> {
+  const now = new Date();
+  const year = now.getFullYear().toString();
+  const month = (now.getMonth() + 1).toString().padStart(2, "0");
+
+  // 年フォルダを取得または作成
+  const yearFolderId = await getOrCreateFolder(year, targetFolderId);
 
   // 月フォルダを取得または作成
   const monthFolderId = await getOrCreateFolder(month, yearFolderId);
