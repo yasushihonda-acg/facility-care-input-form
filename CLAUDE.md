@@ -34,6 +34,7 @@
 | `docs/ARCHITECTURE.md` | システム設計・データフロー |
 | `docs/BUSINESS_RULES.md` | 業務ルール・Bot連携ハック |
 | `docs/API_SPEC.md` | API仕様書 |
+| `docs/SHEET_B_STRUCTURE.md` | Sheet B（実績入力先）構造 |
 
 ---
 
@@ -77,7 +78,7 @@
 | 用途 | Sheet ID | 権限 | 共有状態 |
 |------|----------|------|----------|
 | Sheet A（記録の結果） | `1Gf8QTbGyKB7rn5QQa5cYOg1NNYWMV8lzqySdbDkfG-w` | 閲覧者 | 完了 |
-| Sheet B（実績入力先） | `1OrpUVoDfUECXCTrKOGKLwN_4OQ9dlg7cUTCPGLDGHV0` | 編集者 | ペンディング |
+| Sheet B（実績入力先） | `1OrpUVoDfUECXCTrKOGKLwN_4OQ9dlg7cUTCPGLDGHV0` | 編集者 | ブロック中（共有ドライブのセキュリティ制限） |
 
 ---
 

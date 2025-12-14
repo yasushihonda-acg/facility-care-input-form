@@ -251,7 +251,17 @@
 
 | サービスアカウント | 共有先 | 権限 | 状態 |
 |-------------------|--------|------|------|
-| `facility-care-sa@facility-care-input-form.iam.gserviceaccount.com` | Sheet B | 編集者 | 後回し |
+| `facility-care-sa@facility-care-input-form.iam.gserviceaccount.com` | Sheet B | 編集者 | ブロック中（共有ドライブのセキュリティ制限） |
+
+**Sheet B 構造分析** ✅ 完了
+
+> 詳細: [SHEET_B_STRUCTURE.md](./SHEET_B_STRUCTURE.md)
+
+| シート名 | 用途 | カラム数 |
+|----------|------|----------|
+| フォームの回答 1 | 食事記録の入力先 | 15 |
+
+**制約事項**: 共有ドライブのセキュリティ設定により、サービスアカウントへの直接共有が不可。代替案検討中。
 
 ---
 
