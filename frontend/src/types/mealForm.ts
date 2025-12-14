@@ -1,0 +1,85 @@
+// 食事入力フォームの型定義
+// docs/MEAL_INPUT_FORM_SPEC.md に基づく
+
+export interface MealInputForm {
+  // 必須フィールド
+  staffName: string;           // 入力者（あなた）は？
+  facility: string;            // 利用者様のお住まいの施設は？
+  residentName: string;        // 利用者名は？
+  dayServiceUsage: '利用中' | '利用中ではない';  // デイサービスの利用中ですか？
+  mealTime: '朝' | '昼' | '夜'; // 食事はいつのことですか？
+  isImportant: '重要' | '重要ではない';  // 重要特記事項集計表に反映させますか？
+
+  // 任意フィールド
+  mainDishRatio?: string;      // 主食の摂取量は何割ですか？
+  sideDishRatio?: string;      // 副食の摂取量は何割ですか？
+  injectionType?: string;      // 注入の種類は？
+  injectionAmount?: string;    // 注入量は？
+  snack?: string;              // 間食は何を食べましたか？
+  note?: string;               // 特記事項
+  photo?: File | null;         // 写真アップロード
+}
+
+// フォームの初期値
+export const initialMealForm: MealInputForm = {
+  staffName: '',
+  facility: '',
+  residentName: '',
+  dayServiceUsage: '利用中ではない',
+  mealTime: '朝',
+  isImportant: '重要ではない',
+  mainDishRatio: '',
+  sideDishRatio: '',
+  injectionType: '',
+  injectionAmount: '',
+  snack: '',
+  note: '',
+  photo: null,
+};
+
+// 選択肢の定義
+export const FACILITIES = [
+  'あおぞら荘',
+  'ひまわり館',
+  'さくら苑',
+] as const;
+
+export const RESIDENTS: Record<string, string[]> = {
+  'あおぞら荘': ['山田 太郎', '鈴木 花子', '田中 一郎'],
+  'ひまわり館': ['佐藤 次郎', '高橋 美咲', '伊藤 健太'],
+  'さくら苑': ['渡辺 優子', '小林 誠', '加藤 恵'],
+};
+
+export const MEAL_TIMES = ['朝', '昼', '夜'] as const;
+
+export const INTAKE_RATIOS = [
+  '0割',
+  '1割',
+  '2割',
+  '3割',
+  '4割',
+  '5割',
+  '6割',
+  '7割',
+  '8割',
+  '9割',
+  '10割（全量）',
+] as const;
+
+export const INJECTION_TYPES = [
+  'エンシュア',
+  'ラコール',
+  'メイバランス',
+  'その他',
+] as const;
+
+export const INJECTION_AMOUNTS = [
+  '50cc',
+  '100cc',
+  '150cc',
+  '200cc',
+  '250cc',
+  '300cc',
+  '350cc',
+  '400cc',
+] as const;
