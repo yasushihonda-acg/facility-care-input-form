@@ -152,9 +152,28 @@ gh run list --repo yasushihonda-acg/facility-care-input-form --workflow=gh-pages
 | `672520607884-compute@developer.gserviceaccount.com` | Compute Engine default | GCP自動作成 |
 | `firebase-adminsdk-fbsvc@facility-care-input-form.iam.gserviceaccount.com` | Firebase Admin SDK | Firebase自動作成 |
 
-### firebase.json サービスアカウント指定
+### Cloud Functions サービスアカウント指定
 
-**重要**: `firebase.json` に `serviceAccount` を明示的に指定しないと、Cloud FunctionsはApp Engine default SA (`facility-care-input-form@appspot.gserviceaccount.com`) を使用してしまう。
+**重要**: Cloud Functions **第1世代**では、`firebase.json` の `serviceAccount` フィールドは機能しません。
+第1世代関数のサービスアカウントを変更するには、gcloudコマンドで直接指定する必要があります。
+
+#### 第1世代関数のSA変更コマンド
+
+```bash
+# 関数のSAを変更
+gcloud functions deploy <関数名> \
+  --region=asia-northeast1 \
+  --project=facility-care-input-form \
+  --service-account=facility-care-sa@facility-care-input-form.iam.gserviceaccount.com \
+  --trigger-http \
+  --allow-unauthenticated \
+  --runtime=nodejs20
+
+# 確認
+gcloud functions describe <関数名> --region=asia-northeast1 | grep serviceAccountEmail
+```
+
+#### firebase.json の serviceAccount フィールド（第2世代のみ）
 
 ```json
 {
@@ -167,7 +186,7 @@ gh run list --repo yasushihonda-acg/facility-care-input-form --workflow=gh-pages
 }
 ```
 
-この設定により、全Cloud Functionsが統一SAで実行される。
+**注意**: この設定は**第2世代関数のみ**に適用されます。第1世代関数には効果がありません。
 
 ---
 
