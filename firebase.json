@@ -17,7 +17,9 @@
       "predeploy": [
         "npm --prefix \"$RESOURCE_DIR\" run lint",
         "npm --prefix \"$RESOURCE_DIR\" run build"
-      ]
+      ],
+      "runtime": "nodejs20",
+      "serviceAccount": "facility-care-sa@facility-care-input-form.iam.gserviceaccount.com"
     }
   ],
   "hosting": {

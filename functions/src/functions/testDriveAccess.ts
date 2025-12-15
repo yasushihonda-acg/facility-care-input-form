@@ -22,10 +22,10 @@ interface TestDriveAccessResponse {
   advice?: string; // v1.1: 親切なアドバイス
 }
 
-// Cloud Functionsランタイムサービスアカウントメールアドレス
-// ※ これがCloud FunctionsからGoogle APIにアクセスする際の実行アカウント
+// サービスアカウントメールアドレス
+// CLAUDE.md記載の統一サービスアカウント
 const SERVICE_ACCOUNT_EMAIL =
-  "facility-care-input-form@appspot.gserviceaccount.com";
+  "facility-care-sa@facility-care-input-form.iam.gserviceaccount.com";
 
 export const testDriveAccess = functions
   .region("asia-northeast1")
