@@ -79,6 +79,14 @@ https://asia-northeast1-facility-care-input-form.cloudfunctions.net
 | POST | `/uploadCareImage` | 画像をアップロード | 画像連携 | ✅ |
 | POST | `/testWebhook` | Webhook URLの動作確認 | 管理テスト | ✅ |
 | POST | `/testDriveAccess` | DriveフォルダIDの権限確認 | 管理テスト | ✅ |
+| POST | `/createCareItem` | 品物を登録 | Phase 8.1 | ✅ |
+| GET | `/getCareItems` | 品物一覧を取得 | Phase 8.1 | ✅ |
+| PUT | `/updateCareItem` | 品物を更新 | Phase 8.1 | ✅ |
+| DELETE | `/deleteCareItem` | 品物を削除 | Phase 8.1 | ✅ |
+| POST | `/createTask` | タスクを作成 | Phase 8.2 | ✅ |
+| GET | `/getTasks` | タスク一覧を取得 | Phase 8.2 | ✅ |
+| PUT | `/updateTask` | タスクを更新 | Phase 8.2 | ✅ |
+| DELETE | `/deleteTask` | タスクを削除 | Phase 8.2 | ✅ |
 | POST | `/submitCareRecord` | ケア実績を入力 (deprecated) | Flow B | ❌ |
 | POST | `/submitFamilyRequest` | 家族要望を送信 | Flow C | ❌ |
 | GET | `/getFamilyRequests` | 家族要望一覧を取得 | - | ❌ |
@@ -713,6 +721,363 @@ Google DriveフォルダIDのアクセス権限確認テスト。管理者が設
 
 ---
 
+### 4.12 POST /createCareItem (Phase 8.1)
+
+家族が送付した品物（差し入れ）を登録します。
+
+> **詳細設計**: [ITEM_MANAGEMENT_SPEC.md](./ITEM_MANAGEMENT_SPEC.md) を参照
+
+**エンドポイント**: `POST /createCareItem`
+
+**リクエスト**:
+```json
+{
+  "residentId": "resident-001",
+  "userId": "family-001",
+  "itemName": "キウイ",
+  "sentDate": "2025-12-16",
+  "expirationDate": "2025-12-20",
+  "quantity": 3,
+  "servingMethod": "cut",
+  "plannedServeDate": "2025-12-17",
+  "noteToStaff": "8等分にカットしてください"
+}
+```
+
+| フィールド | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `residentId` | string | Yes | 入居者ID |
+| `userId` | string | Yes | 登録した家族ID |
+| `itemName` | string | Yes | 品物名 |
+| `sentDate` | string | Yes | 送付日（YYYY-MM-DD） |
+| `expirationDate` | string | No | 賞味期限（YYYY-MM-DD） |
+| `quantity` | number | Yes | 個数 |
+| `servingMethod` | enum | Yes | 提供方法（`as_is`, `cut`, `heated`, `cooled`, `processed`, `other`） |
+| `plannedServeDate` | string | No | 提供予定日（YYYY-MM-DD） |
+| `noteToStaff` | string | No | スタッフへの申し送り |
+
+**成功レスポンス (200)**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "item-abc123",
+    "itemName": "キウイ",
+    "status": "pending",
+    "createdAt": "2025-12-16T10:00:00.000Z"
+  },
+  "timestamp": "2025-12-16T10:00:00.000Z"
+}
+```
+
+---
+
+### 4.13 GET /getCareItems (Phase 8.1)
+
+品物一覧を取得します。フィルタ・ソート対応。
+
+**エンドポイント**: `GET /getCareItems`
+
+**クエリパラメータ**:
+
+| パラメータ | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `residentId` | string | No | 入居者IDで絞り込み |
+| `status` | string | No | ステータスで絞り込み（`pending`, `served`, `consumed`, `expired`, `discarded`） |
+| `sortBy` | string | No | ソート項目（`sentDate`, `expirationDate`, `createdAt`） |
+| `sortOrder` | string | No | ソート順（`asc`, `desc`） |
+| `limit` | number | No | 取得件数上限（デフォルト: 50） |
+
+**成功レスポンス (200)**:
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": "item-abc123",
+        "residentId": "resident-001",
+        "userId": "family-001",
+        "itemName": "キウイ",
+        "sentDate": "2025-12-16",
+        "expirationDate": "2025-12-20",
+        "quantity": 3,
+        "servingMethod": "cut",
+        "status": "pending",
+        "createdAt": "2025-12-16T10:00:00.000Z",
+        "updatedAt": "2025-12-16T10:00:00.000Z"
+      }
+    ],
+    "total": 1,
+    "counts": {
+      "pending": 1,
+      "served": 0,
+      "consumed": 0,
+      "expired": 0,
+      "discarded": 0
+    }
+  },
+  "timestamp": "2025-12-16T10:00:00.000Z"
+}
+```
+
+---
+
+### 4.14 PUT /updateCareItem (Phase 8.1)
+
+品物情報を更新します（スタッフが提供・摂食記録を入力など）。
+
+**エンドポイント**: `PUT /updateCareItem`
+
+**リクエスト**:
+```json
+{
+  "itemId": "item-abc123",
+  "updates": {
+    "status": "served",
+    "actualServeDate": "2025-12-17",
+    "servedQuantity": 2,
+    "noteToFamily": "喜んで召し上がっていました"
+  }
+}
+```
+
+| フィールド | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `itemId` | string | Yes | 更新対象の品物ID |
+| `updates` | object | Yes | 更新内容（部分更新） |
+
+**更新可能フィールド**:
+- `status`: ステータス変更
+- `actualServeDate`: 実際の提供日
+- `servedQuantity`: 提供個数
+- `consumptionRate`: 摂食割合（0-100）
+- `consumptionStatus`: 摂食状況
+- `noteToFamily`: 家族への申し送り
+- `noteToStaff`: スタッフへの申し送り
+
+**成功レスポンス (200)**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "item-abc123",
+    "status": "served",
+    "updatedAt": "2025-12-17T12:00:00.000Z"
+  },
+  "timestamp": "2025-12-17T12:00:00.000Z"
+}
+```
+
+---
+
+### 4.15 DELETE /deleteCareItem (Phase 8.1)
+
+品物を削除します。
+
+**エンドポイント**: `DELETE /deleteCareItem`
+
+**リクエスト**:
+```json
+{
+  "itemId": "item-abc123"
+}
+```
+
+**成功レスポンス (200)**:
+```json
+{
+  "success": true,
+  "data": {
+    "deletedId": "item-abc123"
+  },
+  "timestamp": "2025-12-17T12:00:00.000Z"
+}
+```
+
+---
+
+### 4.16 POST /createTask (Phase 8.2)
+
+タスクを作成します。
+
+> **詳細設計**: [TASK_MANAGEMENT_SPEC.md](./TASK_MANAGEMENT_SPEC.md) を参照
+
+**エンドポイント**: `POST /createTask`
+
+**リクエスト**:
+```json
+{
+  "residentId": "resident-001",
+  "title": "キウイの賞味期限が近づいています",
+  "description": "12/20に期限切れ予定",
+  "taskType": "expiration_warning",
+  "relatedItemId": "item-abc123",
+  "dueDate": "2025-12-19",
+  "dueTime": "09:00",
+  "priority": "high",
+  "createdBy": "system"
+}
+```
+
+| フィールド | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `residentId` | string | Yes | 入居者ID |
+| `title` | string | Yes | タスクタイトル |
+| `description` | string | No | 詳細説明 |
+| `taskType` | enum | Yes | タイプ（`expiration_warning`, `serve_reminder`, `restock_alert`, `care_instruction`, `custom`） |
+| `relatedItemId` | string | No | 関連する品物ID |
+| `dueDate` | string | Yes | 期日（YYYY-MM-DD） |
+| `dueTime` | string | No | 時刻（HH:mm） |
+| `priority` | enum | No | 優先度（`low`, `medium`, `high`, `urgent`） |
+| `assignee` | string | No | 担当者名 |
+| `createdBy` | string | No | 作成者 |
+
+**成功レスポンス (200)**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "task-xyz789",
+    "title": "キウイの賞味期限が近づいています",
+    "status": "pending",
+    "createdAt": "2025-12-16T10:00:00.000Z"
+  },
+  "timestamp": "2025-12-16T10:00:00.000Z"
+}
+```
+
+---
+
+### 4.17 GET /getTasks (Phase 8.2)
+
+タスク一覧を取得します。フィルタ・ソート対応。
+
+**エンドポイント**: `GET /getTasks`
+
+**クエリパラメータ**:
+
+| パラメータ | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `residentId` | string | No | 入居者IDで絞り込み |
+| `status` | string/array | No | ステータスで絞り込み（`pending`, `in_progress`, `completed`, `cancelled`）。配列で複数指定可 |
+| `taskType` | string | No | タイプで絞り込み |
+| `dueDate` | string | No | 期日で絞り込み（YYYY-MM-DD） |
+| `sortBy` | string | No | ソート項目（`dueDate`, `priority`, `createdAt`） |
+| `sortOrder` | string | No | ソート順（`asc`, `desc`） |
+| `limit` | number | No | 取得件数上限（デフォルト: 50） |
+
+**成功レスポンス (200)**:
+```json
+{
+  "success": true,
+  "data": {
+    "tasks": [
+      {
+        "id": "task-xyz789",
+        "residentId": "resident-001",
+        "title": "キウイの賞味期限が近づいています",
+        "description": "12/20に期限切れ予定",
+        "taskType": "expiration_warning",
+        "relatedItemId": "item-abc123",
+        "dueDate": "2025-12-19",
+        "dueTime": "09:00",
+        "status": "pending",
+        "priority": "high",
+        "notificationSent": false,
+        "createdAt": "2025-12-16T10:00:00.000Z",
+        "updatedAt": "2025-12-16T10:00:00.000Z"
+      }
+    ],
+    "total": 1,
+    "counts": {
+      "pending": 1,
+      "inProgress": 0,
+      "completed": 0,
+      "overdue": 0
+    }
+  },
+  "timestamp": "2025-12-16T10:00:00.000Z"
+}
+```
+
+---
+
+### 4.18 PUT /updateTask (Phase 8.2)
+
+タスクを更新します（ステータス変更・完了処理など）。
+
+**エンドポイント**: `PUT /updateTask`
+
+**リクエスト**:
+```json
+{
+  "taskId": "task-xyz789",
+  "updates": {
+    "status": "completed",
+    "completionNote": "提供済み"
+  },
+  "completedBy": "田中花子"
+}
+```
+
+| フィールド | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `taskId` | string | Yes | 更新対象のタスクID |
+| `updates` | object | Yes | 更新内容（部分更新） |
+| `completedBy` | string | No | 完了者名（完了時に使用） |
+
+**更新可能フィールド**:
+- `status`: ステータス変更（`pending`, `in_progress`, `completed`, `cancelled`）
+- `priority`: 優先度変更
+- `assignee`: 担当者変更
+- `dueDate`: 期日変更
+- `dueTime`: 時刻変更
+- `completionNote`: 完了メモ
+
+**成功レスポンス (200)**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "task-xyz789",
+    "status": "completed",
+    "completedBy": "田中花子",
+    "completedAt": "2025-12-19T09:30:00.000Z",
+    "updatedAt": "2025-12-19T09:30:00.000Z"
+  },
+  "timestamp": "2025-12-19T09:30:00.000Z"
+}
+```
+
+---
+
+### 4.19 DELETE /deleteTask (Phase 8.2)
+
+タスクを削除します。
+
+**エンドポイント**: `DELETE /deleteTask`
+
+**リクエスト**:
+```json
+{
+  "taskId": "task-xyz789"
+}
+```
+
+**成功レスポンス (200)**:
+```json
+{
+  "success": true,
+  "data": {
+    "deletedId": "task-xyz789"
+  },
+  "timestamp": "2025-12-19T10:00:00.000Z"
+}
+```
+
+---
+
 ## 5. TypeScript 型定義
 
 ```typescript
@@ -829,6 +1194,132 @@ export interface TestDriveAccessResponse {
   advice?: string;      // v1.1: エラー時の親切なアドバイス
 }
 
+// === Phase 8.1: 品物管理 (CareItems) ===
+
+export type ServingMethod = 'as_is' | 'cut' | 'heated' | 'cooled' | 'processed' | 'other';
+export type ConsumptionStatus = 'full' | 'most' | 'half' | 'little' | 'none';
+export type ItemStatus = 'pending' | 'served' | 'consumed' | 'expired' | 'discarded';
+
+export interface CareItem {
+  id: string;
+  residentId: string;
+  userId: string;
+  itemName: string;
+  sentDate: string;
+  expirationDate?: string;
+  quantity: number;
+  servingMethod: ServingMethod;
+  plannedServeDate?: string;
+  actualServeDate?: string;
+  servedQuantity?: number;
+  consumptionRate?: number;
+  consumptionStatus?: ConsumptionStatus;
+  noteToFamily?: string;
+  noteToStaff?: string;
+  status: ItemStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCareItemRequest {
+  residentId: string;
+  userId: string;
+  itemName: string;
+  sentDate: string;
+  expirationDate?: string;
+  quantity: number;
+  servingMethod: ServingMethod;
+  plannedServeDate?: string;
+  noteToStaff?: string;
+}
+
+export interface GetCareItemsParams {
+  residentId?: string;
+  status?: ItemStatus;
+  sortBy?: 'sentDate' | 'expirationDate' | 'createdAt';
+  sortOrder?: 'asc' | 'desc';
+  limit?: number;
+}
+
+export interface GetCareItemsResponse {
+  items: CareItem[];
+  total: number;
+  counts: {
+    pending: number;
+    served: number;
+    consumed: number;
+    expired: number;
+    discarded: number;
+  };
+}
+
+// === Phase 8.2: タスク管理 (Tasks) ===
+
+export type TaskType = 'expiration_warning' | 'serve_reminder' | 'restock_alert' | 'care_instruction' | 'custom';
+export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+
+export interface Task {
+  id: string;
+  residentId: string;
+  userId?: string;
+  title: string;
+  description?: string;
+  taskType: TaskType;
+  relatedItemId?: string;
+  dueDate: string;
+  dueTime?: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  assignee?: string;
+  completedBy?: string;
+  completedAt?: string;
+  completionNote?: string;
+  notificationSent: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTaskRequest {
+  residentId: string;
+  title: string;
+  description?: string;
+  taskType: TaskType;
+  relatedItemId?: string;
+  dueDate: string;
+  dueTime?: string;
+  priority?: TaskPriority;
+  assignee?: string;
+  createdBy?: string;
+}
+
+export interface GetTasksParams {
+  residentId?: string;
+  status?: TaskStatus | TaskStatus[];
+  taskType?: TaskType;
+  dueDate?: string;
+  sortBy?: 'dueDate' | 'priority' | 'createdAt';
+  sortOrder?: 'asc' | 'desc';
+  limit?: number;
+}
+
+export interface GetTasksResponse {
+  tasks: Task[];
+  total: number;
+  counts: {
+    pending: number;
+    inProgress: number;
+    completed: number;
+    overdue: number;
+  };
+}
+
+export interface UpdateTaskRequest {
+  taskId: string;
+  updates: Partial<Pick<Task, 'status' | 'priority' | 'assignee' | 'dueDate' | 'dueTime' | 'completionNote' | 'completedBy'>>;
+  completedBy?: string;
+}
+
 // === 汎用データモデル (Phase 4.1+) ===
 
 export interface PlanDataRecord {
@@ -937,6 +1428,8 @@ curl -X POST \
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
+| 2025-12-16 | 1.6.0 | Phase 8.2: タスク管理API（createTask, getTasks, updateTask, deleteTask）追加 |
+| 2025-12-16 | 1.5.0 | Phase 8.1: 品物管理API（createCareItem, getCareItems, updateCareItem, deleteCareItem）追加 |
 | 2025-12-15 | 1.4.3 | 投稿IDルールへの参照追加（BUSINESS_RULES.mdリンク） |
 | 2025-12-15 | 1.4.2 | Phase 5.8 v1.2: firebase.json SA統一修正（ドキュメント整合性更新） |
 | 2025-12-15 | 1.4.1 | Phase 5.8 v1.1改善: 本番形式テストメッセージ、エラー時アドバイス追加 |

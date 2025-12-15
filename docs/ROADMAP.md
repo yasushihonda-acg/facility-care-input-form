@@ -1056,8 +1056,10 @@ Phase 5.8: 管理設定テスト機能   ░░░░░░░░░░░░░
 Phase 6.0: フッターナビゲーション ████████████████████ 100% (完了)
 Phase 7.0: 家族向け機能        ████████████████████ 100% (完了)
 Phase 7.1: 予実管理            ████████████████████ 100% (完了)
+Phase 8.1: 品物管理基盤        ████████████████████ 100% (完了)
+Phase 8.2: タスク管理          ████████████████████ 100% (完了)
                                ─────────────────────
-                               合計: 90+ tasks
+                               合計: 100+ tasks
 ```
 
 | Phase | タスク数 | 主な成果物 | 状態 |
@@ -1085,6 +1087,8 @@ Phase 7.1: 予実管理            ███████████████
 | Phase 6.1 | - | ビュー分離（閲覧/入力） | ✅ 完了（6.0に統合） |
 | Phase 7.0 | 14 | 家族向け機能（Flow C拡張） | ✅ 完了 |
 | Phase 7.1 | 8 | 予実管理（Plan/Result連携） | ✅ 完了 |
+| Phase 8.1 | 12 | 品物管理基盤（CareItems） | ✅ 完了 |
+| Phase 8.2 | 10 | タスク管理（Tasks） | ✅ 完了 |
 
 ---
 
@@ -1394,6 +1398,143 @@ interface CareInstruction {
 - [x] FamilyDashboard修正（実データ反映）
 - [x] ビルド確認
 - [x] コミット・デプロイ
+
+---
+
+## Phase 8.1: 品物管理基盤（CareItems） ✅ 完了
+
+**目的**: 家族が送付した品物（差し入れ）を管理し、スタッフが提供・摂食記録を入力できる機能を実装。
+
+> **詳細設計**: [ITEM_MANAGEMENT_SPEC.md](./ITEM_MANAGEMENT_SPEC.md) を参照
+
+### 8.1-1. 実装内容
+
+| カテゴリ | ファイル | 内容 |
+|----------|----------|------|
+| バックエンド | `functions/src/functions/careItems.ts` | CRUD API（作成・取得・更新・削除） |
+| バックエンド | `functions/src/types/careItem.ts` | CareItem型定義 |
+| フロントエンド | `frontend/src/types/careItem.ts` | CareItem型定義（共通） |
+| フロントエンド | `frontend/src/pages/family/ItemManagement.tsx` | 品物一覧ページ |
+| フロントエンド | `frontend/src/pages/family/ItemForm.tsx` | 品物登録フォーム |
+| フロントエンド | `frontend/src/components/family/ItemCard.tsx` | 品物カードコンポーネント |
+| フロントエンド | `frontend/src/hooks/useCareItems.ts` | React Queryフック |
+
+### 8.1-2. データモデル
+
+```typescript
+interface CareItem {
+  id: string;
+  residentId: string;
+  userId: string;
+  itemName: string;
+  sentDate: string;
+  expirationDate?: string;
+  quantity: number;
+  servingMethod: ServingMethod;
+  plannedServeDate?: string;
+  actualServeDate?: string;
+  servedQuantity?: number;
+  consumptionRate?: number;
+  consumptionStatus?: ConsumptionStatus;
+  noteToFamily?: string;
+  noteToStaff?: string;
+  status: ItemStatus;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+```
+
+### 8.1-3. API
+
+| エンドポイント | メソッド | 説明 |
+|---------------|---------|------|
+| `/createCareItem` | POST | 品物登録 |
+| `/getCareItems` | GET | 品物一覧取得 |
+| `/updateCareItem` | PUT | 品物更新 |
+| `/deleteCareItem` | DELETE | 品物削除 |
+
+### Phase 8.1 完了条件 ✅
+
+- [x] バックエンドAPI実装（CRUD）
+- [x] フロントエンド品物一覧ページ
+- [x] フロントエンド品物登録フォーム
+- [x] React Queryフック作成
+- [x] ルーティング追加（`/family/items`）
+- [x] FamilyDashboardにクイックリンク追加
+- [x] ビルド・デプロイ
+
+---
+
+## Phase 8.2: タスク管理（Tasks） ✅ 完了
+
+**目的**: 賞味期限警告・提供リマインダー等のタスクを管理し、スタッフが完了処理できる機能を実装。
+
+> **詳細設計**: [TASK_MANAGEMENT_SPEC.md](./TASK_MANAGEMENT_SPEC.md) を参照
+
+### 8.2-1. 実装内容
+
+| カテゴリ | ファイル | 内容 |
+|----------|----------|------|
+| バックエンド | `functions/src/functions/tasks.ts` | CRUD API（作成・取得・更新・削除） |
+| バックエンド | `functions/src/types/task.ts` | Task型定義 |
+| フロントエンド | `frontend/src/types/task.ts` | Task型定義（共通） |
+| フロントエンド | `frontend/src/pages/family/TaskList.tsx` | タスク一覧ページ |
+| フロントエンド | `frontend/src/hooks/useTasks.ts` | React Queryフック |
+| フロントエンド | `frontend/src/api/index.ts` | タスクAPIクライアント追加 |
+
+### 8.2-2. データモデル
+
+```typescript
+interface Task {
+  id: string;
+  residentId: string;
+  userId?: string;
+  title: string;
+  description?: string;
+  taskType: TaskType;
+  relatedItemId?: string;
+  dueDate: string;
+  dueTime?: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  assignee?: string;
+  completedBy?: string;
+  completedAt?: Timestamp;
+  completionNote?: string;
+  notificationSent: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+```
+
+### 8.2-3. API
+
+| エンドポイント | メソッド | 説明 |
+|---------------|---------|------|
+| `/createTask` | POST | タスク作成 |
+| `/getTasks` | GET | タスク一覧取得（フィルタ・ソート対応） |
+| `/updateTask` | PUT | タスク更新（ステータス変更・完了処理） |
+| `/deleteTask` | DELETE | タスク削除 |
+
+### 8.2-4. UI機能
+
+| 機能 | 説明 |
+|------|------|
+| フィルタタブ | 全て/未着手/対応中/完了 |
+| 期限切れ表示 | 期限切れタスクは赤いハイライト |
+| 完了モーダル | 完了メモ入力対応 |
+| バッジ表示 | FamilyDashboardに未完了タスク数バッジ |
+
+### Phase 8.2 完了条件 ✅
+
+- [x] バックエンドAPI実装（CRUD）
+- [x] フロントエンドタスク一覧ページ
+- [x] フィルタ・ソート機能
+- [x] 完了処理モーダル
+- [x] React Queryフック作成
+- [x] ルーティング追加（`/family/tasks`）
+- [x] FamilyDashboardにタスクバッジ追加
+- [x] ビルド・デプロイ
 
 ---
 
