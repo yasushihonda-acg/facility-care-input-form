@@ -84,3 +84,12 @@ export {
   updateTask,
   deleteTask,
 } from "./functions/tasks";
+
+// =============================================================================
+// タスク自動生成（Phase 8.2.1）
+// =============================================================================
+
+export {
+  generateDailyTasks,
+  triggerTaskGeneration,
+} from "./functions/taskGenerator";
