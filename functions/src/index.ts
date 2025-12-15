@@ -55,3 +55,10 @@ export {getFamilyRequestsFunc as getFamilyRequests} from "./functions/getFamilyR
 // =============================================================================
 
 export {getMealFormSettings, updateMealFormSettings} from "./functions/mealFormSettings";
+
+// =============================================================================
+// 管理者テスト機能
+// =============================================================================
+
+export {testWebhook} from "./functions/testWebhook";
+export {testDriveAccess} from "./functions/testDriveAccess";

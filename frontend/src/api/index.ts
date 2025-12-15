@@ -95,3 +95,50 @@ export async function updateMealFormSettings(
 
   return response.json();
 }
+
+// =============================================================================
+// 管理者テスト機能
+// =============================================================================
+
+export interface TestWebhookResponse {
+  success: boolean;
+  message: string;
+  error?: string;
+}
+
+export interface TestDriveAccessResponse {
+  success: boolean;
+  message: string;
+  folderName?: string;
+  error?: string;
+}
+
+/**
+ * Webhook URLのテスト送信
+ * 指定されたURLにテストメッセージを送信
+ */
+export async function testWebhook(webhookUrl: string): Promise<TestWebhookResponse> {
+  const response = await fetch(`${API_BASE}/testWebhook`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ webhookUrl }),
+  });
+
+  const data = await response.json();
+  return data as TestWebhookResponse;
+}
+
+/**
+ * Google DriveフォルダIDのアクセステスト
+ * 指定されたフォルダへのアクセス権限を確認
+ */
+export async function testDriveAccess(folderId: string): Promise<TestDriveAccessResponse> {
+  const response = await fetch(`${API_BASE}/testDriveAccess`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ folderId }),
+  });
+
+  const data = await response.json();
+  return data as TestDriveAccessResponse;
+}

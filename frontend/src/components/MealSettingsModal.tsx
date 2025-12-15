@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { MealFormSettings, UpdateMealFormSettingsRequest } from '../types';
+import { testWebhook, testDriveAccess } from '../api';
 
 interface MealSettingsModalProps {
   isOpen: boolean;
@@ -7,6 +8,22 @@ interface MealSettingsModalProps {
   settings: MealFormSettings;
   onSave: (settings: UpdateMealFormSettingsRequest) => Promise<boolean>;
 }
+
+// テスト状態の型
+interface TestState {
+  isLoading: boolean;
+  result: 'success' | 'error' | null;
+  message: string;
+}
+
+const initialTestState: TestState = {
+  isLoading: false,
+  result: null,
+  message: '',
+};
+
+// クールダウン時間（ミリ秒）
+const TEST_COOLDOWN_MS = 5000;
 
 export function MealSettingsModal({
   isOpen,
@@ -26,6 +43,16 @@ export function MealSettingsModal({
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
+  // テスト状態
+  const [webhookTestState, setWebhookTestState] = useState<TestState>(initialTestState);
+  const [importantWebhookTestState, setImportantWebhookTestState] = useState<TestState>(initialTestState);
+  const [driveTestState, setDriveTestState] = useState<TestState>(initialTestState);
+
+  // クールダウン状態
+  const [webhookCooldown, setWebhookCooldown] = useState(false);
+  const [importantWebhookCooldown, setImportantWebhookCooldown] = useState(false);
+  const [driveCooldown, setDriveCooldown] = useState(false);
+
   // 設定が変更されたら同期
   useEffect(() => {
     setLocalSettings({
@@ -36,7 +63,111 @@ export function MealSettingsModal({
       importantWebhookUrl: settings.importantWebhookUrl || '',
       driveUploadFolderId: settings.driveUploadFolderId || '',
     });
+    // テスト状態もリセット
+    setWebhookTestState(initialTestState);
+    setImportantWebhookTestState(initialTestState);
+    setDriveTestState(initialTestState);
   }, [settings]);
+
+  // Webhookテスト関数
+  const handleTestWebhook = useCallback(async (
+    url: string,
+    setTestState: React.Dispatch<React.SetStateAction<TestState>>,
+    setCooldown: React.Dispatch<React.SetStateAction<boolean>>
+  ) => {
+    if (!url) {
+      setTestState({
+        isLoading: false,
+        result: 'error',
+        message: 'URLを入力してください',
+      });
+      return;
+    }
+
+    // Google Chat URLプレフィックスチェック
+    if (!url.startsWith('https://chat.googleapis.com/')) {
+      setTestState({
+        isLoading: false,
+        result: 'error',
+        message: 'URLは https://chat.googleapis.com/ で始まる必要があります',
+      });
+      return;
+    }
+
+    setTestState({ isLoading: true, result: null, message: '' });
+
+    try {
+      const response = await testWebhook(url);
+      if (response.success) {
+        setTestState({
+          isLoading: false,
+          result: 'success',
+          message: response.message,
+        });
+      } else {
+        setTestState({
+          isLoading: false,
+          result: 'error',
+          message: response.error || response.message,
+        });
+      }
+    } catch (error) {
+      setTestState({
+        isLoading: false,
+        result: 'error',
+        message: error instanceof Error ? error.message : 'テストに失敗しました',
+      });
+    }
+
+    // クールダウン開始
+    setCooldown(true);
+    setTimeout(() => setCooldown(false), TEST_COOLDOWN_MS);
+  }, []);
+
+  // Driveアクセステスト関数
+  const handleTestDriveAccess = useCallback(async () => {
+    const folderId = localSettings.driveUploadFolderId;
+
+    if (!folderId) {
+      setDriveTestState({
+        isLoading: false,
+        result: 'error',
+        message: 'フォルダIDを入力してください',
+      });
+      return;
+    }
+
+    setDriveTestState({ isLoading: true, result: null, message: '' });
+
+    try {
+      const response = await testDriveAccess(folderId);
+      if (response.success) {
+        setDriveTestState({
+          isLoading: false,
+          result: 'success',
+          message: response.folderName
+            ? `${response.message}: ${response.folderName}`
+            : response.message,
+        });
+      } else {
+        setDriveTestState({
+          isLoading: false,
+          result: 'error',
+          message: response.error || response.message,
+        });
+      }
+    } catch (error) {
+      setDriveTestState({
+        isLoading: false,
+        result: 'error',
+        message: error instanceof Error ? error.message : 'テストに失敗しました',
+      });
+    }
+
+    // クールダウン開始
+    setDriveCooldown(true);
+    setTimeout(() => setDriveCooldown(false), TEST_COOLDOWN_MS);
+  }, [localSettings.driveUploadFolderId]);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -89,6 +220,45 @@ export function MealSettingsModal({
   };
 
   if (!isOpen) return null;
+
+  // テスト結果表示コンポーネント
+  const TestResultDisplay = ({ state }: { state: TestState }) => {
+    if (state.isLoading) {
+      return (
+        <div className="mt-1 text-xs text-gray-500 flex items-center gap-1">
+          <svg className="animate-spin h-3 w-3 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          テスト中...
+        </div>
+      );
+    }
+
+    if (state.result === 'success') {
+      return (
+        <div className="mt-1 text-xs text-green-600 flex items-center gap-1">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          {state.message}
+        </div>
+      );
+    }
+
+    if (state.result === 'error') {
+      return (
+        <div className="mt-1 text-xs text-red-600 flex items-center gap-1">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          {state.message}
+        </div>
+      );
+    }
+
+    return null;
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -228,19 +398,36 @@ export function MealSettingsModal({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               通常Webhook URL
             </label>
-            <input
-              type="url"
-              value={localSettings.webhookUrl || ''}
-              onChange={(e) =>
-                setLocalSettings((prev) => ({
-                  ...prev,
-                  webhookUrl: e.target.value,
-                }))
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
-              placeholder="https://chat.googleapis.com/v1/spaces/..."
-            />
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={localSettings.webhookUrl || ''}
+                onChange={(e) => {
+                  setLocalSettings((prev) => ({
+                    ...prev,
+                    webhookUrl: e.target.value,
+                  }));
+                  // 入力が変わったらテスト結果をリセット
+                  setWebhookTestState(initialTestState);
+                }}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+                placeholder="https://chat.googleapis.com/v1/spaces/..."
+              />
+              <button
+                type="button"
+                onClick={() => handleTestWebhook(
+                  localSettings.webhookUrl || '',
+                  setWebhookTestState,
+                  setWebhookCooldown
+                )}
+                disabled={webhookTestState.isLoading || webhookCooldown || !localSettings.webhookUrl}
+                className="px-3 py-2 text-xs bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+              >
+                テスト送信
+              </button>
+            </div>
             <p className="mt-1 text-xs text-gray-500">全ての食事記録を通知</p>
+            <TestResultDisplay state={webhookTestState} />
           </div>
 
           {/* 重要Webhook URL */}
@@ -248,19 +435,36 @@ export function MealSettingsModal({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               重要Webhook URL
             </label>
-            <input
-              type="url"
-              value={localSettings.importantWebhookUrl || ''}
-              onChange={(e) =>
-                setLocalSettings((prev) => ({
-                  ...prev,
-                  importantWebhookUrl: e.target.value,
-                }))
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
-              placeholder="https://chat.googleapis.com/v1/spaces/..."
-            />
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={localSettings.importantWebhookUrl || ''}
+                onChange={(e) => {
+                  setLocalSettings((prev) => ({
+                    ...prev,
+                    importantWebhookUrl: e.target.value,
+                  }));
+                  // 入力が変わったらテスト結果をリセット
+                  setImportantWebhookTestState(initialTestState);
+                }}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+                placeholder="https://chat.googleapis.com/v1/spaces/..."
+              />
+              <button
+                type="button"
+                onClick={() => handleTestWebhook(
+                  localSettings.importantWebhookUrl || '',
+                  setImportantWebhookTestState,
+                  setImportantWebhookCooldown
+                )}
+                disabled={importantWebhookTestState.isLoading || importantWebhookCooldown || !localSettings.importantWebhookUrl}
+                className="px-3 py-2 text-xs bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+              >
+                テスト送信
+              </button>
+            </div>
             <p className="mt-1 text-xs text-gray-500">「重要」選択時のみ追加通知</p>
+            <TestResultDisplay state={importantWebhookTestState} />
           </div>
 
           {/* セパレーター */}
@@ -278,24 +482,37 @@ export function MealSettingsModal({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               写真保存先フォルダID
             </label>
-            <input
-              type="text"
-              value={localSettings.driveUploadFolderId || ''}
-              onChange={(e) =>
-                setLocalSettings((prev) => ({
-                  ...prev,
-                  driveUploadFolderId: e.target.value,
-                }))
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm font-mono"
-              placeholder="1ABC123xyz..."
-            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={localSettings.driveUploadFolderId || ''}
+                onChange={(e) => {
+                  setLocalSettings((prev) => ({
+                    ...prev,
+                    driveUploadFolderId: e.target.value,
+                  }));
+                  // 入力が変わったらテスト結果をリセット
+                  setDriveTestState(initialTestState);
+                }}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm font-mono"
+                placeholder="1ABC123xyz..."
+              />
+              <button
+                type="button"
+                onClick={handleTestDriveAccess}
+                disabled={driveTestState.isLoading || driveCooldown || !localSettings.driveUploadFolderId}
+                className="px-3 py-2 text-xs bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+              >
+                接続テスト
+              </button>
+            </div>
             <p className="mt-1 text-xs text-gray-500">
               Google DriveのフォルダURLからIDを取得
             </p>
             <p className="mt-0.5 text-xs text-gray-400">
               例: https://drive.google.com/drive/folders/<span className="font-mono text-blue-600">[ID]</span>
             </p>
+            <TestResultDisplay state={driveTestState} />
           </div>
 
           {/* 保存メッセージ */}
