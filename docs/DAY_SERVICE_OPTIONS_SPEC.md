@@ -1,7 +1,7 @@
 # デイサービス選択肢機能 設計書
 
 > **作成日**: 2025年12月15日
-> **ステータス**: 実装中
+> **ステータス**: 完了
 
 ---
 
@@ -115,12 +115,12 @@ const availableDayServices = DAY_SERVICE_OPTIONS;
 | # | タスク | 状態 |
 |---|--------|------|
 | 1 | 設計書作成 | ✅ 完了 |
-| 2 | `mealForm.ts` に定数追加 | 📋 計画中 |
-| 3 | `MealInputPage.tsx` 修正 | 📋 計画中 |
-| 4 | `MealSettingsModal.tsx` 修正 | 📋 計画中 |
-| 5 | ビルド確認 | 📋 計画中 |
-| 6 | デプロイ | 📋 計画中 |
-| 7 | CURRENT_STATUS.md 更新 | 📋 計画中 |
+| 2 | `mealForm.ts` に定数追加 | ✅ 完了 |
+| 3 | `MealInputPage.tsx` 修正 | ✅ 完了 |
+| 4 | `MealSettingsModal.tsx` 修正 | ✅ 完了 |
+| 5 | ビルド確認 | ✅ 完了 |
+| 6 | デプロイ | ✅ 完了 |
+| 7 | CURRENT_STATUS.md 更新 | ✅ 完了 |
 
 ---
 
@@ -190,3 +190,4 @@ const availableDayServices = DAY_SERVICE_OPTIONS;
 | 日付 | 内容 |
 |------|------|
 | 2025-12-15 | 初版作成 |
+| 2025-12-15 | 実装完了 |

@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月15日 (Phase 5.8 管理設定テスト機能実装完了)
+> **最終更新**: 2025年12月15日 (Phase 5.9 デイサービス選択肢固定リスト化完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -332,6 +332,42 @@ POST /updateMealFormSettings?admin=true - 設定更新（adminパラメータ必
 - `frontend/src/components/Layout.tsx`
 - `frontend/src/components/FooterNav.tsx`
 - `frontend/src/pages/ViewPage.tsx`
+
+---
+
+### ✅ 完了: Phase 5.9 デイサービス選択肢固定リスト化
+
+**背景**:
+- デイサービス選択が管理者設定の単一値のみで運用に対応できなかった
+- 複数のデイサービス施設から選択する必要があった
+
+**設計書**: [DAY_SERVICE_OPTIONS_SPEC.md](./DAY_SERVICE_OPTIONS_SPEC.md)
+
+**実装完了**:
+
+| ステップ | 内容 | 状態 |
+|----------|------|------|
+| 1 | 設計書作成 | ✅ 完了 |
+| 2 | mealForm.ts に DAY_SERVICE_OPTIONS 定数追加 | ✅ 完了 |
+| 3 | MealInputPage.tsx 修正（固定リスト使用） | ✅ 完了 |
+| 4 | MealSettingsModal.tsx 修正（defaultDayServiceName削除） | ✅ 完了 |
+| 5 | ビルド確認 | ✅ 完了 |
+| 6 | デプロイ | ✅ 完了 |
+
+**デイサービス選択肢（固定リスト）**:
+1. 武
+2. 田上
+3. 笹貫
+4. 下荒田
+5. 東千石
+6. 南栄
+7. 永吉
+8. 七福の里
+
+**実装ファイル（修正）**:
+- `frontend/src/types/mealForm.ts` - DAY_SERVICE_OPTIONS定数追加
+- `frontend/src/pages/MealInputPage.tsx` - 固定リスト使用に変更
+- `frontend/src/components/MealSettingsModal.tsx` - defaultDayServiceNameフィールド削除
 
 ---
 
@@ -741,6 +777,7 @@ Phase 6.0: フッターナビゲーション基盤 █████████�
 Phase 7.0: 家族向け機能(Flow C)     ████████████████████ 100% (完了)
 Phase 7.1: 予実管理(Plan/Result連携) ████████████████████ 100% (完了)
 Phase 5.8: 管理設定テスト機能       ████████████████████ 100% (完了)
+Phase 5.9: デイサービス選択肢固定リスト ████████████████████ 100% (完了)
 ```
 
 詳細: [docs/ROADMAP.md](./ROADMAP.md)
