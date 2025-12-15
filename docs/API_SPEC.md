@@ -77,6 +77,8 @@ https://asia-northeast1-facility-care-input-form.cloudfunctions.net
 | GET | `/getMealFormSettings` | 食事フォーム設定を取得 | - | ✅ |
 | POST | `/updateMealFormSettings` | 食事フォーム設定を更新 | - | ✅ |
 | POST | `/uploadCareImage` | 画像をアップロード | 画像連携 | ✅ |
+| POST | `/testWebhook` | Webhook URLの動作確認 | 管理テスト | 📋 計画中 |
+| POST | `/testDriveAccess` | DriveフォルダIDの権限確認 | 管理テスト | 📋 計画中 |
 | POST | `/submitCareRecord` | ケア実績を入力 (deprecated) | Flow B | ❌ |
 | POST | `/submitFamilyRequest` | 家族要望を送信 | Flow C | ❌ |
 | GET | `/getFamilyRequests` | 家族要望一覧を取得 | - | ❌ |
@@ -595,6 +597,100 @@ GET /getFamilyRequests?userId=F001&status=pending
 
 ---
 
+### 4.10 testWebhook 📋 計画中
+
+Webhook URLの動作確認テスト。管理者が設定保存前にURLの有効性を確認するために使用。
+
+> **詳細設計**: [ADMIN_TEST_FEATURE_SPEC.md](./ADMIN_TEST_FEATURE_SPEC.md) を参照
+
+**エンドポイント**: `POST /testWebhook`
+
+**リクエスト**:
+```json
+{
+  "webhookUrl": "https://chat.googleapis.com/v1/spaces/xxx/messages?key=yyy"
+}
+```
+
+| フィールド | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `webhookUrl` | string | Yes | テスト対象のWebhook URL（`https://chat.googleapis.com/`プレフィックス必須） |
+
+**成功レスポンス (200)**:
+```json
+{
+  "success": true,
+  "message": "テスト送信成功",
+  "timestamp": "2024-01-15T12:00:00.000Z"
+}
+```
+
+**失敗レスポンス (400)**:
+```json
+{
+  "success": false,
+  "message": "テスト送信失敗",
+  "error": "Webhook URLが無効か、送信に失敗しました",
+  "timestamp": "2024-01-15T12:00:00.000Z"
+}
+```
+
+**テストメッセージ内容**:
+```
+[テスト] 施設ケア入力フォームからの接続テストです。
+このメッセージが表示されれば設定は正常です。
+
+送信時刻: 2024/1/15 12:00:00
+```
+
+---
+
+### 4.11 testDriveAccess 📋 計画中
+
+Google DriveフォルダIDのアクセス権限確認テスト。管理者が設定保存前にフォルダへのアクセス可否を確認するために使用。
+
+> **詳細設計**: [ADMIN_TEST_FEATURE_SPEC.md](./ADMIN_TEST_FEATURE_SPEC.md) を参照
+
+**エンドポイント**: `POST /testDriveAccess`
+
+**リクエスト**:
+```json
+{
+  "folderId": "1ABC123xyz..."
+}
+```
+
+| フィールド | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `folderId` | string | Yes | テスト対象のGoogle DriveフォルダID |
+
+**成功レスポンス (200)**:
+```json
+{
+  "success": true,
+  "message": "フォルダにアクセス可能",
+  "folderName": "ケア写真フォルダ",
+  "timestamp": "2024-01-15T12:00:00.000Z"
+}
+```
+
+**失敗レスポンス (400)**:
+```json
+{
+  "success": false,
+  "message": "フォルダにアクセスできません",
+  "error": "The user does not have permission to access the file.",
+  "timestamp": "2024-01-15T12:00:00.000Z"
+}
+```
+
+**検証内容**:
+1. 指定IDのファイル/フォルダが存在するか
+2. サービスアカウントにアクセス権限があるか
+3. 対象がフォルダであるか（ファイルでないか）
+
+---
+
 ## 5. TypeScript 型定義
 
 ```typescript
@@ -648,6 +744,16 @@ export interface SubmitFamilyRequestRequest {
   attachments?: string[];
 }
 
+/** Phase 5.8: Webhookテストリクエスト */
+export interface TestWebhookRequest {
+  webhookUrl: string;
+}
+
+/** Phase 5.8: Driveアクセステストリクエスト */
+export interface TestDriveAccessRequest {
+  folderId: string;
+}
+
 // === Response Types ===
 
 export interface ApiResponse<T> {
@@ -683,6 +789,21 @@ export interface UploadCareImageResponse {
   fileName: string;
   publicUrl: string;
   thumbnailUrl: string;
+}
+
+/** Phase 5.8: Webhookテストレスポンス */
+export interface TestWebhookResponse {
+  success: boolean;
+  message: string;
+  error?: string;
+}
+
+/** Phase 5.8: Driveアクセステストレスポンス */
+export interface TestDriveAccessResponse {
+  success: boolean;
+  message: string;
+  folderName?: string;  // 成功時のみ
+  error?: string;
 }
 
 // === 汎用データモデル (Phase 4.1+) ===
