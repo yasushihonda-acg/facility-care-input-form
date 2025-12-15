@@ -7,6 +7,7 @@ import { EvidenceMonitor } from './pages/family/EvidenceMonitor'
 import { RequestBuilder } from './pages/family/RequestBuilder'
 import { ItemManagement } from './pages/family/ItemManagement'
 import { ItemForm } from './pages/family/ItemForm'
+import { TaskList } from './pages/family/TaskList'
 
 function App() {
   return (
@@ -29,6 +30,9 @@ function App() {
       {/* 品物管理（Phase 8.1） */}
       <Route path="/family/items" element={<ItemManagement />} />
       <Route path="/family/items/new" element={<ItemForm />} />
+
+      {/* タスク管理（Phase 8.2） */}
+      <Route path="/family/tasks" element={<TaskList />} />
 
       {/* シート詳細（レガシー） */}
       <Route path="/sheet/:sheetName" element={<SheetDetailPage />} />

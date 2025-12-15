@@ -73,3 +73,14 @@ export {
   updateCareItem,
   deleteCareItem,
 } from "./functions/careItems";
+
+// =============================================================================
+// タスク管理（Phase 8.2）
+// =============================================================================
+
+export {
+  createTask,
+  getTasks,
+  updateTask,
+  deleteTask,
+} from "./functions/tasks";
