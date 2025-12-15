@@ -3,6 +3,7 @@
  *
  * 管理者設定画面から、Google DriveフォルダIDの妥当性確認を行うためのAPI
  * v1.1: エラー時に親切なアドバイスを返すよう改善
+ * v1.2: firebase.jsonでserviceAccount指定により統一SAで実行
  *
  * 設計書: docs/ADMIN_TEST_FEATURE_SPEC.md
  */
