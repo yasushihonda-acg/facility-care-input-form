@@ -44,6 +44,7 @@
 |----------|------|
 | `docs/FAMILY_UX_DESIGN.md` | 家族向けUX設計（Phase 7.0） |
 | `docs/PLAN_RESULT_MANAGEMENT.md` | 予実管理設計（Phase 7.1） |
+| `docs/ADMIN_TEST_FEATURE_SPEC.md` | 管理設定テスト機能（Phase 5.8） |
 | `docs/MEAL_INPUT_FORM_SPEC.md` | 食事入力フォーム設計 |
 | `docs/GOOGLE_CHAT_WEBHOOK_SPEC.md` | Google Chat Webhook連携 |
 | `docs/PHOTO_UPLOAD_SPEC.md` | 写真アップロード・フォルダ設定 |
