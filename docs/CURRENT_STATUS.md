@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月15日 (Phase 5.7 設定モーダルUI改善 ✅完了)
+> **最終更新**: 2025年12月15日 (Phase 7.0 家族向け機能 🚧実装中)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -17,6 +17,49 @@
 ---
 
 ## 現在の進捗
+
+### 🚧 進行中: Phase 7.0 家族向け機能（Flow C拡張）
+
+**コンセプト**: 『遠隔ケア・コックピット』- FAXの代替となる入力機能と、安心を提供する確認画面
+
+**設計書**: [FAMILY_UX_DESIGN.md](./FAMILY_UX_DESIGN.md)
+
+**実装完了**:
+
+| ステップ | 内容 | 状態 |
+|----------|------|------|
+| 1 | UX設計書作成（FAMILY_UX_DESIGN.md） | ✅ 完了 |
+| 2 | ARCHITECTURE.md更新（Flow C詳細追記） | ✅ 完了 |
+| 3 | 家族向け型定義（frontend/src/types/family.ts） | ✅ 完了 |
+| 4 | デモ用モックデータ（frontend/src/data/demoFamilyData.ts） | ✅ 完了 |
+| 5 | フッターナビ3タブ化（FooterNav.tsx） | ✅ 完了 |
+| 6 | Layoutコンポーネント拡張（ヘッダー対応） | ✅ 完了 |
+| 7 | View C: 家族ホーム（FamilyDashboard.tsx） | ✅ 完了 |
+| 8 | View A: エビデンス・モニター（EvidenceMonitor.tsx） | ✅ 完了 |
+| 9 | View B: ケア仕様ビルダー（RequestBuilder.tsx） | ✅ 完了 |
+| 10 | ルーティング追加（App.tsx） | ✅ 完了 |
+| 11 | ビルド確認 | ✅ 完了 |
+| 12 | デプロイ・動作確認 | 📋 未実施 |
+
+**3つのビュー**:
+| ビュー | パス | 説明 |
+|--------|------|------|
+| 家族ホーム | `/family` | タイムライン形式で1日の食事状況確認 |
+| エビデンス・モニター | `/family/evidence/:date` | Plan（指示）とResult（実績）を対比表示 |
+| ケア仕様ビルダー | `/family/request` | 構造化されたケア指示作成（プリセット＋If-Then） |
+
+**実装ファイル**:
+- `frontend/src/types/family.ts` - 家族向け型定義（CareInstruction等）
+- `frontend/src/data/demoFamilyData.ts` - デモ用モックデータ（蒲池様FAX内容）
+- `frontend/src/components/Layout.tsx` - ヘッダー対応拡張
+- `frontend/src/components/FooterNav.tsx` - 3タブ化
+- `frontend/src/components/family/TimelineItem.tsx` - タイムラインアイテム
+- `frontend/src/pages/family/FamilyDashboard.tsx` - View C
+- `frontend/src/pages/family/EvidenceMonitor.tsx` - View A
+- `frontend/src/pages/family/RequestBuilder.tsx` - View B
+- `frontend/src/App.tsx` - ルーティング追加
+
+---
 
 ### ✅ 完了: Phase 5.7 設定モーダルUI改善
 
@@ -238,11 +281,34 @@ POST /updateMealFormSettings?admin=true - 設定更新（adminパラメータ必
 
 ---
 
-### 次のタスク: オプション機能
+### 次のタスク: Phase 7.0 家族向け機能（Flow C拡張）
+
+> **詳細設計**: [FAMILY_UX_DESIGN.md](./FAMILY_UX_DESIGN.md) / [ROADMAP.md](./ROADMAP.md#phase-70-家族向け機能flow-c拡張-計画中)
+
+**コンセプト**: 『遠隔ケア・コックピット』- FAXの代替となる入力機能と、安心を提供する確認画面
+
+| タスク | 説明 | 優先度 |
+|--------|------|--------|
+| デモ用モックデータ作成 | 蒲池様FAX内容に基づく初期データ | 高 |
+| 家族向け型定義 | `CareInstruction`等の型定義 | 高 |
+| フッターナビ3タブ化 | 📋記録閲覧 / ✏️記録入力 / 👨‍👩‍👧家族 | 高 |
+| View C: 家族ホーム | タイムライン形式で1日の食事状況確認 | 高 |
+| View A: エビデンス・モニター | Plan/Result対比＋写真エビデンス | 高 |
+| View B: ケア仕様ビルダー | 構造化ケア指示作成（プリセット＋If-Then） | 中 |
+
+**3つのビュー**:
+| ビュー | パス | 説明 |
+|--------|------|------|
+| 家族ホーム | `/family` | タイムライン形式で食事状況確認 |
+| エビデンス・モニター | `/family/evidence/:date` | Plan vs Result対比表示 |
+| ケア仕様ビルダー | `/family/request` | 構造化されたケア指示作成 |
+
+---
+
+### その他オプション機能
 
 | 機能 | 説明 | 優先度 |
 |------|------|--------|
-| Firebase Hostingデプロイ | Phase 5.3 + 6.0 の本番反映 | 高 |
 | CSVエクスポート | 表示中のデータをCSVでダウンロード | 中 |
 | オフラインキャッシュ強化 | ServiceWorkerでAPI応答をキャッシュ | 低 |
 
@@ -604,6 +670,7 @@ Phase 5.5: Google Chat Webhook連携  ██████████████
 Phase 5.6: 写真アップロードフォルダ設定 ████████████████████ 100% (完了)
 Phase 5.7: 設定モーダルUI改善       ████████████████████ 100% (完了)
 Phase 6.0: フッターナビゲーション基盤 ████████████████████ 100% (完了)
+Phase 7.0: 家族向け機能(Flow C)     ░░░░░░░░░░░░░░░░░░░░   0% (計画中)
 ```
 
 詳細: [docs/ROADMAP.md](./ROADMAP.md)

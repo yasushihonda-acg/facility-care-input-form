@@ -86,13 +86,39 @@
 | 属性 | 値 |
 |------|-----|
 | **Role** | アプリ内完結データ |
-| **Storage** | Cloud Firestore (`family_requests` collection) |
+| **Storage** | Cloud Firestore (`family_requests`, `care_instructions` collection) |
 | **操作** | 読み書き可能 |
 
 **データ内容例**:
-- ケア方法への要望
+- ケア方法への要望（自由記述）
+- 構造化されたケア指示（メニュー・調理方法・条件付きロジック）
 - 特別な配慮事項
 - 優先度・カテゴリ分類
+
+#### Flow C 詳細: 家族向け機能（『遠隔ケア・コックピット』）
+
+> **詳細設計**: [FAMILY_UX_DESIGN.md](./FAMILY_UX_DESIGN.md) を参照
+
+**解決する課題**:
+| 課題 | 現状（FAX） | 解決策（アプリ） |
+|------|------------|------------------|
+| 指示の不透明さ | FAXを送っても実施確認できない | 写真付きエビデンスで実施確認 |
+| 手書きの手間 | 詳細な指示を毎回手書き | プリセット＋構造化入力で効率化 |
+| 条件付き指示 | 「残食があれば...」が伝わりにくい | If-Then形式のUI |
+
+**3つのビュー**:
+| ビュー | パス | 説明 |
+|--------|------|------|
+| 家族ホーム | `/family` | タイムライン形式で1日の食事状況を確認 |
+| エビデンス・モニター | `/family/evidence/:date` | Plan（指示）とResult（実績）を対比表示 |
+| ケア仕様ビルダー | `/family/request` | 構造化されたケア指示を作成 |
+
+**データ結合ロジック**:
+```
+Plan（Flow A/C）─┬─ targetDate    ─┐
+                 ├─ mealTime      ─┼─→ JOIN → エビデンス対比表示
+Result（Flow B）─┴─ menuName(opt) ─┘
+```
 
 ---
 
@@ -188,19 +214,69 @@ interface PlanDataRecord {
 3. ヘッダー名と値を `data` マップにマッピング
 4. 共通フィールド (`timestamp`, `staffName`, `residentName`) を個別に抽出
 
-#### `family_requests` (Flow C)
+#### `family_requests` (Flow C - 汎用要望)
 ```typescript
 interface FamilyRequest {
   id: string;                  // ドキュメントID
   userId: string;              // ご家族ユーザーID
   residentId: string;          // 対象入居者ID
   category: string;            // カテゴリ（食事/生活/医療など）
-  content: string;             // 要望内容
+  content: string;             // 要望内容（自由記述）
   priority: 'low' | 'medium' | 'high';
   status: 'pending' | 'reviewed' | 'implemented';
+  attachments?: string[];      // 添付ファイルURL
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
+```
+
+#### `care_instructions` (Flow C - 構造化ケア指示)
+
+> **詳細**: [FAMILY_UX_DESIGN.md](./FAMILY_UX_DESIGN.md) を参照
+
+```typescript
+interface CareInstruction {
+  id: string;                  // ドキュメントID
+  userId: string;              // ご家族ユーザーID
+  residentId: string;          // 対象入居者ID
+
+  // 対象指定
+  targetDate: string;          // "2025-12-14"
+  mealTime: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+
+  // メニュー・指示内容
+  menuName: string;            // "キウイ"
+  processingDetail: string;    // 詳細指示（必須・長文OK）
+
+  // 条件付きロジック（オプション）
+  conditions?: {
+    trigger: 'leftover' | 'poor_condition' | 'no_appetite' | 'after_rehab';
+    action: 'reserve_snack' | 'reduce_amount' | 'cancel' | 'alternative';
+  }[];
+
+  // 優先度
+  priority: 'normal' | 'critical';  // critical = 絶対厳守
+
+  // ステータス
+  status: 'pending' | 'acknowledged' | 'completed';
+
+  // メタ情報
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+```
+
+**Firestoreコレクション構成**:
+```
+firestore/
+├── family_requests/           # 汎用的な要望（自由記述）
+│   └── {requestId}
+├── care_instructions/         # 構造化されたケア指示
+│   └── {instructionId}
+├── plan_data/                 # 同期済み記録データ（Flow A）
+│   └── {recordId}
+└── settings/                  # アプリ設定
+    └── mealFormDefaults
 ```
 
 ---
@@ -261,6 +337,7 @@ service cloud.firestore {
 | [SETTINGS_MODAL_UI_SPEC.md](./SETTINGS_MODAL_UI_SPEC.md) | 設定モーダルUI仕様 |
 | [MEAL_INPUT_FORM_SPEC.md](./MEAL_INPUT_FORM_SPEC.md) | 食事入力フォーム設計 |
 | [SHEET_B_STRUCTURE.md](./SHEET_B_STRUCTURE.md) | Sheet B（書き込み先）構造 |
+| [FAMILY_UX_DESIGN.md](./FAMILY_UX_DESIGN.md) | **家族向けUX設計（Flow C詳細）** |
 
 ---
 
@@ -353,7 +430,22 @@ graph LR
 | Phase 5.7 | 設定モーダルUI改善 | ✅ 完了 |
 | Phase 6.0 | フッターナビゲーション | ✅ 完了 |
 
-### 次のオプション機能
+### 次のPhase: 家族向け機能
+
+| Phase | 内容 | 状態 |
+|-------|------|------|
+| Phase 7.0 | 家族向け機能（Flow C拡張） | 📋 計画中 |
+
+> **詳細**: [FAMILY_UX_DESIGN.md](./FAMILY_UX_DESIGN.md) を参照
+
+**実装予定**:
+| ビュー | 説明 | 優先度 |
+|--------|------|--------|
+| 家族ホーム（タイムライン） | 1日の食事状況を時系列表示 | 高 |
+| エビデンス・モニター | Plan/Result対比＋写真エビデンス | 高 |
+| ケア仕様ビルダー | 構造化されたケア指示作成 | 中 |
+
+### その他オプション機能
 
 | 機能 | 説明 | 優先度 |
 |------|------|--------|
