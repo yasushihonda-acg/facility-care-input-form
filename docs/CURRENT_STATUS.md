@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月16日 (Phase 8.3 統計ダッシュボード基本実装 完了)
+> **最終更新**: 2025年12月16日 (Phase 8.4 Gemini AI連携基盤 完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -696,19 +696,68 @@ POST /updateMealFormSettings?admin=true - 設定更新（adminパラメータ必
 
 ---
 
-### 次のタスク
+### ✅ 完了: Phase 8.4 Gemini AI連携基盤
 
-#### Phase 8.4: Gemini AI連携（次に実装予定）
+**コンセプト**: Gemini 2.0 Flashを使用した品物入力補助（賞味期限・保存方法・提供方法の自動提案）
 
 **設計書**: [AI_INTEGRATION_SPEC.md](./AI_INTEGRATION_SPEC.md)
 
+**実装完了**:
+
 | ステップ | 内容 | 状態 |
 |----------|------|------|
-| 1 | Vertex AI API有効化・権限設定 | 未着手 |
-| 2 | geminiService.ts実装 | 未着手 |
-| 3 | 品物入力補助API（aiSuggest） | 未着手 |
-| 4 | 摂食傾向分析API（aiAnalyze） | 未着手 |
-| 5 | フロントエンドUI統合 | 未着手 |
+| 1 | Vertex AI API有効化・権限設定 | ✅ 完了 |
+| 2 | @google-cloud/vertexai パッケージインストール | ✅ 完了 |
+| 3 | geminiService.ts実装 | ✅ 完了 |
+| 4 | プロンプトテンプレート作成 | ✅ 完了 |
+| 5 | 品物入力補助API（aiSuggest） | ✅ 完了 |
+| 6 | フロントエンド型定義・API関数・フック | ✅ 完了 |
+| 7 | ビルド・デプロイ | ✅ 完了（CI/CD） |
+
+**実装ファイル（新規）**:
+- `functions/src/services/geminiService.ts` - Gemini API連携サービス
+- `functions/src/prompts/itemSuggestion.ts` - 品物入力補助プロンプト
+- `functions/src/functions/aiSuggest.ts` - 品物入力補助API
+- `frontend/src/hooks/useAISuggest.ts` - AI提案フック
+
+**実装ファイル（修正）**:
+- `functions/src/index.ts` - aiSuggestエクスポート追加
+- `functions/src/types/index.ts` - AI関連型定義追加
+- `frontend/src/api/index.ts` - aiSuggest API関数追加
+- `frontend/src/types/careItem.ts` - AI関連型・ラベルマップ追加
+
+**AI機能**:
+| 機能 | 説明 | 状態 |
+|------|------|------|
+| aiSuggest | 品物名から賞味期限・保存方法・提供方法を提案 | ✅ 実装完了 |
+| aiAnalyze | 摂食傾向分析・ケア提案 | 将来実装予定 |
+| aiReport | 週次レポート自動生成 | 将来実装予定 |
+
+**APIエンドポイント**:
+```
+POST /aiSuggest
+  - リクエスト: { itemName: string, category?: ItemCategory }
+  - レスポンス: { expirationDays, storageMethod, servingMethods[], notes? }
+  - フォールバック: AIエラー時もデフォルト値を返却
+```
+
+**設計特徴**:
+- Gemini 2.0 Flash使用（高速・低コスト）
+- フォールバック対応（AI障害時もデフォルト値を返却）
+- デバウンス実装（500ms、連続リクエスト防止）
+- キャッシュ対応（フロントエンドフック）
+
+---
+
+### 次のタスク
+
+#### Phase 8.4拡張: AI機能追加
+
+| ステップ | 内容 | 状態 |
+|----------|------|------|
+| 1 | 摂食傾向分析API（aiAnalyze） | 未着手 |
+| 2 | 週次レポート生成（aiReport） | 未着手 |
+| 3 | 品物登録フォームへのAI提案UI統合 | 未着手 |
 
 #### Phase 8.3拡張: 統計ダッシュボード機能追加
 
@@ -1087,7 +1136,7 @@ Phase 8.1: 品物管理基盤               ████████████
 Phase 8.2: タスク管理                 ████████████████████ 100% (完了)
 Phase 8.2.1: タスク自動生成           ████████████████████ 100% (完了)
 Phase 8.3: 統計ダッシュボード         ████████████████░░░░  80% (基本実装完了)
-Phase 8.4: Gemini AI連携             ░░░░░░░░░░░░░░░░░░░░   0% (次に実装予定)
+Phase 8.4: Gemini AI連携             ████████████████░░░░  80% (基盤実装完了)
 ```
 
 詳細: [docs/ROADMAP.md](./ROADMAP.md)
@@ -1124,6 +1173,7 @@ Phase 8.4: Gemini AI連携             ░░░░░░░░░░░░░�
 | Scheduler | `/generateDailyTasks` | タスク自動生成（毎日6時） | ✅ 実装完了 |
 | POST | `/triggerTaskGeneration?admin=true` | タスク手動生成（テスト用） | ✅ 実装完了 |
 | GET | `/getStats` | 統計データ取得（品物状況・アラート） | ✅ 実装完了 |
+| POST | `/aiSuggest` | AI品物入力補助（賞味期限・保存方法提案） | ✅ 実装完了 |
 
 ### 同期済みデータ
 
