@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月15日 (Phase 5.9 デイサービス選択肢固定リスト化完了)
+> **最終更新**: 2025年12月15日 (Phase 5.10 設定モーダルキャンセル時リセット修正完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -332,6 +332,31 @@ POST /updateMealFormSettings?admin=true - 設定更新（adminパラメータ必
 - `frontend/src/components/Layout.tsx`
 - `frontend/src/components/FooterNav.tsx`
 - `frontend/src/pages/ViewPage.tsx`
+
+---
+
+### ✅ 完了: Phase 5.10 設定モーダルキャンセル時リセット修正
+
+**背景**:
+- 設定モーダルでテスト送信だけ実行して保存せずにキャンセルしても、次回モーダルを開いた時に前回の入力値やテスト結果が残っていた
+- ユーザーが混乱するため、キャンセル時は完全にリセットすべき
+
+**設計書**: [SETTINGS_MODAL_UI_SPEC.md](./SETTINGS_MODAL_UI_SPEC.md)
+
+**問題の原因**:
+- Reactコンポーネントは`isOpen=false`でも破棄されず、メモリ上に状態が保持される
+- `handleCancel`でリセットしても、モーダルを閉じる前にリセットされるため、次回開いた時に反映されない
+
+**解決策**:
+- `useEffect`で`isOpen`を監視し、`isOpen=true`（モーダルが開いた時）に`resetAllStates()`を実行
+- これによりモーダルを開く度に必ずpropsの設定値で初期化される
+
+**実装ファイル（修正）**:
+- `frontend/src/components/MealSettingsModal.tsx` - useEffectでisOpen監視追加
+
+**コミット履歴**:
+- `52774c7` fix: キャンセル時に設定・テスト状態をリセット（初回修正）
+- `bef8087` fix: モーダルを開いた時に状態をリセット（最終修正）
 
 ---
 
@@ -800,6 +825,7 @@ Phase 7.0: 家族向け機能(Flow C)     ████████████�
 Phase 7.1: 予実管理(Plan/Result連携) ████████████████████ 100% (完了)
 Phase 5.8: 管理設定テスト機能       ████████████████████ 100% (完了)
 Phase 5.9: デイサービス選択肢固定リスト ████████████████████ 100% (完了)
+Phase 5.10: 設定モーダルキャンセル修正 ████████████████████ 100% (完了)
 ```
 
 詳細: [docs/ROADMAP.md](./ROADMAP.md)
