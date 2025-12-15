@@ -378,3 +378,39 @@ export async function deleteTask(
 
   return response.json();
 }
+
+// =============================================================================
+// 統計ダッシュボード API（Phase 8.3）
+// =============================================================================
+
+import type {
+  GetStatsRequest,
+  GetStatsResponse,
+} from '../types/stats';
+
+export type { GetStatsRequest, GetStatsResponse };
+
+/**
+ * 統計データを取得
+ */
+export async function getStats(
+  params: Partial<GetStatsRequest> = {}
+): Promise<ApiResponse<GetStatsResponse>> {
+  const url = new URL(`${API_BASE}/getStats`);
+
+  if (params.residentId) url.searchParams.set('residentId', params.residentId);
+  if (params.startDate) url.searchParams.set('startDate', params.startDate);
+  if (params.endDate) url.searchParams.set('endDate', params.endDate);
+  if (params.include && params.include.length > 0) {
+    url.searchParams.set('include', params.include.join(','));
+  }
+
+  const response = await fetch(url.toString());
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to get stats: ${response.statusText}`);
+  }
+
+  return response.json();
+}

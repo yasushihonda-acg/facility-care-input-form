@@ -8,6 +8,7 @@ import { RequestBuilder } from './pages/family/RequestBuilder'
 import { ItemManagement } from './pages/family/ItemManagement'
 import { ItemForm } from './pages/family/ItemForm'
 import { TaskList } from './pages/family/TaskList'
+import { StatsDashboard } from './pages/shared/StatsDashboard'
 
 function App() {
   return (
@@ -33,6 +34,10 @@ function App() {
 
       {/* タスク管理（Phase 8.2） */}
       <Route path="/family/tasks" element={<TaskList />} />
+
+      {/* 統計ダッシュボード（Phase 8.3） */}
+      <Route path="/stats" element={<StatsDashboard />} />
+      <Route path="/family/stats" element={<StatsDashboard />} />
 
       {/* シート詳細（レガシー） */}
       <Route path="/sheet/:sheetName" element={<SheetDetailPage />} />

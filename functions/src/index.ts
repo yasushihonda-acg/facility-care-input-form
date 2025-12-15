@@ -93,3 +93,9 @@ export {
   generateDailyTasks,
   triggerTaskGeneration,
 } from "./functions/taskGenerator";
+
+// =============================================================================
+// 統計ダッシュボード（Phase 8.3）
+// =============================================================================
+
+export {getStats} from "./functions/getStats";

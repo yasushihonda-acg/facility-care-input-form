@@ -128,24 +128,22 @@ export function FamilyDashboard() {
       }
     >
       <div className="pb-4">
-        {/* クイックリンク（タスク・品物管理） */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
+        {/* クイックリンク（タスク・品物管理・統計） */}
+        <div className="grid grid-cols-3 gap-3 mb-4">
           {/* タスク管理 */}
           <Link
             to="/family/tasks"
-            className={`relative bg-white rounded-lg shadow-card p-4 hover:shadow-md transition flex items-center gap-3 ${
+            className={`relative bg-white rounded-lg shadow-card p-3 hover:shadow-md transition flex flex-col items-center gap-1 ${
               hasOverdue ? 'ring-2 ring-red-300' : ''
             }`}
           >
             <div className="text-2xl">📋</div>
-            <div className="flex-1">
-              <p className="font-medium text-sm">タスク</p>
-              <p className="text-xs text-gray-500">
-                {taskCount > 0 ? `${taskCount}件の未完了` : 'タスクなし'}
-              </p>
-            </div>
+            <p className="font-medium text-xs text-center">タスク</p>
+            <p className="text-[10px] text-gray-500 text-center">
+              {taskCount > 0 ? `${taskCount}件` : 'なし'}
+            </p>
             {taskCount > 0 && (
-              <span className={`absolute -top-1 -right-1 px-2 py-0.5 rounded-full text-xs font-bold text-white ${
+              <span className={`absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold text-white ${
                 hasOverdue ? 'bg-red-500' : 'bg-blue-500'
               }`}>
                 {taskCount}
@@ -156,20 +154,28 @@ export function FamilyDashboard() {
           {/* 品物管理 */}
           <Link
             to="/family/items"
-            className="relative bg-white rounded-lg shadow-card p-4 hover:shadow-md transition flex items-center gap-3"
+            className="relative bg-white rounded-lg shadow-card p-3 hover:shadow-md transition flex flex-col items-center gap-1"
           >
             <div className="text-2xl">📦</div>
-            <div className="flex-1">
-              <p className="font-medium text-sm">品物管理</p>
-              <p className="text-xs text-gray-500">
-                {itemCounts.pending > 0 ? `未提供 ${itemCounts.pending}件` : '品物なし'}
-              </p>
-            </div>
+            <p className="font-medium text-xs text-center">品物管理</p>
+            <p className="text-[10px] text-gray-500 text-center">
+              {itemCounts.pending > 0 ? `${itemCounts.pending}件` : 'なし'}
+            </p>
             {itemCounts.pending > 0 && (
-              <span className="absolute -top-1 -right-1 px-2 py-0.5 rounded-full text-xs font-bold text-white bg-orange-500">
+              <span className="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold text-white bg-orange-500">
                 {itemCounts.pending}
               </span>
             )}
+          </Link>
+
+          {/* 統計 */}
+          <Link
+            to="/family/stats"
+            className="relative bg-white rounded-lg shadow-card p-3 hover:shadow-md transition flex flex-col items-center gap-1"
+          >
+            <div className="text-2xl">📊</div>
+            <p className="font-medium text-xs text-center">統計</p>
+            <p className="text-[10px] text-gray-500 text-center">状況確認</p>
           </Link>
         </div>
 

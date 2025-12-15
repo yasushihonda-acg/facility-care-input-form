@@ -669,3 +669,126 @@ export interface UpdateTaskResponse {
 export interface DeleteTaskRequest {
   taskId: string;
 }
+
+// =============================================================================
+// 統計ダッシュボード関連型定義 (Phase 8.3)
+// =============================================================================
+
+/** 統計データ取得リクエスト */
+export interface GetStatsRequest {
+  residentId?: string;
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
+  include?: ("items" | "consumption" | "meals" | "alerts")[];
+}
+
+/** アラート種別 */
+export type AlertType =
+  | "expiration_today"
+  | "expiration_soon"
+  | "low_stock"
+  | "out_of_stock"
+  | "consumption_decline"
+  | "no_recent_record";
+
+/** アラート重要度 */
+export type AlertSeverity = "urgent" | "warning" | "info";
+
+/** アラート */
+export interface Alert {
+  id: string;
+  type: AlertType;
+  severity: AlertSeverity;
+  title: string;
+  description: string;
+  relatedItemId?: string;
+  createdAt: string;
+}
+
+/** 品物状況サマリ */
+export interface ItemStatsSummary {
+  totalItems: number;
+  pendingItems: number;
+  servedItems: number;
+  consumedItems: number;
+  expiringToday: number;
+  expiringIn3Days: number;
+}
+
+/** カテゴリ別分布 */
+export interface CategoryDistribution {
+  category: ItemCategory;
+  count: number;
+  percentage: number;
+}
+
+/** 賞味期限カレンダーエントリ */
+export interface ExpirationCalendarEntry {
+  date: string;
+  items: {
+    id: string;
+    itemName: string;
+    daysUntil: number;
+  }[];
+}
+
+/** 品物統計データ */
+export interface ItemStatsData {
+  summary: ItemStatsSummary;
+  categoryDistribution: CategoryDistribution[];
+  expirationCalendar: ExpirationCalendarEntry[];
+}
+
+/** 摂食傾向サマリ */
+export interface ConsumptionStatsSummary {
+  averageRate: number;
+  weeklyChange: number;
+  totalRecords: number;
+}
+
+/** 品目ランキングアイテム */
+export interface ItemRankingEntry {
+  itemName: string;
+  averageRate: number;
+  count: number;
+  suggestion?: string;
+}
+
+/** 摂食統計データ */
+export interface ConsumptionStatsData {
+  summary: ConsumptionStatsSummary;
+  topItems: ItemRankingEntry[];
+  bottomItems: ItemRankingEntry[];
+}
+
+/** 食事統計サマリ */
+export interface MealStatsSummary {
+  totalRecords: number;
+  mainDish: {
+    high: number;
+    medium: number;
+    low: number;
+  };
+  sideDish: {
+    high: number;
+    medium: number;
+    low: number;
+  };
+}
+
+/** 食事統計データ */
+export interface MealStatsData {
+  summary: MealStatsSummary;
+}
+
+/** 統計データ取得レスポンス */
+export interface GetStatsResponse {
+  period: {
+    start: string;
+    end: string;
+  };
+  itemStats?: ItemStatsData;
+  consumptionStats?: ConsumptionStatsData;
+  mealStats?: MealStatsData;
+  alerts?: Alert[];
+}
