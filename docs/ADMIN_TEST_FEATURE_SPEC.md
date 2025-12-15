@@ -2,7 +2,7 @@
 
 > **作成日**: 2025年12月15日
 > **最終更新**: 2025年12月15日
-> **ステータス**: 実装完了（v1.2）
+> **ステータス**: 実装完了（v1.3）
 
 ---
 
@@ -434,11 +434,30 @@ const [driveTestState, setDriveTestState] = useState<TestState>({
 
 ## 9. 重要な注意事項
 
-### 9.1 サービスアカウント設定
+### 9.1 サービスアカウント設定（第1世代関数）
 
 **重要**: `testDriveAccess` 関数が正しく動作するには、Cloud Functionsが正しいサービスアカウントで実行される必要があります。
 
-`firebase.json` に `serviceAccount` を明示的に指定しないと、App Engine default SA が使用され、Google Driveフォルダへのアクセス権限が異なるSAになってしまいます。
+#### Cloud Functions 第1世代の制約
+
+`firebase.json` の `serviceAccount` フィールドは**第2世代関数のみ**対応しています。
+このプロジェクトの関数は第1世代のため、gcloudコマンドで直接指定する必要があります。
+
+```bash
+# 第1世代関数のSA変更
+gcloud functions deploy testDriveAccess \
+  --region=asia-northeast1 \
+  --project=facility-care-input-form \
+  --service-account=facility-care-sa@facility-care-input-form.iam.gserviceaccount.com \
+  --trigger-http \
+  --allow-unauthenticated \
+  --runtime=nodejs20
+
+# 確認
+gcloud functions describe testDriveAccess --region=asia-northeast1 | grep serviceAccountEmail
+```
+
+#### firebase.json（第2世代のみ有効）
 
 ```json
 {
@@ -451,6 +470,8 @@ const [driveTestState, setDriveTestState] = useState<TestState>({
 }
 ```
 
+**注意**: この設定は第2世代関数のみに適用されます。
+
 詳細は `CLAUDE.md` の「サービスアカウント」セクションを参照。
 
 ---
@@ -462,4 +483,5 @@ const [driveTestState, setDriveTestState] = useState<TestState>({
 | 2025-12-15 | 初版作成 |
 | 2025-12-15 | v1.0 実装完了 |
 | 2025-12-15 | v1.1 改善（本番形式テストメッセージ、親切なエラーアドバイス） |
-| 2025-12-15 | v1.2 サービスアカウント統一修正（firebase.json設定） |
+| 2025-12-15 | v1.2 firebase.json serviceAccount設定追加（第2世代のみ対応と判明） |
+| 2025-12-15 | v1.3 第1世代関数SA修正（gcloudコマンドで直接指定）✅ 動作確認完了 |

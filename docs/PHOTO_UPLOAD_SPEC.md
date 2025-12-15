@@ -292,11 +292,34 @@ export interface UpdateMealFormSettingsRequest {
 権限: 編集者
 ```
 
-### 重要: firebase.json の serviceAccount 指定
+### 重要: Cloud Functions サービスアカウント指定
 
-Cloud Functionsが正しいサービスアカウントを使用するには、`firebase.json` に `serviceAccount` を明示的に指定する必要があります。
+Cloud Functionsが正しいサービスアカウントを使用するには、明示的に指定する必要があります。
+
+#### 第1世代関数の制約（重要）
+
+**`firebase.json` の `serviceAccount` フィールドは第2世代関数のみ対応**しています。
+このプロジェクトの関数は第1世代のため、gcloudコマンドで直接指定する必要があります。
 
 指定がない場合、App Engine default SA (`facility-care-input-form@appspot.gserviceaccount.com`) が使用され、Google Driveフォルダへのアクセス権限が異なるSAになってしまいます。
+
+#### 第1世代関数のSA変更コマンド
+
+```bash
+# 例: uploadCareImage関数のSA変更
+gcloud functions deploy uploadCareImage \
+  --region=asia-northeast1 \
+  --project=facility-care-input-form \
+  --service-account=facility-care-sa@facility-care-input-form.iam.gserviceaccount.com \
+  --trigger-http \
+  --allow-unauthenticated \
+  --runtime=nodejs20
+
+# 確認
+gcloud functions describe uploadCareImage --region=asia-northeast1 | grep serviceAccountEmail
+```
+
+#### firebase.json（第2世代のみ有効）
 
 ```json
 {
@@ -309,7 +332,9 @@ Cloud Functionsが正しいサービスアカウントを使用するには、`f
 }
 ```
 
-詳細は `CLAUDE.md` の「サービスアカウント」セクションを参照。
+**注意**: この設定は第2世代関数のみに適用されます。第1世代関数には効果がありません。
+
+詳細は `docs/SETUP.md` および `CLAUDE.md` の「サービスアカウント」セクションを参照。
 
 ---
 
@@ -335,3 +360,4 @@ Cloud Functionsが正しいサービスアカウントを使用するには、`f
 |------|------|
 | 2025-12-15 | 初版作成（設計書） |
 | 2025-12-15 | firebase.json serviceAccount指定の重要性を追記 |
+| 2025-12-15 | 第1世代vs第2世代関数のSA指定方法を詳細化（gcloudコマンド追記） |

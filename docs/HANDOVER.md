@@ -160,7 +160,8 @@ facility-care-input-form/
 | UI仕様（SETTINGS_MODAL_UI_SPEC.md） | ✅ 完了 |
 | 実装 | ✅ 完了 |
 | v1.1改善（本番形式テスト、親切なエラーメッセージ） | ✅ 完了 |
-| v1.2 SA統一修正（firebase.json） | ✅ 完了 |
+| v1.2 firebase.json設定（第2世代のみ対応） | ✅ 完了 |
+| v1.3 第1世代関数SA修正（gcloudコマンド） | ✅ 動作確認完了 |
 
 ---
 
@@ -313,3 +314,4 @@ firebase functions:log
 |------|------|
 | 2025-12-15 | 初版作成（Phase 7.1完了時点） |
 | 2025-12-15 | Phase 5.8完了、サービスアカウント情報整理 |
+| 2025-12-15 | Phase 5.8 v1.3完了、第1世代関数SA修正 |

@@ -420,10 +420,20 @@ POST /updateMealFormSettings?admin=true - 設定更新（adminパラメータ必
   - 403: サービスアカウント共有手順を詳細表示
 
 **v1.2 サービスアカウント統一修正（2025-12-15）**:
-- 問題: Cloud Functionsがデフォルトで App Engine SA (`facility-care-input-form@appspot.gserviceaccount.com`) を使用していた
-- 原因: `firebase.json` に `serviceAccount` が明示的に指定されていなかった
-- 修正: `firebase.json` に統一SA (`facility-care-sa@...`) を明示的に指定
-- 結果: 全Cloud Functionsが正しいサービスアカウントで実行されるようになった
+- 問題: Cloud Functionsがデフォルトで App Engine SA を使用していた
+- 試行: `firebase.json` に `serviceAccount` を明示的に指定
+- 発見: **firebase.jsonのserviceAccountは第2世代関数のみ対応**
+- 結論: 第1世代関数には別の対応が必要
+
+**v1.3 第1世代関数SA修正（2025-12-15）**:
+- 問題: `firebase.json` の `serviceAccount` フィールドはCloud Functions第2世代のみ対応
+- 原因: このプロジェクトの関数は第1世代で動作していた
+- 修正: gcloudコマンドで直接サービスアカウントを指定してデプロイ
+  ```bash
+  gcloud functions deploy testDriveAccess \
+    --service-account=facility-care-sa@facility-care-input-form.iam.gserviceaccount.com
+  ```
+- 結果: ✅ testDriveAccess関数が正しいSAで実行され、Driveフォルダテスト成功
 
 ---
 

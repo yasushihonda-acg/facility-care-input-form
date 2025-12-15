@@ -266,11 +266,30 @@ echo "keys/" >> .gitignore
 
 > **重要**: `keys/` ディレクトリは絶対にGitにコミットしないでください。
 
-### firebase.json サービスアカウント指定
+### Cloud Functions サービスアカウント指定
 
-**重要**: Cloud Functionsをデプロイする際、`firebase.json` に `serviceAccount` を明示的に指定しないと、App Engine default SA (`{project-id}@appspot.gserviceaccount.com`) が使用されます。
+**重要**: Cloud Functions（第1世代）をデプロイする際、サービスアカウントの指定方法に注意が必要です。
 
-これを防ぐため、必ず以下のように設定してください：
+#### 第1世代関数の制約
+
+`firebase.json` の `serviceAccount` フィールドは**第2世代関数のみ**対応しています。
+第1世代関数のサービスアカウントを変更するには、gcloudコマンドで直接指定する必要があります。
+
+```bash
+# 第1世代関数のSA変更
+gcloud functions deploy <関数名> \
+  --region=asia-northeast1 \
+  --project=facility-care-input-form \
+  --service-account=facility-care-sa@facility-care-input-form.iam.gserviceaccount.com \
+  --trigger-http \
+  --allow-unauthenticated \
+  --runtime=nodejs20
+
+# 確認
+gcloud functions describe <関数名> --region=asia-northeast1 | grep serviceAccountEmail
+```
+
+#### firebase.json（第2世代のみ有効）
 
 ```json
 {
@@ -283,7 +302,7 @@ echo "keys/" >> .gitignore
 }
 ```
 
-この設定により、全Cloud Functionsが統一されたサービスアカウントで実行されます。
+**注意**: この設定は第2世代関数のみに適用されます。第1世代関数には効果がありません。
 
 ### スプレッドシートへのアクセス権限
 
