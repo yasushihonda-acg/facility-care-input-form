@@ -24,6 +24,32 @@
 3. **Push**: `git push origin main` でリモートリポジトリに反映
 4. **確認**: 会話クリア前に必ず未pushの変更がないか確認
 
+### GitHub Pages（プロジェクト紹介ページ）
+
+**公開URL**: https://yasushihonda-acg.github.io/facility-care-input-form/
+
+**ディレクトリ**: `gh-pages/`
+- `index.html` - プロジェクト概要ページ（Mermaid図付き）
+- `architecture.html` - アーキテクチャ詳細ページ（シーケンス図含む）
+
+**自動デプロイ**: `gh-pages/` の変更がmainにpushされると自動デプロイ
+- ワークフロー: `.github/workflows/gh-pages.yml`
+
+**更新方法**:
+1. `gh-pages/` 内のHTMLファイルを編集
+2. `git add gh-pages/ && git commit -m "docs: GitHub Pages更新" && git push origin main`
+3. 自動でGitHub Actionsがデプロイ（約30秒）
+
+**手動デプロイ（必要時）**:
+```bash
+gh workflow run gh-pages.yml --repo yasushihonda-acg/facility-care-input-form
+```
+
+**デプロイ状況確認**:
+```bash
+gh run list --repo yasushihonda-acg/facility-care-input-form --workflow=gh-pages.yml --limit 1
+```
+
 ### 主要ドキュメント
 
 #### 必読（再開時）
@@ -76,7 +102,8 @@
 - **アカウント**: `yasushihonda-acg`
 - **リポジトリ**: `yasushihonda-acg/facility-care-input-form`
 - **認証切替**: `gh auth switch --user yasushihonda-acg`
-- **リポジトリ種別**: Private
+- **リポジトリ種別**: Public
+- **GitHub Pages**: https://yasushihonda-acg.github.io/facility-care-input-form/
 
 ### GCP
 - **アカウント**: `yasushi.honda@aozora-cg.com`
