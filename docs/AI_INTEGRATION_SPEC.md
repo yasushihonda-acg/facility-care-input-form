@@ -64,8 +64,8 @@ npm install @google-cloud/vertexai
 import { VertexAI } from '@google-cloud/vertexai';
 
 const PROJECT_ID = 'facility-care-input-form';
-const LOCATION = 'asia-northeast1';
-const MODEL_ID = 'gemini-2.5-flash-preview-05-20'; // または最新安定版
+const LOCATION = 'asia-northeast1';  // 東京リージョン
+const MODEL_ID = 'gemini-2.5-flash'; // GA版モデル
 
 const vertexAI = new VertexAI({
   project: PROJECT_ID,
@@ -83,6 +83,8 @@ const generativeModel = vertexAI.getGenerativeModel({
 
 export { generativeModel };
 ```
+
+> **注意**: モデルIDは `gemini-2.5-flash` を使用。`gemini-2.5-flash-preview-*` はプレビュー版で利用制限あり。
 
 ---
 

@@ -698,7 +698,7 @@ POST /updateMealFormSettings?admin=true - 設定更新（adminパラメータ必
 
 ### ✅ 完了: Phase 8.4 Gemini AI連携基盤
 
-**コンセプト**: Gemini 2.0 Flashを使用した品物入力補助（賞味期限・保存方法・提供方法の自動提案）
+**コンセプト**: Gemini 2.5 Flashを使用した品物入力補助（賞味期限・保存方法・提供方法の自動提案）
 
 **設計書**: [AI_INTEGRATION_SPEC.md](./AI_INTEGRATION_SPEC.md)
 
@@ -742,10 +742,29 @@ POST /aiSuggest
 ```
 
 **設計特徴**:
-- Gemini 2.0 Flash使用（高速・低コスト）
+- Gemini 2.5 Flash使用（高速・低コスト、GA版）
+- asia-northeast1（東京）リージョンで稼働
 - フォールバック対応（AI障害時もデフォルト値を返却）
 - デバウンス実装（500ms、連続リクエスト防止）
 - キャッシュ対応（フロントエンドフック）
+
+**動作確認済み**（2025-12-16）:
+```
+POST /aiSuggest {"itemName": "りんご"}
+→ {"expirationDays": 14, "storageMethod": "refrigerated",
+   "servingMethods": ["cut", "peeled", "heated", "blended"],
+   "notes": "皮を剥き、芯を取り除き、小さくカット。硬い場合は加熱し、誤嚥に注意。"}
+
+POST /aiSuggest {"itemName": "バナナ"}
+→ {"expirationDays": 5, "storageMethod": "room_temp",
+   "servingMethods": ["peeled", "cut", "blended"],
+   "notes": "熟し具合に注意し、食べやすい大きさにカットしてください。"}
+
+POST /aiSuggest {"itemName": "プリン", "category": "snack"}
+→ {"expirationDays": 5, "storageMethod": "refrigerated",
+   "servingMethods": ["as_is", "cut"],
+   "notes": "喉に詰まらせないよう、ゆっくりと。必要に応じてスプーンで崩して提供してください。"}
+```
 
 ---
 
