@@ -1,6 +1,6 @@
 /**
  * Gemini AI サービス (Phase 8.4)
- * Vertex AI を使用した Gemini 1.5 Flash 連携
+ * Vertex AI を使用した Gemini 2.5 Flash 連携
  * @see docs/AI_INTEGRATION_SPEC.md
  */
 
@@ -8,10 +8,10 @@ import {VertexAI} from "@google-cloud/vertexai";
 import * as functions from "firebase-functions";
 
 const PROJECT_ID = "facility-care-input-form";
-// Gemini モデルは us-central1 で最も安定して利用可能
-const LOCATION = "us-central1";
-// Gemini 1.5 Flash - 高速で安定したモデル
-const MODEL_ID = "gemini-1.5-flash-001";
+// Gemini 2.5 Flash は asia-northeast1 (東京) で利用可能
+const LOCATION = "asia-northeast1";
+// Gemini 2.5 Flash - 最新の高速モデル（GA）
+const MODEL_ID = "gemini-2.5-flash";
 
 let vertexAIInstance: VertexAI | null = null;
 
