@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月15日 (Phase 5.10 設定モーダルキャンセル時リセット修正完了)
+> **最終更新**: 2025年12月16日 (Phase 8.0 設計ドキュメント完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -27,6 +27,47 @@
 ---
 
 ## 現在の進捗
+
+### ✅ 完了: Phase 8.0 設計ドキュメント（品物管理・タスク管理・統計・AI連携）
+
+**コンセプト**: 家族向け品物管理、スタッフ向けタスク管理、統計ダッシュボード、Gemini AI連携機能の詳細設計
+
+**実装プランファイル**: `.claude/plans/elegant-imagining-aho.md`
+
+**Phase 8 設計方針**:
+1. **既存システム維持**: Sheet B（15カラム）・Webhook通知は変更しない
+2. **分岐保存**: 既存フィールド→Sheet B、新規フィールド→Firestore
+3. **postIdによる紐付け**: 既存記録と品物データを共通キーで関連付け
+4. **段階的実装**: Phase 8.1から順に独立してデプロイ可能
+5. **ユーザータイプ分離**: スタッフ用/家族用/管理者用でページを明確に分ける
+
+**作成した設計ドキュメント**:
+
+| ドキュメント | 内容 |
+|-------------|------|
+| [USER_ROLE_SPEC.md](./USER_ROLE_SPEC.md) | ユーザータイプ別ページ・権限設計 |
+| [ITEM_MANAGEMENT_SPEC.md](./ITEM_MANAGEMENT_SPEC.md) | 品物管理機能詳細設計 |
+| [TASK_MANAGEMENT_SPEC.md](./TASK_MANAGEMENT_SPEC.md) | タスク管理機能詳細設計 |
+| [STATS_DASHBOARD_SPEC.md](./STATS_DASHBOARD_SPEC.md) | 統計ダッシュボード設計 |
+| [AI_INTEGRATION_SPEC.md](./AI_INTEGRATION_SPEC.md) | Gemini 2.5 Flash AI連携設計 |
+
+**3つのユーザータイプ**:
+| ロール | アクセス方法 | 主な機能 |
+|--------|-------------|---------|
+| 管理者 | `?admin=true` | システム設定・マスタ管理 |
+| スタッフ | `?role=staff` (デフォルト) | 記録入力・家族指示の実行 |
+| 家族 | `?role=family` | 品物送付登録・ケア指示・状況確認 |
+
+**次の実装Phase（Phase 8.1〜）**:
+| Phase | 内容 | 優先度 |
+|-------|------|--------|
+| Phase 8.1 | 品物管理基盤（Firestore + API + UI） | 高 |
+| Phase 8.2 | タスク管理（自動生成 + スケジューラ） | 高 |
+| Phase 8.3 | 統計ダッシュボード（SVGグラフ + 共有ビュー） | 中 |
+| Phase 8.4 | Gemini AI連携（入力補助 + 分析） | 中 |
+| Phase 8.5 | Push通知（FCM + リマインダー） | 低 |
+
+---
 
 ### ✅ 完了: Phase 7.1 予実管理（Plan/Result連携）
 
@@ -464,6 +505,40 @@ POST /updateMealFormSettings?admin=true - 設定更新（adminパラメータ必
 
 ### 次のタスク
 
+#### Phase 8.1: 品物管理基盤（次に実装予定）
+
+**設計書**: [ITEM_MANAGEMENT_SPEC.md](./ITEM_MANAGEMENT_SPEC.md)
+
+| ステップ | 内容 | 状態 |
+|----------|------|------|
+| 1 | CareItem型定義（frontend/backend共通） | 未着手 |
+| 2 | Firestoreコレクション `care_items` 作成 | 未着手 |
+| 3 | 品物管理API実装（submitCareItem, getCareItems等） | 未着手 |
+| 4 | 品物一覧UI（ItemManagement.tsx） | 未着手 |
+| 5 | 品物登録フォーム（ItemForm.tsx） | 未着手 |
+| 6 | 品物詳細・提供記録UI | 未着手 |
+| 7 | スタッフ向け家族指示閲覧ページ | 未着手 |
+| 8 | ルーティング追加（/family/items, /staff/family-instructions） | 未着手 |
+
+**新規Firestoreコレクション**:
+```
+care_items/
+├── {itemId}/
+│   ├── itemName: string
+│   ├── category: string
+│   ├── sentDate: string
+│   ├── quantity: number
+│   ├── expirationDate?: string
+│   ├── servingMethod: string
+│   ├── status: 'pending' | 'served' | 'consumed' | 'expired'
+│   ├── consumptionRate?: number
+│   ├── noteToFamily?: string
+│   ├── noteToStaff?: string
+│   └── ...
+```
+
+#### その他のタスク
+
 | 機能 | 説明 | 優先度 |
 |------|------|--------|
 | ケア指示のFirestore保存 | モックデータ → Firestore永続化 | 中 |
@@ -826,6 +901,8 @@ Phase 7.1: 予実管理(Plan/Result連携) ████████████�
 Phase 5.8: 管理設定テスト機能       ████████████████████ 100% (完了)
 Phase 5.9: デイサービス選択肢固定リスト ████████████████████ 100% (完了)
 Phase 5.10: 設定モーダルキャンセル修正 ████████████████████ 100% (完了)
+Phase 8.0: 設計ドキュメント作成        ████████████████████ 100% (完了)
+Phase 8.1: 品物管理基盤               ░░░░░░░░░░░░░░░░░░░░   0% (次に実装)
 ```
 
 詳細: [docs/ROADMAP.md](./ROADMAP.md)
