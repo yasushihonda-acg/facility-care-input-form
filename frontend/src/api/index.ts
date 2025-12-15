@@ -414,3 +414,35 @@ export async function getStats(
 
   return response.json();
 }
+
+// =============================================================================
+// AI連携 API（Phase 8.4）
+// =============================================================================
+
+import type {
+  AISuggestRequest,
+  AISuggestResponse,
+} from '../types/careItem';
+
+export type { AISuggestRequest, AISuggestResponse };
+
+/**
+ * AI品物入力補助
+ * 品物名から賞味期限・保存方法・提供方法を提案
+ */
+export async function aiSuggest(
+  params: AISuggestRequest
+): Promise<ApiResponse<AISuggestResponse>> {
+  const response = await fetch(`${API_BASE}/aiSuggest`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `AI suggest failed: ${response.statusText}`);
+  }
+
+  return response.json();
+}

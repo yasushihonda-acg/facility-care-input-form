@@ -792,3 +792,30 @@ export interface GetStatsResponse {
   mealStats?: MealStatsData;
   alerts?: Alert[];
 }
+
+// =============================================================================
+// AI連携 Types (Phase 8.4)
+// docs/AI_INTEGRATION_SPEC.md に基づく型定義
+// =============================================================================
+
+/** AI品物提案リクエスト */
+export interface AISuggestRequest {
+  itemName: string;
+  category?: ItemCategory;
+}
+
+/** AI品物提案レスポンス */
+export interface AISuggestResponse {
+  expirationDays: number;
+  storageMethod: StorageMethod;
+  servingMethods: ServingMethod[];
+  notes?: string;
+}
+
+/** AI品物提案のデフォルト値（フォールバック用） */
+export const DEFAULT_AI_SUGGESTION: AISuggestResponse = {
+  expirationDays: 7,
+  storageMethod: "refrigerated",
+  servingMethods: ["as_is"],
+  notes: undefined,
+};

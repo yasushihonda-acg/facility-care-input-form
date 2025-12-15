@@ -333,3 +333,39 @@ export function formatDate(dateStr: string): string {
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}/${m}/${d}`;
 }
+
+// =============================================================================
+// AI連携 (Phase 8.4)
+// =============================================================================
+
+/** AI品物提案リクエスト */
+export interface AISuggestRequest {
+  itemName: string;
+  category?: ItemCategory;
+}
+
+/** AI品物提案レスポンス */
+export interface AISuggestResponse {
+  expirationDays: number;
+  storageMethod: StorageMethod;
+  servingMethods: ServingMethod[];
+  notes?: string;
+}
+
+/** 保存方法ラベルマップ（AI提案表示用） */
+export const STORAGE_METHOD_LABELS: Record<StorageMethod, string> = {
+  room_temp: '常温',
+  refrigerated: '冷蔵',
+  frozen: '冷凍',
+};
+
+/** 提供方法ラベルマップ（AI提案表示用） */
+export const SERVING_METHOD_LABELS: Record<ServingMethod, string> = {
+  as_is: 'そのまま',
+  cut: 'カット',
+  peeled: '皮むき',
+  heated: '温める',
+  cooled: '冷やす',
+  blended: 'ミキサー',
+  other: 'その他',
+};
