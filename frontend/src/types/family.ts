@@ -153,6 +153,23 @@ export interface TimelineItem {
 }
 
 /**
+ * 食事実績データ（食事シートから変換）
+ * @see docs/PLAN_RESULT_MANAGEMENT.md
+ */
+export interface MealResult {
+  id: string;
+  staffName: string;
+  recordedAt: string;       // "YYYY/MM/DD HH:mm:ss" 形式
+  mealTime?: MealTime;      // 食事タイミング（タイムライン用）
+  mainDishAmount: string;   // "8" など（割数）
+  sideDishAmount: string;   // "7" など（割数）
+  snack?: string;           // 間食内容
+  note?: string;            // 特記事項
+  isImportant: boolean;     // 重要フラグ
+  photoUrl?: string;        // 写真URL（将来用）
+}
+
+/**
  * エビデンス対比表示用データ
  * View A（エビデンス・モニター）で使用
  */
@@ -169,15 +186,8 @@ export interface EvidenceData {
     conditions?: CareCondition[];
   };
 
-  // Result（実績）側
-  result?: {
-    photoUrl?: string;
-    staffName: string;
-    recordedAt: string;
-    mainDishAmount: string;
-    sideDishAmount: string;
-    note?: string;
-  };
+  // Result（実績）側 - MealResult型を使用
+  result?: MealResult;
 }
 
 /** 入居者情報（デモ用簡易型） */

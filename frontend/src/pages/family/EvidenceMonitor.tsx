@@ -2,6 +2,7 @@
  * View A: エビデンス・モニター
  * Plan（指示）とResult（実績）を対比表示し、写真エビデンスで安心感を提供
  * @see docs/FAMILY_UX_DESIGN.md
+ * @see docs/PLAN_RESULT_MANAGEMENT.md
  */
 
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -14,24 +15,83 @@ import {
   CONDITION_TRIGGER_LABELS,
   CONDITION_ACTION_LABELS,
   type MealTime,
+  type EvidenceData,
 } from '../../types/family';
 import {
   getEvidenceData,
   formatDateDisplay,
-  formatDateTime,
-  DEMO_EVIDENCE_DATA,
+  getTodayString,
+  DEMO_CARE_INSTRUCTIONS,
 } from '../../data/demoFamilyData';
+import { useFamilyMealRecords } from '../../hooks/useFamilyMealRecords';
+
+/**
+ * タイムスタンプをフォーマット（表示用）
+ * "YYYY/MM/DD HH:mm:ss" → "YYYY/M/D HH:mm"
+ */
+function formatRecordedAt(timestamp: string): string {
+  if (!timestamp) return '';
+  // ISO形式の場合
+  if (timestamp.includes('T')) {
+    const date = new Date(timestamp);
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${date.getFullYear()}/${month}/${day} ${hours}:${minutes}`;
+  }
+  // シート形式の場合 "YYYY/MM/DD HH:mm:ss"
+  const match = timestamp.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})\s+(\d{1,2}):(\d{2})/);
+  if (match) {
+    const [, year, month, day, hour, minute] = match;
+    return `${year}/${parseInt(month)}/${parseInt(day)} ${hour.padStart(2, '0')}:${minute}`;
+  }
+  return timestamp;
+}
 
 export function EvidenceMonitor() {
   const { date } = useParams<{ date: string }>();
   const [searchParams] = useSearchParams();
   const mealTime = (searchParams.get('meal') || 'lunch') as MealTime;
 
-  // エビデンスデータ取得
-  const evidence = useMemo(() => {
-    if (!date) return DEMO_EVIDENCE_DATA; // デモ用フォールバック
-    return getEvidenceData(date, mealTime) || DEMO_EVIDENCE_DATA;
-  }, [date, mealTime]);
+  // 対象日（URLパラメータがない場合は今日）
+  const targetDate = date || getTodayString();
+
+  // 食事シートから実績データを取得（予実管理）
+  const { records: mealResults, isLoading } = useFamilyMealRecords({
+    date: targetDate,
+    mealTime: mealTime,
+    // デモ版では入居者フィルタなし（全員分表示）
+  });
+
+  // エビデンスデータを構築（Plan: モック、Result: 実データ優先）
+  const evidence = useMemo<EvidenceData>(() => {
+    // Plan: モックデータから取得（将来的にはFirestoreから）
+    const instruction = DEMO_CARE_INSTRUCTIONS.find(
+      (i) => i.targetDate === targetDate && i.mealTime === mealTime
+    );
+
+    // Result: 食事シートから取得した実績（最新1件）
+    const result = mealResults.length > 0 ? mealResults[0] : undefined;
+
+    // 実データがない場合はモックにフォールバック
+    const fallbackEvidence = getEvidenceData(targetDate, mealTime);
+
+    return {
+      date: targetDate,
+      mealTime: mealTime,
+      plan: instruction
+        ? {
+            menuName: instruction.menuName,
+            processingDetail: instruction.processingDetail,
+            priority: instruction.priority,
+            conditions: instruction.conditions,
+          }
+        : fallbackEvidence?.plan,
+      // 実データ優先、なければモックのresult
+      result: result || fallbackEvidence?.result,
+    };
+  }, [targetDate, mealTime, mealResults]);
 
   const mealLabel = MEAL_TIME_LABELS[evidence.mealTime];
   const mealIcon = MEAL_TIME_ICONS[evidence.mealTime];
@@ -40,10 +100,19 @@ export function EvidenceMonitor() {
   return (
     <Layout
       title="エビデンス・モニター"
-      subtitle={`${date ? formatDateDisplay(date).split('年')[1] : ''} ${mealLabel}`}
+      subtitle={`${targetDate ? formatDateDisplay(targetDate).split('年')[1] : ''} ${mealLabel}`}
       showBackButton={true}
     >
       <div className="pb-4 space-y-4">
+        {/* ローディング表示 */}
+        {isLoading && (
+          <div className="bg-white rounded-lg shadow-card p-6">
+            <div className="flex flex-col items-center text-gray-400">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-2" />
+              <p className="text-sm">データを読み込み中...</p>
+            </div>
+          </div>
+        )}
         {/* PLAN セクション */}
         {evidence.plan && (
           <div className={`bg-white rounded-lg shadow-card overflow-hidden ${isCritical ? 'ring-2 ring-red-400' : ''}`}>
@@ -142,12 +211,12 @@ export function EvidenceMonitor() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">記録日時</span>
-                  <span className="text-gray-800">{formatDateTime(evidence.result.recordedAt)}</span>
+                  <span className="text-gray-800">{formatRecordedAt(evidence.result.recordedAt)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">摂取量</span>
                   <span className="text-gray-800">
-                    主食{evidence.result.mainDishAmount} / 副食{evidence.result.sideDishAmount}
+                    主食{evidence.result.mainDishAmount}{evidence.result.mainDishAmount && !evidence.result.mainDishAmount.includes('割') ? '割' : ''} / 副食{evidence.result.sideDishAmount}{evidence.result.sideDishAmount && !evidence.result.sideDishAmount.includes('割') ? '割' : ''}
                   </span>
                 </div>
               </div>

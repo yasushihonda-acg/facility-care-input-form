@@ -198,12 +198,15 @@ export const DEMO_EVIDENCE_DATA: EvidenceData = {
     conditions: [{ trigger: 'leftover', action: 'reserve_snack' }],
   },
   result: {
+    id: 'demo-result-001',
     photoUrl: '/demo-images/kiwi-cut.jpg',
     staffName: '田中花子',
     recordedAt: `${formatDate(today)}T12:15:00`,
-    mainDishAmount: '8割',
-    sideDishAmount: '7割',
+    mealTime: 'lunch',
+    mainDishAmount: '8',
+    sideDishAmount: '7',
     note: '指示通りに8等分カットして提供しました。美味しそうに召し上がりました。',
+    isImportant: false,
   },
 };
 

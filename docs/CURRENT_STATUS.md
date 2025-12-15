@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月15日 (Phase 7.0 家族向け機能 🚧実装中)
+> **最終更新**: 2025年12月15日 (Phase 7.1 予実管理 ✅完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -18,7 +18,49 @@
 
 ## 現在の進捗
 
-### 🚧 進行中: Phase 7.0 家族向け機能（Flow C拡張）
+### ✅ 完了: Phase 7.1 予実管理（Plan/Result連携）
+
+**コンセプト**: スタッフの食事入力が家族ビューに自動反映
+
+**設計書**: [PLAN_RESULT_MANAGEMENT.md](./PLAN_RESULT_MANAGEMENT.md)
+
+**設計方針**: 読み取り時JOIN（バックエンド修正ゼロ・コスト増なし・シンプル）
+
+**実装完了**:
+
+| ステップ | 内容 | 状態 |
+|----------|------|------|
+| 1 | 設計書作成（PLAN_RESULT_MANAGEMENT.md） | ✅ 完了 |
+| 2 | 食事時間マッピングユーティリティ作成 | ✅ 完了 |
+| 3 | MealResult型定義追加 | ✅ 完了 |
+| 4 | useFamilyMealRecordsフック作成 | ✅ 完了 |
+| 5 | EvidenceMonitor修正（実データ取得） | ✅ 完了 |
+| 6 | FamilyDashboard修正（実データ反映） | ✅ 完了 |
+| 7 | ビルド確認 | ✅ 完了 |
+
+**予実管理データフロー**:
+```
+食事入力(スタッフ) → Sheet B → 同期(15分毎) → Firestore plan_data/
+                                                    ↓
+家族ビュー → useFamilyMealRecords → 日付+食事時間でフィルタ → 表示
+                                                    ↑
+家族指示(Plan) → モックデータ (将来: Firestore care_instructions/)
+```
+
+**実装ファイル（新規）**:
+- `frontend/src/utils/mealTimeMapping.ts` - 食事時間マッピング
+- `frontend/src/hooks/useFamilyMealRecords.ts` - 実績データ取得フック
+- `docs/PLAN_RESULT_MANAGEMENT.md` - 設計ドキュメント
+
+**実装ファイル（修正）**:
+- `frontend/src/types/family.ts` - MealResult型追加
+- `frontend/src/pages/family/EvidenceMonitor.tsx` - 実データ取得対応
+- `frontend/src/pages/family/FamilyDashboard.tsx` - タイムライン実データ反映
+- `frontend/src/data/demoFamilyData.ts` - 型整合性修正
+
+---
+
+### ✅ 完了: Phase 7.0 家族向け機能（Flow C拡張）
 
 **コンセプト**: 『遠隔ケア・コックピット』- FAXの代替となる入力機能と、安心を提供する確認画面
 
@@ -39,7 +81,7 @@
 | 9 | View B: ケア仕様ビルダー（RequestBuilder.tsx） | ✅ 完了 |
 | 10 | ルーティング追加（App.tsx） | ✅ 完了 |
 | 11 | ビルド確認 | ✅ 完了 |
-| 12 | デプロイ・動作確認 | 📋 未実施 |
+| 12 | 予実管理（Phase 7.1）| ✅ 完了 |
 
 **3つのビュー**:
 | ビュー | パス | 説明 |
@@ -49,7 +91,7 @@
 | ケア仕様ビルダー | `/family/request` | 構造化されたケア指示作成（プリセット＋If-Then） |
 
 **実装ファイル**:
-- `frontend/src/types/family.ts` - 家族向け型定義（CareInstruction等）
+- `frontend/src/types/family.ts` - 家族向け型定義（CareInstruction, MealResult等）
 - `frontend/src/data/demoFamilyData.ts` - デモ用モックデータ（蒲池様FAX内容）
 - `frontend/src/components/Layout.tsx` - ヘッダー対応拡張
 - `frontend/src/components/FooterNav.tsx` - 3タブ化
@@ -58,6 +100,8 @@
 - `frontend/src/pages/family/EvidenceMonitor.tsx` - View A
 - `frontend/src/pages/family/RequestBuilder.tsx` - View B
 - `frontend/src/App.tsx` - ルーティング追加
+- `frontend/src/utils/mealTimeMapping.ts` - 食事時間マッピング
+- `frontend/src/hooks/useFamilyMealRecords.ts` - 実績データ取得フック
 
 ---
 

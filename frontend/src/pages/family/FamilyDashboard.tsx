@@ -2,21 +2,30 @@
  * View C: 家族ホーム（タイムライン）
  * 時系列で1日の食事提供状況を一覧表示
  * @see docs/FAMILY_UX_DESIGN.md
+ * @see docs/PLAN_RESULT_MANAGEMENT.md
  */
 
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import { TimelineItem } from '../../components/family/TimelineItem';
+import type { TimelineItem as TimelineItemType, MealTime, TimelineStatus } from '../../types/family';
 import {
   DEMO_RESIDENT,
-  getTimelineForDate,
   getTodayString,
   formatDateDisplay,
+  DEMO_CARE_INSTRUCTIONS,
 } from '../../data/demoFamilyData';
+import { useDailyMealRecords } from '../../hooks/useFamilyMealRecords';
+
+/** 食事タイミングの順序（表示順） */
+const MEAL_TIME_ORDER: MealTime[] = ['breakfast', 'lunch', 'snack', 'dinner'];
 
 export function FamilyDashboard() {
   const [selectedDate, setSelectedDate] = useState<string>(getTodayString());
+
+  // 食事シートから当日の実績データを取得（予実管理）
+  const { records: mealResults, isLoading } = useDailyMealRecords(selectedDate);
 
   // 日付の前後移動
   const handlePrevDay = () => {
@@ -31,10 +40,52 @@ export function FamilyDashboard() {
     setSelectedDate(date.toISOString().split('T')[0]);
   };
 
-  // タイムラインデータ取得
-  const timelineItems = useMemo(() => {
-    return getTimelineForDate(selectedDate);
-  }, [selectedDate]);
+  // タイムラインデータを構築（実データ + モックPlan）
+  const timelineItems = useMemo<TimelineItemType[]>(() => {
+    // 各食事タイミング用のベースタイムライン
+    const items: TimelineItemType[] = MEAL_TIME_ORDER.map((mealTime) => {
+      // 実績データから該当する食事を検索（mealTime でマッチング）
+      const result = mealResults.find((r) => r.mealTime === mealTime);
+
+      // モックのケア指示から該当するものを検索
+      const instruction = DEMO_CARE_INSTRUCTIONS.find(
+        (i) => i.targetDate === selectedDate && i.mealTime === mealTime
+      );
+
+      // ステータス判定
+      let status: TimelineStatus = 'pending';
+      if (result) {
+        // 実績あり
+        status = result.isImportant ? 'provided' : 'completed';
+      } else if (instruction) {
+        // 実績なし、指示あり
+        status = 'has_instruction';
+      }
+
+      // タイムラインアイテム構築
+      const item: TimelineItemType = {
+        id: `${selectedDate}-${mealTime}`,
+        date: selectedDate,
+        mealTime,
+        status,
+        instruction,
+      };
+
+      // 実績データがある場合、タイムラインにマージ
+      if (result) {
+        item.mainDishAmount = result.mainDishAmount ? `${result.mainDishAmount}割` : undefined;
+        item.sideDishAmount = result.sideDishAmount ? `${result.sideDishAmount}割` : undefined;
+        item.staffName = result.staffName;
+        item.recordedAt = result.recordedAt;
+        item.note = result.note || result.snack;
+        item.isImportant = result.isImportant;
+      }
+
+      return item;
+    });
+
+    return items;
+  }, [selectedDate, mealResults]);
 
   // 日付選択用の近隣日付生成
   const nearbyDates = useMemo(() => {
@@ -126,9 +177,18 @@ export function FamilyDashboard() {
 
         {/* タイムライン */}
         <div className="space-y-3">
-          {timelineItems.map((item) => (
-            <TimelineItem key={item.id} item={item} />
-          ))}
+          {isLoading ? (
+            <div className="bg-white rounded-lg shadow-card p-6">
+              <div className="flex flex-col items-center text-gray-400">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-2" />
+                <p className="text-sm">データを読み込み中...</p>
+              </div>
+            </div>
+          ) : (
+            timelineItems.map((item) => (
+              <TimelineItem key={item.id} item={item} />
+            ))
+          )}
         </div>
 
         {/* ケア指示作成ボタン（FAB風） */}
