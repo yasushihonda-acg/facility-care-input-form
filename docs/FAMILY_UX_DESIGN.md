@@ -438,8 +438,51 @@ export const DEMO_CARE_INSTRUCTIONS: CareInstruction[] = [
 
 ---
 
+## 12. 実装状況
+
+### Phase 7.0: 家族向け機能（Flow C拡張） ✅ 完了
+
+| タスク | 状態 |
+|--------|------|
+| UX設計書作成（FAMILY_UX_DESIGN.md） | ✅ 完了 |
+| ARCHITECTURE.md更新（Flow C詳細追記） | ✅ 完了 |
+| 家族向け型定義（frontend/src/types/family.ts） | ✅ 完了 |
+| デモ用モックデータ（frontend/src/data/demoFamilyData.ts） | ✅ 完了 |
+| フッターナビ3タブ化（FooterNav.tsx） | ✅ 完了 |
+| Layoutコンポーネント拡張（ヘッダー対応） | ✅ 完了 |
+| View C: 家族ホーム（FamilyDashboard.tsx） | ✅ 完了 |
+| View A: エビデンス・モニター（EvidenceMonitor.tsx） | ✅ 完了 |
+| View B: ケア仕様ビルダー（RequestBuilder.tsx） | ✅ 完了 |
+| ルーティング追加（App.tsx） | ✅ 完了 |
+
+### Phase 7.1: 予実管理（Plan/Result連携） ✅ 完了
+
+> **詳細設計**: [PLAN_RESULT_MANAGEMENT.md](./PLAN_RESULT_MANAGEMENT.md)
+
+| タスク | 状態 |
+|--------|------|
+| 設計書作成（PLAN_RESULT_MANAGEMENT.md） | ✅ 完了 |
+| 食事時間マッピングユーティリティ作成 | ✅ 完了 |
+| MealResult型定義追加 | ✅ 完了 |
+| useFamilyMealRecordsフック作成 | ✅ 完了 |
+| EvidenceMonitor修正（実データ取得） | ✅ 完了 |
+| FamilyDashboard修正（実データ反映） | ✅ 完了 |
+
+**予実管理データフロー**:
+```
+食事入力(スタッフ) → Sheet B → 同期(15分毎) → Firestore plan_data/
+                                                    ↓
+家族ビュー → useFamilyMealRecords → 日付+食事時間でフィルタ → 表示
+                                                    ↑
+家族指示(Plan) → モックデータ (将来: Firestore care_instructions/)
+```
+
+---
+
 ## 更新履歴
 
 | 日付 | 内容 |
 |------|------|
 | 2025-12-15 | 初版作成（3ビュー設計・データモデル定義） |
+| 2025-12-15 | Phase 7.0 実装完了・実装状況セクション追加 |
+| 2025-12-15 | Phase 7.1 予実管理実装完了 |

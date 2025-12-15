@@ -325,35 +325,14 @@ POST /updateMealFormSettings?admin=true - 設定更新（adminパラメータ必
 
 ---
 
-### 次のタスク: Phase 7.0 家族向け機能（Flow C拡張）
-
-> **詳細設計**: [FAMILY_UX_DESIGN.md](./FAMILY_UX_DESIGN.md) / [ROADMAP.md](./ROADMAP.md#phase-70-家族向け機能flow-c拡張-計画中)
-
-**コンセプト**: 『遠隔ケア・コックピット』- FAXの代替となる入力機能と、安心を提供する確認画面
-
-| タスク | 説明 | 優先度 |
-|--------|------|--------|
-| デモ用モックデータ作成 | 蒲池様FAX内容に基づく初期データ | 高 |
-| 家族向け型定義 | `CareInstruction`等の型定義 | 高 |
-| フッターナビ3タブ化 | 📋記録閲覧 / ✏️記録入力 / 👨‍👩‍👧家族 | 高 |
-| View C: 家族ホーム | タイムライン形式で1日の食事状況確認 | 高 |
-| View A: エビデンス・モニター | Plan/Result対比＋写真エビデンス | 高 |
-| View B: ケア仕様ビルダー | 構造化ケア指示作成（プリセット＋If-Then） | 中 |
-
-**3つのビュー**:
-| ビュー | パス | 説明 |
-|--------|------|------|
-| 家族ホーム | `/family` | タイムライン形式で食事状況確認 |
-| エビデンス・モニター | `/family/evidence/:date` | Plan vs Result対比表示 |
-| ケア仕様ビルダー | `/family/request` | 構造化されたケア指示作成 |
-
----
-
-### その他オプション機能
+### 次のタスク
 
 | 機能 | 説明 | 優先度 |
 |------|------|--------|
-| CSVエクスポート | 表示中のデータをCSVでダウンロード | 中 |
+| ケア指示のFirestore保存 | モックデータ → Firestore永続化 | 中 |
+| 写真エビデンス表示 | Google Drive画像を家族ビューで表示 | 中 |
+| 複数入居者対応 | residentIdでの厳密フィルタ | 中 |
+| CSVエクスポート | 表示中のデータをCSVでダウンロード | 低 |
 | オフラインキャッシュ強化 | ServiceWorkerでAPI応答をキャッシュ | 低 |
 
 ---
@@ -645,15 +624,6 @@ curl -X POST ".../submitMealRecord" -d '{"dayServiceUsage":"利用中","dayServi
 
 ---
 
-### 次のタスク: オプション機能
-
-| 機能 | 説明 | 優先度 |
-|------|------|--------|
-| CSVエクスポート | 表示中のデータをCSVでダウンロード | 中 |
-| オフラインキャッシュ強化 | ServiceWorkerでAPI応答をキャッシュ | 低 |
-
----
-
 ### 完了済み（デモ版）
 
 **Sheet B 構造分析** ✅ 完了
@@ -714,7 +684,8 @@ Phase 5.5: Google Chat Webhook連携  ██████████████
 Phase 5.6: 写真アップロードフォルダ設定 ████████████████████ 100% (完了)
 Phase 5.7: 設定モーダルUI改善       ████████████████████ 100% (完了)
 Phase 6.0: フッターナビゲーション基盤 ████████████████████ 100% (完了)
-Phase 7.0: 家族向け機能(Flow C)     ░░░░░░░░░░░░░░░░░░░░   0% (計画中)
+Phase 7.0: 家族向け機能(Flow C)     ████████████████████ 100% (完了)
+Phase 7.1: 予実管理(Plan/Result連携) ████████████████████ 100% (完了)
 ```
 
 詳細: [docs/ROADMAP.md](./ROADMAP.md)
@@ -783,25 +754,37 @@ facility-care-input-form/
 │   │   ├── api/index.ts          # API呼び出し (汎用型対応)
 │   │   ├── components/
 │   │   │   ├── Header.tsx        # ヘッダー (同期ボタン + トースト)
+│   │   │   ├── Layout.tsx        # レイアウト (Header + Footer)
+│   │   │   ├── FooterNav.tsx     # フッターナビ (3タブ)
 │   │   │   ├── DataTable.tsx     # テーブルビュー
 │   │   │   ├── DetailModal.tsx   # 詳細モーダル
 │   │   │   ├── YearPaginator.tsx # 年切り替え
 │   │   │   ├── MonthFilter.tsx   # 月フィルタ
-│   │   │   ├── MealSettingsModal.tsx # 初期値設定モーダル ← New!
-│   │   │   └── ...
+│   │   │   ├── MealSettingsModal.tsx # 初期値設定モーダル
+│   │   │   └── family/           # 家族向けコンポーネント
+│   │   │       └── TimelineItem.tsx  # タイムラインアイテム
 │   │   ├── config/
 │   │   │   └── tableColumns.ts   # シート別カラム設定
+│   │   ├── data/
+│   │   │   └── demoFamilyData.ts # 家族向けデモデータ（蒲池様FAX）
 │   │   ├── hooks/
 │   │   │   ├── useSync.ts        # 同期処理
 │   │   │   ├── usePlanData.ts    # データ取得
-│   │   │   └── useMealFormSettings.ts # 初期値設定取得 ← New!
+│   │   │   ├── useMealFormSettings.ts # 初期値設定取得
+│   │   │   └── useFamilyMealRecords.ts # 家族ビュー用食事実績取得
 │   │   ├── pages/
-│   │   │   ├── HomePage.tsx      # ホーム（タブUI + FAB）
-│   │   │   ├── MealInputPage.tsx # 食事入力フォーム ← New!
-│   │   │   └── SheetDetailPage.tsx
+│   │   │   ├── ViewPage.tsx      # 記録閲覧（旧HomePage）
+│   │   │   ├── MealInputPage.tsx # 食事入力フォーム
+│   │   │   └── family/           # 家族向けページ
+│   │   │       ├── FamilyDashboard.tsx  # View C: 家族ホーム
+│   │   │       ├── EvidenceMonitor.tsx  # View A: エビデンス・モニター
+│   │   │       └── RequestBuilder.tsx   # View B: ケア仕様ビルダー
 │   │   ├── types/
 │   │   │   ├── index.ts          # 型定義 (PlanDataRecord等)
-│   │   │   └── mealForm.ts       # 食事フォーム型定義 ← New!
+│   │   │   ├── mealForm.ts       # 食事フォーム型定義
+│   │   │   └── family.ts         # 家族向け型定義
+│   │   ├── utils/
+│   │   │   └── mealTimeMapping.ts # 食事時間マッピング
 │   │   ├── App.tsx               # ルーティング
 │   │   ├── main.tsx
 │   │   └── index.css             # TailwindCSS v4
@@ -824,15 +807,17 @@ facility-care-input-form/
 │       └── ...
 ├── docs/
 │   ├── CURRENT_STATUS.md         # このファイル（再開時に最初に読む）
+│   ├── FAMILY_UX_DESIGN.md       # 家族向けUX設計（Phase 7.0）
+│   ├── PLAN_RESULT_MANAGEMENT.md # 予実管理設計（Phase 7.1）
 │   ├── SHEET_A_STRUCTURE.md      # Sheet A（読み取り）構造
-│   ├── SHEET_B_STRUCTURE.md      # Sheet B（書き込み）構造 ← New!
-│   ├── MEAL_INPUT_FORM_SPEC.md   # 食事入力フォーム設計書 ← New!
+│   ├── SHEET_B_STRUCTURE.md      # Sheet B（書き込み）構造
+│   ├── MEAL_INPUT_FORM_SPEC.md   # 食事入力フォーム設計書
 │   ├── SYNC_STRATEGY.md          # 同期戦略設計書
 │   ├── SYNC_CONCURRENCY.md       # 同期競合防止設計
 │   ├── DESIGN_GUIDELINES.md      # デザインガイドライン
 │   ├── TABLE_VIEW_COLUMNS.md     # テーブルビュー表示カラム設計
 │   ├── GOOGLE_CHAT_WEBHOOK_SPEC.md # Google Chat Webhook仕様
-│   ├── PHOTO_UPLOAD_SPEC.md       # 写真アップロード仕様 ← New!
+│   ├── PHOTO_UPLOAD_SPEC.md       # 写真アップロード仕様
 │   └── ...
 ├── firebase.json
 └── firestore.rules

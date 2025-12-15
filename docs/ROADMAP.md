@@ -990,9 +990,10 @@ Phase 5.5: Google Chat Webhook ████████████████�
 Phase 5.6: 写真フォルダ設定     ████████████████████ 100% (完了)
 Phase 5.7: 設定モーダルUI改善   ████████████████████ 100% (完了)
 Phase 6.0: フッターナビゲーション ████████████████████ 100% (完了)
-Phase 7.0: 家族向け機能        ░░░░░░░░░░░░░░░░░░░░   0% (計画中)
+Phase 7.0: 家族向け機能        ████████████████████ 100% (完了)
+Phase 7.1: 予実管理            ████████████████████ 100% (完了)
                                ─────────────────────
-                               合計: 80+ tasks
+                               合計: 90+ tasks
 ```
 
 | Phase | タスク数 | 主な成果物 | 状態 |
@@ -1017,7 +1018,8 @@ Phase 7.0: 家族向け機能        ░░░░░░░░░░░░░░�
 | Phase 5.7 | 2 | 設定モーダルUI改善 | ✅ 完了 |
 | Phase 6.0 | 4 | フッターナビゲーション基盤 | ✅ 完了 |
 | Phase 6.1 | - | ビュー分離（閲覧/入力） | ✅ 完了（6.0に統合） |
-| Phase 7.0 | 14 | 家族向け機能（Flow C拡張） | 📋 計画中 |
+| Phase 7.0 | 14 | 家族向け機能（Flow C拡張） | ✅ 完了 |
+| Phase 7.1 | 8 | 予実管理（Plan/Result連携） | ✅ 完了 |
 
 ---
 
@@ -1139,7 +1141,7 @@ Phase 7.0: 家族向け機能        ░░░░░░░░░░░░░░�
 
 ---
 
-## Phase 7.0: 家族向け機能（Flow C拡張）📋 計画中
+## Phase 7.0: 家族向け機能（Flow C拡張） ✅ 完了
 
 **目的**: ご家族（蒲池様）向けの「遠隔ケア・コックピット」機能を実装。FAXの代替となる入力機能と、安心を提供する確認画面を提供。
 
@@ -1268,18 +1270,65 @@ interface CareInstruction {
 }
 ```
 
-### Phase 7.0 完了条件
+### Phase 7.0 完了条件 ✅
 
-- [ ] `docs/FAMILY_UX_DESIGN.md` 作成
-- [ ] `docs/ARCHITECTURE.md` 更新（Flow C詳細）
-- [ ] デモ用モックデータ作成
-- [ ] フッターナビ3タブ化
-- [ ] View C: 家族ホーム（タイムライン）実装
-- [ ] View A: エビデンス・モニター実装
-- [ ] View B: ケア仕様ビルダー実装
-- [ ] ルーティング追加（`/family`配下）
-- [ ] Firebase Hosting デプロイ
-- [ ] モバイル実機確認
+- [x] `docs/FAMILY_UX_DESIGN.md` 作成
+- [x] `docs/ARCHITECTURE.md` 更新（Flow C詳細）
+- [x] デモ用モックデータ作成
+- [x] フッターナビ3タブ化
+- [x] View C: 家族ホーム（タイムライン）実装
+- [x] View A: エビデンス・モニター実装
+- [x] View B: ケア仕様ビルダー実装
+- [x] ルーティング追加（`/family`配下）
+- [x] Firebase Hosting デプロイ
+- [x] 動作確認
+
+---
+
+## Phase 7.1: 予実管理（Plan/Result連携） ✅ 完了
+
+**目的**: スタッフの食事入力データ（Result）を家族ビューに自動反映する予実管理機能を実装。
+
+> **詳細設計**: [PLAN_RESULT_MANAGEMENT.md](./PLAN_RESULT_MANAGEMENT.md) を参照
+
+### 7.1-1. 設計方針
+
+**方針B「読み取り時JOIN」を採用**:
+- バックエンド修正ゼロ（既存API `getPlanData` を活用）
+- Firestoreトリガー不要 → コスト増なし
+- 15分同期ラグ許容（安定運用優先）
+
+### 7.1-2. 実装内容
+
+| ファイル | 変更種別 | 内容 |
+|---------|----------|------|
+| `frontend/src/utils/mealTimeMapping.ts` | **新規** | 食事時間マッピングユーティリティ |
+| `frontend/src/hooks/useFamilyMealRecords.ts` | **新規** | 食事シートからResult取得フック |
+| `frontend/src/types/family.ts` | 修正 | MealResult型追加 |
+| `frontend/src/pages/family/EvidenceMonitor.tsx` | 修正 | モック→実データ切替 |
+| `frontend/src/pages/family/FamilyDashboard.tsx` | 修正 | タイムラインに実績反映 |
+| `docs/PLAN_RESULT_MANAGEMENT.md` | **新規** | 設計ドキュメント |
+
+### 7.1-3. データフロー
+
+```
+食事入力(スタッフ) → Sheet B → 同期(15分毎) → Firestore plan_data/
+                                                    ↓
+家族ビュー → useFamilyMealRecords → 日付+食事時間でフィルタ → 表示
+                                                    ↑
+家族指示(Plan) → モックデータ (将来: Firestore care_instructions/)
+```
+
+### Phase 7.1 完了条件 ✅
+
+- [x] 設計書作成（PLAN_RESULT_MANAGEMENT.md）
+- [x] 食事時間マッピングユーティリティ作成
+- [x] MealResult型定義追加
+- [x] useFamilyMealRecordsフック作成
+- [x] EvidenceMonitor修正（実データ取得）
+- [x] FamilyDashboard修正（実データ反映）
+- [x] ビルド確認
+- [x] コミット・デプロイ
 
 ---
 

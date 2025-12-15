@@ -42,6 +42,8 @@
 #### 機能別仕様
 | ファイル | 用途 |
 |----------|------|
+| `docs/FAMILY_UX_DESIGN.md` | 家族向けUX設計（Phase 7.0） |
+| `docs/PLAN_RESULT_MANAGEMENT.md` | 予実管理設計（Phase 7.1） |
 | `docs/MEAL_INPUT_FORM_SPEC.md` | 食事入力フォーム設計 |
 | `docs/GOOGLE_CHAT_WEBHOOK_SPEC.md` | Google Chat Webhook連携 |
 | `docs/PHOTO_UPLOAD_SPEC.md` | 写真アップロード・フォルダ設定 |
@@ -175,11 +177,18 @@ facility-care-input-form/
 ├── frontend/              # デモ版PWA (React + Vite + TailwindCSS)
 │   ├── src/
 │   │   ├── pages/
-│   │   │   ├── HomePage.tsx       # ホーム（記録閲覧）
-│   │   │   └── MealInputPage.tsx  # 食事入力フォーム
+│   │   │   ├── ViewPage.tsx       # 記録閲覧
+│   │   │   ├── MealInputPage.tsx  # 食事入力フォーム
+│   │   │   └── family/            # 家族向けページ
+│   │   │       ├── FamilyDashboard.tsx  # View C: 家族ホーム
+│   │   │       ├── EvidenceMonitor.tsx  # View A: エビデンス・モニター
+│   │   │       └── RequestBuilder.tsx   # View B: ケア仕様ビルダー
 │   │   ├── components/            # UIコンポーネント
+│   │   │   └── family/            # 家族向けコンポーネント
 │   │   ├── hooks/                 # カスタムフック
 │   │   ├── types/                 # 型定義
+│   │   ├── data/                  # デモ用データ
+│   │   ├── utils/                 # ユーティリティ
 │   │   └── config/                # 設定ファイル
 │   └── package.json
 ├── functions/             # Cloud Functions
@@ -190,8 +199,8 @@ facility-care-input-form/
 │   └── package.json
 ├── docs/
 │   ├── CURRENT_STATUS.md  # 進捗管理（**再開時に最初に読む**）
-│   ├── SHEET_B_STRUCTURE.md       # Sheet B構造
-│   ├── MEAL_INPUT_FORM_SPEC.md    # 食事フォーム設計
+│   ├── FAMILY_UX_DESIGN.md        # 家族向けUX設計（Phase 7.0）
+│   ├── PLAN_RESULT_MANAGEMENT.md  # 予実管理設計（Phase 7.1）
 │   └── ...                        # その他設計ドキュメント
 ├── keys/                  # サービスアカウントキー（Git管理外）
 └── .github/workflows/     # CI/CD設定
