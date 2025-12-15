@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月16日 (Phase 8.1 品物管理基盤 完了)
+> **最終更新**: 2025年12月16日 (Phase 8.2 タスク管理機能 完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -27,6 +27,52 @@
 ---
 
 ## 現在の進捗
+
+### ✅ 完了: Phase 8.2 タスク管理機能
+
+**コンセプト**: スタッフ向けのタスク管理・追跡システム（賞味期限警告、提供リマインダー等）
+
+**設計書**: [TASK_MANAGEMENT_SPEC.md](./TASK_MANAGEMENT_SPEC.md)
+
+**実装完了**:
+
+| ステップ | 内容 | 状態 |
+|----------|------|------|
+| 1 | Task型定義（frontend/backend共通） | ✅ 完了 |
+| 2 | バックエンドAPI実装（createTask, getTasks, updateTask, deleteTask） | ✅ 完了 |
+| 3 | フロントエンドAPI呼び出し関数・カスタムフック | ✅ 完了 |
+| 4 | タスク一覧UI（TaskList.tsx） | ✅ 完了 |
+| 5 | FamilyDashboardにタスクバッジ追加 | ✅ 完了 |
+| 6 | ビルド確認・デプロイ | ✅ 完了 |
+
+**実装ファイル（新規）**:
+- `frontend/src/types/task.ts` - タスク管理型定義
+- `frontend/src/hooks/useTasks.ts` - カスタムフック
+- `frontend/src/pages/family/TaskList.tsx` - タスク一覧ページ
+- `functions/src/functions/tasks.ts` - バックエンドAPI
+
+**実装ファイル（修正）**:
+- `frontend/src/App.tsx` - ルーティング追加（/family/tasks）
+- `frontend/src/api/index.ts` - API呼び出し関数追加
+- `frontend/src/pages/family/FamilyDashboard.tsx` - タスクバッジ・クイックリンク追加
+- `functions/src/index.ts` - APIエンドポイント追加
+- `functions/src/types/index.ts` - バックエンド型定義追加
+
+**アクセス方法**:
+- タスク一覧: `/family/tasks`
+- 家族ホームからクイックリンクでアクセス可能
+
+**タスク種別**:
+- `expiration_warning` - 賞味期限警告
+- `serve_reminder` - 提供リマインダー
+- `restock_alert` - 在庫切れアラート
+- `care_instruction` - ケア指示確認
+- `custom` - カスタムタスク
+
+**次のステップ**:
+- タスク自動生成ロジック（Cloud Scheduler連携）は Phase 8.2.1 で実装予定
+
+---
 
 ### ✅ 完了: Phase 8.1 品物管理基盤
 
@@ -542,20 +588,27 @@ POST /updateMealFormSettings?admin=true - 設定更新（adminパラメータ必
 
 ### 次のタスク
 
-#### Phase 8.2: タスク管理機能（次に実装予定）
+#### Phase 8.2.1: タスク自動生成ロジック（次に実装予定）
 
 **設計書**: [TASK_MANAGEMENT_SPEC.md](./TASK_MANAGEMENT_SPEC.md)
 
 | ステップ | 内容 | 状態 |
 |----------|------|------|
-| 1 | Task型定義（frontend/backend共通） | 未着手 |
-| 2 | Firestoreコレクション `tasks` 作成 | 未着手 |
-| 3 | タスク管理API実装（createTask, getTasks, completeTask等） | 未着手 |
-| 4 | タスク自動生成ロジック（賞味期限警告、提供リマインダー等） | 未着手 |
+| 1 | タスク自動生成関数（taskGenerator.ts） | 未着手 |
+| 2 | 賞味期限警告タスク生成（expiration_warning） | 未着手 |
+| 3 | 提供リマインダータスク生成（serve_reminder） | 未着手 |
+| 4 | 在庫切れアラートタスク生成（restock_alert） | 未着手 |
 | 5 | Cloud Scheduler設定（毎日午前6時） | 未着手 |
-| 6 | タスク一覧UI（TaskDashboard.tsx） | 未着手 |
-| 7 | タスクバッジ（FamilyDashboardに追加） | 未着手 |
-| 8 | ルーティング追加 | 未着手 |
+
+#### Phase 8.3: 統計ダッシュボード
+
+**設計書**: [STATS_DASHBOARD_SPEC.md](./STATS_DASHBOARD_SPEC.md)
+
+| ステップ | 内容 | 状態 |
+|----------|------|------|
+| 1 | 統計API実装（getStats） | 未着手 |
+| 2 | 統計ダッシュボードUI（StatsDashboard.tsx） | 未着手 |
+| 3 | グラフコンポーネント（SVG/Chart.js） | 未着手 |
 
 #### その他のタスク
 
@@ -923,7 +976,9 @@ Phase 5.9: デイサービス選択肢固定リスト ████████�
 Phase 5.10: 設定モーダルキャンセル修正 ████████████████████ 100% (完了)
 Phase 8.0: 設計ドキュメント作成        ████████████████████ 100% (完了)
 Phase 8.1: 品物管理基盤               ████████████████████ 100% (完了)
-Phase 8.2: タスク管理                 ░░░░░░░░░░░░░░░░░░░░   0% (次に実装)
+Phase 8.2: タスク管理                 ████████████████████ 100% (完了)
+Phase 8.2.1: タスク自動生成           ░░░░░░░░░░░░░░░░░░░░   0% (次に実装)
+Phase 8.3: 統計ダッシュボード         ░░░░░░░░░░░░░░░░░░░░   0%
 ```
 
 詳細: [docs/ROADMAP.md](./ROADMAP.md)
