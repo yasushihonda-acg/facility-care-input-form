@@ -278,8 +278,34 @@ firebase deploy --only functions  # バックエンド
 | Firestoreアクセス拒否 | `firestore.rules` のルールを確認（Dev Mode: `allow read, write: if true;`） |
 | スプレッドシート権限エラー | サービスアカウントに共有設定を確認 |
 | GitHub Actions失敗 | `GCP_SA_KEY` シークレットの設定を確認 |
+| Driveフォルダ404エラー | 下記「Cloud Functions サービスアカウント」を参照 |
 
-### 8.2 ログ確認
+### 8.2 Cloud Functions サービスアカウント（重要）
+
+**問題**: Cloud Functionsが間違ったサービスアカウントを使用している
+
+**原因と解決**:
+
+`firebase.json` の `serviceAccount` フィールドは**Cloud Functions第2世代のみ**対応しています。
+このプロジェクトは第1世代関数のため、gcloudコマンドで直接指定する必要があります。
+
+```bash
+# 現在のSAを確認
+gcloud functions describe testDriveAccess --region=asia-northeast1 | grep serviceAccountEmail
+
+# 第1世代関数のSA変更コマンド
+gcloud functions deploy <関数名> \
+  --region=asia-northeast1 \
+  --project=facility-care-input-form \
+  --service-account=facility-care-sa@facility-care-input-form.iam.gserviceaccount.com \
+  --trigger-http \
+  --allow-unauthenticated \
+  --runtime=nodejs20
+```
+
+**対象関数**: `testDriveAccess`, `uploadCareImage`, `submitMealRecord` など外部サービス連携する関数
+
+### 8.3 ログ確認
 
 ```bash
 # Cloud Functionsログ
@@ -291,27 +317,79 @@ firebase functions:log
 
 ---
 
-## 9. 連絡先・リソース
+## 9. 業務ルール・データ仕様
 
-### 9.1 リポジトリ・ドキュメント
+### 9.1 投稿IDルール
 
-- GitHub: https://github.com/yasushihonda-acg/facility-care-input-form
-- デモ: https://facility-care-input-form.web.app
-- GCPコンソール: https://console.cloud.google.com/home/dashboard?project=facility-care-input-form
+食事記録を送信すると、自動で投稿IDが生成されます。
 
-### 9.2 開発再開手順
+**本番用（食事記録）**:
+```
+MEL{YYYYMMDDHHmmssSSS}{6桁乱数}
+```
+例: `MEL20251214182056917838123`
 
-1. `docs/CURRENT_STATUS.md` を読む
-2. 必要に応じてアカウント切り替えを実行
-3. 「次のタスク」セクションから作業を再開
-4. 作業完了後は `docs/CURRENT_STATUS.md` を更新
+**テスト用（Webhookテスト）**:
+```
+TEST-{YYYYMMDDHHmmss}
+```
+例: `TEST-20251215071725`
+
+> **詳細**: [BUSINESS_RULES.md#6-投稿id生成ルール](./BUSINESS_RULES.md#6-投稿id生成ルール) を参照
+
+### 9.2 Bot連携ハック（間食入力）
+
+間食入力時は特殊処理が適用されます。既存GAS Botとの互換性のための意図的な仕様です。
+
+> **詳細**: [BUSINESS_RULES.md#2-bot連携ハック間食入力時の特殊処理](./BUSINESS_RULES.md#2-bot連携ハック間食入力時の特殊処理) を参照
+
+### 9.3 シート別アクセス制御
+
+| シート | 許可操作 | 禁止操作 |
+|--------|----------|----------|
+| Sheet A (記録の結果) | Read | Write, Update, Delete |
+| Sheet B (実績入力先) | Append | Read, Update, Delete |
 
 ---
 
-## 10. 更新履歴
+## 10. 連絡先・リソース
+
+### 10.1 リポジトリ・ドキュメント
+
+| リソース | URL |
+|----------|-----|
+| GitHub | https://github.com/yasushihonda-acg/facility-care-input-form |
+| デモサイト | https://facility-care-input-form.web.app |
+| プロジェクト紹介 | https://yasushihonda-acg.github.io/facility-care-input-form/ |
+| GCPコンソール | https://console.cloud.google.com/home/dashboard?project=facility-care-input-form |
+
+### 10.2 開発再開手順
+
+```
+1. docs/CURRENT_STATUS.md を読む（現在の進捗確認）
+2. 必要に応じてアカウント切り替えを実行
+3. 「次のタスク」セクションから作業を再開
+4. 作業完了後は docs/CURRENT_STATUS.md を更新
+5. git commit & push（必須）
+```
+
+### 10.3 AIエージェントへの指示
+
+会話をクリアした後、このプロジェクトの開発を継続する場合は、以下のように指示してください：
+
+```
+facility-care-input-form プロジェクトの開発を継続してください。
+docs/CURRENT_STATUS.md を読んで、次のタスクから再開してください。
+```
+
+---
+
+## 11. 更新履歴
 
 | 日付 | 内容 |
 |------|------|
-| 2025-12-15 | 初版作成（Phase 7.1完了時点） |
-| 2025-12-15 | Phase 5.8完了、サービスアカウント情報整理 |
+| 2025-12-15 | 業務ルール・データ仕様セクション追加（投稿IDルール等） |
+| 2025-12-15 | Cloud Functions SA問題のトラブルシューティング追加 |
 | 2025-12-15 | Phase 5.8 v1.3完了、第1世代関数SA修正 |
+| 2025-12-15 | Phase 5.8完了、サービスアカウント情報整理 |
+| 2025-12-15 | 初版作成（Phase 7.1完了時点） |

@@ -64,7 +64,7 @@ gh run list --repo yasushihonda-acg/facility-care-input-form --workflow=gh-pages
 |----------|------|
 | `docs/ARCHITECTURE.md` | システム全体設計・データフロー |
 | `docs/API_SPEC.md` | API仕様書（全エンドポイント） |
-| `docs/BUSINESS_RULES.md` | 業務ルール・Bot連携ハック |
+| `docs/BUSINESS_RULES.md` | 業務ルール・Bot連携ハック・投稿IDルール |
 
 #### 機能別仕様
 | ファイル | 用途 |
@@ -77,6 +77,7 @@ gh run list --repo yasushihonda-acg/facility-care-input-form --workflow=gh-pages
 | `docs/PHOTO_UPLOAD_SPEC.md` | 写真アップロード・フォルダ設定 |
 | `docs/SETTINGS_MODAL_UI_SPEC.md` | 設定モーダルUI仕様 |
 | `docs/FOOTER_NAVIGATION_SPEC.md` | フッターナビゲーション仕様 |
+| `docs/DAY_SERVICE_OPTIONS_SPEC.md` | デイサービス選択肢固定リスト（Phase 5.9） |
 
 #### データ構造
 | ファイル | 用途 |

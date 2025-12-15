@@ -214,7 +214,9 @@ Content-Type: application/json
 | `postId` | string | 生成された投稿ID（MEL{YYYYMMDDHHmmssSSS}{6桁乱数}形式、約26文字） |
 | `sheetRow` | number | Sheet Bに追記された行番号 |
 
-> **参照**: フォーム仕様の詳細は [MEAL_INPUT_FORM_SPEC.md](./MEAL_INPUT_FORM_SPEC.md) を参照
+> **参照**:
+> - フォーム仕様の詳細は [MEAL_INPUT_FORM_SPEC.md](./MEAL_INPUT_FORM_SPEC.md) を参照
+> - 投稿IDルールの詳細は [BUSINESS_RULES.md#6-投稿id生成ルール](./BUSINESS_RULES.md#6-投稿id生成ルール) を参照
 
 #### Webhook連携
 
@@ -935,6 +937,7 @@ curl -X POST \
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
+| 2025-12-15 | 1.4.3 | 投稿IDルールへの参照追加（BUSINESS_RULES.mdリンク） |
 | 2025-12-15 | 1.4.2 | Phase 5.8 v1.2: firebase.json SA統一修正（ドキュメント整合性更新） |
 | 2025-12-15 | 1.4.1 | Phase 5.8 v1.1改善: 本番形式テストメッセージ、エラー時アドバイス追加 |
 | 2025-12-15 | 1.4.0 | Phase 5.8: testWebhook, testDriveAccess 追加 |
