@@ -78,6 +78,18 @@ gcloud projects add-iam-policy-binding facility-care-input-form \
 curl -X POST "https://asia-northeast1-facility-care-input-form.cloudfunctions.net/triggerTaskGeneration?admin=true"
 ```
 
+**Cloud Schedulerジョブ（設定済み）**:
+| ジョブ名 | スケジュール | 用途 |
+|---------|-------------|------|
+| `firebase-schedule-generateDailyTasks-asia-northeast1` | 毎日6:00 AM (Asia/Tokyo) | タスク自動生成 |
+
+**Firestoreインデックス（作成済み）**:
+| コレクション | フィールド | 用途 |
+|-------------|-----------|------|
+| `care_items` | status, expirationDate | 賞味期限警告クエリ |
+| `care_items` | status, plannedServeDate | 提供リマインダークエリ |
+| `tasks` | relatedItemId, taskType, dueDate, status | 重複タスクチェック |
+
 ---
 
 ### ✅ 完了: Phase 8.2 タスク管理機能

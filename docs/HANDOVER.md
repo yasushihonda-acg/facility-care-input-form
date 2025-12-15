@@ -258,6 +258,23 @@ facility-care-input-form/
 |---------------|------|
 | `GCP_SA_KEY` | CI/CD用サービスアカウントキー |
 
+### 6.4 Cloud Schedulerジョブ
+
+| ジョブ名 | スケジュール | 用途 |
+|---------|-------------|------|
+| `sync-plan-data-incremental` | 毎15分 (Asia/Tokyo) | 差分同期 |
+| `sync-plan-data-full` | 毎日3:00 AM (Asia/Tokyo) | 完全同期 |
+| `firebase-schedule-generateDailyTasks-asia-northeast1` | 毎日6:00 AM (Asia/Tokyo) | タスク自動生成 |
+
+### 6.5 Firestoreインデックス
+
+| コレクション | フィールド | 用途 |
+|-------------|-----------|------|
+| `plan_data` | sheetName + timestamp | シート別データ取得 |
+| `care_items` | status + expirationDate | 賞味期限警告クエリ |
+| `care_items` | status + plannedServeDate | 提供リマインダークエリ |
+| `tasks` | relatedItemId + taskType + dueDate + status | 重複タスクチェック |
+
 ---
 
 ## 7. デプロイ手順
