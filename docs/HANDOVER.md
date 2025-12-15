@@ -31,7 +31,7 @@
 | 写真アップロード | Google Driveへの画像保存 | ✅ 完了 |
 | 家族ビュー | 家族向けタイムライン・エビデンス表示 | ✅ 完了 |
 | 予実管理 | Plan（指示）とResult（実績）の対比 | ✅ 完了 |
-| 管理設定テスト | Webhook/Driveの事前テスト | 📋 計画中 |
+| 管理設定テスト | Webhook/Driveの事前テスト | ✅ 完了 |
 
 ---
 
@@ -145,11 +145,11 @@ facility-care-input-form/
 
 | Phase | 内容 | 優先度 |
 |-------|------|--------|
-| **Phase 5.8** | **管理設定テスト機能** | **高** |
 | - | ケア指示のFirestore保存 | 中 |
 | - | 写真エビデンス表示 | 中 |
+| - | 複数入居者対応 | 中 |
 
-### 4.3 Phase 5.8 設計状況
+### 4.3 Phase 5.8 管理設定テスト機能（完了）
 
 **設計書**: `docs/ADMIN_TEST_FEATURE_SPEC.md`
 
@@ -158,7 +158,9 @@ facility-care-input-form/
 | 詳細設計 | ✅ 完了 |
 | API仕様（API_SPEC.md） | ✅ 完了 |
 | UI仕様（SETTINGS_MODAL_UI_SPEC.md） | ✅ 完了 |
-| 実装 | 📋 未着手 |
+| 実装 | ✅ 完了 |
+| v1.1改善（本番形式テスト、親切なエラーメッセージ） | ✅ 完了 |
+| v1.2 SA統一修正（firebase.json） | ✅ 完了 |
 
 ---
 
@@ -208,10 +210,24 @@ facility-care-input-form/
 
 ### 6.1 サービスアカウント
 
+**重要**: 本プロジェクトでは単一のサービスアカウントに統一しています。
+
 | 項目 | 値 |
 |------|-----|
+| 名前 | `facility-care-sa` |
 | メール | `facility-care-sa@facility-care-input-form.iam.gserviceaccount.com` |
 | キーファイル | `keys/sa-key.json` (Git管理外) |
+| 用途 | Cloud Functions実行、CI/CD、スプレッドシート連携、Google Drive連携 |
+
+**外部サービス共有設定**:
+
+| 対象 | 権限 |
+|------|------|
+| Sheet A（記録の結果） | 閲覧者 |
+| Sheet B（実績入力先） | 編集者 |
+| Google Drive写真フォルダ | 編集者 |
+
+**注意**: GCPには他にも自動作成されるサービスアカウント（App Engine default, Compute Engine default, firebase-adminsdk）がありますが、これらは使用しません。詳細は `CLAUDE.md` を参照。
 
 ### 6.2 スプレッドシート
 
@@ -296,3 +312,4 @@ firebase functions:log
 | 日付 | 内容 |
 |------|------|
 | 2025-12-15 | 初版作成（Phase 7.1完了時点） |
+| 2025-12-15 | Phase 5.8完了、サービスアカウント情報整理 |

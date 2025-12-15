@@ -2,7 +2,7 @@
 
 > **作成日**: 2025年12月15日
 > **最終更新**: 2025年12月15日
-> **ステータス**: 実装完了（v1.1改善対応中）
+> **ステータス**: 実装完了（v1.2）
 
 ---
 
@@ -432,10 +432,34 @@ const [driveTestState, setDriveTestState] = useState<TestState>({
 
 ---
 
-## 9. 更新履歴
+## 9. 重要な注意事項
+
+### 9.1 サービスアカウント設定
+
+**重要**: `testDriveAccess` 関数が正しく動作するには、Cloud Functionsが正しいサービスアカウントで実行される必要があります。
+
+`firebase.json` に `serviceAccount` を明示的に指定しないと、App Engine default SA が使用され、Google Driveフォルダへのアクセス権限が異なるSAになってしまいます。
+
+```json
+{
+  "functions": [
+    {
+      "source": "functions",
+      "serviceAccount": "facility-care-sa@facility-care-input-form.iam.gserviceaccount.com"
+    }
+  ]
+}
+```
+
+詳細は `CLAUDE.md` の「サービスアカウント」セクションを参照。
+
+---
+
+## 10. 更新履歴
 
 | 日付 | 内容 |
 |------|------|
 | 2025-12-15 | 初版作成 |
 | 2025-12-15 | v1.0 実装完了 |
-| 2025-12-15 | v1.1 改善仕様追加（本番形式テストメッセージ、親切なエラーアドバイス） |
+| 2025-12-15 | v1.1 改善（本番形式テストメッセージ、親切なエラーアドバイス） |
+| 2025-12-15 | v1.2 サービスアカウント統一修正（firebase.json設定） |

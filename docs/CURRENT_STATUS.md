@@ -419,6 +419,12 @@ POST /updateMealFormSettings?admin=true - 設定更新（adminパラメータ必
   - 404: フォルダID取得方法を案内
   - 403: サービスアカウント共有手順を詳細表示
 
+**v1.2 サービスアカウント統一修正（2025-12-15）**:
+- 問題: Cloud Functionsがデフォルトで App Engine SA (`facility-care-input-form@appspot.gserviceaccount.com`) を使用していた
+- 原因: `firebase.json` に `serviceAccount` が明示的に指定されていなかった
+- 修正: `firebase.json` に統一SA (`facility-care-sa@...`) を明示的に指定
+- 結果: 全Cloud Functionsが正しいサービスアカウントで実行されるようになった
+
 ---
 
 ### 次のタスク

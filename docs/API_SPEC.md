@@ -824,6 +824,7 @@ export interface TestDriveAccessResponse {
   message: string;
   folderName?: string;  // 成功時のみ
   error?: string;
+  advice?: string;      // v1.1: エラー時の親切なアドバイス
 }
 
 // === 汎用データモデル (Phase 4.1+) ===
@@ -934,6 +935,7 @@ curl -X POST \
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
+| 2025-12-15 | 1.4.2 | Phase 5.8 v1.2: firebase.json SA統一修正（ドキュメント整合性更新） |
 | 2025-12-15 | 1.4.1 | Phase 5.8 v1.1改善: 本番形式テストメッセージ、エラー時アドバイス追加 |
 | 2025-12-15 | 1.4.0 | Phase 5.8: testWebhook, testDriveAccess 追加 |
 | 2025-12-14 | 1.3.0 | submitMealRecord追加、submitCareRecordをdeprecated化 |

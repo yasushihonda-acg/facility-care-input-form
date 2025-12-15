@@ -266,6 +266,25 @@ echo "keys/" >> .gitignore
 
 > **重要**: `keys/` ディレクトリは絶対にGitにコミットしないでください。
 
+### firebase.json サービスアカウント指定
+
+**重要**: Cloud Functionsをデプロイする際、`firebase.json` に `serviceAccount` を明示的に指定しないと、App Engine default SA (`{project-id}@appspot.gserviceaccount.com`) が使用されます。
+
+これを防ぐため、必ず以下のように設定してください：
+
+```json
+{
+  "functions": [
+    {
+      "source": "functions",
+      "serviceAccount": "facility-care-sa@facility-care-input-form.iam.gserviceaccount.com"
+    }
+  ]
+}
+```
+
+この設定により、全Cloud Functionsが統一されたサービスアカウントで実行されます。
+
 ### スプレッドシートへのアクセス権限
 
 サービスアカウントのメールアドレスを、対象スプレッドシートに**編集者**として追加する必要があります。

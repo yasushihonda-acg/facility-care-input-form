@@ -292,6 +292,25 @@ export interface UpdateMealFormSettingsRequest {
 権限: 編集者
 ```
 
+### 重要: firebase.json の serviceAccount 指定
+
+Cloud Functionsが正しいサービスアカウントを使用するには、`firebase.json` に `serviceAccount` を明示的に指定する必要があります。
+
+指定がない場合、App Engine default SA (`facility-care-input-form@appspot.gserviceaccount.com`) が使用され、Google Driveフォルダへのアクセス権限が異なるSAになってしまいます。
+
+```json
+{
+  "functions": [
+    {
+      "source": "functions",
+      "serviceAccount": "facility-care-sa@facility-care-input-form.iam.gserviceaccount.com"
+    }
+  ]
+}
+```
+
+詳細は `CLAUDE.md` の「サービスアカウント」セクションを参照。
+
 ---
 
 ## エラーハンドリング
@@ -315,3 +334,4 @@ export interface UpdateMealFormSettingsRequest {
 | 日付 | 内容 |
 |------|------|
 | 2025-12-15 | 初版作成（設計書） |
+| 2025-12-15 | firebase.json serviceAccount指定の重要性を追記 |
