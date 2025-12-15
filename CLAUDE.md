@@ -120,24 +120,65 @@ gh run list --repo yasushihonda-acg/facility-care-input-form --workflow=gh-pages
 
 ## サービスアカウント
 
-**注意**: 本プロジェクトでは単一のサービスアカウントを使用。不要なSAは作成しないこと。
+### プロジェクト統一サービスアカウント
+
+**重要**: 本プロジェクトでは以下の単一サービスアカウントに統一。不要なSAは作成しないこと。
 
 | 項目 | 値 |
 |------|-----|
 | 名前 | `facility-care-sa` |
 | メール | `facility-care-sa@facility-care-input-form.iam.gserviceaccount.com` |
 | キーファイル | `keys/sa-key.json` (Git管理外) |
-| 用途 | Cloud Functions実行、CI/CD、スプレッドシート連携 |
+| 用途 | Cloud Functions実行、CI/CD、スプレッドシート連携、Google Drive連携 |
 | 権限 | `roles/datastore.user`, `roles/cloudfunctions.invoker`, `roles/firebase.admin`, `roles/cloudfunctions.developer`, `roles/run.admin`, `roles/iam.serviceAccountUser` |
+
+### 外部サービス共有設定
+
+スプレッドシートやGoogle Driveフォルダを共有する際は、必ず上記の統一SAを使用：
+
+| 対象 | 共有先SA | 権限 |
+|------|----------|------|
+| Sheet A（記録の結果） | `facility-care-sa@facility-care-input-form.iam.gserviceaccount.com` | 閲覧者 |
+| Sheet B（実績入力先） | `facility-care-sa@facility-care-input-form.iam.gserviceaccount.com` | 編集者 |
+| Google Drive写真フォルダ | `facility-care-sa@facility-care-input-form.iam.gserviceaccount.com` | 編集者 |
+
+### GCP自動作成サービスアカウント（参考）
+
+以下はGCP/Firebaseが自動作成するSA。**削除不可・変更不要**。プロジェクトでは使用しない。
+
+| メール | 用途 | 備考 |
+|--------|------|------|
+| `facility-care-input-form@appspot.gserviceaccount.com` | App Engine default | GCP自動作成 |
+| `672520607884-compute@developer.gserviceaccount.com` | Compute Engine default | GCP自動作成 |
+| `firebase-adminsdk-fbsvc@facility-care-input-form.iam.gserviceaccount.com` | Firebase Admin SDK | Firebase自動作成 |
+
+### firebase.json サービスアカウント指定
+
+**重要**: `firebase.json` に `serviceAccount` を明示的に指定しないと、Cloud FunctionsはApp Engine default SA (`facility-care-input-form@appspot.gserviceaccount.com`) を使用してしまう。
+
+```json
+{
+  "functions": [
+    {
+      "source": "functions",
+      "serviceAccount": "facility-care-sa@facility-care-input-form.iam.gserviceaccount.com"
+    }
+  ]
+}
+```
+
+この設定により、全Cloud Functionsが統一SAで実行される。
 
 ---
 
 ## スプレッドシート
 
-| 用途 | Sheet ID | 権限 | 共有状態 |
-|------|----------|------|----------|
-| Sheet A（記録の結果） | `1Gf8QTbGyKB7rn5QQa5cYOg1NNYWMV8lzqySdbDkfG-w` | 閲覧者 | ✅ 完了 |
-| Sheet B（実績入力先） | `1OrpUVoDfUECXCTrKOGKLwN_4OQ9dlg7cUTCPGLDGHV0` | 編集者 | ✅ 完了 |
+| 用途 | Sheet ID | 共有状態 |
+|------|----------|----------|
+| Sheet A（記録の結果） | `1Gf8QTbGyKB7rn5QQa5cYOg1NNYWMV8lzqySdbDkfG-w` | ✅ 閲覧者で共有済み |
+| Sheet B（実績入力先） | `1OrpUVoDfUECXCTrKOGKLwN_4OQ9dlg7cUTCPGLDGHV0` | ✅ 編集者で共有済み |
+
+※ 共有先SAは「サービスアカウント」セクション参照
 
 ---
 
