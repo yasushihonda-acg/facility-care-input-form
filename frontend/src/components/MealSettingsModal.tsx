@@ -54,8 +54,8 @@ export function MealSettingsModal({
   const [importantWebhookCooldown, setImportantWebhookCooldown] = useState(false);
   const [driveCooldown, setDriveCooldown] = useState(false);
 
-  // 設定が変更されたら同期
-  useEffect(() => {
+  // 全状態をリセットする関数
+  const resetAllStates = useCallback(() => {
     setLocalSettings({
       defaultFacility: settings.defaultFacility,
       defaultResidentName: settings.defaultResidentName,
@@ -64,11 +64,26 @@ export function MealSettingsModal({
       importantWebhookUrl: settings.importantWebhookUrl || '',
       driveUploadFolderId: settings.driveUploadFolderId || '',
     });
-    // テスト状態もリセット
+    // テスト状態をリセット
     setWebhookTestState(initialTestState);
     setImportantWebhookTestState(initialTestState);
     setDriveTestState(initialTestState);
+    // 保存メッセージをリセット
+    setSaveMessage(null);
+    // クリア確認ダイアログを閉じる
+    setShowClearConfirm(false);
   }, [settings]);
+
+  // キャンセル処理（リセットしてから閉じる）
+  const handleCancel = useCallback(() => {
+    resetAllStates();
+    onClose();
+  }, [resetAllStates, onClose]);
+
+  // 設定が変更されたら同期
+  useEffect(() => {
+    resetAllStates();
+  }, [resetAllStates]);
 
   // Webhookテスト関数
   const handleTestWebhook = useCallback(async (
@@ -279,7 +294,7 @@ export function MealSettingsModal({
       {/* オーバーレイ */}
       <div
         className="absolute inset-0 bg-black/50"
-        onClick={onClose}
+        onClick={handleCancel}
       />
 
       {/* モーダル */}
@@ -319,7 +334,7 @@ export function MealSettingsModal({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleCancel}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
           >
             <svg
@@ -551,7 +566,7 @@ export function MealSettingsModal({
         {/* フッター */}
         <div className="px-5 py-4 border-t border-gray-200 bg-gray-50 flex gap-3">
           <button
-            onClick={onClose}
+            onClick={handleCancel}
             disabled={isSaving}
             className="flex-1 py-2.5 px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium disabled:opacity-50"
           >
