@@ -80,10 +80,12 @@ export function MealSettingsModal({
     onClose();
   }, [resetAllStates, onClose]);
 
-  // 設定が変更されたら同期
+  // モーダルが開いた時に設定を同期（propsの値で初期化）
   useEffect(() => {
-    resetAllStates();
-  }, [resetAllStates]);
+    if (isOpen) {
+      resetAllStates();
+    }
+  }, [isOpen, settings]); // isOpenがtrueになった時、またはsettingsが変わった時にリセット
 
   // Webhookテスト関数
   const handleTestWebhook = useCallback(async (
