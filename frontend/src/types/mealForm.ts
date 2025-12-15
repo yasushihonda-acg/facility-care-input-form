@@ -100,12 +100,19 @@ export const INJECTION_AMOUNTS = [
   '600cc',
 ] as const;
 
-// デイサービス施設リスト
-export const DAY_SERVICES = [
-  'デイサービスあおぞら',
-  'デイサービスひまわり',
-  'デイサービスさくら',
-  'その他',
+/**
+ * デイサービス選択肢（固定リスト）
+ * 設計書: docs/DAY_SERVICE_OPTIONS_SPEC.md
+ */
+export const DAY_SERVICE_OPTIONS = [
+  '武',
+  '田上',
+  '笹貫',
+  '下荒田',
+  '東千石',
+  '南栄',
+  '永吉',
+  '七福の里',
 ] as const;
 
 // グローバル初期値設定はFirestoreに保存され、APIから取得します

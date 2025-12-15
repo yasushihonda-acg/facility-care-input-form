@@ -8,6 +8,7 @@ import {
   INTAKE_RATIOS,
   INJECTION_TYPES,
   INJECTION_AMOUNTS,
+  DAY_SERVICE_OPTIONS,
 } from '../types/mealForm';
 import { submitMealRecord } from '../api';
 import { Layout } from '../components/Layout';
@@ -62,14 +63,9 @@ export function MealInputPage() {
     return residents;
   }, [form.facility, settings.defaultFacility, settings.defaultResidentName]);
 
-  // デイサービスリスト（初期値のみ表示）
-  const availableDayServices = useMemo(() => {
-    // 初期値が設定されている場合のみ、その値だけを選択肢として表示
-    if (settings.defaultDayServiceName) {
-      return [settings.defaultDayServiceName];
-    }
-    return [];
-  }, [settings.defaultDayServiceName]);
+  // デイサービスリスト（固定リスト使用）
+  // 設計書: docs/DAY_SERVICE_OPTIONS_SPEC.md
+  const availableDayServices = DAY_SERVICE_OPTIONS;
 
   // フィールド更新
   const updateField = <K extends keyof MealInputForm>(
