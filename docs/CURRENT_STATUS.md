@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月16日 (Phase 8.2.1 タスク自動生成機能 完了)
+> **最終更新**: 2025年12月16日 (Phase 8.3 統計ダッシュボード基本実装 完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -27,6 +27,55 @@
 ---
 
 ## 現在の進捗
+
+### ✅ 完了: Phase 8.3 統計ダッシュボード基本実装
+
+**コンセプト**: 品物状況・アラートを可視化する統計ダッシュボード（スタッフ・家族共通ビュー）
+
+**設計書**: [STATS_DASHBOARD_SPEC.md](./STATS_DASHBOARD_SPEC.md)
+
+**実装完了**:
+
+| ステップ | 内容 | 状態 |
+|----------|------|------|
+| 1 | 設計確認（STATS_DASHBOARD_SPEC.md） | ✅ 完了 |
+| 2 | バックエンド型定義（functions/src/types/index.ts） | ✅ 完了 |
+| 3 | フロントエンド型定義（frontend/src/types/stats.ts） | ✅ 完了 |
+| 4 | getStats API実装 | ✅ 完了 |
+| 5 | useStatsカスタムフック | ✅ 完了 |
+| 6 | 統計ダッシュボードUI（StatsDashboard.tsx） | ✅ 完了 |
+| 7 | ルーティング追加（/stats, /family/stats） | ✅ 完了 |
+| 8 | ビルド・デプロイ | ✅ 完了（CI/CD） |
+
+**実装ファイル（新規）**:
+- `functions/src/functions/getStats.ts` - 統計データ取得API
+- `frontend/src/types/stats.ts` - 統計関連型定義
+- `frontend/src/hooks/useStats.ts` - 統計データ取得フック
+- `frontend/src/pages/shared/StatsDashboard.tsx` - 統計ダッシュボードUI
+
+**実装ファイル（修正）**:
+- `functions/src/index.ts` - getStatsエクスポート追加
+- `functions/src/types/index.ts` - 統計関連型定義追加
+- `frontend/src/App.tsx` - ルーティング追加（/stats, /family/stats）
+- `frontend/src/api/index.ts` - getStats API関数追加
+- `frontend/src/pages/family/FamilyDashboard.tsx` - 統計リンク追加
+
+**アクセス方法**:
+- 統計ダッシュボード: `/stats` または `/family/stats`
+- 家族ホームからクイックリンクでアクセス可能
+
+**実装済み機能**:
+| タブ | 内容 |
+|------|------|
+| 品物状況 | サマリ（総品物数・未提供・消費済み）、カテゴリ別分布、賞味期限カレンダー |
+| アラート | 賞味期限警告（本日・3日以内）、在庫少アラート、重要度別表示 |
+
+**将来実装予定（Phase 8.3拡張）**:
+- 摂食傾向タブ（摂食率推移、品目ランキング）
+- レポートタブ（AIサマリ、CSVエクスポート）
+- SVGグラフ（折れ線・円グラフ）
+
+---
 
 ### ✅ 完了: Phase 8.2.1 タスク自動生成機能
 
@@ -649,15 +698,25 @@ POST /updateMealFormSettings?admin=true - 設定更新（adminパラメータ必
 
 ### 次のタスク
 
-#### Phase 8.3: 統計ダッシュボード（次に実装予定）
+#### Phase 8.4: Gemini AI連携（次に実装予定）
 
-**設計書**: [STATS_DASHBOARD_SPEC.md](./STATS_DASHBOARD_SPEC.md)
+**設計書**: [AI_INTEGRATION_SPEC.md](./AI_INTEGRATION_SPEC.md)
 
 | ステップ | 内容 | 状態 |
 |----------|------|------|
-| 1 | 統計API実装（getStats） | 未着手 |
-| 2 | 統計ダッシュボードUI（StatsDashboard.tsx） | 未着手 |
-| 3 | グラフコンポーネント（SVG/Chart.js） | 未着手 |
+| 1 | Vertex AI API有効化・権限設定 | 未着手 |
+| 2 | geminiService.ts実装 | 未着手 |
+| 3 | 品物入力補助API（aiSuggest） | 未着手 |
+| 4 | 摂食傾向分析API（aiAnalyze） | 未着手 |
+| 5 | フロントエンドUI統合 | 未着手 |
+
+#### Phase 8.3拡張: 統計ダッシュボード機能追加
+
+| ステップ | 内容 | 状態 |
+|----------|------|------|
+| 1 | 摂食傾向タブ実装 | 未着手 |
+| 2 | レポートタブ実装（CSVエクスポート） | 未着手 |
+| 3 | SVGグラフコンポーネント（折れ線・円グラフ） | 未着手 |
 
 #### その他のタスク
 
@@ -1027,7 +1086,8 @@ Phase 8.0: 設計ドキュメント作成        ██████████�
 Phase 8.1: 品物管理基盤               ████████████████████ 100% (完了)
 Phase 8.2: タスク管理                 ████████████████████ 100% (完了)
 Phase 8.2.1: タスク自動生成           ████████████████████ 100% (完了)
-Phase 8.3: 統計ダッシュボード         ░░░░░░░░░░░░░░░░░░░░   0% (次に実装)
+Phase 8.3: 統計ダッシュボード         ████████████████░░░░  80% (基本実装完了)
+Phase 8.4: Gemini AI連携             ░░░░░░░░░░░░░░░░░░░░   0% (次に実装予定)
 ```
 
 詳細: [docs/ROADMAP.md](./ROADMAP.md)
@@ -1063,6 +1123,7 @@ Phase 8.3: 統計ダッシュボード         ░░░░░░░░░░░
 | POST | `/updateMealFormSettings?admin=true` | 食事フォーム初期値設定を更新 | ✅ 動作確認済み |
 | Scheduler | `/generateDailyTasks` | タスク自動生成（毎日6時） | ✅ 実装完了 |
 | POST | `/triggerTaskGeneration?admin=true` | タスク手動生成（テスト用） | ✅ 実装完了 |
+| GET | `/getStats` | 統計データ取得（品物状況・アラート） | ✅ 実装完了 |
 
 ### 同期済みデータ
 
@@ -1115,18 +1176,29 @@ facility-care-input-form/
 │   │   │   ├── useSync.ts        # 同期処理
 │   │   │   ├── usePlanData.ts    # データ取得
 │   │   │   ├── useMealFormSettings.ts # 初期値設定取得
-│   │   │   └── useFamilyMealRecords.ts # 家族ビュー用食事実績取得
+│   │   │   ├── useFamilyMealRecords.ts # 家族ビュー用食事実績取得
+│   │   │   ├── useCareItems.ts   # 品物管理フック (Phase 8.1)
+│   │   │   ├── useTasks.ts       # タスク管理フック (Phase 8.2)
+│   │   │   └── useStats.ts       # 統計データフック (Phase 8.3)
 │   │   ├── pages/
 │   │   │   ├── ViewPage.tsx      # 記録閲覧（旧HomePage）
 │   │   │   ├── MealInputPage.tsx # 食事入力フォーム
-│   │   │   └── family/           # 家族向けページ
-│   │   │       ├── FamilyDashboard.tsx  # View C: 家族ホーム
-│   │   │       ├── EvidenceMonitor.tsx  # View A: エビデンス・モニター
-│   │   │       └── RequestBuilder.tsx   # View B: ケア仕様ビルダー
+│   │   │   ├── family/           # 家族向けページ
+│   │   │   │   ├── FamilyDashboard.tsx  # View C: 家族ホーム
+│   │   │   │   ├── EvidenceMonitor.tsx  # View A: エビデンス・モニター
+│   │   │   │   ├── RequestBuilder.tsx   # View B: ケア仕様ビルダー
+│   │   │   │   ├── ItemManagement.tsx   # 品物一覧 (Phase 8.1)
+│   │   │   │   ├── ItemForm.tsx         # 品物登録フォーム (Phase 8.1)
+│   │   │   │   └── TaskList.tsx         # タスク一覧 (Phase 8.2)
+│   │   │   └── shared/           # スタッフ・家族共通ページ
+│   │   │       └── StatsDashboard.tsx   # 統計ダッシュボード (Phase 8.3)
 │   │   ├── types/
 │   │   │   ├── index.ts          # 型定義 (PlanDataRecord等)
 │   │   │   ├── mealForm.ts       # 食事フォーム型定義
-│   │   │   └── family.ts         # 家族向け型定義
+│   │   │   ├── family.ts         # 家族向け型定義
+│   │   │   ├── careItem.ts       # 品物管理型定義 (Phase 8.1)
+│   │   │   ├── task.ts           # タスク管理型定義 (Phase 8.2)
+│   │   │   └── stats.ts          # 統計ダッシュボード型定義 (Phase 8.3)
 │   │   ├── utils/
 │   │   │   └── mealTimeMapping.ts # 食事時間マッピング
 │   │   ├── App.tsx               # ルーティング
@@ -1151,6 +1223,7 @@ facility-care-input-form/
 │       ├── tasks.ts              # タスク管理API (Phase 8.2)
 │       ├── careItems.ts          # 品物管理API (Phase 8.1)
 │       ├── taskGenerator.ts      # タスク自動生成 (Phase 8.2.1)
+│       ├── getStats.ts           # 統計データ取得API (Phase 8.3)
 │       └── ...
 ├── docs/
 │   ├── CURRENT_STATUS.md         # このファイル（再開時に最初に読む）
