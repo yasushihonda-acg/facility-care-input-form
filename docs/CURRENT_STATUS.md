@@ -10,9 +10,9 @@
 
 **引き継ぎドキュメント**: [HANDOVER.md](./HANDOVER.md) を参照
 
-**プロジェクト紹介ページ**: `gh-pages/` ディレクトリ（Mermaid図付きHTML）
-- ※ PrivateリポジトリのためGitHub Pages公開は有料プラン必要
-- GitHubのREADME.mdでMermaid図を直接閲覧可能
+**プロジェクト紹介ページ**: https://yasushihonda-acg.github.io/facility-care-input-form/
+- Mermaid図付きのプロジェクト概要・アーキテクチャ図
+- GitHub Pages自動デプロイ（`gh-pages/` ディレクトリ）
 
 ---
 

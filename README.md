@@ -8,6 +8,7 @@
 |--------|------|
 | [デモサイト](https://facility-care-input-form.web.app) | PWAアプリ |
 | [管理者モード](https://facility-care-input-form.web.app/input/meal?admin=true) | 設定変更画面 |
+| [プロジェクト紹介](https://yasushihonda-acg.github.io/facility-care-input-form/) | GitHub Pages（Mermaid図付き） |
 
 ---
 
