@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>アーキテクチャ - 施設ケア入力フォーム</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        .mermaid {
+            background: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+        .mermaid svg {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-indigo-600 to-purple-700 text-white py-8">
+        <div class="container mx-auto px-4">
+            <nav class="mb-4">
+                <a href="index.html" class="text-indigo-200 hover:text-white transition">
+                    ← トップに戻る
+                </a>
+            </nav>
+            <h1 class="text-3xl font-bold">システムアーキテクチャ</h1>
+            <p class="text-indigo-200 mt-2">施設ケア入力フォーム - 技術設計詳細</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-12">
+        <!-- System Overview -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-indigo-500 pb-2">システム全体図</h2>
+            <div class="bg-white rounded-lg shadow-md p-6 overflow-x-auto">
+                <div class="mermaid">
+flowchart TB
+    subgraph Users["ユーザー層"]
+        Staff["👨‍⚕️ スタッフ"]
+        Family["👨‍👩‍👧 ご家族"]
+        Admin["⚙️ 管理者"]
+    end
+
+    subgraph Frontend["フロントエンド（Firebase Hosting）"]
+        PWA["📱 React PWA<br/>Vite + TypeScript + TailwindCSS"]
+    end
+
+    subgraph Backend["バックエンド（Cloud Functions）"]
+        direction TB
+        API["🔌 REST API"]
+        Sync["⏰ 定期同期<br/>Cloud Scheduler"]
+    end
+
+    subgraph Storage["データストレージ"]
+        Firestore["🔥 Firestore<br/>plan_data/ settings/"]
+        Drive["📁 Google Drive<br/>画像保存"]
+    end
+
+    subgraph External["外部連携"]
+        Sheets["📊 Google Sheets<br/>Sheet A / Sheet B"]
+        Chat["💬 Google Chat<br/>Webhook通知"]
+    end
+
+    Staff --> PWA
+    Family --> PWA
+    Admin --> PWA
+
+    PWA <--> API
+    API <--> Firestore
+    API --> Drive
+    API --> Chat
+    API <--> Sheets
+
+    Sync --> API
+                </div>
+            </div>
+        </section>
+
+        <!-- Data Flow - Flow A -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-indigo-500 pb-2">Flow A: データ同期（読み取り）</h2>
+            <p class="text-gray-600 mb-4">スプレッドシートからFirestoreへの15分毎の自動同期フロー</p>
+            <div class="bg-white rounded-lg shadow-md p-6 overflow-x-auto">
+                <div class="mermaid">
+sequenceDiagram
+    participant Scheduler as Cloud Scheduler
+    participant Func as syncPlanData
+    participant Sheets as Sheet A
+    participant FS as Firestore
+
+    Scheduler->>Func: 15分毎にトリガー
+    Func->>Sheets: シートデータ取得
+    Sheets-->>Func: 全シートの行データ
+
+    loop 各シート
+        Func->>Func: データ変換（汎用モデル化）
+        Func->>FS: Upsert plan_data/{sheetName}/{id}
+    end
+
+    Func-->>Scheduler: 同期完了
+                </div>
+            </div>
+            <div class="mt-4 bg-blue-50 rounded-lg p-4">
+                <h3 class="font-semibold text-blue-800 mb-2">ポイント</h3>
+                <ul class="text-sm text-blue-700 list-disc list-inside space-y-1">
+                    <li>Cloud Schedulerで15分毎に自動実行</li>
+                    <li>決定論的IDで重複防止（同期競合対策）</li>
+                    <li>汎用データモデルで全シートに対応</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Data Flow - Flow B -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-indigo-500 pb-2">Flow B: 食事記録入力</h2>
+            <p class="text-gray-600 mb-4">スタッフの食事記録入力からスプレッドシート書き込み・通知までのフロー</p>
+            <div class="bg-white rounded-lg shadow-md p-6 overflow-x-auto">
+                <div class="mermaid">
+sequenceDiagram
+    participant Staff as スタッフ
+    participant PWA as React PWA
+    participant API as submitMealRecord
+    participant FS as Firestore
+    participant Sheets as Sheet B
+    participant Chat as Google Chat
+    participant Drive as Google Drive
+
+    Staff->>PWA: 食事記録入力
+
+    opt 写真あり
+        PWA->>API: uploadCareImage
+        API->>FS: フォルダID取得
+        API->>Drive: 画像アップロード
+        Drive-->>API: fileId, URL
+        API-->>PWA: 画像URL
+    end
+
+    PWA->>API: submitMealRecord
+    API->>FS: 設定取得（Webhook URL等）
+    API->>Sheets: 行追加
+    Sheets-->>API: 行番号
+
+    API->>Chat: 通常Webhook送信
+
+    opt 重要フラグあり
+        API->>Chat: 重要Webhook送信
+    end
+
+    API-->>PWA: 成功レスポンス
+    PWA-->>Staff: 完了表示
+                </div>
+            </div>
+            <div class="mt-4 bg-green-50 rounded-lg p-4">
+                <h3 class="font-semibold text-green-800 mb-2">ポイント</h3>
+                <ul class="text-sm text-green-700 list-disc list-inside space-y-1">
+                    <li>Sheet Bへの直接書き込み（リアルタイム反映）</li>
+                    <li>Google Chat Webhookで自動通知</li>
+                    <li>重要フラグで別チャンネルにも追加通知</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Data Flow - Flow C -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-indigo-500 pb-2">Flow C: 家族ビュー（予実管理）</h2>
+            <p class="text-gray-600 mb-4">ご家族がケア指示（Plan）と実績（Result）を対比確認するフロー</p>
+            <div class="bg-white rounded-lg shadow-md p-6 overflow-x-auto">
+                <div class="mermaid">
+sequenceDiagram
+    participant Family as ご家族
+    participant PWA as React PWA
+    participant Hook as useFamilyMealRecords
+    participant API as getPlanData
+    participant FS as Firestore
+
+    Family->>PWA: 家族ビューアクセス
+    PWA->>Hook: 日付・食事時間指定
+    Hook->>API: getPlanData('食事')
+    API->>FS: plan_data/食事 取得
+    FS-->>API: 全記録
+    API-->>Hook: レスポンス
+
+    Hook->>Hook: 日付+食事時間でフィルタ
+    Hook->>Hook: PlanDataRecord → MealResult変換
+    Hook-->>PWA: フィルタ済みResult
+
+    PWA->>PWA: Plan（モック）+ Result を統合
+    PWA-->>Family: タイムライン表示
+                </div>
+            </div>
+            <div class="mt-4 bg-purple-50 rounded-lg p-4">
+                <h3 class="font-semibold text-purple-800 mb-2">ポイント</h3>
+                <ul class="text-sm text-purple-700 list-disc list-inside space-y-1">
+                    <li>「読み取り時JOIN」方式でバックエンド修正ゼロ</li>
+                    <li>既存のgetPlanData APIを再利用</li>
+                    <li>フロントエンドでフィルタ・変換処理</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Component Architecture -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-indigo-500 pb-2">フロントエンド構成</h2>
+            <div class="bg-white rounded-lg shadow-md p-6 overflow-x-auto">
+                <div class="mermaid">
+graph TB
+    subgraph Pages["ページ"]
+        Home["HomePage<br/>記録閲覧"]
+        Meal["MealInputPage<br/>食事入力"]
+        FamDash["FamilyDashboard<br/>家族ホーム"]
+        Evidence["EvidenceMonitor<br/>エビデンス"]
+        Request["RequestBuilder<br/>ケア指示作成"]
+    end
+
+    subgraph Components["共通コンポーネント"]
+        Layout["Layout"]
+        Footer["FooterNav"]
+        Modal["MealSettingsModal"]
+        Timeline["TimelineItem"]
+    end
+
+    subgraph Hooks["カスタムフック"]
+        UsePlan["usePlanData"]
+        UseSettings["useMealFormSettings"]
+        UseMeal["useFamilyMealRecords"]
+    end
+
+    subgraph Services["サービス"]
+        API["apiService"]
+        AdminTest["adminTestService"]
+    end
+
+    Home --> UsePlan
+    Meal --> UseSettings
+    FamDash --> UseMeal
+    Evidence --> UseMeal
+
+    UsePlan --> API
+    UseSettings --> API
+    UseMeal --> UsePlan
+
+    Pages --> Components
+                </div>
+            </div>
+        </section>
+
+        <!-- API Endpoints -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-indigo-500 pb-2">APIエンドポイント</h2>
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-4 py-3 text-left">メソッド</th>
+                            <th class="px-4 py-3 text-left">パス</th>
+                            <th class="px-4 py-3 text-left">説明</th>
+                            <th class="px-4 py-3 text-left">状態</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                        <tr>
+                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/healthCheck</td>
+                            <td class="px-4 py-3">ヘルスチェック</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/syncPlanData</td>
+                            <td class="px-4 py-3">記録データ同期</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/getPlanData</td>
+                            <td class="px-4 py-3">同期済み記録取得</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/submitMealRecord</td>
+                            <td class="px-4 py-3">食事記録入力</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/getMealFormSettings</td>
+                            <td class="px-4 py-3">設定取得</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/updateMealFormSettings</td>
+                            <td class="px-4 py-3">設定更新</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/uploadCareImage</td>
+                            <td class="px-4 py-3">画像アップロード</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr class="bg-yellow-50">
+                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/testWebhook</td>
+                            <td class="px-4 py-3">Webhookテスト</td>
+                            <td class="px-4 py-3"><span class="text-yellow-600">📋</span></td>
+                        </tr>
+                        <tr class="bg-yellow-50">
+                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/testDriveAccess</td>
+                            <td class="px-4 py-3">Driveアクセステスト</td>
+                            <td class="px-4 py-3"><span class="text-yellow-600">📋</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Infrastructure -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-indigo-500 pb-2">インフラ構成</h2>
+            <div class="bg-white rounded-lg shadow-md p-6 overflow-x-auto">
+                <div class="mermaid">
+graph LR
+    subgraph GCP["Google Cloud Platform"]
+        subgraph Firebase["Firebase"]
+            Hosting["Firebase Hosting<br/>フロントエンド"]
+            Functions["Cloud Functions<br/>バックエンドAPI"]
+            Firestore["Firestore<br/>データストア"]
+        end
+
+        Scheduler["Cloud Scheduler<br/>15分毎同期"]
+        SA["Service Account<br/>facility-care-sa"]
+    end
+
+    subgraph Google["Google Workspace"]
+        Sheets["Google Sheets"]
+        Drive["Google Drive"]
+        Chat["Google Chat"]
+    end
+
+    subgraph CI["CI/CD"]
+        Actions["GitHub Actions"]
+    end
+
+    Scheduler --> Functions
+    Functions --> Firestore
+    Functions --> Sheets
+    Functions --> Drive
+    Functions --> Chat
+    SA -.-> Functions
+    Actions --> Hosting
+    Actions --> Functions
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-400">
+                © 2025 施設ケア入力フォーム プロジェクト
+            </p>
+            <div class="mt-4 space-x-4">
+                <a href="index.html" class="text-gray-400 hover:text-white transition">トップ</a>
+                <a href="https://github.com/yasushihonda-acg/facility-care-input-form" target="_blank"
+                   class="text-gray-400 hover:text-white transition">GitHub</a>
+                <a href="https://facility-care-input-form.web.app" target="_blank"
+                   class="text-gray-400 hover:text-white transition">デモ</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            },
+            sequence: {
+                useMaxWidth: true,
+                actorMargin: 50,
+                messageMargin: 40
+            }
+        });
+    </script>
+</body>
+</html>
