@@ -77,8 +77,8 @@ https://asia-northeast1-facility-care-input-form.cloudfunctions.net
 | GET | `/getMealFormSettings` | 食事フォーム設定を取得 | - | ✅ |
 | POST | `/updateMealFormSettings` | 食事フォーム設定を更新 | - | ✅ |
 | POST | `/uploadCareImage` | 画像をアップロード | 画像連携 | ✅ |
-| POST | `/testWebhook` | Webhook URLの動作確認 | 管理テスト | 📋 計画中 |
-| POST | `/testDriveAccess` | DriveフォルダIDの権限確認 | 管理テスト | 📋 計画中 |
+| POST | `/testWebhook` | Webhook URLの動作確認 | 管理テスト | ✅ |
+| POST | `/testDriveAccess` | DriveフォルダIDの権限確認 | 管理テスト | ✅ |
 | POST | `/submitCareRecord` | ケア実績を入力 (deprecated) | Flow B | ❌ |
 | POST | `/submitFamilyRequest` | 家族要望を送信 | Flow C | ❌ |
 | GET | `/getFamilyRequests` | 家族要望一覧を取得 | - | ❌ |
@@ -597,7 +597,7 @@ GET /getFamilyRequests?userId=F001&status=pending
 
 ---
 
-### 4.10 testWebhook 📋 計画中
+### 4.10 POST /testWebhook
 
 Webhook URLの動作確認テスト。管理者が設定保存前にURLの有効性を確認するために使用。
 
@@ -645,7 +645,7 @@ Webhook URLの動作確認テスト。管理者が設定保存前にURLの有効
 
 ---
 
-### 4.11 testDriveAccess 📋 計画中
+### 4.11 POST /testDriveAccess
 
 Google DriveフォルダIDのアクセス権限確認テスト。管理者が設定保存前にフォルダへのアクセス可否を確認するために使用。
 
@@ -914,6 +914,7 @@ curl -X POST \
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
+| 2025-12-15 | 1.4.0 | Phase 5.8: testWebhook, testDriveAccess 追加 |
 | 2025-12-14 | 1.3.0 | submitMealRecord追加、submitCareRecordをdeprecated化 |
 | 2025-12-13 | 1.2.0 | getPlanData汎用データモデル対応、シート別フィルタ機能追加 |
 | 2025-12-13 | 1.1.0 | デモ版対応（healthCheck追加、URL更新） |

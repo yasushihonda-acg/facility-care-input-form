@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月15日 (引き継ぎ品質化・ドキュメント整備完了)
+> **最終更新**: 2025年12月15日 (Phase 5.8 管理設定テスト機能実装完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -335,7 +335,7 @@ POST /updateMealFormSettings?admin=true - 設定更新（adminパラメータ必
 
 ---
 
-### 📋 計画中: Phase 5.8 管理設定テスト機能
+### ✅ 完了: Phase 5.8 管理設定テスト機能
 
 **背景**:
 - Webhook URLやDriveフォルダIDの設定を保存前にテストしたい
@@ -343,18 +343,18 @@ POST /updateMealFormSettings?admin=true - 設定更新（adminパラメータ必
 
 **設計書**: [ADMIN_TEST_FEATURE_SPEC.md](./ADMIN_TEST_FEATURE_SPEC.md)
 
-**実装予定**:
+**実装完了**:
 
 | ステップ | 内容 | 状態 |
 |----------|------|------|
-| 1 | testWebhook関数作成 | 📋 計画中 |
-| 2 | testDriveAccess関数作成 | 📋 計画中 |
-| 3 | functions/index.ts更新 | 📋 計画中 |
-| 4 | adminTestService.ts作成 | 📋 計画中 |
-| 5 | MealSettingsModal.tsx修正 | 📋 計画中 |
-| 6 | ビルド・ローカルテスト | 📋 計画中 |
-| 7 | デプロイ | 📋 計画中 |
-| 8 | ドキュメント更新 | 📋 計画中 |
+| 1 | testWebhook関数作成 | ✅ 完了 |
+| 2 | testDriveAccess関数作成 | ✅ 完了 |
+| 3 | functions/index.ts更新 | ✅ 完了 |
+| 4 | api/index.ts更新（フロントエンド） | ✅ 完了 |
+| 5 | MealSettingsModal.tsx修正 | ✅ 完了 |
+| 6 | ビルド確認 | ✅ 完了 |
+| 7 | デプロイ | ✅ 完了 |
+| 8 | ドキュメント更新 | ✅ 完了 |
 
 **テスト機能**:
 | 機能 | 説明 |
@@ -362,7 +362,20 @@ POST /updateMealFormSettings?admin=true - 設定更新（adminパラメータ必
 | Webhookテスト送信 | 入力したURLにテストメッセージを送信して動作確認 |
 | Driveフォルダ接続テスト | 入力したフォルダIDへのアクセス権限を確認 |
 
-**実現可能性**: ✅ 技術的に実現可能（既存APIを再利用）
+**実装ファイル（新規）**:
+- `functions/src/functions/testWebhook.ts` - Webhookテスト送信関数
+- `functions/src/functions/testDriveAccess.ts` - Driveアクセステスト関数
+
+**実装ファイル（修正）**:
+- `functions/src/index.ts` - エンドポイント追加
+- `frontend/src/api/index.ts` - API呼び出し関数追加
+- `frontend/src/components/MealSettingsModal.tsx` - テストボタンUI追加
+
+**UI機能**:
+- テストボタン（「テスト送信」/「接続テスト」）
+- 5秒間のクールダウン防止
+- 成功/失敗のインライン表示（緑/赤テキスト）
+- フォルダ名表示（Driveテスト成功時）
 
 ---
 
@@ -370,7 +383,6 @@ POST /updateMealFormSettings?admin=true - 設定更新（adminパラメータ必
 
 | 機能 | 説明 | 優先度 |
 |------|------|--------|
-| **管理設定テスト機能（Phase 5.8）** | **Webhook・DriveフォルダIDのテスト送信** | **高** |
 | ケア指示のFirestore保存 | モックデータ → Firestore永続化 | 中 |
 | 写真エビデンス表示 | Google Drive画像を家族ビューで表示 | 中 |
 | 複数入居者対応 | residentIdでの厳密フィルタ | 中 |
@@ -728,6 +740,7 @@ Phase 5.7: 設定モーダルUI改善       ████████████
 Phase 6.0: フッターナビゲーション基盤 ████████████████████ 100% (完了)
 Phase 7.0: 家族向け機能(Flow C)     ████████████████████ 100% (完了)
 Phase 7.1: 予実管理(Plan/Result連携) ████████████████████ 100% (完了)
+Phase 5.8: 管理設定テスト機能       ████████████████████ 100% (完了)
 ```
 
 詳細: [docs/ROADMAP.md](./ROADMAP.md)
