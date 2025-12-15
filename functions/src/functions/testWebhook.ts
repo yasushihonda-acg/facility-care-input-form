@@ -2,11 +2,13 @@
  * Webhook テスト送信関数
  *
  * 管理者設定画面から、Webhook URLの動作確認を行うためのAPI
+ * v1.1: 本番形式のテストメッセージを送信するよう改善
+ *
  * 設計書: docs/ADMIN_TEST_FEATURE_SPEC.md
  */
 
 import * as functions from "firebase-functions";
-import {sendToGoogleChat} from "../services/googleChatService";
+import {sendToGoogleChat, formatMealRecordMessage} from "../services/googleChatService";
 
 interface TestWebhookRequest {
   webhookUrl: string;
@@ -66,16 +68,24 @@ export const testWebhook = functions
       return;
     }
 
-    // テストメッセージを生成
+    // 本番形式のテストメッセージを生成
+    // v1.1: 実際の通知と同じ形式でテストメッセージを送信
     const timestamp = new Date().toLocaleString("ja-JP", {
       timeZone: "Asia/Tokyo",
     });
-    const testMessage = [
-      "[テスト] 施設ケア入力フォームからの接続テストです。",
-      "このメッセージが表示されれば設定は正常です。",
-      "",
-      `送信時刻: ${timestamp}`,
-    ].join("\n");
+    const testRecord = {
+      facility: "テスト施設",
+      residentName: "テスト利用者",
+      staffName: "テスト太郎",
+      mealTime: "昼",
+      mainDishRatio: "10割",
+      sideDishRatio: "10割",
+      injectionType: undefined, // 経口
+      injectionAmount: undefined,
+      note: `【テスト送信】\nこのメッセージが表示されれば設定は正常です。\n送信時刻: ${timestamp}`,
+      postId: `TEST-${new Date().toISOString().replace(/[-:T.Z]/g, "").slice(0, 14)}`,
+    };
+    const testMessage = formatMealRecordMessage(testRecord);
 
     // Webhook送信
     functions.logger.info("[testWebhook] Testing webhook URL:", webhookUrl);

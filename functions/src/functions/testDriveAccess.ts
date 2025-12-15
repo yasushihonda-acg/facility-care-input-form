@@ -2,6 +2,8 @@
  * Drive フォルダ アクセステスト関数
  *
  * 管理者設定画面から、Google DriveフォルダIDの妥当性確認を行うためのAPI
+ * v1.1: エラー時に親切なアドバイスを返すよう改善
+ *
  * 設計書: docs/ADMIN_TEST_FEATURE_SPEC.md
  */
 
@@ -17,7 +19,12 @@ interface TestDriveAccessResponse {
   message: string;
   folderName?: string;
   error?: string;
+  advice?: string; // v1.1: 親切なアドバイス
 }
+
+// サービスアカウントメールアドレス
+const SERVICE_ACCOUNT_EMAIL =
+  "facility-care-sa@facility-care-input-form.iam.gserviceaccount.com";
 
 export const testDriveAccess = functions
   .region("asia-northeast1")
@@ -92,6 +99,7 @@ export const testDriveAccess = functions
           success: false,
           message: "指定されたIDはフォルダではありません",
           error: `MimeType: ${driveResponse.data.mimeType}`,
+          advice: "ファイルではなくフォルダのIDを入力してください。",
         };
         res.status(400).json(errorResponse);
         return;
@@ -110,26 +118,42 @@ export const testDriveAccess = functions
     } catch (error: unknown) {
       functions.logger.error("[testDriveAccess] Test failed:", error);
 
-      // エラーメッセージを取得
+      // エラーメッセージとアドバイスを決定
       let errorMessage = "Unknown error";
+      let advice = "しばらく待ってから再試行してください。問題が続く場合は管理者に連絡してください。";
+
       if (error instanceof Error) {
         errorMessage = error.message;
       }
 
-      // Google API エラーの詳細を取得
+      // Google API エラーの詳細を取得し、親切なアドバイスを返す
       const googleError = error as {code?: number; errors?: Array<{reason?: string}>};
       if (googleError.code === 404) {
-        errorMessage = "フォルダが見つかりません。IDを確認してください。";
+        errorMessage = "フォルダが見つかりません";
+        advice = [
+          "フォルダIDを確認してください。",
+          "Google DriveでフォルダのURLを開くと:",
+          "https://drive.google.com/drive/folders/1ABC123xyz",
+          "「1ABC123xyz」の部分がフォルダIDです。",
+        ].join("\n");
       } else if (googleError.code === 403) {
-        errorMessage =
-          "フォルダへのアクセス権限がありません。" +
-          "サービスアカウントにフォルダの編集者権限を付与してください。";
+        errorMessage = "フォルダへのアクセス権限がありません";
+        advice = [
+          "以下の手順でサービスアカウントを共有してください:",
+          "",
+          "1. Google Driveで対象フォルダを右クリック",
+          "2. 「共有」を選択",
+          `3. 「${SERVICE_ACCOUNT_EMAIL}」を追加`,
+          "4. 権限を「編集者」に設定",
+          "5. 「送信」をクリック",
+        ].join("\n");
       }
 
       const errorResponse: TestDriveAccessResponse = {
         success: false,
         message: "フォルダにアクセスできません",
         error: errorMessage,
+        advice: advice,
       };
       res.status(400).json(errorResponse);
     }

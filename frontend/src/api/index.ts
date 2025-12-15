@@ -111,6 +111,7 @@ export interface TestDriveAccessResponse {
   message: string;
   folderName?: string;
   error?: string;
+  advice?: string; // v1.1: 親切なアドバイス
 }
 
 /**

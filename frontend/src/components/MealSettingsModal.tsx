@@ -14,6 +14,7 @@ interface TestState {
   isLoading: boolean;
   result: 'success' | 'error' | null;
   message: string;
+  advice?: string; // v1.1: 親切なアドバイス
 }
 
 const initialTestState: TestState = {
@@ -150,10 +151,12 @@ export function MealSettingsModal({
             : response.message,
         });
       } else {
+        // v1.1: adviceフィールドを含める
         setDriveTestState({
           isLoading: false,
           result: 'error',
           message: response.error || response.message,
+          advice: response.advice,
         });
       }
     } catch (error) {
@@ -248,11 +251,22 @@ export function MealSettingsModal({
 
     if (state.result === 'error') {
       return (
-        <div className="mt-1 text-xs text-red-600 flex items-center gap-1">
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-          {state.message}
+        <div className="mt-1 space-y-1">
+          <div className="text-xs text-red-600 flex items-center gap-1">
+            <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            {state.message}
+          </div>
+          {/* v1.1: 親切なアドバイスを表示 */}
+          {state.advice && (
+            <div className="text-xs text-gray-600 bg-gray-50 rounded p-2 border border-gray-200">
+              <div className="flex items-start gap-1.5">
+                <span className="text-yellow-500 flex-shrink-0">💡</span>
+                <pre className="whitespace-pre-wrap font-sans">{state.advice}</pre>
+              </div>
+            </div>
+          )}
         </div>
       );
     }
