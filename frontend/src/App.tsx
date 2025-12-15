@@ -5,6 +5,8 @@ import { MealInputPage } from './pages/MealInputPage'
 import { FamilyDashboard } from './pages/family/FamilyDashboard'
 import { EvidenceMonitor } from './pages/family/EvidenceMonitor'
 import { RequestBuilder } from './pages/family/RequestBuilder'
+import { ItemManagement } from './pages/family/ItemManagement'
+import { ItemForm } from './pages/family/ItemForm'
 
 function App() {
   return (
@@ -23,6 +25,10 @@ function App() {
       <Route path="/family/evidence/:date" element={<EvidenceMonitor />} />
       <Route path="/family/request" element={<RequestBuilder />} />
       <Route path="/family/request/:id" element={<RequestBuilder />} />
+
+      {/* 品物管理（Phase 8.1） */}
+      <Route path="/family/items" element={<ItemManagement />} />
+      <Route path="/family/items/new" element={<ItemForm />} />
 
       {/* シート詳細（レガシー） */}
       <Route path="/sheet/:sheetName" element={<SheetDetailPage />} />

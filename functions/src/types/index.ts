@@ -347,3 +347,184 @@ export interface MealRecordForChat {
 }
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
+
+// =============================================================================
+// CareItem Types (品物管理)
+// docs/ITEM_MANAGEMENT_SPEC.md に基づく型定義
+// =============================================================================
+
+/** カテゴリ */
+export type ItemCategory =
+  | "fruit" // 果物
+  | "snack" // お菓子・間食
+  | "drink" // 飲み物
+  | "dairy" // 乳製品
+  | "prepared" // 調理済み食品
+  | "supplement" // 栄養補助食品
+  | "other"; // その他
+
+/** 保存方法 */
+export type StorageMethod =
+  | "room_temp" // 常温
+  | "refrigerated" // 冷蔵
+  | "frozen"; // 冷凍
+
+/** 提供方法 */
+export type ServingMethod =
+  | "as_is" // そのまま
+  | "cut" // カット
+  | "peeled" // 皮むき
+  | "heated" // 温める
+  | "cooled" // 冷やす
+  | "blended" // ミキサー
+  | "other"; // その他
+
+/** 摂食状況 */
+export type ConsumptionStatus =
+  | "full" // 完食
+  | "most" // ほぼ完食 (80%以上)
+  | "half" // 半分程度 (50%程度)
+  | "little" // 少量 (30%以下)
+  | "none"; // 食べなかった
+
+/** 品物ステータス */
+export type ItemStatus =
+  | "pending" // 未提供
+  | "served" // 提供済み
+  | "consumed" // 消費済み
+  | "expired" // 期限切れ
+  | "discarded"; // 廃棄
+
+/**
+ * 品物（Firestore: care_items/{itemId}）
+ */
+export interface CareItem {
+  // 識別情報
+  id: string;
+  residentId: string;
+  userId: string;
+
+  // 品物基本情報（家族が入力）
+  itemName: string;
+  category: ItemCategory;
+  sentDate: string; // YYYY-MM-DD
+  quantity: number;
+  unit: string;
+  expirationDate?: string; // YYYY-MM-DD
+  storageMethod?: StorageMethod;
+
+  // 提供希望（家族が入力）
+  servingMethod: ServingMethod;
+  servingMethodDetail?: string;
+  plannedServeDate?: string; // YYYY-MM-DD
+  noteToStaff?: string;
+
+  // 提供記録（スタッフが入力）
+  actualServeDate?: string;
+  servedQuantity?: number;
+  servedBy?: string;
+
+  // 摂食記録（スタッフが入力）
+  consumptionRate?: number; // 0-100
+  consumptionStatus?: ConsumptionStatus;
+  consumptionNote?: string;
+  recordedBy?: string;
+
+  // 申し送り（スタッフ→家族）
+  noteToFamily?: string;
+
+  // ステータス・メタ情報
+  status: ItemStatus;
+  remainingQuantity: number;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/** 家族が入力する品物登録フォーム */
+export interface CareItemInput {
+  itemName: string;
+  category: ItemCategory;
+  sentDate: string;
+  quantity: number;
+  unit: string;
+  expirationDate?: string;
+  storageMethod?: StorageMethod;
+  servingMethod: ServingMethod;
+  servingMethodDetail?: string;
+  plannedServeDate?: string;
+  noteToStaff?: string;
+}
+
+/** 品物登録リクエスト */
+export interface SubmitCareItemRequest {
+  residentId: string;
+  userId: string;
+  item: CareItemInput;
+}
+
+/** 品物登録レスポンス */
+export interface SubmitCareItemResponse {
+  itemId: string;
+  createdAt: string;
+}
+
+/** 品物一覧取得リクエスト */
+export interface GetCareItemsRequest {
+  residentId?: string;
+  userId?: string;
+  status?: ItemStatus | ItemStatus[];
+  category?: ItemCategory;
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
+  offset?: number;
+}
+
+/** 品物一覧取得レスポンス */
+export interface GetCareItemsResponse {
+  items: CareItem[];
+  total: number;
+  hasMore: boolean;
+}
+
+/** 品物更新リクエスト */
+export interface UpdateCareItemRequest {
+  itemId: string;
+  updates: Partial<CareItem>;
+}
+
+/** 提供記録入力リクエスト */
+export interface RecordServingRequest {
+  itemId: string;
+  actualServeDate: string;
+  servedQuantity: number;
+  servedBy: string;
+}
+
+/** 提供記録レスポンス */
+export interface RecordServingResponse {
+  itemId: string;
+  remainingQuantity: number;
+  status: ItemStatus;
+}
+
+/** 摂食記録入力リクエスト */
+export interface RecordConsumptionRequest {
+  itemId: string;
+  consumptionStatus: ConsumptionStatus;
+  consumptionRate?: number;
+  consumptionNote?: string;
+  noteToFamily?: string;
+  recordedBy: string;
+}
+
+/** 摂食記録レスポンス */
+export interface RecordConsumptionResponse {
+  itemId: string;
+  status: ItemStatus;
+}
+
+/** 品物削除リクエスト */
+export interface DeleteCareItemRequest {
+  itemId: string;
+}

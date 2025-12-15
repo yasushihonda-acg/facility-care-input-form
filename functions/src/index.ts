@@ -62,3 +62,14 @@ export {getMealFormSettings, updateMealFormSettings} from "./functions/mealFormS
 
 export {testWebhook} from "./functions/testWebhook";
 export {testDriveAccess} from "./functions/testDriveAccess";
+
+// =============================================================================
+// 品物管理（Phase 8.1）
+// =============================================================================
+
+export {
+  submitCareItem,
+  getCareItems,
+  updateCareItem,
+  deleteCareItem,
+} from "./functions/careItems";

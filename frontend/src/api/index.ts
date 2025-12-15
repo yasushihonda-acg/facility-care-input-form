@@ -143,3 +143,123 @@ export async function testDriveAccess(folderId: string): Promise<TestDriveAccess
   const data = await response.json();
   return data as TestDriveAccessResponse;
 }
+
+// =============================================================================
+// 品物管理 API（Phase 8.1）
+// =============================================================================
+
+import type {
+  CareItem,
+  CareItemInput,
+  SubmitCareItemResponse,
+  GetCareItemsResponse,
+  ItemStatus,
+  ItemCategory,
+} from '../types/careItem';
+
+export type { CareItem, CareItemInput };
+
+/**
+ * 品物を登録（家族用）
+ */
+export async function submitCareItem(
+  residentId: string,
+  userId: string,
+  item: CareItemInput
+): Promise<ApiResponse<SubmitCareItemResponse>> {
+  const response = await fetch(`${API_BASE}/submitCareItem`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ residentId, userId, item }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Submit failed: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 品物一覧を取得
+ */
+export interface GetCareItemsParams {
+  residentId?: string;
+  userId?: string;
+  status?: ItemStatus | ItemStatus[];
+  category?: ItemCategory;
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export async function getCareItems(
+  params: GetCareItemsParams = {}
+): Promise<ApiResponse<GetCareItemsResponse>> {
+  const url = new URL(`${API_BASE}/getCareItems`);
+
+  if (params.residentId) url.searchParams.set('residentId', params.residentId);
+  if (params.userId) url.searchParams.set('userId', params.userId);
+  if (params.status) {
+    if (Array.isArray(params.status)) {
+      params.status.forEach(s => url.searchParams.append('status', s));
+    } else {
+      url.searchParams.set('status', params.status);
+    }
+  }
+  if (params.category) url.searchParams.set('category', params.category);
+  if (params.startDate) url.searchParams.set('startDate', params.startDate);
+  if (params.endDate) url.searchParams.set('endDate', params.endDate);
+  if (params.limit) url.searchParams.set('limit', params.limit.toString());
+  if (params.offset) url.searchParams.set('offset', params.offset.toString());
+
+  const response = await fetch(url.toString());
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to get items: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 品物を更新
+ */
+export async function updateCareItem(
+  itemId: string,
+  updates: Partial<CareItem>
+): Promise<ApiResponse<{ itemId: string; updatedAt: string }>> {
+  const response = await fetch(`${API_BASE}/updateCareItem`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ itemId, updates }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Update failed: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 品物を削除
+ */
+export async function deleteCareItem(
+  itemId: string
+): Promise<ApiResponse<null>> {
+  const response = await fetch(`${API_BASE}/deleteCareItem?itemId=${itemId}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Delete failed: ${response.statusText}`);
+  }
+
+  return response.json();
+}
