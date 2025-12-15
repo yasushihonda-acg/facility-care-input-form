@@ -285,12 +285,15 @@ export interface UpdateMealFormSettingsRequest {
 
 ### フォルダ共有設定
 
-管理者が指定するフォルダは、サービスアカウントに**編集者**権限で共有が必要：
+管理者が指定するフォルダは、Cloud Functionsランタイムサービスアカウントに**編集者**権限で共有が必要：
 
 ```
-サービスアカウント: facility-care-sa@facility-care-input-form.iam.gserviceaccount.com
+サービスアカウント: facility-care-input-form@appspot.gserviceaccount.com
 権限: 編集者
 ```
+
+> **注意**: `facility-care-sa@...` ではなく、App Engineデフォルトサービスアカウントを使用します。
+> これはCloud FunctionsがGoogle APIにアクセスする際の実行アカウントです。
 
 ---
 

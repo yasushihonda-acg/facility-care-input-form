@@ -697,7 +697,7 @@ Google DriveフォルダIDのアクセス権限確認テスト。管理者が設
   "success": false,
   "message": "フォルダにアクセスできません",
   "error": "フォルダへのアクセス権限がありません",
-  "advice": "以下の手順でサービスアカウントを共有してください:\n\n1. Google Driveで対象フォルダを右クリック\n2. 「共有」を選択\n3. 「facility-care-sa@facility-care-input-form.iam.gserviceaccount.com」を追加\n4. 権限を「編集者」に設定\n5. 「送信」をクリック",
+  "advice": "以下の手順でサービスアカウントを共有してください:\n\n1. Google Driveで対象フォルダを右クリック\n2. 「共有」を選択\n3. 「facility-care-input-form@appspot.gserviceaccount.com」を追加\n4. 権限を「編集者」に設定\n5. 「送信」をクリック",
   "timestamp": "2024-01-15T12:00:00.000Z"
 }
 ```
