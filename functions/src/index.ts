@@ -111,3 +111,15 @@ export {aiSuggest} from "./functions/aiSuggest";
 // =============================================================================
 
 export {getPresetSuggestions} from "./functions/getPresetSuggestions";
+
+// =============================================================================
+// プリセット管理 CRUD（Phase 8.6）
+// =============================================================================
+
+export {
+  getPresets,
+  createPreset,
+  updatePreset,
+  deletePreset,
+  saveAISuggestionAsPreset,
+} from "./functions/presets";

@@ -87,6 +87,12 @@ https://asia-northeast1-facility-care-input-form.cloudfunctions.net
 | GET | `/getTasks` | タスク一覧を取得 | Phase 8.2 | ✅ |
 | PUT | `/updateTask` | タスクを更新 | Phase 8.2 | ✅ |
 | DELETE | `/deleteTask` | タスクを削除 | Phase 8.2 | ✅ |
+| POST | `/getPresetSuggestions` | プリセット候補を取得 | Phase 8.5 | ✅ |
+| GET | `/getPresets` | プリセット一覧を取得 | Phase 8.6 | ✅ |
+| POST | `/createPreset` | プリセットを作成 | Phase 8.6 | ✅ |
+| PUT | `/updatePreset` | プリセットを更新 | Phase 8.6 | ✅ |
+| DELETE | `/deletePreset` | プリセットを削除 | Phase 8.6 | ✅ |
+| POST | `/saveAISuggestionAsPreset` | AI提案をプリセット保存 | Phase 8.7 | ✅ |
 | POST | `/submitCareRecord` | ケア実績を入力 (deprecated) | Flow B | ❌ |
 | POST | `/submitFamilyRequest` | 家族要望を送信 | Flow C | ❌ |
 | GET | `/getFamilyRequests` | 家族要望一覧を取得 | - | ❌ |
@@ -1078,6 +1084,283 @@ Google DriveフォルダIDのアクセス権限確認テスト。管理者が設
 
 ---
 
+### 4.20 GET /getPresets (Phase 8.6)
+
+プリセット一覧を取得します。
+
+> **詳細設計**: [PRESET_MANAGEMENT_SPEC.md](./PRESET_MANAGEMENT_SPEC.md) を参照
+
+**エンドポイント**: `GET /getPresets`
+
+**クエリパラメータ**:
+
+| パラメータ | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `residentId` | string | Yes | 入居者ID |
+| `category` | string | No | カテゴリで絞り込み（`cut`, `serve`, `ban`, `condition`） |
+| `source` | string | No | 出所で絞り込み（`manual`, `ai`） |
+| `activeOnly` | boolean | No | アクティブのみ取得（デフォルト: true） |
+
+**成功レスポンス (200)**:
+```json
+{
+  "success": true,
+  "data": {
+    "presets": [
+      {
+        "id": "preset-abc123",
+        "residentId": "resident-001",
+        "name": "キウイ（8等分・半月切り）",
+        "category": "cut",
+        "icon": "🥝",
+        "instruction": {
+          "content": "半月切りで8等分に",
+          "servingMethod": "cut",
+          "servingDetail": "8等分"
+        },
+        "matchConfig": {
+          "keywords": ["キウイ", "キーウィ"],
+          "categories": ["fruit"],
+          "exactMatch": false
+        },
+        "source": "manual",
+        "isActive": true,
+        "usageCount": 15,
+        "createdAt": "2025-12-16T10:00:00.000Z",
+        "updatedAt": "2025-12-16T10:00:00.000Z",
+        "createdBy": "family-001"
+      }
+    ],
+    "total": 1
+  }
+}
+```
+
+---
+
+### 4.21 POST /createPreset (Phase 8.6)
+
+新しいプリセットを作成します。
+
+**エンドポイント**: `POST /createPreset`
+
+**リクエスト**:
+```json
+{
+  "residentId": "resident-001",
+  "userId": "family-001",
+  "preset": {
+    "name": "キウイ（8等分・半月切り）",
+    "category": "cut",
+    "icon": "🥝",
+    "instruction": {
+      "content": "半月切りで8等分に",
+      "servingMethod": "cut",
+      "servingDetail": "8等分"
+    },
+    "matchConfig": {
+      "keywords": ["キウイ", "キーウィ"],
+      "categories": ["fruit"],
+      "exactMatch": false
+    }
+  },
+  "source": "manual"
+}
+```
+
+| フィールド | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `residentId` | string | Yes | 入居者ID |
+| `userId` | string | Yes | 作成した家族ID |
+| `preset` | object | Yes | プリセット定義 |
+| `preset.name` | string | Yes | プリセット名 |
+| `preset.category` | string | No | カテゴリ（デフォルト: `other`） |
+| `preset.icon` | string | No | アイコン絵文字 |
+| `preset.instruction` | object | Yes | 指示内容 |
+| `preset.instruction.content` | string | Yes | 指示テキスト |
+| `preset.matchConfig` | object | No | マッチング設定 |
+| `source` | string | No | 出所（デフォルト: `manual`） |
+
+**成功レスポンス (201)**:
+```json
+{
+  "success": true,
+  "data": {
+    "presetId": "preset-abc123",
+    "createdAt": "2025-12-16T10:00:00.000Z"
+  }
+}
+```
+
+---
+
+### 4.22 PUT /updatePreset (Phase 8.6)
+
+プリセットを更新します。
+
+**エンドポイント**: `PUT /updatePreset`
+
+**リクエスト**:
+```json
+{
+  "presetId": "preset-abc123",
+  "updates": {
+    "name": "キウイ（8等分・半月切り・皮むき）",
+    "instruction": {
+      "content": "皮をむいて半月切りで8等分に",
+      "servingMethod": "cut",
+      "servingDetail": "8等分・皮むき"
+    }
+  }
+}
+```
+
+| フィールド | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `presetId` | string | Yes | 更新対象のプリセットID |
+| `updates` | object | Yes | 更新内容（部分更新） |
+
+**更新可能フィールド**:
+- `name`: プリセット名
+- `category`: カテゴリ
+- `icon`: アイコン
+- `instruction`: 指示内容
+- `matchConfig`: マッチング設定
+- `isActive`: 有効フラグ
+
+**成功レスポンス (200)**:
+```json
+{
+  "success": true,
+  "data": {
+    "presetId": "preset-abc123",
+    "updatedAt": "2025-12-16T12:00:00.000Z"
+  }
+}
+```
+
+---
+
+### 4.23 DELETE /deletePreset (Phase 8.6)
+
+プリセットを論理削除します。
+
+**エンドポイント**: `DELETE /deletePreset`
+
+**クエリパラメータ**:
+
+| パラメータ | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `presetId` | string | Yes | 削除対象のプリセットID |
+
+**成功レスポンス (200)**:
+```json
+{
+  "success": true
+}
+```
+
+---
+
+### 4.24 POST /getPresetSuggestions (Phase 8.5)
+
+品物名からマッチするプリセット候補を取得します。
+
+**エンドポイント**: `POST /getPresetSuggestions`
+
+**リクエスト**:
+```json
+{
+  "residentId": "resident-001",
+  "itemName": "キウイ",
+  "category": "fruit"
+}
+```
+
+| フィールド | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `residentId` | string | Yes | 入居者ID |
+| `itemName` | string | Yes | 品物名（2文字以上） |
+| `category` | string | No | 品物カテゴリ |
+
+**成功レスポンス (200)**:
+```json
+{
+  "success": true,
+  "data": {
+    "suggestions": [
+      {
+        "presetId": "preset-abc123",
+        "presetName": "キウイ（8等分・半月切り）",
+        "matchReason": "品物名「キウイ」",
+        "matchType": "itemName",
+        "confidence": 0.9,
+        "instruction": {
+          "title": "キウイ（8等分・半月切り）",
+          "content": "半月切りで8等分に",
+          "servingMethod": "cut",
+          "servingDetail": "8等分"
+        },
+        "source": "manual"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### 4.25 POST /saveAISuggestionAsPreset (Phase 8.7)
+
+AI提案をプリセットとして保存します。
+
+**エンドポイント**: `POST /saveAISuggestionAsPreset`
+
+**リクエスト**:
+```json
+{
+  "residentId": "resident-001",
+  "userId": "family-001",
+  "itemName": "マンゴー",
+  "presetName": "マンゴー（角切り）",
+  "category": "cut",
+  "icon": "🥭",
+  "aiSuggestion": {
+    "expirationDays": 5,
+    "storageMethod": "refrigerated",
+    "servingMethods": ["cut"],
+    "notes": "熟してから提供"
+  },
+  "keywords": ["マンゴー"],
+  "itemCategories": ["fruit"]
+}
+```
+
+| フィールド | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `residentId` | string | Yes | 入居者ID |
+| `userId` | string | Yes | 保存した家族ID |
+| `itemName` | string | No | 元の品物名 |
+| `presetName` | string | Yes | プリセット名 |
+| `category` | string | No | カテゴリ |
+| `icon` | string | No | アイコン（デフォルト: 🤖） |
+| `aiSuggestion` | object | Yes | AI提案内容 |
+| `keywords` | string[] | No | マッチングキーワード |
+| `itemCategories` | string[] | No | マッチング対象カテゴリ |
+
+**成功レスポンス (201)**:
+```json
+{
+  "success": true,
+  "data": {
+    "presetId": "preset-xyz789",
+    "createdAt": "2025-12-16T10:00:00.000Z"
+  }
+}
+```
+
+---
+
 ## 5. TypeScript 型定義
 
 ```typescript
@@ -1428,6 +1711,9 @@ curl -X POST \
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
+| 2025-12-16 | 1.8.0 | Phase 8.7: saveAISuggestionAsPreset API追加 |
+| 2025-12-16 | 1.7.0 | Phase 8.6: プリセット管理API（getPresets, createPreset, updatePreset, deletePreset）追加 |
+| 2025-12-16 | 1.6.1 | Phase 8.5: getPresetSuggestions API追加 |
 | 2025-12-16 | 1.6.0 | Phase 8.2: タスク管理API（createTask, getTasks, updateTask, deleteTask）追加 |
 | 2025-12-16 | 1.5.0 | Phase 8.1: 品物管理API（createCareItem, getCareItems, updateCareItem, deleteCareItem）追加 |
 | 2025-12-15 | 1.4.3 | 投稿IDルールへの参照追加（BUSINESS_RULES.mdリンク） |

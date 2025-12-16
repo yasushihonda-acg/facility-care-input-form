@@ -479,3 +479,132 @@ export async function getPresetSuggestions(
 
   return response.json();
 }
+
+// =============================================================================
+// プリセット管理 CRUD API（Phase 8.6）
+// =============================================================================
+
+import type {
+  CarePreset,
+  CarePresetInput,
+  PresetCategory,
+  PresetSource,
+  GetPresetsRequest,
+  GetPresetsResponse,
+  CreatePresetRequest,
+  CreatePresetResponse,
+  UpdatePresetRequest,
+  UpdatePresetResponse,
+  SaveAISuggestionAsPresetRequest,
+  SaveAISuggestionAsPresetResponse,
+} from '../types/careItem';
+
+export type {
+  CarePreset,
+  CarePresetInput,
+  PresetCategory,
+  PresetSource,
+};
+
+/**
+ * プリセット一覧を取得
+ */
+export async function getPresets(
+  params: GetPresetsRequest
+): Promise<ApiResponse<GetPresetsResponse>> {
+  const url = new URL(`${API_BASE}/getPresets`);
+
+  url.searchParams.set('residentId', params.residentId);
+  if (params.category) url.searchParams.set('category', params.category);
+  if (params.source) url.searchParams.set('source', params.source);
+  if (params.activeOnly !== undefined) {
+    url.searchParams.set('activeOnly', String(params.activeOnly));
+  }
+
+  const response = await fetch(url.toString());
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Failed to get presets: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * プリセットを作成
+ */
+export async function createPreset(
+  params: CreatePresetRequest
+): Promise<ApiResponse<CreatePresetResponse>> {
+  const response = await fetch(`${API_BASE}/createPreset`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Failed to create preset: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * プリセットを更新
+ */
+export async function updatePreset(
+  params: UpdatePresetRequest
+): Promise<ApiResponse<UpdatePresetResponse>> {
+  const response = await fetch(`${API_BASE}/updatePreset`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Failed to update preset: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * プリセットを削除（論理削除）
+ */
+export async function deletePreset(
+  presetId: string
+): Promise<ApiResponse<null>> {
+  const response = await fetch(`${API_BASE}/deletePreset?presetId=${presetId}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Failed to delete preset: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * AI提案をプリセットとして保存
+ */
+export async function saveAISuggestionAsPreset(
+  params: SaveAISuggestionAsPresetRequest
+): Promise<ApiResponse<SaveAISuggestionAsPresetResponse>> {
+  const response = await fetch(`${API_BASE}/saveAISuggestionAsPreset`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Failed to save AI suggestion: ${response.statusText}`);
+  }
+
+  return response.json();
+}

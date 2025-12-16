@@ -1,6 +1,7 @@
 /**
  * プリセット候補取得API
  * @see docs/AI_INTEGRATION_SPEC.md (セクション9)
+ * @see docs/PRESET_MANAGEMENT_SPEC.md
  */
 
 import * as functions from "firebase-functions";
@@ -17,6 +18,7 @@ const firestore = getFirestore();
 
 /**
  * プリセットをマッチングしてスコアリング
+ * 新型定義（Phase 8.6）に対応
  */
 function matchPresets(
   presets: CarePreset[],
@@ -28,62 +30,69 @@ function matchPresets(
 
   for (const preset of presets) {
     // 1. カテゴリマッチ（confidence: 0.8）
-    if (category && preset.targetCategories?.includes(category)) {
+    if (category && preset.matchConfig.categories?.includes(category)) {
       if (!seenPresetIds.has(preset.id)) {
         suggestions.push({
           presetId: preset.id,
-          presetName: preset.presetName,
+          presetName: preset.name,
           matchReason: `カテゴリ「${CATEGORY_LABELS[category]}」`,
           matchType: "category",
           confidence: 0.8,
           instruction: {
-            title: preset.title,
-            content: preset.content,
-            servingMethod: preset.servingMethod,
-            servingDetail: preset.servingDetail,
+            title: preset.name,
+            content: preset.instruction.content,
+            servingMethod: preset.instruction.servingMethod,
+            servingDetail: preset.instruction.servingDetail,
           },
+          source: preset.source,
         });
         seenPresetIds.add(preset.id);
       }
     }
 
     // 2. 品物名マッチ（キーワード部分一致、confidence: 0.9）
-    if (preset.keywords && preset.keywords.length > 0) {
-      const matchedKeyword = preset.keywords.find(
-        (kw) => itemName.includes(kw) || kw.includes(itemName)
+    const keywords = preset.matchConfig.keywords;
+    if (keywords && keywords.length > 0) {
+      const matchedKeyword = keywords.find(
+        (kw: string) => itemName.includes(kw) || kw.includes(itemName)
       );
       if (matchedKeyword && !seenPresetIds.has(preset.id)) {
         suggestions.push({
           presetId: preset.id,
-          presetName: preset.presetName,
+          presetName: preset.name,
           matchReason: `品物名「${itemName}」`,
           matchType: "itemName",
           confidence: 0.9,
           instruction: {
-            title: preset.title,
-            content: preset.content,
-            servingMethod: preset.servingMethod,
-            servingDetail: preset.servingDetail,
+            title: preset.name,
+            content: preset.instruction.content,
+            servingMethod: preset.instruction.servingMethod,
+            servingDetail: preset.instruction.servingDetail,
           },
+          source: preset.source,
         });
         seenPresetIds.add(preset.id);
       }
     }
 
     // 3. コンテンツキーワードマッチ（confidence: 0.7）
-    if (preset.content.includes(itemName) && !seenPresetIds.has(preset.id)) {
+    if (
+      preset.instruction.content.includes(itemName) &&
+      !seenPresetIds.has(preset.id)
+    ) {
       suggestions.push({
         presetId: preset.id,
-        presetName: preset.presetName,
+        presetName: preset.name,
         matchReason: `指示内容に「${itemName}」を含む`,
         matchType: "keyword",
         confidence: 0.7,
         instruction: {
-          title: preset.title,
-          content: preset.content,
-          servingMethod: preset.servingMethod,
-          servingDetail: preset.servingDetail,
+          title: preset.name,
+          content: preset.instruction.content,
+          servingMethod: preset.instruction.servingMethod,
+          servingDetail: preset.instruction.servingDetail,
         },
+        source: preset.source,
       });
       seenPresetIds.add(preset.id);
     }

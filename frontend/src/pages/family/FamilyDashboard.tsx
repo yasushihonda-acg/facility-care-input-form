@@ -177,6 +177,16 @@ export function FamilyDashboard() {
             <p className="font-medium text-xs text-center">統計</p>
             <p className="text-[10px] text-gray-500 text-center">状況確認</p>
           </Link>
+
+          {/* いつもの指示 */}
+          <Link
+            to="/family/presets"
+            className="relative bg-white rounded-lg shadow-card p-3 hover:shadow-md transition flex flex-col items-center gap-1"
+          >
+            <div className="text-2xl">📋</div>
+            <p className="font-medium text-xs text-center">指示</p>
+            <p className="text-[10px] text-gray-500 text-center">プリセット</p>
+          </Link>
         </div>
 
         {/* 日付セレクター */}

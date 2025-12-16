@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import { AISuggestion } from '../../components/family/AISuggestion';
 import { PresetSuggestion } from '../../components/family/PresetSuggestion';
+import { SaveAISuggestionDialog } from '../../components/family/SaveAISuggestionDialog';
 import { useSubmitCareItem } from '../../hooks/useCareItems';
 import { useAISuggest } from '../../hooks/useAISuggest';
 import { usePresetSuggestions } from '../../hooks/usePresetSuggestions';
@@ -51,6 +52,10 @@ export function ItemForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // AI提案保存ダイアログ用state
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [pendingAISuggestion, setPendingAISuggestion] = useState<AISuggestResponse | null>(null);
+
   // AI提案フック
   const {
     suggestion,
@@ -79,8 +84,8 @@ export function ItemForm() {
     }
   }, [formData.itemName, formData.category, fetchSuggestion, clearSuggestion, fetchPresetSuggestions, clearPresetSuggestions]);
 
-  // AI提案を適用
-  const handleApplySuggestion = useCallback((aiSuggestion: AISuggestResponse) => {
+  // AI提案をフォームに適用（内部ロジック）
+  const applySuggestionToForm = useCallback((aiSuggestion: AISuggestResponse) => {
     // 賞味期限: 今日 + expirationDays
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + aiSuggestion.expirationDays);
@@ -94,6 +99,30 @@ export function ItemForm() {
       servingMethodDetail: aiSuggestion.notes || prev.servingMethodDetail,
     }));
   }, []);
+
+  // AI提案を適用（ダイアログを表示）
+  const handleApplySuggestion = useCallback((aiSuggestion: AISuggestResponse) => {
+    setPendingAISuggestion(aiSuggestion);
+    setShowSaveDialog(true);
+  }, []);
+
+  // ダイアログで「今回だけ」を選択
+  const handleSkipSave = useCallback(() => {
+    if (pendingAISuggestion) {
+      applySuggestionToForm(pendingAISuggestion);
+    }
+    setShowSaveDialog(false);
+    setPendingAISuggestion(null);
+  }, [pendingAISuggestion, applySuggestionToForm]);
+
+  // ダイアログで「保存して適用」完了後
+  const handleSavedAndApply = useCallback(() => {
+    if (pendingAISuggestion) {
+      applySuggestionToForm(pendingAISuggestion);
+    }
+    setShowSaveDialog(false);
+    setPendingAISuggestion(null);
+  }, [pendingAISuggestion, applySuggestionToForm]);
 
   // プリセット提案を適用
   const handleApplyPreset = useCallback((preset: PresetSuggestionType) => {
@@ -409,6 +438,20 @@ export function ItemForm() {
           </div>
         </form>
       </div>
+
+      {/* AI提案保存ダイアログ */}
+      {pendingAISuggestion && (
+        <SaveAISuggestionDialog
+          isOpen={showSaveDialog}
+          onClose={handleSkipSave}
+          onSaved={handleSavedAndApply}
+          residentId={DEMO_RESIDENT_ID}
+          userId={DEMO_USER_ID}
+          itemName={formData.itemName}
+          category={formData.category}
+          aiSuggestion={pendingAISuggestion}
+        />
+      )}
     </Layout>
   );
 }

@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月16日 (Phase 8.6/8.7 設計完了、プリセットデータ修正完了)
+> **最終更新**: 2025年12月16日 (Phase 8.6/8.7 完了 - プリセット管理・AI自動ストック全機能実装)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -27,6 +27,55 @@
 ---
 
 ## 現在の進捗
+
+### ✅ 完了: Phase 8.6/8.7 プリセット管理・AI自動ストック
+
+**コンセプト**: 「いつもの指示（プリセット）」の手動CRUD管理 + AI提案をワンクリックでプリセット保存
+
+**設計書**: [PRESET_MANAGEMENT_SPEC.md](./PRESET_MANAGEMENT_SPEC.md)
+
+**実装完了**:
+
+| Phase | ステップ | 内容 | 状態 |
+|-------|----------|------|------|
+| 8.6-1 | 型定義 | CarePreset型定義拡張（frontend/backend） | ✅ 完了 |
+| 8.6-2 | API | プリセットCRUD API実装（backend） | ✅ 完了 |
+| 8.6-3 | UI | プリセット管理画面作成（/family/presets） | ✅ 完了 |
+| 8.6-4 | 拡張 | getPresetSuggestions出所情報追加 | ✅ 完了 |
+| 8.7-1 | API | saveAISuggestionAsPreset API実装 | ✅ 完了 |
+| 8.7-2 | UI | SaveAISuggestionDialogコンポーネント作成 | ✅ 完了 |
+| 8.7-3 | 統合 | ItemFormに保存ダイアログ統合 | ✅ 完了 |
+
+**実装ファイル（新規）**:
+- `functions/src/functions/presets.ts` - プリセットCRUD API（getPresets, createPreset, updatePreset, deletePreset, saveAISuggestionAsPreset）
+- `frontend/src/pages/family/PresetManagement.tsx` - プリセット管理画面
+- `frontend/src/hooks/usePresets.ts` - プリセットCRUDフック
+- `frontend/src/components/family/SaveAISuggestionDialog.tsx` - AI提案保存ダイアログ
+
+**実装ファイル（修正）**:
+- `functions/src/index.ts` - プリセットAPIエクスポート追加
+- `frontend/src/api/index.ts` - プリセットAPI関数追加
+- `frontend/src/types/careItem.ts` - プリセット管理型定義追加
+- `frontend/src/App.tsx` - /family/presetsルート追加
+- `frontend/src/pages/family/FamilyDashboard.tsx` - プリセット管理へのリンク追加
+- `frontend/src/pages/family/ItemForm.tsx` - AI提案保存ダイアログ統合
+- `docs/API_SPEC.md` - プリセットAPI仕様追加
+
+**機能詳細**:
+
+| 機能 | 説明 |
+|------|------|
+| プリセット管理画面 | カテゴリ別フィルタ、検索、一覧表示、新規作成、編集、削除 |
+| 手動プリセット登録 | 名前、カテゴリ、アイコン、指示内容、キーワードを設定 |
+| AI提案保存 | 品物登録フォームでAI提案を適用時に「いつもの指示」として保存可能 |
+| 出所バッジ | 手動登録(📌)とAI提案から保存(🤖)を区別表示 |
+
+**アクセス方法**:
+- プリセット管理画面: `/family/presets`
+- 家族ダッシュボードの「指示」ボタンからアクセス可能
+- 品物登録フォーム: AI提案適用時に保存ダイアログ表示
+
+---
 
 ### ✅ 完了: Phase 8.4拡張 AI提案UI統合
 

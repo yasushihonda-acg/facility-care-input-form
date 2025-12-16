@@ -428,3 +428,189 @@ export const CATEGORY_LABELS: Record<ItemCategory, string> = {
   supplement: '栄養補助食品',
   other: 'その他',
 };
+
+// =============================================================================
+// プリセット管理 (Phase 8.6)
+// @see docs/PRESET_MANAGEMENT_SPEC.md
+// =============================================================================
+
+/** プリセットカテゴリ */
+export type PresetCategory =
+  | 'cut'        // カット・調理方法
+  | 'serve'      // 提供方法・温度
+  | 'ban'        // 禁止・制限
+  | 'condition'; // 条件付き対応
+
+export const PRESET_CATEGORIES: { value: PresetCategory; label: string; icon: string }[] = [
+  { value: 'cut', label: 'カット・調理', icon: '🔪' },
+  { value: 'serve', label: '提供方法', icon: '🍽️' },
+  { value: 'ban', label: '禁止・制限', icon: '🚫' },
+  { value: 'condition', label: '条件付き', icon: '⚠️' },
+];
+
+/** プリセット出所 */
+export type PresetSource = 'manual' | 'ai';
+
+export const PRESET_SOURCE_LABELS: Record<PresetSource, { label: string; icon: string; color: string }> = {
+  manual: { label: '手動登録', icon: '📌', color: 'text-blue-600' },
+  ai: { label: 'AI提案から保存', icon: '🤖', color: 'text-purple-600' },
+};
+
+/** AI出所情報（AIから保存されたプリセット用） */
+export interface AISourceInfo {
+  originalItemName: string;
+  originalSuggestion: {
+    expirationDays: number;
+    storageMethod: StorageMethod;
+    servingMethods: ServingMethod[];
+    notes?: string;
+  };
+  savedAt: string;  // ISO8601
+}
+
+/**
+ * プリセット（いつもの指示）
+ * Firestore: care_presets/{presetId}
+ * @see docs/PRESET_MANAGEMENT_SPEC.md
+ */
+export interface CarePreset {
+  // 識別情報
+  id: string;
+  residentId: string;
+
+  // 基本情報
+  name: string;
+  category: PresetCategory;
+  icon?: string;
+
+  // 指示内容
+  instruction: {
+    content: string;
+    servingMethod?: ServingMethod;
+    servingDetail?: string;
+  };
+
+  // マッチング設定
+  matchConfig: {
+    keywords: string[];
+    categories?: ItemCategory[];
+    exactMatch?: boolean;
+  };
+
+  // 出所追跡
+  source: PresetSource;
+  aiSourceInfo?: AISourceInfo;
+
+  // ステータス・統計
+  isActive: boolean;
+  usageCount: number;
+  lastUsedAt?: string;
+
+  // メタ情報
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+}
+
+/** プリセット作成入力 */
+export interface CarePresetInput {
+  name: string;
+  category: PresetCategory;
+  icon?: string;
+  instruction: {
+    content: string;
+    servingMethod?: ServingMethod;
+    servingDetail?: string;
+  };
+  matchConfig: {
+    keywords: string[];
+    categories?: ItemCategory[];
+    exactMatch?: boolean;
+  };
+}
+
+// === プリセット管理 APIリクエスト/レスポンス型 ===
+
+export interface GetPresetsRequest {
+  residentId: string;
+  category?: PresetCategory;
+  source?: PresetSource;
+  activeOnly?: boolean;
+}
+
+export interface GetPresetsResponse {
+  presets: CarePreset[];
+  total: number;
+}
+
+export interface CreatePresetRequest {
+  residentId: string;
+  userId: string;
+  preset: CarePresetInput;
+  source?: PresetSource;
+}
+
+export interface CreatePresetResponse {
+  presetId: string;
+  createdAt: string;
+}
+
+export interface UpdatePresetRequest {
+  presetId: string;
+  updates: Partial<CarePresetInput> & { isActive?: boolean };
+}
+
+export interface UpdatePresetResponse {
+  presetId: string;
+  updatedAt: string;
+}
+
+export interface DeletePresetRequest {
+  presetId: string;
+}
+
+export interface DeletePresetResponse {
+  // 削除成功時は空（APIはsuccess:trueのみ返す）
+}
+
+// === AI自動ストック (Phase 8.7) ===
+
+export interface SaveAISuggestionAsPresetRequest {
+  residentId: string;
+  userId: string;
+  itemName: string;
+  presetName: string;
+  category: PresetCategory;
+  icon?: string;
+  aiSuggestion: AISuggestResponse;
+  keywords?: string[];
+  itemCategories?: ItemCategory[];
+}
+
+export interface SaveAISuggestionAsPresetResponse {
+  presetId: string;
+  createdAt: string;
+}
+
+// === ユーティリティ関数 ===
+
+/**
+ * プリセットカテゴリのラベルを取得
+ */
+export function getPresetCategoryLabel(category: PresetCategory): string {
+  return PRESET_CATEGORIES.find(c => c.value === category)?.label ?? category;
+}
+
+/**
+ * プリセットカテゴリのアイコンを取得
+ */
+export function getPresetCategoryIcon(category: PresetCategory): string {
+  return PRESET_CATEGORIES.find(c => c.value === category)?.icon ?? '📋';
+}
+
+/**
+ * プリセット出所のラベル情報を取得
+ */
+export function getPresetSourceInfo(source: PresetSource): { label: string; icon: string; color: string } {
+  return PRESET_SOURCE_LABELS[source];
+}

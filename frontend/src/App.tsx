@@ -8,6 +8,7 @@ import { RequestBuilder } from './pages/family/RequestBuilder'
 import { ItemManagement } from './pages/family/ItemManagement'
 import { ItemForm } from './pages/family/ItemForm'
 import { TaskList } from './pages/family/TaskList'
+import { PresetManagement } from './pages/family/PresetManagement'
 import { StatsDashboard } from './pages/shared/StatsDashboard'
 
 function App() {
@@ -34,6 +35,9 @@ function App() {
 
       {/* タスク管理（Phase 8.2） */}
       <Route path="/family/tasks" element={<TaskList />} />
+
+      {/* プリセット管理（Phase 8.6） */}
+      <Route path="/family/presets" element={<PresetManagement />} />
 
       {/* 統計ダッシュボード（Phase 8.3） */}
       <Route path="/stats" element={<StatsDashboard />} />

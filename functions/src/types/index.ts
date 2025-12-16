@@ -848,40 +848,12 @@ export interface PresetSuggestion {
     servingMethod?: ServingMethod;
     servingDetail?: string;
   };
+  source?: PresetSource; // 出所追跡（Phase 8.6追加）
 }
 
 /** プリセット候補取得レスポンス */
 export interface GetPresetSuggestionsResponse {
   suggestions: PresetSuggestion[];
-}
-
-/**
- * ケア指示プリセット（Firestore: care_presets/{presetId}）
- * 家族が作成した「いつもの指示」パターン
- */
-export interface CarePreset {
-  id: string;
-  residentId: string;
-  userId: string;
-
-  // プリセット情報
-  presetName: string;
-  title: string;
-  content: string;
-
-  // マッチング用フィールド
-  targetCategories?: ItemCategory[];
-  keywords?: string[];
-
-  // 適用時の設定
-  servingMethod?: ServingMethod;
-  servingDetail?: string;
-
-  // メタ情報
-  isActive: boolean;
-  usageCount: number;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
 }
 
 /** カテゴリラベル（マッチ理由表示用） */
@@ -894,3 +866,161 @@ export const CATEGORY_LABELS: Record<ItemCategory, string> = {
   supplement: "栄養補助食品",
   other: "その他",
 };
+
+// =============================================================================
+// プリセット管理 Types (Phase 8.6)
+// docs/PRESET_MANAGEMENT_SPEC.md に基づく型定義
+// =============================================================================
+
+/** プリセットカテゴリ */
+export type PresetCategory =
+  | "cut" // カット・調理方法
+  | "serve" // 提供方法・温度
+  | "ban" // 禁止・制限
+  | "condition"; // 条件付き対応
+
+/** プリセット出所 */
+export type PresetSource = "manual" | "ai";
+
+/** AI出所情報（AIから保存されたプリセット用） */
+export interface AISourceInfo {
+  originalItemName: string;
+  originalSuggestion: {
+    expirationDays: number;
+    storageMethod: StorageMethod;
+    servingMethods: ServingMethod[];
+    notes?: string;
+  };
+  savedAt: string; // ISO8601
+}
+
+/**
+ * ケア指示プリセット（Firestore: care_presets/{presetId}）
+ * 家族が作成した「いつもの指示」パターン
+ * @see docs/PRESET_MANAGEMENT_SPEC.md
+ */
+export interface CarePreset {
+  // 識別情報
+  id: string;
+  residentId: string;
+
+  // 基本情報
+  name: string;
+  category: PresetCategory;
+  icon?: string;
+
+  // 指示内容
+  instruction: {
+    content: string;
+    servingMethod?: ServingMethod;
+    servingDetail?: string;
+  };
+
+  // マッチング設定
+  matchConfig: {
+    keywords: string[];
+    categories?: ItemCategory[];
+    exactMatch?: boolean;
+  };
+
+  // 出所追跡
+  source: PresetSource;
+  aiSourceInfo?: AISourceInfo;
+
+  // ステータス・統計
+  isActive: boolean;
+  usageCount: number;
+  lastUsedAt?: string;
+
+  // メタ情報
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  createdBy: string;
+}
+
+/** プリセット作成入力 */
+export interface CarePresetInput {
+  name: string;
+  category: PresetCategory;
+  icon?: string;
+  instruction: {
+    content: string;
+    servingMethod?: ServingMethod;
+    servingDetail?: string;
+  };
+  matchConfig: {
+    keywords: string[];
+    categories?: ItemCategory[];
+    exactMatch?: boolean;
+  };
+}
+
+// === プリセット管理 APIリクエスト/レスポンス型 ===
+
+/** プリセット一覧取得リクエスト */
+export interface GetPresetsRequest {
+  residentId: string;
+  category?: PresetCategory;
+  source?: PresetSource;
+  activeOnly?: boolean;
+}
+
+/** プリセット一覧取得レスポンス */
+export interface GetPresetsResponse {
+  presets: CarePreset[];
+}
+
+/** プリセット作成リクエスト */
+export interface CreatePresetRequest {
+  residentId: string;
+  userId: string;
+  preset: CarePresetInput;
+  source?: PresetSource;
+}
+
+/** プリセット作成レスポンス */
+export interface CreatePresetResponse {
+  presetId: string;
+  createdAt: string;
+}
+
+/** プリセット更新リクエスト */
+export interface UpdatePresetRequest {
+  presetId: string;
+  updates: Partial<CarePresetInput> & { isActive?: boolean };
+}
+
+/** プリセット更新レスポンス */
+export interface UpdatePresetResponse {
+  presetId: string;
+  updatedAt: string;
+}
+
+/** プリセット削除リクエスト */
+export interface DeletePresetRequest {
+  presetId: string;
+}
+
+// =============================================================================
+// AI自動ストック Types (Phase 8.7)
+// docs/AI_INTEGRATION_SPEC.md セクション10 に基づく型定義
+// =============================================================================
+
+/** AI提案をプリセットとして保存リクエスト */
+export interface SaveAISuggestionAsPresetRequest {
+  residentId: string;
+  userId: string;
+  itemName: string;
+  presetName: string;
+  category: PresetCategory;
+  icon?: string;
+  aiSuggestion: AISuggestResponse;
+  keywords?: string[];
+  itemCategories?: ItemCategory[];
+}
+
+/** AI提案をプリセットとして保存レスポンス */
+export interface SaveAISuggestionAsPresetResponse {
+  presetId: string;
+  createdAt: string;
+}
