@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月16日 (Phase 8.5 プリセット統合機能実装 完了)
+> **最終更新**: 2025年12月16日 (Phase 8.6/8.7 設計完了、プリセットデータ修正完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -286,6 +286,7 @@ curl -X POST "https://asia-northeast1-facility-care-input-form.cloudfunctions.ne
 | [TASK_MANAGEMENT_SPEC.md](./TASK_MANAGEMENT_SPEC.md) | タスク管理機能詳細設計 |
 | [STATS_DASHBOARD_SPEC.md](./STATS_DASHBOARD_SPEC.md) | 統計ダッシュボード設計 |
 | [AI_INTEGRATION_SPEC.md](./AI_INTEGRATION_SPEC.md) | Gemini 2.5 Flash AI連携設計 |
+| [PRESET_MANAGEMENT_SPEC.md](./PRESET_MANAGEMENT_SPEC.md) | プリセット管理機能詳細設計 |
 
 **3つのユーザータイプ**:
 | ロール | アクセス方法 | 主な機能 |
@@ -301,7 +302,10 @@ curl -X POST "https://asia-northeast1-facility-care-input-form.cloudfunctions.ne
 | Phase 8.2 | タスク管理（自動生成 + スケジューラ） | 高 |
 | Phase 8.3 | 統計ダッシュボード（SVGグラフ + 共有ビュー） | 中 |
 | Phase 8.4 | Gemini AI連携（入力補助 + 分析） | 中 |
-| Phase 8.5 | Push通知（FCM + リマインダー） | 低 |
+| Phase 8.5 | プリセット統合（AI提案+いつもの指示） | 中 |
+| Phase 8.6 | プリセット管理基盤（CRUD + UI） | 中 |
+| Phase 8.7 | AI自動ストック連携 | 中 |
+| Phase 8.8 | Push通知（FCM + リマインダー） | 低 |
 
 ---
 
@@ -889,6 +893,29 @@ POST /aiSuggest {"itemName": "プリン", "category": "snack"}
 
 ### 次のタスク
 
+#### Phase 8.6: プリセット管理基盤
+
+**設計書**: [PRESET_MANAGEMENT_SPEC.md](./PRESET_MANAGEMENT_SPEC.md)
+
+| ステップ | 内容 | 状態 |
+|----------|------|------|
+| 1 | CarePreset型定義拡張（source追跡フィールド追加） | 未着手 |
+| 2 | 初期プリセットデータ修正（参考資料反映）- demoFamilyData.ts | ✅ 完了 |
+| 3 | プリセットCRUD API（createPreset, updatePreset, deletePreset） | 未着手 |
+| 4 | プリセット管理画面（/family/presets） | 未着手 |
+| 5 | getPresetSuggestions出所情報追加 | 未着手 |
+
+#### Phase 8.7: AI自動ストック連携
+
+**設計書**: [AI_INTEGRATION_SPEC.md](./AI_INTEGRATION_SPEC.md) (セクション10)
+
+| ステップ | 内容 | 状態 |
+|----------|------|------|
+| 1 | saveAISuggestionAsPreset API実装 | 未着手 |
+| 2 | SaveAISuggestionDialogコンポーネント作成 | 未着手 |
+| 3 | ItemFormに保存ダイアログ統合 | 未着手 |
+| 4 | 出所バッジ表示（🤖 AI提案 / 📌 手動） | 未着手 |
+
 #### Phase 8.4拡張: AI機能追加
 
 | ステップ | 内容 | 状態 |
@@ -1276,6 +1303,8 @@ Phase 8.2.1: タスク自動生成           ███████████�
 Phase 8.3: 統計ダッシュボード         ████████████████░░░░  80% (基本実装完了)
 Phase 8.4: Gemini AI連携             ██████████████████░░  90% (AI提案UI統合完了)
 Phase 8.5: プリセット統合             ████████████████████ 100% (完了)
+Phase 8.6: プリセット管理基盤         ██░░░░░░░░░░░░░░░░░░  10% (設計完了、実装待ち)
+Phase 8.7: AI自動ストック             ██░░░░░░░░░░░░░░░░░░  10% (設計完了、実装待ち)
 ```
 
 詳細: [docs/ROADMAP.md](./ROADMAP.md)

@@ -76,6 +76,7 @@ gh run list --repo yasushihonda-acg/facility-care-input-form --workflow=gh-pages
 | `docs/TASK_MANAGEMENT_SPEC.md` | タスク管理機能設計（Phase 8.0） |
 | `docs/STATS_DASHBOARD_SPEC.md` | 統計ダッシュボード設計（Phase 8.0） |
 | `docs/AI_INTEGRATION_SPEC.md` | Gemini AI連携設計（Phase 8.0） |
+| `docs/PRESET_MANAGEMENT_SPEC.md` | プリセット管理機能設計（Phase 8.6/8.7） |
 | `docs/ADMIN_TEST_FEATURE_SPEC.md` | 管理設定テスト機能（Phase 5.8） |
 | `docs/MEAL_INPUT_FORM_SPEC.md` | 食事入力フォーム設計 |
 | `docs/GOOGLE_CHAT_WEBHOOK_SPEC.md` | Google Chat Webhook連携 |

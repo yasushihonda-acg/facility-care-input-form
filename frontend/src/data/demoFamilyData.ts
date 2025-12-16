@@ -2,6 +2,7 @@
  * デモ用モックデータ
  * 蒲池様のFAX内容に基づく初期データ
  * @see docs/FAMILY_UX_DESIGN.md
+ * @see docs/PRESET_MANAGEMENT_SPEC.md (プリセットデータ定義)
  */
 
 import type {
@@ -33,36 +34,61 @@ export const DEMO_FAMILY_USER: FamilyUser = {
 
 // ============================================
 // プリセット設定（蒲池様FAX内容に基づく）
+// @see docs/PRESET_MANAGEMENT_SPEC.md - セクション4.1「蒲池様プリセット」
 // ============================================
 
 export const DEMO_PRESETS: CarePreset[] = [
+  // カット・加工系
   {
     id: 'preset-kiwi',
-    name: 'キウイ8等分',
+    name: 'キウイ（8等分・半月切り）',
     processingDetail:
-      '輪切り4等分をさらに半分に切ってください。\n皮は必ず剥いてください。\n種が多い部分は避けてください。',
+      '輪切り4等分をさらに半分（半月）に切ってください。\n皮は必ず剥いてください。\n種が多い部分は避けてください。',
     icon: '🥝',
   },
   {
-    id: 'preset-rakkyo',
-    name: 'らっきょう冷',
-    processingDetail:
-      'らっきょうは冷たいまま提供してください。\n常温で放置しないでください。\n提供直前まで冷蔵庫で保管をお願いします。',
-    icon: '🧅',
-  },
-  {
     id: 'preset-persimmon',
-    name: '柿は皮むき',
+    name: '熟した柿（柔らかい部分も捨てずに）',
     processingDetail:
-      '柿は必ず皮をむいてから提供してください。\n薄切り（5mm程度）にしてください。\n種がある場合は必ず取り除いてください。',
+      '熟して柔らかくなった部分も捨てずに提供してください。\nご本人の好物です。\n皮をむいて食べやすい大きさにカット。',
     icon: '🍑',
   },
   {
-    id: 'preset-tomato',
-    name: 'トマト月水金禁止',
+    id: 'preset-kuromame',
+    name: '黒豆（煮汁を切って器へ）',
     processingDetail:
-      '月曜・水曜・金曜はトマトの提供を禁止してください。\nリハビリ後は消化に負担がかかるためです。\n他の曜日は少量であれば可能です。',
-    icon: '🍅',
+      '煮汁をしっかり切ってから器に盛り付けてください。\n汁気が多いとこぼれやすいため。',
+    icon: '⚫',
+  },
+  // 提供方法系
+  {
+    id: 'preset-rakkyo',
+    name: 'らっきょう（冷・小皿で提供）',
+    processingDetail:
+      'らっきょうは冷たいまま小皿で提供してください。\n常温で放置しないでください。\n提供直前まで冷蔵庫で保管をお願いします。',
+    icon: '🧅',
+  },
+  {
+    id: 'preset-mikan',
+    name: 'みかん（未剥離残食は→おやつへ再提供）',
+    processingDetail:
+      '皮を剥かずに残した場合は、おやつの時間に再度提供してください。\n剥いた状態で残した場合は廃棄。',
+    icon: '🍊',
+  },
+  // 禁止・制限系
+  {
+    id: 'preset-shichifuku-ban',
+    name: '七福のお菓子は出さない',
+    processingDetail:
+      '七福（しちふく）のお菓子は提供禁止です。\nご家族からの指定により。',
+    icon: '🈲',
+  },
+  {
+    id: 'preset-kurozato-cheese',
+    name: '黒砂糖・チーズは指定日以外禁止',
+    processingDetail:
+      '黒砂糖・チーズはご家族が指定した日のみ提供可能です。\n指定日以外は絶対に提供しないでください。\n不明な場合はご家族に確認を。',
+    icon: '⚠️',
   },
 ];
 
@@ -91,7 +117,7 @@ export const DEMO_CARE_INSTRUCTIONS: CareInstruction[] = [
     mealTime: 'lunch',
     menuName: 'キウイ',
     processingDetail:
-      '輪切り4等分をさらに半分に切ってください。\n皮は必ず剥いてください。\n種が多い部分は避けてください。',
+      '輪切り4等分をさらに半分（半月）に切ってください。\n皮は必ず剥いてください。\n種が多い部分は避けてください。',
     conditions: [{ trigger: 'leftover', action: 'reserve_snack' }],
     priority: 'critical',
     status: 'completed',
@@ -107,22 +133,22 @@ export const DEMO_CARE_INSTRUCTIONS: CareInstruction[] = [
     mealTime: 'dinner',
     menuName: 'らっきょう',
     processingDetail:
-      'らっきょうは冷たいまま提供してください。\n常温で放置しないでください。\n提供直前まで冷蔵庫で保管をお願いします。',
+      'らっきょうは冷たいまま小皿で提供してください。\n常温で放置しないでください。\n提供直前まで冷蔵庫で保管をお願いします。',
     priority: 'normal',
     status: 'acknowledged',
     createdAt: `${formatDate(yesterday)}T18:00:00`,
     updatedAt: `${formatDate(today)}T08:00:00`,
   },
-  // 明日の昼食 - 柿指示（未確認）
+  // 明日の昼食 - 熟した柿指示（未確認）
   {
     id: 'demo-003',
     userId: 'family-kamachi',
     residentId: 'resident-kinue',
     targetDate: formatDate(tomorrow),
     mealTime: 'lunch',
-    menuName: '柿',
+    menuName: '熟した柿',
     processingDetail:
-      '柿は必ず皮をむいてから提供してください。\n薄切り（5mm程度）にしてください。\n種がある場合は必ず取り除いてください。',
+      '熟して柔らかくなった部分も捨てずに提供してください。\nご本人の好物です。\n皮をむいて食べやすい大きさにカット。',
     conditions: [{ trigger: 'no_appetite', action: 'reduce_amount' }],
     priority: 'critical',
     status: 'pending',
@@ -159,7 +185,7 @@ export const DEMO_TIMELINE_ITEMS: TimelineItem[] = [
     staffName: '佐藤一郎',
     recordedAt: `${formatDate(today)}T12:30:00`,
     photoUrl: '/demo-images/kiwi-cut.jpg', // デモ用プレースホルダ
-    note: 'キウイ8等分カット、指示通り対応。美味しそうに召し上がりました。',
+    note: 'キウイ8等分・半月切り、指示通り対応。美味しそうに召し上がりました。',
     instruction: DEMO_CARE_INSTRUCTIONS[0],
   },
   // 間食 - 提供済み（重要フラグ）
@@ -193,7 +219,7 @@ export const DEMO_EVIDENCE_DATA: EvidenceData = {
   plan: {
     menuName: 'キウイ',
     processingDetail:
-      '輪切り4等分をさらに半分に切ってください。\n皮は必ず剥いてください。\n種が多い部分は避けてください。',
+      '輪切り4等分をさらに半分（半月）に切ってください。\n皮は必ず剥いてください。\n種が多い部分は避けてください。',
     priority: 'critical',
     conditions: [{ trigger: 'leftover', action: 'reserve_snack' }],
   },
@@ -205,7 +231,7 @@ export const DEMO_EVIDENCE_DATA: EvidenceData = {
     mealTime: 'lunch',
     mainDishAmount: '8',
     sideDishAmount: '7',
-    note: '指示通りに8等分カットして提供しました。美味しそうに召し上がりました。',
+    note: '指示通りに8等分・半月切りで提供しました。美味しそうに召し上がりました。',
     isImportant: false,
   },
 };

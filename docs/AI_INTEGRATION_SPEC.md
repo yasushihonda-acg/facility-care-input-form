@@ -1260,7 +1260,320 @@ AI提案とプリセットで矛盾がある場合の警告表示:
 
 ---
 
-## 10. 参照資料
+## 10. AI自動ストック化（Phase 8.7）
+
+### 10.1 概要
+
+AI提案を適用した際に、その設定を「いつもの指示（プリセット）」として保存する機能です。
+
+**詳細設計**: [PRESET_MANAGEMENT_SPEC.md](./PRESET_MANAGEMENT_SPEC.md)
+
+### 10.2 ユーザーフロー
+
+```
+1. 品物登録フォームで品物名入力（例: りんご）
+2. AI提案カードが表示される
+3. 「この提案を適用」をタップ
+4. 保存ダイアログが表示:
+
+   ┌──────────────────────────────────────────────┐
+   │ この設定を「いつもの指示」として保存しますか？ │
+   ├──────────────────────────────────────────────┤
+   │                                              │
+   │ 🍎 りんご                                     │
+   │ ───────────────────────────────────────────  │
+   │ 賞味期限: 7日                                 │
+   │ 保存方法: 冷蔵                                │
+   │ 提供方法: カット、皮むき                       │
+   │ 注意: 皮をむいて食べやすい大きさにカット       │
+   │                                              │
+   │ プリセット名                                  │
+   │ ┌──────────────────────────────────────────┐ │
+   │ │ りんご（カット・皮むき）                  │ │
+   │ └──────────────────────────────────────────┘ │
+   │                                              │
+   │ ┌──────────────┐  ┌──────────────┐          │
+   │ │  今回だけ    │  │ 保存して適用  │          │
+   │ └──────────────┘  └──────────────┘          │
+   └──────────────────────────────────────────────┘
+
+5. 「保存して適用」をタップ
+6. Firestore care_presets に保存（source: 'ai'）
+7. フォームに適用 + 完了トースト
+```
+
+### 10.3 API仕様
+
+#### AI提案をプリセットとして保存
+
+```
+POST /saveAISuggestionAsPreset
+```
+
+**リクエスト**:
+```typescript
+interface SaveAISuggestionAsPresetRequest {
+  residentId: string;
+  userId: string;
+
+  // プリセット基本情報
+  name: string;                // ユーザーが入力した名前
+  category: PresetCategory;
+  icon?: string;
+  keywords: string[];          // マッチングキーワード
+
+  // 元のAI提案情報
+  originalItemName: string;    // 品物名
+  originalSuggestion: {
+    expirationDays: number;
+    storageMethod: StorageMethod;
+    servingMethods: ServingMethod[];
+    notes?: string;
+  };
+
+  // カスタマイズした指示内容（オプション）
+  customInstruction?: {
+    content: string;
+    servingMethod?: ServingMethod;
+    servingDetail?: string;
+  };
+}
+```
+
+**レスポンス**:
+```typescript
+interface SaveAISuggestionAsPresetResponse {
+  success: boolean;
+  data?: {
+    presetId: string;
+    createdAt: string;
+  };
+  error?: string;
+}
+```
+
+### 10.4 保存されるプリセットデータ
+
+```typescript
+// Firestore care_presets/{presetId}
+{
+  id: "preset-ai-xxxxx",
+  residentId: "resident-001",
+  name: "りんご（カット・皮むき）",
+  category: "cut",
+  icon: "🍎",
+  instruction: {
+    content: "皮をむいて食べやすい大きさにカットしてください。",
+    servingMethod: "cut",
+    servingDetail: "5mm程度の薄切り"
+  },
+  matchConfig: {
+    keywords: ["りんご", "リンゴ", "apple"],
+    categories: ["fruit"]
+  },
+  source: "ai",                    // ← AI登録であることを示す
+  aiSourceInfo: {                   // ← 元のAI提案情報
+    originalItemName: "りんご",
+    originalSuggestion: {
+      expirationDays: 7,
+      storageMethod: "refrigerated",
+      servingMethods: ["cut", "peeled"],
+      notes: "皮をむいて食べやすい大きさにカットしてください。"
+    },
+    savedAt: "2025-12-16T10:30:00Z"
+  },
+  isActive: true,
+  usageCount: 0,
+  createdAt: "2025-12-16T10:30:00Z",
+  updatedAt: "2025-12-16T10:30:00Z",
+  createdBy: "family-001"
+}
+```
+
+### 10.5 フロントエンド実装
+
+#### SaveAISuggestionDialog コンポーネント
+
+```typescript
+// frontend/src/components/family/SaveAISuggestionDialog.tsx
+
+interface SaveAISuggestionDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (name: string) => void;
+  onApplyOnly: () => void;
+  itemName: string;
+  suggestion: AISuggestResponse;
+}
+
+function SaveAISuggestionDialog({
+  isOpen,
+  onClose,
+  onSave,
+  onApplyOnly,
+  itemName,
+  suggestion,
+}: SaveAISuggestionDialogProps) {
+  const [presetName, setPresetName] = useState(
+    `${itemName}（${SERVING_METHOD_LABELS[suggestion.servingMethods[0]] || 'カスタム'}）`
+  );
+  const [isSaving, setIsSaving] = useState(false);
+
+  if (!isOpen) return null;
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await onSave(presetName);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-xl w-[90%] max-w-md p-5 shadow-xl">
+        <h2 className="text-lg font-bold text-center mb-4">
+          この設定を「いつもの指示」として保存しますか？
+        </h2>
+
+        {/* AI提案サマリ */}
+        <div className="bg-purple-50 rounded-lg p-3 mb-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span>🤖</span>
+            <span className="font-medium">{itemName}</span>
+          </div>
+          <div className="text-sm text-gray-600 space-y-1">
+            <p>📅 賞味期限: {suggestion.expirationDays}日</p>
+            <p>🧊 保存方法: {STORAGE_METHOD_LABELS[suggestion.storageMethod]}</p>
+            <p>🍴 提供方法: {suggestion.servingMethods.map(m => SERVING_METHOD_LABELS[m]).join('、')}</p>
+            {suggestion.notes && <p>⚠️ 注意: {suggestion.notes}</p>}
+          </div>
+        </div>
+
+        {/* プリセット名入力 */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            プリセット名
+          </label>
+          <input
+            type="text"
+            value={presetName}
+            onChange={(e) => setPresetName(e.target.value)}
+            className="w-full px-3 py-2 border rounded-lg"
+            placeholder="例: りんご（カット・皮むき）"
+          />
+        </div>
+
+        {/* ボタン */}
+        <div className="flex gap-3">
+          <button
+            onClick={onApplyOnly}
+            className="flex-1 py-2.5 border border-gray-300 rounded-lg text-gray-700"
+          >
+            今回だけ
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={!presetName.trim() || isSaving}
+            className="flex-1 py-2.5 bg-primary text-white rounded-lg disabled:opacity-50"
+          >
+            {isSaving ? '保存中...' : '保存して適用'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+#### ItemForm.tsx 統合
+
+```typescript
+// AI提案適用時の処理を修正
+const handleApplySuggestion = useCallback((aiSuggestion: AISuggestResponse) => {
+  // 保存ダイアログを表示
+  setShowSaveDialog(true);
+  setPendingSuggestion(aiSuggestion);
+}, []);
+
+// 「保存して適用」
+const handleSaveAndApply = async (presetName: string) => {
+  if (!pendingSuggestion) return;
+
+  // プリセットとして保存
+  await saveAISuggestionAsPreset({
+    residentId: DEMO_RESIDENT_ID,
+    userId: DEMO_USER_ID,
+    name: presetName,
+    category: 'cut', // デフォルトまたはユーザー選択
+    keywords: [formData.itemName],
+    originalItemName: formData.itemName,
+    originalSuggestion: pendingSuggestion,
+  });
+
+  // フォームに適用
+  applyToForm(pendingSuggestion);
+
+  // ダイアログを閉じる
+  setShowSaveDialog(false);
+  setPendingSuggestion(null);
+};
+
+// 「今回だけ」
+const handleApplyOnly = () => {
+  if (pendingSuggestion) {
+    applyToForm(pendingSuggestion);
+  }
+  setShowSaveDialog(false);
+  setPendingSuggestion(null);
+};
+```
+
+### 10.6 出所バッジ表示
+
+プリセット一覧・プリセット候補で出所を明示的に表示:
+
+| 出所 | バッジ表示 | 背景色 |
+|------|-----------|--------|
+| 手動登録 | 📌 手動登録 | `bg-gray-100` |
+| AI提案から | 🤖 AI提案から保存（日時） | `bg-purple-100` |
+
+```typescript
+// PresetSuggestion.tsx の出所バッジ
+{suggestion.source === 'ai' ? (
+  <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
+    🤖 AI提案から保存
+  </span>
+) : (
+  <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
+    📌 手動登録
+  </span>
+)}
+```
+
+### 10.7 実装チェックリスト
+
+**バックエンド**:
+- [ ] `saveAISuggestionAsPreset.ts` 新規作成
+- [ ] `functions/src/index.ts` にエクスポート追加
+- [ ] `CarePreset` 型に `aiSourceInfo` フィールド追加
+
+**フロントエンド**:
+- [ ] `SaveAISuggestionDialog.tsx` 新規作成
+- [ ] `ItemForm.tsx` にダイアログ統合
+- [ ] `api/index.ts` に `saveAISuggestionAsPreset` 関数追加
+- [ ] `PresetSuggestion.tsx` に出所バッジ追加
+
+**テスト**:
+- [ ] AI提案→保存フローの動作確認
+- [ ] 保存したプリセットが候補に表示されることの確認
+- [ ] 出所バッジの表示確認
+- [ ] 「今回だけ」選択時に保存されないことの確認
+
+---
+
+## 11. 参照資料
 
 - [USER_ROLE_SPEC.md](./USER_ROLE_SPEC.md) - ユーザーロール・権限設計
 - [ITEM_MANAGEMENT_SPEC.md](./ITEM_MANAGEMENT_SPEC.md) - 品物管理詳細設計
