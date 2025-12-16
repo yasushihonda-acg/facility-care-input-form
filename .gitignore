@@ -25,3 +25,7 @@ firebase-debug.*.log
 *.swo
 .DS_Store
 *.log
+
+# Playwright test results
+test-results/
+playwright-report/
