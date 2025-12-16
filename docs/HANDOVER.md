@@ -34,6 +34,9 @@
 | 管理設定テスト | Webhook/Driveの事前テスト | ✅ 完了 |
 | 品物管理 | 家族からの差し入れ品物の登録・追跡 | ✅ 完了 |
 | タスク管理 | 賞味期限警告・リマインダー等のタスク管理 | ✅ 完了 |
+| 統計ダッシュボード | 品物状況・アラートの可視化 | ✅ 完了 |
+| AI提案 | Gemini APIによる賞味期限・提供方法の自動提案 | ✅ 完了 |
+| プリセット管理 | 「いつもの指示」のCRUD管理・AI自動ストック | ✅ 完了 |
 
 ---
 
@@ -95,15 +98,25 @@ facility-care-input-form/
 │   │   ├── pages/         # ページコンポーネント
 │   │   │   ├── HomePage.tsx          # 記録閲覧
 │   │   │   ├── MealInputPage.tsx     # 食事入力
+│   │   │   ├── shared/               # 共有ページ
+│   │   │   │   └── StatsDashboard.tsx # 統計ダッシュボード
 │   │   │   └── family/               # 家族向けページ
 │   │   │       ├── FamilyDashboard.tsx
 │   │   │       ├── EvidenceMonitor.tsx
 │   │   │       ├── RequestBuilder.tsx
 │   │   │       ├── ItemManagement.tsx  # 品物管理
-│   │   │       ├── ItemForm.tsx        # 品物登録
-│   │   │       └── TaskList.tsx        # タスク一覧
+│   │   │       ├── ItemForm.tsx        # 品物登録（AI提案統合）
+│   │   │       ├── TaskList.tsx        # タスク一覧
+│   │   │       └── PresetManagement.tsx # プリセット管理
 │   │   ├── components/    # UIコンポーネント
+│   │   │   └── family/
+│   │   │       ├── AISuggestion.tsx         # AI提案カード
+│   │   │       ├── PresetSuggestion.tsx     # プリセット候補
+│   │   │       └── SaveAISuggestionDialog.tsx # AI保存ダイアログ
 │   │   ├── hooks/         # カスタムフック
+│   │   │   ├── usePresets.ts   # プリセットCRUD
+│   │   │   ├── useStats.ts     # 統計データ
+│   │   │   └── useAISuggest.ts # AI提案
 │   │   ├── types/         # 型定義
 │   │   └── services/      # APIサービス
 │   └── package.json
@@ -111,6 +124,11 @@ facility-care-input-form/
 │   ├── src/
 │   │   ├── index.ts       # エントリポイント
 │   │   ├── functions/     # 各API関数
+│   │   │   ├── careItems.ts  # 品物CRUD
+│   │   │   ├── tasks.ts      # タスクCRUD
+│   │   │   ├── presets.ts    # プリセットCRUD + AI保存
+│   │   │   ├── getStats.ts   # 統計データ
+│   │   │   └── aiSuggest.ts  # AI提案
 │   │   └── services/      # サービス層
 │   └── package.json
 ├── docs/                  # ドキュメント
@@ -131,6 +149,8 @@ facility-care-input-form/
 | ⭐⭐ | `docs/ROADMAP.md` | Phase別ロードマップ |
 | ⭐⭐ | `docs/ARCHITECTURE.md` | システム全体設計 |
 | ⭐ | `docs/API_SPEC.md` | API仕様書 |
+| ⭐ | `docs/PRESET_MANAGEMENT_SPEC.md` | プリセット管理機能設計（Phase 8.6/8.7） |
+| ⭐ | `docs/AI_INTEGRATION_SPEC.md` | AI連携設計（Phase 8.4/8.5/8.7） |
 
 ---
 
@@ -148,6 +168,11 @@ facility-care-input-form/
 | Phase 8.1 | 品物管理基盤 | 2025-12-16 |
 | Phase 8.2 | タスク管理 | 2025-12-16 |
 | Phase 8.2.1 | タスク自動生成（Cloud Scheduler） | 2025-12-16 |
+| Phase 8.3 | 統計ダッシュボード | 2025-12-16 |
+| Phase 8.4 | AI提案UI統合 | 2025-12-16 |
+| Phase 8.5 | プリセット提案統合 | 2025-12-16 |
+| Phase 8.6 | プリセット管理CRUD | 2025-12-16 |
+| Phase 8.7 | AI自動ストック | 2025-12-16 |
 
 ### 4.2 計画中（次のタスク）
 
