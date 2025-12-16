@@ -96,8 +96,8 @@ test.describe('品物管理ページ', () => {
   test('品物一覧ページが表示される', async ({ page }) => {
     await page.goto('/family/items');
 
-    // ページヘッダーにタイトルがあることを確認
-    await expect(page.getByRole('heading', { name: /品物管理/ })).toBeVisible();
+    // ページヘッダーにタイトルがあることを確認（複数h1対策: first()）
+    await expect(page.getByRole('heading', { name: /品物管理/ }).first()).toBeVisible();
 
     // 新規登録ボタンが存在する
     const newButton = page.getByRole('link', { name: /新規登録/ });
@@ -132,8 +132,8 @@ test.describe('プリセット管理ページ', () => {
   test('プリセット管理ページにアクセスできる', async ({ page }) => {
     await page.goto('/family/presets');
 
-    // 「いつもの指示」というタイトルで表示される
-    await expect(page.getByRole('heading', { name: /いつもの指示/ })).toBeVisible();
+    // 「いつもの指示」というタイトルで表示される（複数h1対策: first()）
+    await expect(page.getByRole('heading', { name: /いつもの指示/ }).first()).toBeVisible();
   });
 });
 
@@ -150,8 +150,8 @@ test.describe('タスク一覧ページ', () => {
   test('タスク一覧ページにアクセスできる', async ({ page }) => {
     await page.goto('/family/tasks');
 
-    // 「タスク一覧」というタイトルで表示される
-    await expect(page.getByRole('heading', { name: /タスク/ })).toBeVisible();
+    // 「タスク一覧」というタイトルで表示される（複数h1対策: first()）
+    await expect(page.getByRole('heading', { name: /タスク/ }).first()).toBeVisible();
   });
 });
 
