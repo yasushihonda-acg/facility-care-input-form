@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月16日 (Phase 8.4 Gemini AI連携基盤 完了)
+> **最終更新**: 2025年12月16日 (フッター用語統一 完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -765,6 +765,35 @@ POST /aiSuggest {"itemName": "プリン", "category": "snack"}
    "servingMethods": ["as_is", "cut"],
    "notes": "喉に詰まらせないよう、ゆっくりと。必要に応じてスプーンで崩して提供してください。"}
 ```
+
+---
+
+### ✅ 完了: フッター用語統一（家族指示→家族連絡）
+
+**背景**: スタッフ用フッターのラベル「家族指示」は硬い印象があるため、「家族連絡」に変更
+
+**変更内容**:
+
+| 変更箇所 | Before | After |
+|----------|--------|-------|
+| フッターラベル | 家族指示 | 家族連絡 |
+| URLパス | `/staff/family-instructions` | `/staff/family-messages` |
+
+**変更ファイル**:
+- `frontend/src/components/FooterNav.tsx` - ラベル・パス変更
+- `docs/USER_ROLE_SPEC.md` - 用語統一
+- `docs/FOOTER_NAVIGATION_SPEC.md` - Phase 8 4タブ設計追記
+- `docs/HANDOVER.md` - 用語統一
+- `docs/CURRENT_STATUS.md` - 用語統一
+- `docs/TASK_MANAGEMENT_SPEC.md` - 用語統一
+- `docs/FAMILY_UX_DESIGN.md` - 用語統一
+- `docs/ROADMAP.md` - 用語統一
+- `docs/ITEM_MANAGEMENT_SPEC.md` - 用語統一
+- `gh-pages/index.html` - Mermaid図修正 + 用語統一
+
+**GitHub Pagesの修正**:
+- Mermaid 10.x対応（startOnLoad: false、mermaid.run()使用）
+- タブ切り替え時の遅延レンダリング実装
 
 ---
 
