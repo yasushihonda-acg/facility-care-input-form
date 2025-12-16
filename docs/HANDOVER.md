@@ -217,7 +217,7 @@ facility-care-input-form/
                                                       ↓
 [家族ビュー] → [useFamilyMealRecords] → [日付+食事時間フィルタ] → [表示]
                                                       ↑
-[家族指示(Plan)] → [モックデータ] (将来: Firestore care_instructions/)
+[家族連絡(Plan)] → [モックデータ] (将来: Firestore care_instructions/)
 ```
 
 ---

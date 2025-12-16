@@ -248,7 +248,7 @@ curl -X POST "https://asia-northeast1-facility-care-input-form.cloudfunctions.ne
 | ロール | アクセス方法 | 主な機能 |
 |--------|-------------|---------|
 | 管理者 | `?admin=true` | システム設定・マスタ管理 |
-| スタッフ | `?role=staff` (デフォルト) | 記録入力・家族指示の実行 |
+| スタッフ | `?role=staff` (デフォルト) | 記録入力・家族連絡の確認・対応 |
 | 家族 | `?role=family` | 品物送付登録・ケア指示・状況確認 |
 
 **次の実装Phase（Phase 8.1〜）**:
@@ -288,7 +288,7 @@ curl -X POST "https://asia-northeast1-facility-care-input-form.cloudfunctions.ne
                                                     ↓
 家族ビュー → useFamilyMealRecords → 日付+食事時間でフィルタ → 表示
                                                     ↑
-家族指示(Plan) → モックデータ (将来: Firestore care_instructions/)
+家族連絡(Plan) → モックデータ (将来: Firestore care_instructions/)
 ```
 
 **実装ファイル（新規）**:

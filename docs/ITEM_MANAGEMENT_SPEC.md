@@ -523,7 +523,7 @@ interface DeleteCareItemResponse {
 
 ### 4.3 品物詳細ページ（共通）
 
-**パス**: `/family/items/:id` または `/staff/family-instructions/:id`
+**パス**: `/family/items/:id` または `/staff/family-messages/:id`
 
 ```
 ┌─────────────────────────────────────────────┐
