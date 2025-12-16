@@ -13,7 +13,7 @@
 介護施設向けコミュニケーションアプリでは、以下の3種類のユーザーが異なる目的で利用します：
 
 - **管理者**: システム設定・マスタ管理
-- **スタッフ**: ケア記録の入力・家族指示の実行
+- **スタッフ**: ケア記録の入力・家族連絡の確認・対応
 - **家族**: 品物送付の登録・ケア指示・状況確認
 
 各ユーザーが「見るべき情報」「入力できる項目」を明確に分離することで、以下を実現します：
@@ -39,7 +39,7 @@
 | ロール | 識別方法 | 主な責務 | 想定ユーザー |
 |--------|---------|---------|-------------|
 | **管理者** | `?admin=true` | システム設定、マスタ管理、データ修正 | 施設管理者、システム管理者 |
-| **スタッフ** | `?role=staff` またはデフォルト | ケア記録入力、家族指示の実行・報告 | 介護スタッフ、看護師 |
+| **スタッフ** | `?role=staff` またはデフォルト | ケア記録入力、家族連絡の確認・対応 | 介護スタッフ、看護師 |
 | **家族** | `?role=family` | 品物送付登録、ケア指示作成、状況確認 | 入居者のご家族 |
 
 ### 2.2 アクセス方法
@@ -113,7 +113,7 @@ function useUserRole(): UserRoleInfo {
 
 **フッターナビゲーション（4タブ）**:
 ```
-[記録閲覧] [記録入力] [家族指示] [統計]
+[記録閲覧] [記録入力] [家族連絡] [統計]
 ```
 
 | パス | ページ名 | 説明 |
@@ -121,8 +121,8 @@ function useUserRole(): UserRoleInfo {
 | `/staff` または `/` | スタッフホーム | 記録一覧（既存ViewPage） |
 | `/staff/input/meal` | 食事記録入力 | 食事入力フォーム（既存MealInputPage） |
 | `/staff/input/care` | ケア実績入力 | 将来拡張用 |
-| `/staff/family-instructions` | 家族指示一覧 | 品物・ケア指示の一覧（読み取り専用） |
-| `/staff/family-instructions/:id` | 指示詳細 | 指示詳細・対応記録入力・完了報告 |
+| `/staff/family-messages` | 家族連絡一覧 | 品物・ケア指示の一覧（読み取り専用） |
+| `/staff/family-messages/:id` | 連絡詳細 | 連絡詳細・対応記録入力・完了報告 |
 | `/staff/stats` | 統計ダッシュボード | 摂食傾向・品物状況（家族と同じビュー） |
 
 ### 3.2 家族用ページ
@@ -392,7 +392,7 @@ function FooterNav() {
     <nav className="footer-nav">
       <NavLink to="/staff">記録閲覧</NavLink>
       <NavLink to="/staff/input/meal">記録入力</NavLink>
-      <NavLink to="/staff/family-instructions">家族指示</NavLink>
+      <NavLink to="/staff/family-messages">家族連絡</NavLink>
       <NavLink to="/staff/stats">統計</NavLink>
     </nav>
   );
