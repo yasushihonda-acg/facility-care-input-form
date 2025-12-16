@@ -64,6 +64,7 @@
                         <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm">Firebase</span>
                         <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">Cloud Functions</span>
                         <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm">Google Sheets API</span>
+                        <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm">Vertex AI (Gemini)</span>
                     </div>
                 </div>
             </div>
@@ -109,6 +110,31 @@
                     <p class="text-gray-600 text-sm">Webhook URLやDriveフォルダIDの設定を保存前にテスト。親切なエラーメッセージ付き。</p>
                     <span class="inline-block mt-3 bg-green-100 text-green-800 px-2 py-1 rounded text-xs">✅ 完了</span>
                 </div>
+                <!-- Phase 8 新機能 -->
+                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+                    <div class="text-3xl mb-3">📦</div>
+                    <h3 class="text-lg font-semibold mb-2">品物管理</h3>
+                    <p class="text-gray-600 text-sm">家族が送付した品物の登録・追跡。賞味期限・在庫管理、提供・摂食記録。</p>
+                    <span class="inline-block mt-3 bg-green-100 text-green-800 px-2 py-1 rounded text-xs">✅ Phase 8.1 完了</span>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+                    <div class="text-3xl mb-3">✅</div>
+                    <h3 class="text-lg font-semibold mb-2">タスク管理</h3>
+                    <p class="text-gray-600 text-sm">スタッフ向けタスク管理。賞味期限警告・提供リマインダーを毎日自動生成。</p>
+                    <span class="inline-block mt-3 bg-green-100 text-green-800 px-2 py-1 rounded text-xs">✅ Phase 8.2 完了</span>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+                    <div class="text-3xl mb-3">📊</div>
+                    <h3 class="text-lg font-semibold mb-2">統計ダッシュボード</h3>
+                    <p class="text-gray-600 text-sm">品物状況・アラートを可視化。スタッフ・家族共通ビューで認識のズレを防止。</p>
+                    <span class="inline-block mt-3 bg-green-100 text-green-800 px-2 py-1 rounded text-xs">✅ Phase 8.3 完了</span>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+                    <div class="text-3xl mb-3">🤖</div>
+                    <h3 class="text-lg font-semibold mb-2">Gemini AI連携</h3>
+                    <p class="text-gray-600 text-sm">品物名からAIが賞味期限・保存方法・提供方法を自動提案。高齢者向けの注意点も表示。</p>
+                    <span class="inline-block mt-3 bg-green-100 text-green-800 px-2 py-1 rounded text-xs">✅ Phase 8.4 完了</span>
+                </div>
             </div>
         </section>
 
@@ -123,6 +149,7 @@ flowchart TB
         SheetB["📊 Sheet B<br/>実績入力（書き込み）"]
         GDrive["📁 Google Drive<br/>写真保存"]
         GChat["💬 Google Chat<br/>Webhook通知"]
+        Gemini["🤖 Vertex AI<br/>Gemini 2.5 Flash"]
     end
 
     subgraph Backend["Cloud Functions"]
@@ -130,17 +157,26 @@ flowchart TB
         Get["getPlanData<br/>データ取得"]
         Submit["submitMealRecord<br/>記録入力"]
         Upload["uploadCareImage<br/>画像アップロード"]
+        CareItems["submitCareItem<br/>品物登録"]
+        Tasks["getTasks<br/>タスク取得"]
+        Stats["getStats<br/>統計取得"]
+        AISuggest["aiSuggest<br/>AI入力補助"]
+        TaskGen["generateDailyTasks<br/>毎日6時自動生成"]
     end
 
     subgraph Storage["Firestore"]
         PlanData["plan_data/<br/>同期データ"]
         Settings["settings/<br/>設定"]
+        CareItemsDB["care_items/<br/>品物データ"]
+        TasksDB["tasks/<br/>タスクデータ"]
     end
 
     subgraph Frontend["React PWA"]
         Home["🏠 記録閲覧"]
         Input["📝 食事入力"]
         Family["👨‍👩‍👧 家族ビュー"]
+        Items["📦 品物管理"]
+        Dashboard["📊 統計"]
     end
 
     SheetA -->|読み取り| Sync
@@ -155,6 +191,19 @@ flowchart TB
 
     Input -->|写真| Upload
     Upload -->|保存| GDrive
+
+    Items -->|登録| CareItems
+    CareItems -->|保存| CareItemsDB
+    CareItems -->|AI提案| AISuggest
+    AISuggest -->|問合せ| Gemini
+
+    TaskGen -->|読み取り| CareItemsDB
+    TaskGen -->|生成| TasksDB
+    Tasks -->|取得| TasksDB
+    Tasks -->|表示| Dashboard
+
+    Stats -->|集計| CareItemsDB
+    Stats -->|表示| Dashboard
 
     Settings -.->|設定読込| Submit
     Settings -.->|設定読込| Upload
@@ -206,6 +255,15 @@ flowchart TB
                     <div>
                         <div class="flex justify-between mb-1">
                             <span class="font-medium">Phase 7.0-7.1: 家族ビュー・予実管理</span>
+                            <span class="text-green-600">100%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3">
+                            <div class="bg-green-500 h-3 rounded-full" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="font-medium">Phase 8.0-8.4: 品物管理・タスク・統計・AI連携</span>
                             <span class="text-green-600">100%</span>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-3">
@@ -268,6 +326,31 @@ flowchart TB
                     <h3 class="font-semibold text-gray-800">📜 BUSINESS_RULES.md</h3>
                     <p class="text-sm text-gray-600">業務ルール・データ仕様</p>
                 </a>
+                <!-- Phase 8 ドキュメント -->
+                <a href="https://github.com/yasushihonda-acg/facility-care-input-form/blob/main/docs/ITEM_MANAGEMENT_SPEC.md"
+                   target="_blank"
+                   class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition border-l-4 border-teal-500">
+                    <h3 class="font-semibold text-gray-800">📦 ITEM_MANAGEMENT_SPEC.md</h3>
+                    <p class="text-sm text-gray-600">品物管理機能設計</p>
+                </a>
+                <a href="https://github.com/yasushihonda-acg/facility-care-input-form/blob/main/docs/TASK_MANAGEMENT_SPEC.md"
+                   target="_blank"
+                   class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition border-l-4 border-indigo-500">
+                    <h3 class="font-semibold text-gray-800">✅ TASK_MANAGEMENT_SPEC.md</h3>
+                    <p class="text-sm text-gray-600">タスク管理機能設計</p>
+                </a>
+                <a href="https://github.com/yasushihonda-acg/facility-care-input-form/blob/main/docs/STATS_DASHBOARD_SPEC.md"
+                   target="_blank"
+                   class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition border-l-4 border-cyan-500">
+                    <h3 class="font-semibold text-gray-800">📊 STATS_DASHBOARD_SPEC.md</h3>
+                    <p class="text-sm text-gray-600">統計ダッシュボード設計</p>
+                </a>
+                <a href="https://github.com/yasushihonda-acg/facility-care-input-form/blob/main/docs/AI_INTEGRATION_SPEC.md"
+                   target="_blank"
+                   class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition border-l-4 border-violet-500">
+                    <h3 class="font-semibold text-gray-800">🤖 AI_INTEGRATION_SPEC.md</h3>
+                    <p class="text-sm text-gray-600">Gemini AI連携設計</p>
+                </a>
             </div>
         </section>
     </main>
@@ -279,7 +362,7 @@ flowchart TB
                 © 2025 施設ケア入力フォーム プロジェクト
             </p>
             <p class="text-gray-500 text-sm mt-2">
-                最終更新: 2025年12月15日
+                最終更新: 2025年12月16日
             </p>
         </div>
     </footer>
