@@ -3,7 +3,7 @@
  * @see docs/STATS_DASHBOARD_SPEC.md
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getStats } from '../api';
 import type {
   GetStatsRequest,
@@ -46,27 +46,21 @@ function getTodayString(): string {
  * 統計データ取得フック
  *
  * 注意: include配列は参照が変わると無限ループが発生するため、
- * 内部でJSON.stringifyでキーを作成してメモ化している
+ * useRefで初回の値を固定している
  */
 export function useStats(options: UseStatsOptions = {}): UseStatsReturn {
   const { residentId, include, autoFetch = true } = options;
 
-  // include配列を安定した参照にするため、内容をキーにしてメモ化
-  const includeKey = useMemo(
-    () => JSON.stringify(include ?? DEFAULT_INCLUDE),
-    [include]
-  );
-  const stableInclude = useMemo<GetStatsRequest['include']>(
-    () => (include ?? DEFAULT_INCLUDE),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [includeKey]
-  );
+  // include配列をuseRefで初回の値に固定（参照の変化を無視）
+  const includeRef = useRef<GetStatsRequest['include']>(include ?? DEFAULT_INCLUDE);
 
   const [itemStats, setItemStats] = useState<ItemStatsData | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [period, setPeriod] = useState<{ start: string; end: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 初回フェッチ完了フラグ
+  const hasFetchedRef = useRef(false);
 
   const fetchStats = useCallback(async (params: Partial<GetStatsRequest> = {}) => {
     setIsLoading(true);
@@ -78,7 +72,7 @@ export function useStats(options: UseStatsOptions = {}): UseStatsReturn {
         residentId: params.residentId ?? residentId,
         startDate: params.startDate ?? today,
         endDate: params.endDate ?? today,
-        include: params.include ?? stableInclude,
+        include: params.include ?? includeRef.current,
       });
 
       if (response.success && response.data) {
@@ -95,19 +89,19 @@ export function useStats(options: UseStatsOptions = {}): UseStatsReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [residentId, stableInclude]);
+  }, [residentId]);
 
   const refetch = useCallback(async () => {
     await fetchStats();
   }, [fetchStats]);
 
-  // 初回自動取得
+  // 初回自動取得（1回だけ実行）
   useEffect(() => {
-    if (autoFetch) {
+    if (autoFetch && !hasFetchedRef.current) {
+      hasFetchedRef.current = true;
       fetchStats();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoFetch, residentId, includeKey]);
+  }, [autoFetch, fetchStats]);
 
   return {
     itemStats,
