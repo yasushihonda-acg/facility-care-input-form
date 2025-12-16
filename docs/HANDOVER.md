@@ -60,9 +60,13 @@ gh auth switch --user yasushihonda-acg
 gcloud config set account yasushi.honda@aozora-cg.com
 gcloud config set project facility-care-input-form
 
-# Firebase
-firebase use facility-care-input-form
+# Firebase（アカウント認証 + プロジェクト切替）
+firebase login:list                              # 現在のアカウント確認
+firebase login:use yasushi.honda@aozora-cg.com   # アカウント切替（未登録なら firebase login:add を先に実行）
+firebase use facility-care-input-form            # プロジェクト切替
 ```
+
+**注意**: Firebase CLIはGCPとは別の認証システムです。`gcloud config set account`してもFirebase CLIには反映されません。詳細は「8.3 Firebase CLI 認証エラー」を参照。
 
 ### 2.3 ローカル開発セットアップ
 
@@ -362,7 +366,43 @@ gcloud functions deploy <関数名> \
 
 **対象関数**: `testDriveAccess`, `uploadCareImage`, `submitMealRecord` など外部サービス連携する関数
 
-### 8.3 ログ確認
+### 8.3 Firebase CLI 認証エラー
+
+**問題**: `firebase deploy` で「Failed to get Firebase project」エラーが発生
+
+```
+Error: Failed to get Firebase project facility-care-input-form.
+Please make sure the project exists and your account has permission to access it.
+```
+
+**原因**: Firebase CLIが別のGoogleアカウントでログインしている
+
+**解決手順**:
+
+```bash
+# 1. 現在のログインアカウントを確認
+firebase login:list
+
+# 2. 正しいアカウント（yasushi.honda@aozora-cg.com）でログイン
+#    ブラウザが開くのでログインしてください
+firebase login:add
+
+# 3. アカウントを切り替え
+firebase login:use yasushi.honda@aozora-cg.com
+
+# 4. プロジェクト確認
+firebase use facility-care-input-form
+
+# 5. 動作確認
+firebase projects:list
+```
+
+**注意**:
+- Firebase CLIとGCP CLIは別の認証システム
+- GCPで`gcloud config set account`しても、Firebase CLIには反映されない
+- 複数アカウントを`login:add`で追加し、`login:use`で切り替え可能
+
+### 8.4 ログ確認
 
 ```bash
 # Cloud Functionsログ
@@ -445,6 +485,7 @@ docs/CURRENT_STATUS.md を読んで、次のタスクから再開してくださ
 
 | 日付 | 内容 |
 |------|------|
+| 2025-12-16 | Firebase CLI認証トラブルシューティング追加（8.3節）、認証手順整理 |
 | 2025-12-16 | フッター用語統一: 「家族指示」→「家族連絡」、パス変更、Mermaid修正 |
 | 2025-12-16 | Phase 8.2完了: タスク管理機能（一覧・フィルタ・完了処理） |
 | 2025-12-16 | Phase 8.1完了: 品物管理基盤（登録・一覧・更新・削除） |

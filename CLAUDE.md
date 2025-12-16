@@ -120,8 +120,26 @@ gh run list --repo yasushihonda-acg/facility-care-input-form --workflow=gh-pages
 - **認証切替**: `gcloud config set account yasushi.honda@aozora-cg.com`
 
 ### Firebase
+- **アカウント**: `yasushi.honda@aozora-cg.com`（GCPと同一）
 - **プロジェクト**: `facility-care-input-form`
-- **認証切替**: `firebase use facility-care-input-form`
+- **認証確認**: `firebase login:list`
+- **プロジェクト切替**: `firebase use facility-care-input-form`
+
+**注意**: Firebase CLIはGCPとは別の認証システムです。初回または別アカウントでログイン中の場合は、以下の手順でアカウントを設定してください：
+
+```bash
+# 1. 現在のログイン状態を確認
+firebase login:list
+
+# 2. 正しいアカウントでログイン（ブラウザが開きます）
+firebase login:add
+
+# 3. プロジェクト用アカウントに切替
+firebase login:use yasushi.honda@aozora-cg.com
+
+# 4. プロジェクト確認
+firebase use facility-care-input-form
+```
 
 ---
 
@@ -220,11 +238,17 @@ gcloud functions describe <関数名> --region=asia-northeast1 | grep serviceAcc
 
 ### 環境セットアップ
 ```bash
-# 全アカウント切替
+# GitHub
 gh auth switch --user yasushihonda-acg
+
+# GCP
 gcloud config set account yasushi.honda@aozora-cg.com
 gcloud config set project facility-care-input-form
-firebase use facility-care-input-form
+
+# Firebase（アカウント確認・切替）
+firebase login:list                              # 現在のアカウント確認
+firebase login:use yasushi.honda@aozora-cg.com   # アカウント切替（未登録なら firebase login:add を先に実行）
+firebase use facility-care-input-form            # プロジェクト切替
 ```
 
 ### 開発
