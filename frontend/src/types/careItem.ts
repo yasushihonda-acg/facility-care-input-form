@@ -614,3 +614,17 @@ export function getPresetCategoryIcon(category: PresetCategory): string {
 export function getPresetSourceInfo(source: PresetSource): { label: string; icon: string; color: string } {
   return PRESET_SOURCE_LABELS[source];
 }
+
+/**
+ * 保存方法のラベルを取得
+ */
+export function getStorageLabel(method: StorageMethod): string {
+  return STORAGE_METHOD_LABELS[method] ?? method;
+}
+
+/**
+ * 提供方法のラベルを取得
+ */
+export function getServingMethodLabel(method: ServingMethod): string {
+  return SERVING_METHOD_LABELS[method] ?? method;
+}

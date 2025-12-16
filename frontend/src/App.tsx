@@ -1,52 +1,91 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
-import { ViewPage } from './pages/ViewPage'
-import { SheetDetailPage } from './pages/SheetDetailPage'
-import { MealInputPage } from './pages/MealInputPage'
-import { FamilyDashboard } from './pages/family/FamilyDashboard'
-import { EvidenceMonitor } from './pages/family/EvidenceMonitor'
-import { RequestBuilder } from './pages/family/RequestBuilder'
-import { ItemManagement } from './pages/family/ItemManagement'
-import { ItemForm } from './pages/family/ItemForm'
-import { TaskList } from './pages/family/TaskList'
-import { PresetManagement } from './pages/family/PresetManagement'
-import { StatsDashboard } from './pages/shared/StatsDashboard'
+import { Routes, Route, Navigate } from 'react-router-dom';
+
+// 共有ビュー
+import { ViewPage } from './pages/ViewPage';
+import { StatsDashboard } from './pages/shared/StatsDashboard';
+import { ItemTimeline } from './pages/shared/ItemTimeline';
+
+// スタッフ専用
+import { StaffHome } from './pages/staff/StaffHome';
+import { MealInputPage } from './pages/MealInputPage';
+import { FamilyMessages } from './pages/staff/FamilyMessages';
+import { FamilyMessageDetail } from './pages/staff/FamilyMessageDetail';
+
+// 家族専用
+import { FamilyDashboard } from './pages/family/FamilyDashboard';
+import { EvidenceMonitor } from './pages/family/EvidenceMonitor';
+import { RequestBuilder } from './pages/family/RequestBuilder';
+import { ItemManagement } from './pages/family/ItemManagement';
+import { ItemForm } from './pages/family/ItemForm';
+import { ItemDetail } from './pages/family/ItemDetail';
+import { TaskList } from './pages/family/TaskList';
+import { PresetManagement } from './pages/family/PresetManagement';
+
+// レガシー
+import { SheetDetailPage } from './pages/SheetDetailPage';
 
 function App() {
   return (
     <Routes>
-      {/* メインルート: /view へリダイレクト */}
+      {/* デフォルト: /view へリダイレクト */}
       <Route path="/" element={<Navigate to="/view" replace />} />
 
-      {/* 閲覧ビュー */}
+      {/* ========== 共有ビュー ========== */}
+      {/* 記録閲覧（スタッフ・家族共通） */}
       <Route path="/view" element={<ViewPage />} />
 
-      {/* 入力ビュー（直接食事入力へ） */}
-      <Route path="/input/meal" element={<MealInputPage />} />
+      {/* 統計ダッシュボード */}
+      <Route path="/stats" element={<StatsDashboard />} />
 
-      {/* 家族ビュー */}
+      {/* 品物タイムライン（共有） */}
+      <Route path="/items/:id/timeline" element={<ItemTimeline />} />
+
+      {/* ========== スタッフ専用 ========== */}
+      {/* スタッフホーム */}
+      <Route path="/staff" element={<StaffHome />} />
+
+      {/* 食事記録入力 */}
+      <Route path="/staff/input/meal" element={<MealInputPage />} />
+
+      {/* 家族連絡一覧 */}
+      <Route path="/staff/family-messages" element={<FamilyMessages />} />
+
+      {/* 家族連絡詳細（消費記録入力） */}
+      <Route path="/staff/family-messages/:id" element={<FamilyMessageDetail />} />
+
+      {/* スタッフ用統計（共有ページへリダイレクト） */}
+      <Route path="/staff/stats" element={<Navigate to="/stats" replace />} />
+
+      {/* ========== 家族専用 ========== */}
+      {/* 家族ホーム */}
       <Route path="/family" element={<FamilyDashboard />} />
-      <Route path="/family/evidence/:date" element={<EvidenceMonitor />} />
+
+      {/* 品物管理 */}
+      <Route path="/family/items" element={<ItemManagement />} />
+      <Route path="/family/items/new" element={<ItemForm />} />
+      <Route path="/family/items/:id" element={<ItemDetail />} />
+
+      {/* ケア指示 */}
       <Route path="/family/request" element={<RequestBuilder />} />
       <Route path="/family/request/:id" element={<RequestBuilder />} />
 
-      {/* 品物管理（Phase 8.1） */}
-      <Route path="/family/items" element={<ItemManagement />} />
-      <Route path="/family/items/new" element={<ItemForm />} />
-
-      {/* タスク管理（Phase 8.2） */}
-      <Route path="/family/tasks" element={<TaskList />} />
-
-      {/* プリセット管理（Phase 8.6） */}
+      {/* プリセット管理 */}
       <Route path="/family/presets" element={<PresetManagement />} />
 
-      {/* 統計ダッシュボード（Phase 8.3） */}
-      <Route path="/stats" element={<StatsDashboard />} />
-      <Route path="/family/stats" element={<StatsDashboard />} />
+      {/* タスク一覧 */}
+      <Route path="/family/tasks" element={<TaskList />} />
 
-      {/* シート詳細（レガシー） */}
+      {/* エビデンス確認 */}
+      <Route path="/family/evidence/:date" element={<EvidenceMonitor />} />
+
+      {/* 家族用統計（共有ページへリダイレクト） */}
+      <Route path="/family/stats" element={<Navigate to="/stats" replace />} />
+
+      {/* レガシーパス（後方互換） */}
+      <Route path="/input/meal" element={<Navigate to="/staff/input/meal" replace />} />
       <Route path="/sheet/:sheetName" element={<SheetDetailPage />} />
     </Routes>
-  )
+  );
 }
 
-export default App
+export default App;

@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月16日 (Phase 9.0 完了 - 在庫・消費追跡システム再設計)
+> **最終更新**: 2025年12月16日 (Phase 9.1 完了 - ルーティング・ページ実装)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -973,21 +973,51 @@ POST /aiSuggest {"itemName": "プリン", "category": "snack"}
 
 ---
 
-### 次のタスク
-
-#### Phase 9.1: ルーティング・ページ実装
+### ✅ 完了: Phase 9.1 ルーティング・ページ実装
 
 **設計書**: [VIEW_ARCHITECTURE_SPEC.md](./VIEW_ARCHITECTURE_SPEC.md)
 
 | ステップ | 内容 | 状態 |
 |----------|------|------|
-| 1 | App.tsx ルーティング修正（/staff/* パス追加） | 未着手 |
-| 2 | FooterNav.tsx 修正（家族用に記録閲覧タブ追加） | 未着手 |
-| 3 | StaffHome.tsx 新規作成（タスク・アラート表示） | 未着手 |
-| 4 | FamilyMessages.tsx 新規作成（家族連絡一覧） | 未着手 |
-| 5 | FamilyMessageDetail.tsx 新規作成（消費記録入力） | 未着手 |
-| 6 | ItemDetail.tsx 新規作成（品物詳細・タイムライン） | 未着手 |
-| 7 | ItemTimeline.tsx 新規作成（共有タイムラインビュー） | 未着手 |
+| 1 | App.tsx ルーティング修正（/staff/* パス追加） | ✅ 完了 |
+| 2 | FooterNav.tsx 修正（家族用に記録閲覧タブ追加） | ✅ 完了 |
+| 3 | StaffHome.tsx 新規作成（タスク・アラート表示） | ✅ 完了 |
+| 4 | FamilyMessages.tsx 新規作成（家族連絡一覧） | ✅ 完了 |
+| 5 | FamilyMessageDetail.tsx 新規作成（消費記録入力） | ✅ 完了 |
+| 6 | ItemDetail.tsx 新規作成（品物詳細・タイムライン） | ✅ 完了 |
+| 7 | ItemTimeline.tsx 新規作成（共有タイムラインビュー） | ✅ 完了 |
+| 8 | careItem.ts 型定義拡張（getStorageLabel, getServingMethodLabel追加） | ✅ 完了 |
+
+**実装ファイル（新規）**:
+- `frontend/src/pages/staff/StaffHome.tsx` - スタッフホーム（タスク・アラート表示）
+- `frontend/src/pages/staff/FamilyMessages.tsx` - 家族連絡一覧
+- `frontend/src/pages/staff/FamilyMessageDetail.tsx` - 家族連絡詳細・消費記録入力
+- `frontend/src/pages/shared/ItemTimeline.tsx` - 品物タイムライン（共有ビュー）
+- `frontend/src/pages/family/ItemDetail.tsx` - 品物詳細（家族用）
+
+**実装ファイル（修正）**:
+- `frontend/src/App.tsx` - /staff/* ルート追加、リダイレクト設定
+- `frontend/src/components/FooterNav.tsx` - 家族用フッターに「記録閲覧」タブ追加（ケア指示タブを置換）
+- `frontend/src/types/careItem.ts` - getStorageLabel, getServingMethodLabel関数追加
+
+**ルーティング修正内容**:
+| パス | ページ | 説明 |
+|------|--------|------|
+| `/staff` | StaffHome | スタッフホーム |
+| `/staff/input/meal` | MealInputPage | 食事記録入力 |
+| `/staff/family-messages` | FamilyMessages | 家族連絡一覧 |
+| `/staff/family-messages/:id` | FamilyMessageDetail | 家族連絡詳細 |
+| `/staff/stats` | → /stats へリダイレクト | 統計（共有） |
+| `/family/items/:id` | ItemDetail | 品物詳細（家族用） |
+| `/items/:id/timeline` | ItemTimeline | 品物タイムライン（共有） |
+
+**フッターナビ変更**:
+- 家族用フッター: [ホーム] [品物管理] [記録閲覧] [統計] （ケア指示→記録閲覧に変更）
+- スタッフ用フッター: [記録閲覧] [記録入力] [家族連絡] [統計]
+
+---
+
+### 次のタスク
 
 #### Phase 9.2: ConsumptionLog API・UI実装
 
