@@ -352,69 +352,69 @@
                 <div class="overflow-x-auto">
                     <div class="mermaid">
 flowchart TB
-    subgraph External["外部サービス"]
-        SheetA["📊 Sheet A<br/>記録の結果（読み取り）"]
-        SheetB["📊 Sheet B<br/>実績入力（書き込み）"]
-        GDrive["📁 Google Drive<br/>写真保存"]
-        GChat["💬 Google Chat<br/>Webhook通知"]
-        Gemini["🤖 Vertex AI<br/>Gemini 2.5 Flash"]
+    subgraph External[外部サービス]
+        SheetA[Sheet A - 記録の結果]
+        SheetB[Sheet B - 実績入力]
+        GDrive[Google Drive - 写真保存]
+        GChat[Google Chat - Webhook]
+        Gemini[Vertex AI - Gemini]
     end
 
-    subgraph Backend["Cloud Functions"]
-        Sync["syncPlanData<br/>15分毎同期"]
-        Get["getPlanData<br/>データ取得"]
-        Submit["submitMealRecord<br/>記録入力"]
-        Upload["uploadCareImage<br/>画像アップロード"]
-        CareItems["submitCareItem<br/>品物登録"]
-        Tasks["getTasks<br/>タスク取得"]
-        Stats["getStats<br/>統計取得"]
-        AISuggest["aiSuggest<br/>AI入力補助"]
-        TaskGen["generateDailyTasks<br/>毎日6時自動生成"]
+    subgraph Backend[Cloud Functions]
+        Sync[syncPlanData]
+        Get[getPlanData]
+        Submit[submitMealRecord]
+        Upload[uploadCareImage]
+        CareItems[submitCareItem]
+        Tasks[getTasks]
+        Stats[getStats]
+        AISuggest[aiSuggest]
+        TaskGen[generateDailyTasks]
     end
 
-    subgraph Storage["Firestore"]
-        PlanData["plan_data/<br/>同期データ"]
-        Settings["settings/<br/>設定"]
-        CareItemsDB["care_items/<br/>品物データ"]
-        TasksDB["tasks/<br/>タスクデータ"]
+    subgraph Storage[Firestore]
+        PlanData[plan_data]
+        Settings[settings]
+        CareItemsDB[care_items]
+        TasksDB[tasks]
     end
 
-    subgraph Frontend["React PWA"]
-        Home["🏠 記録閲覧"]
-        Input["📝 食事入力"]
-        Family["👨‍👩‍👧 家族ビュー"]
-        Items["📦 品物管理"]
-        Dashboard["📊 統計"]
+    subgraph Frontend[React PWA]
+        Home[記録閲覧]
+        Input[食事入力]
+        Family[家族ビュー]
+        Items[品物管理]
+        Dashboard[統計]
     end
 
-    SheetA -->|読み取り| Sync
-    Sync -->|保存| PlanData
-    PlanData -->|取得| Get
-    Get -->|表示| Home
-    Get -->|表示| Family
+    SheetA --> Sync
+    Sync --> PlanData
+    PlanData --> Get
+    Get --> Home
+    Get --> Family
 
-    Input -->|送信| Submit
-    Submit -->|書き込み| SheetB
-    Submit -->|通知| GChat
+    Input --> Submit
+    Submit --> SheetB
+    Submit --> GChat
 
-    Input -->|写真| Upload
-    Upload -->|保存| GDrive
+    Input --> Upload
+    Upload --> GDrive
 
-    Items -->|登録| CareItems
-    CareItems -->|保存| CareItemsDB
-    CareItems -->|AI提案| AISuggest
-    AISuggest -->|問合せ| Gemini
+    Items --> CareItems
+    CareItems --> CareItemsDB
+    CareItems --> AISuggest
+    AISuggest --> Gemini
 
-    TaskGen -->|読み取り| CareItemsDB
-    TaskGen -->|生成| TasksDB
-    Tasks -->|取得| TasksDB
-    Tasks -->|表示| Dashboard
+    TaskGen --> CareItemsDB
+    TaskGen --> TasksDB
+    Tasks --> TasksDB
+    Tasks --> Dashboard
 
-    Stats -->|集計| CareItemsDB
-    Stats -->|表示| Dashboard
+    Stats --> CareItemsDB
+    Stats --> Dashboard
 
-    Settings -.->|設定読込| Submit
-    Settings -.->|設定読込| Upload
+    Settings -.-> Submit
+    Settings -.-> Upload
                     </div>
                 </div>
                 <div class="mt-6 text-center">
