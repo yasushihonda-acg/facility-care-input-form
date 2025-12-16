@@ -3,6 +3,7 @@
  * @see docs/AI_INTEGRATION_SPEC.md (セクション8)
  */
 
+import { useState } from 'react';
 import type { AISuggestResponse, StorageMethod, ServingMethod } from '../../types/careItem';
 import { STORAGE_METHOD_LABELS, SERVING_METHOD_LABELS } from '../../types/careItem';
 
@@ -29,6 +30,10 @@ export function AISuggestion({
   warning,
   onApply,
 }: AISuggestionProps) {
+  // 適用状態管理
+  const [isApplied, setIsApplied] = useState(false);
+  const [isFadingOut, setIsFadingOut] = useState(false);
+
   // ローディング中
   if (isLoading) {
     return (
@@ -75,8 +80,26 @@ export function AISuggestion({
     return SERVING_METHOD_LABELS[method] || method;
   };
 
+  // 適用ボタンクリック処理
+  const handleApplyClick = () => {
+    // 1. コールバック実行（フォームに適用）
+    onApply(suggestion);
+
+    // 2. 適用状態に変更
+    setIsApplied(true);
+
+    // 3. 1.5秒後にフェードアウト開始
+    setTimeout(() => {
+      setIsFadingOut(true);
+    }, 1500);
+  };
+
   return (
-    <div className="mt-2 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg overflow-hidden">
+    <div
+      className={`mt-2 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg overflow-hidden transition-opacity duration-300 ${
+        isFadingOut ? 'opacity-0' : 'opacity-100'
+      }`}
+    >
       {/* ヘッダー */}
       <div className="px-3 py-2 bg-gradient-to-r from-purple-100 to-blue-100 border-b border-purple-200">
         <div className="flex items-center gap-2">
@@ -130,10 +153,34 @@ export function AISuggestion({
       <div className="px-3 pb-3">
         <button
           type="button"
-          onClick={() => onApply(suggestion)}
-          className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors"
+          onClick={handleApplyClick}
+          disabled={isApplied}
+          className={`w-full py-2 text-white text-sm font-medium rounded-lg transition-all duration-200 ${
+            isApplied
+              ? 'bg-green-500 cursor-default'
+              : 'bg-purple-600 hover:bg-purple-700 active:scale-95'
+          }`}
         >
-          この提案を適用
+          {isApplied ? (
+            <span className="flex items-center justify-center gap-1">
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              適用しました
+            </span>
+          ) : (
+            'この提案を適用'
+          )}
         </button>
       </div>
     </div>
