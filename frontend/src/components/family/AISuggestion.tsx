@@ -33,6 +33,12 @@ export function AISuggestion({
   // 適用状態管理
   const [isApplied, setIsApplied] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
+
+  // 完全に非表示になった場合はnullを返す（空白を残さない）
+  if (isHidden) {
+    return null;
+  }
 
   // ローディング中
   if (isLoading) {
@@ -91,6 +97,11 @@ export function AISuggestion({
     // 3. 1.5秒後にフェードアウト開始
     setTimeout(() => {
       setIsFadingOut(true);
+
+      // 4. フェードアウト完了後（300ms）にDOMを完全に削除
+      setTimeout(() => {
+        setIsHidden(true);
+      }, 300);
     }, 1500);
   };
 
