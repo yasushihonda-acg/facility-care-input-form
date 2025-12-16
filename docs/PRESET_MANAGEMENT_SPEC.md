@@ -592,21 +592,21 @@ functions/src/
 | ステップ | 内容 | 状態 |
 |----------|------|------|
 | 1 | 設計書作成（本ドキュメント） | ✅ 完了 |
-| 2 | 初期プリセットデータ修正（demoFamilyData.ts） | 未着手 |
-| 3 | プリセット型定義（frontend/backend） | 未着手 |
-| 4 | プリセットCRUD API（backend） | 未着手 |
-| 5 | プリセット管理画面（frontend） | 未着手 |
-| 6 | ルーティング追加（/family/presets） | 未着手 |
+| 2 | 初期プリセットデータ修正（demoFamilyData.ts） | ✅ 完了 |
+| 3 | プリセット型定義（frontend/backend） | ✅ 完了 |
+| 4 | プリセットCRUD API（backend） | ✅ 完了 |
+| 5 | プリセット管理画面（frontend） | ✅ 完了 |
+| 6 | ルーティング追加（/family/presets） | ✅ 完了 |
 
 ### Phase 8.7: AI自動ストック連携
 
 | ステップ | 内容 | 状態 |
 |----------|------|------|
-| 1 | saveAISuggestionAsPreset API | 未着手 |
-| 2 | SaveAISuggestionDialog コンポーネント | 未着手 |
-| 3 | ItemForm.tsx 統合 | 未着手 |
-| 4 | getPresetSuggestions 出所情報追加 | 未着手 |
-| 5 | PresetSuggestion.tsx 出所バッジ表示 | 未着手 |
+| 1 | saveAISuggestionAsPreset API | ✅ 完了 |
+| 2 | SaveAISuggestionDialog コンポーネント | ✅ 完了 |
+| 3 | ItemForm.tsx 統合 | ✅ 完了 |
+| 4 | getPresetSuggestions 出所情報追加 | ✅ 完了 |
+| 5 | PresetSuggestion.tsx 出所バッジ表示 | ✅ 完了 |
 
 ---
 
@@ -614,4 +614,5 @@ functions/src/
 
 | 日付 | 内容 |
 |------|------|
+| 2025-12-16 | Phase 8.6/8.7 実装完了を反映 |
 | 2025-12-16 | 初版作成（プリセット管理機能詳細設計） |
