@@ -47,6 +47,16 @@ test.describe('家族ページ基本動作', () => {
     await expect(page).toHaveURL(/\/family\/items/);
   });
 
+  test('ホームからタスク管理に遷移できる', async ({ page }) => {
+    await page.goto('/family');
+
+    // タスク管理リンクをクリック（フッターに無い機能なのでホームに表示）
+    await page.getByText('タスク管理').click();
+
+    // タスク一覧ページに遷移
+    await expect(page).toHaveURL('/family/tasks');
+  });
+
   test('日付セレクターが表示され機能する', async ({ page }) => {
     await page.goto('/family');
 

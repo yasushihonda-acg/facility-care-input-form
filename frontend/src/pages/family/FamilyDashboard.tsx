@@ -17,6 +17,10 @@ import {
   DEMO_CARE_INSTRUCTIONS,
 } from '../../data/demoFamilyData';
 import { useDailyMealRecords } from '../../hooks/useFamilyMealRecords';
+import { useTaskBadgeCount } from '../../hooks/useTasks';
+
+// デモ用の入居者ID（将来は認証から取得）
+const DEMO_RESIDENT_ID = 'resident-001';
 
 /** 食事タイミングの順序（表示順） */
 const MEAL_TIME_ORDER: MealTime[] = ['breakfast', 'lunch', 'snack', 'dinner'];
@@ -26,6 +30,9 @@ export function FamilyDashboard() {
 
   // 食事シートから当日の実績データを取得（予実管理）
   const { records: mealResults, isLoading } = useDailyMealRecords(selectedDate);
+
+  // タスクバッジカウント取得（フッターに無い機能なのでホームに表示）
+  const { count: taskCount, hasOverdue } = useTaskBadgeCount(DEMO_RESIDENT_ID);
 
   // 日付の前後移動
   const handlePrevDay = () => {
@@ -104,19 +111,35 @@ export function FamilyDashboard() {
       title="家族ホーム"
       subtitle={DEMO_RESIDENT.name + '様'}
       showBackButton={false}
-      rightElement={
-        <Link
-          to="/family/request"
-          className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition"
-          aria-label="ケア指示を作成"
-        >
-          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-        </Link>
-      }
     >
       <div className="pb-4">
+        {/* フッターに無い機能へのクイックアクセス（タスク管理のみ） */}
+        <Link
+          to="/family/tasks"
+          className={`block bg-white rounded-lg shadow-card p-3 mb-4 hover:shadow-md transition ${
+            hasOverdue ? 'ring-2 ring-red-300' : ''
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">📋</span>
+              <div>
+                <p className="font-medium text-gray-800">タスク管理</p>
+                <p className="text-xs text-gray-500">
+                  {taskCount > 0 ? `${taskCount}件の未完了タスク` : 'タスクはありません'}
+                </p>
+              </div>
+            </div>
+            {taskCount > 0 && (
+              <span className={`px-2 py-1 rounded-full text-xs font-bold text-white ${
+                hasOverdue ? 'bg-red-500' : 'bg-blue-500'
+              }`}>
+                {taskCount}
+              </span>
+            )}
+          </div>
+        </Link>
+
         {/* 日付セレクター */}
         <div className="bg-white rounded-lg shadow-card p-3 mb-4">
           <p className="text-center text-sm text-gray-500 mb-2">
