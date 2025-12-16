@@ -140,23 +140,7 @@ export function RequestBuilder() {
           </div>
         </div>
 
-        {/* メニュー名 */}
-        <div className="bg-white rounded-lg shadow-card p-4">
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-            <span>🥝</span>
-            <span>メニュー名</span>
-            <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            value={menuName}
-            onChange={(e) => setMenuName(e.target.value)}
-            placeholder="例: キウイ"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-          />
-        </div>
-
-        {/* プリセット */}
+        {/* プリセット（選択するとメニュー名と詳細指示が自動入力） */}
         <div className="bg-white rounded-lg shadow-card p-4">
           <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
             <span>⚡</span>
@@ -175,6 +159,25 @@ export function RequestBuilder() {
               </button>
             ))}
           </div>
+          <p className="text-xs text-gray-500 mt-2">
+            ※ プリセット選択時、メニュー名と詳細指示が自動入力されます
+          </p>
+        </div>
+
+        {/* メニュー名 */}
+        <div className="bg-white rounded-lg shadow-card p-4">
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+            <span>🥝</span>
+            <span>メニュー名</span>
+            <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            value={menuName}
+            onChange={(e) => setMenuName(e.target.value)}
+            placeholder="例: キウイ"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+          />
         </div>
 
         {/* 詳細指示 */}
