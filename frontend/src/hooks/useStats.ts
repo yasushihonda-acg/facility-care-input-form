@@ -3,7 +3,7 @@
  * @see docs/STATS_DASHBOARD_SPEC.md
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getStats } from '../api';
 import type {
   GetStatsRequest,
@@ -16,6 +16,9 @@ interface UseStatsOptions {
   include?: GetStatsRequest['include'];
   autoFetch?: boolean;
 }
+
+/** デフォルトのincludeオプション */
+const DEFAULT_INCLUDE: GetStatsRequest['include'] = ['items', 'alerts'];
 
 interface UseStatsReturn {
   // データ
@@ -41,9 +44,23 @@ function getTodayString(): string {
 
 /**
  * 統計データ取得フック
+ *
+ * 注意: include配列は参照が変わると無限ループが発生するため、
+ * 内部でJSON.stringifyでキーを作成してメモ化している
  */
 export function useStats(options: UseStatsOptions = {}): UseStatsReturn {
-  const { residentId, include = ['items', 'alerts'], autoFetch = true } = options;
+  const { residentId, include, autoFetch = true } = options;
+
+  // include配列を安定した参照にするため、内容をキーにしてメモ化
+  const includeKey = useMemo(
+    () => JSON.stringify(include ?? DEFAULT_INCLUDE),
+    [include]
+  );
+  const stableInclude = useMemo<GetStatsRequest['include']>(
+    () => (include ?? DEFAULT_INCLUDE),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [includeKey]
+  );
 
   const [itemStats, setItemStats] = useState<ItemStatsData | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -61,7 +78,7 @@ export function useStats(options: UseStatsOptions = {}): UseStatsReturn {
         residentId: params.residentId ?? residentId,
         startDate: params.startDate ?? today,
         endDate: params.endDate ?? today,
-        include: params.include ?? include,
+        include: params.include ?? stableInclude,
       });
 
       if (response.success && response.data) {
@@ -78,7 +95,7 @@ export function useStats(options: UseStatsOptions = {}): UseStatsReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [residentId, include]);
+  }, [residentId, stableInclude]);
 
   const refetch = useCallback(async () => {
     await fetchStats();
@@ -89,7 +106,8 @@ export function useStats(options: UseStatsOptions = {}): UseStatsReturn {
     if (autoFetch) {
       fetchStats();
     }
-  }, [autoFetch, fetchStats]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoFetch, residentId, includeKey]);
 
   return {
     itemStats,
