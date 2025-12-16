@@ -610,15 +610,17 @@ flowchart TB
     </footer>
 
     <script>
-        // Mermaid initialization
+        // Mermaid initialization - startOnLoad: false for tab control
         mermaid.initialize({
-            startOnLoad: true,
+            startOnLoad: false,
             theme: 'default',
             flowchart: {
                 useMaxWidth: true,
-                htmlLabels: true
+                htmlLabels: false
             }
         });
+
+        let mermaidRendered = false;
 
         // Tab switching
         function showTab(tabId) {
@@ -635,9 +637,14 @@ flowchart TB
             // Activate selected tab button
             event.currentTarget.classList.add('active');
 
-            // Re-render Mermaid if architecture tab is shown
-            if (tabId === 'architecture') {
-                mermaid.init(undefined, document.querySelectorAll('.mermaid'));
+            // Render Mermaid when architecture tab is shown (only once)
+            if (tabId === 'architecture' && !mermaidRendered) {
+                mermaidRendered = true;
+                setTimeout(() => {
+                    mermaid.run({
+                        nodes: document.querySelectorAll('.mermaid')
+                    });
+                }, 100);
             }
         }
     </script>
