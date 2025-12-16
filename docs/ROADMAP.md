@@ -1064,8 +1064,11 @@ Phase 8.4: AI提案UI統合        ███████████████
 Phase 8.5: プリセット提案統合   ████████████████████ 100% (完了)
 Phase 8.6: プリセット管理CRUD  ████████████████████ 100% (完了)
 Phase 8.7: AI自動ストック      ████████████████████ 100% (完了)
+Phase 9.0: ビュー構成設計      ████████████████████ 100% (完了)
+Phase 9.1: ルーティング・ページ ████████████████████ 100% (完了)
+Phase 9.2: 消費記録連携        ░░░░░░░░░░░░░░░░░░░░   0% (計画中)
                                ─────────────────────
-                               合計: 120+ tasks
+                               合計: 130+ tasks
 ```
 
 | Phase | タスク数 | 主な成果物 | 状態 |
@@ -1101,6 +1104,9 @@ Phase 8.7: AI自動ストック      ██████████████�
 | Phase 8.5 | 6 | プリセット提案統合（getPresetSuggestions） | ✅ 完了 |
 | Phase 8.6 | 6 | プリセット管理CRUD（presets.ts） | ✅ 完了 |
 | Phase 8.7 | 5 | AI自動ストック（saveAISuggestionAsPreset） | ✅ 完了 |
+| Phase 9.0 | 3 | ビュー構成設計（VIEW_ARCHITECTURE_SPEC.md） | ✅ 完了 |
+| Phase 9.1 | 8 | ルーティング・ページ実装（スタッフ/家族ビュー） | ✅ 完了 |
+| Phase 9.2 | - | 消費記録連携（ConsumptionLog API） | 📋 計画中 |
 
 ---
 
@@ -1547,6 +1553,97 @@ interface Task {
 - [x] ルーティング追加（`/family/tasks`）
 - [x] FamilyDashboardにタスクバッジ追加
 - [x] ビルド・デプロイ
+
+---
+
+## Phase 9.0: ビュー構成設計 ✅ 完了
+
+**目的**: スタッフ・家族間でデータが交差するビュー構成を設計し、両者が同じデータを異なる視点で閲覧・操作できる整合性のある設計を定義。
+
+> **詳細設計**: [VIEW_ARCHITECTURE_SPEC.md](./VIEW_ARCHITECTURE_SPEC.md) を参照
+
+### 9.0-1. 設計原則
+
+| 原則 | 説明 |
+|------|------|
+| データ交差 | 家族が登録した品物をスタッフが閲覧・操作し、その結果を家族が確認 |
+| 共有ビュー | 記録閲覧・統計など、同じデータを両者が見れるビュー |
+| 専用ビュー | 入力・操作系はロール専用（誤操作防止） |
+| リアルタイム同期 | 更新があれば即座に反映 |
+
+### 9.0-2. ビュー構成
+
+| パス | 名称 | ロール | 説明 |
+|------|------|--------|------|
+| `/view` | 記録閲覧 | 共有 | 食事記録・バイタル等の閲覧 |
+| `/stats` | 統計 | 共有 | 品物状況・アラートの可視化 |
+| `/items/:id/timeline` | タイムライン | 共有 | 品物の履歴（登録〜消費） |
+| `/staff/family-messages` | 家族連絡 | スタッフ | 家族からの品物・指示一覧 |
+| `/staff/family-messages/:id` | 消費記録 | スタッフ | 提供・摂食の記録入力 |
+| `/family/items` | 品物管理 | 家族 | 品物の登録・一覧・編集 |
+| `/family/items/:id` | 品物詳細 | 家族 | 品物の詳細・消費履歴 |
+
+### Phase 9.0 完了条件 ✅
+
+- [x] VIEW_ARCHITECTURE_SPEC.md 作成
+- [x] ビュー構成図・データ交差フロー定義
+- [x] ルーティング設計
+- [x] データ層3階層モデル定義（FoodMaster→CareItem→ConsumptionLog）
+
+---
+
+## Phase 9.1: ルーティング・ページ実装 ✅ 完了
+
+**目的**: Phase 9.0で設計したビュー構成を実装し、スタッフ・家族それぞれのビューを構築。
+
+### 9.1-1. 実装ファイル
+
+| ファイル | 説明 |
+|----------|------|
+| `App.tsx` | /staff/* ルート追加、リダイレクト設定 |
+| `FooterNav.tsx` | 家族用フッターに「記録閲覧」タブ追加 |
+| `pages/staff/StaffHome.tsx` | スタッフホーム（タスク・アラート表示） |
+| `pages/staff/FamilyMessages.tsx` | 家族連絡一覧 |
+| `pages/staff/FamilyMessageDetail.tsx` | 家族連絡詳細・消費記録入力 |
+| `pages/shared/ItemTimeline.tsx` | 品物タイムライン（共有ビュー） |
+| `pages/family/ItemDetail.tsx` | 品物詳細（家族用） |
+| `types/careItem.ts` | getStorageLabel, getServingMethodLabel関数追加 |
+
+### 9.1-2. バグ修正
+
+| 問題 | 原因 | 修正 |
+|------|------|------|
+| 統計ビュー無限ループ | useStatsフックでinclude配列が毎回新参照 | useRefで初回値固定 + hasFetchedRefフラグ |
+
+### Phase 9.1 完了条件 ✅
+
+- [x] App.tsx ルーティング修正
+- [x] FooterNav.tsx 修正（家族用タブ変更）
+- [x] StaffHome.tsx 新規作成
+- [x] FamilyMessages.tsx 新規作成
+- [x] FamilyMessageDetail.tsx 新規作成
+- [x] ItemTimeline.tsx 新規作成
+- [x] ItemDetail.tsx 新規作成
+- [x] careItem.ts 型定義拡張
+- [x] useStats無限ループ修正
+- [x] ビルド・デプロイ
+
+---
+
+## Phase 9.2: 消費記録連携 📋 計画中
+
+**目的**: ConsumptionLog APIを実装し、FamilyMessageDetailからの消費記録をFirestoreに保存、タイムラインに表示。
+
+> **詳細設計**: [INVENTORY_CONSUMPTION_SPEC.md](./INVENTORY_CONSUMPTION_SPEC.md) を参照
+
+### 9.2-1. 実装予定
+
+| 項目 | 説明 |
+|------|------|
+| ConsumptionLog API | 消費記録CRUD（createConsumptionLog, getConsumptionLogs） |
+| CareItem更新連携 | 消費記録作成時にremainingQuantity自動更新 |
+| タイムライン表示 | ItemTimeline.tsxで実データ表示（現在はモック） |
+| 摂食率計算 | 統計ダッシュボードに摂食傾向グラフ追加 |
 
 ---
 
