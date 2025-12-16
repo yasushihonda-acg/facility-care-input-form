@@ -1,8 +1,12 @@
 # ユーザーロール・権限設計書
 
-> **最終更新**: 2025年12月16日
+> **最終更新**: 2025年12月16日（Phase 9.0 再設計版）
 >
 > 本ドキュメントは、アプリケーションの3つのユーザーロール（管理者/スタッフ/家族）の権限設計とページ構成を定義します。
+>
+> **関連ドキュメント**:
+> - [VIEW_ARCHITECTURE_SPEC.md](./VIEW_ARCHITECTURE_SPEC.md) - ビュー構成詳細設計
+> - [INVENTORY_CONSUMPTION_SPEC.md](./INVENTORY_CONSUMPTION_SPEC.md) - 在庫・消費追跡システム
 
 ---
 
@@ -109,6 +113,16 @@ function useUserRole(): UserRoleInfo {
 
 ## 3. ページ構成
 
+> **詳細設計**: [VIEW_ARCHITECTURE_SPEC.md](./VIEW_ARCHITECTURE_SPEC.md)
+
+### 3.0 共有ビュー（全ロールアクセス可能）
+
+| パス | ページ名 | 説明 |
+|------|---------|------|
+| `/view` | 記録閲覧 | 食事・バイタル記録の閲覧（スタッフ・家族共通） |
+| `/stats` | 統計ダッシュボード | 在庫状況・摂食傾向・アラート |
+| `/items/:id/timeline` | 品物タイムライン | 1つの品物の登録〜消費履歴 |
+
 ### 3.1 スタッフ用ページ
 
 **フッターナビゲーション（4タブ）**:
@@ -118,29 +132,34 @@ function useUserRole(): UserRoleInfo {
 
 | パス | ページ名 | 説明 |
 |------|---------|------|
-| `/staff` または `/` | スタッフホーム | 記録一覧（既存ViewPage） |
-| `/staff/input/meal` | 食事記録入力 | 食事入力フォーム（既存MealInputPage） |
-| `/staff/input/care` | ケア実績入力 | 将来拡張用 |
-| `/staff/family-messages` | 家族連絡一覧 | 品物・ケア指示の一覧（読み取り専用） |
-| `/staff/family-messages/:id` | 連絡詳細 | 連絡詳細・対応記録入力・完了報告 |
-| `/staff/stats` | 統計ダッシュボード | 摂食傾向・品物状況（家族と同じビュー） |
+| `/staff` | スタッフホーム | 今日のタスク・アラート・新着連絡 |
+| `/staff/input/meal` | 食事記録入力 | 食事入力フォーム |
+| `/staff/family-messages` | 家族連絡一覧 | 家族からの品物・ケア指示の一覧 |
+| `/staff/family-messages/:id` | 連絡詳細 | 品物詳細・消費記録入力・申し送り |
+| `/staff/stats` | 統計 | → `/stats` へリダイレクト |
+
+**データ交差**: スタッフが `/staff/family-messages/:id` で記録した消費ログは、家族が `/family/items/:id` で確認できる。
 
 ### 3.2 家族用ページ
 
 **フッターナビゲーション（4タブ）**:
 ```
-[ホーム] [品物管理] [ケア指示] [統計]
+[ホーム] [品物管理] [記録閲覧] [統計]
 ```
 
 | パス | ページ名 | 説明 |
 |------|---------|------|
-| `/family` | 家族ホーム | タイムライン + タスクバッジ（既存FamilyDashboard） |
+| `/family` | 家族ホーム | 今日のタイムライン・送った品物の状況 |
 | `/family/items` | 品物一覧 | 送付した品物の一覧・在庫状況 |
 | `/family/items/new` | 品物登録 | 新規品物登録フォーム |
-| `/family/items/:id` | 品物詳細 | 提供状況・摂食結果の確認 |
-| `/family/request` | ケア指示作成 | ケア仕様ビルダー（既存RequestBuilder） |
-| `/family/stats` | 統計ダッシュボード | 摂食傾向・品物状況 |
-| `/family/evidence/:date` | エビデンス確認 | Plan vs Result（既存EvidenceMonitor） |
+| `/family/items/:id` | 品物詳細 | 消費タイムライン・スタッフからの申し送り |
+| `/family/request` | ケア指示作成 | ケア仕様ビルダー |
+| `/family/presets` | プリセット管理 | いつもの指示を管理 |
+| `/family/tasks` | タスク一覧 | タスク状況確認 |
+| `/family/evidence/:date` | エビデンス確認 | Plan vs Result |
+| `/family/stats` | 統計 | → `/stats` へリダイレクト |
+
+**データ交差**: 家族が `/family/items/new` で登録した品物は、スタッフが `/staff/family-messages` で確認・対応できる。
 
 ### 3.3 管理者専用機能
 
@@ -154,10 +173,13 @@ function useUserRole(): UserRoleInfo {
 
 ### 3.4 共有ページ（全ロールアクセス可能）
 
+> ※ 詳細は [VIEW_ARCHITECTURE_SPEC.md](./VIEW_ARCHITECTURE_SPEC.md) セクション4「共有ビュー詳細」を参照
+
 | パス | ページ名 | 説明 |
 |------|---------|------|
-| `/stats` | 統計ダッシュボード | `/staff/stats` と `/family/stats` からリダイレクト |
-| `/item/:id/timeline` | 品物ライフサイクル | 登録→提供→摂食の時系列表示 |
+| `/view` | 記録閲覧 | 食事・バイタル記録の閲覧（スタッフ・家族共通） |
+| `/stats` | 統計ダッシュボード | 在庫状況・摂食傾向・アラート |
+| `/items/:id/timeline` | 品物タイムライン | 登録→提供→摂食の時系列表示（消費ログ含む） |
 
 ---
 

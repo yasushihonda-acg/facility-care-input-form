@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月16日 (Phase 8.6/8.7 完了 - プリセット管理・AI自動ストック全機能実装)
+> **最終更新**: 2025年12月16日 (Phase 9.0 完了 - 在庫・消費追跡システム再設計)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -940,56 +940,88 @@ POST /aiSuggest {"itemName": "プリン", "category": "snack"}
 
 ---
 
+### ✅ 完了: Phase 9.0 在庫・消費追跡システム再設計
+
+**背景**: スタッフ用ページ（/staff/stats, /staff/family-messages）が真っ白だった問題を機に、以下の要件を整理して設計を見直し：
+
+1. **詳細な在庫追跡**: 「バナナ4房中1房の半分を食べた」→ 残り3.5房 を表現
+2. **消費履歴の蓄積**: 複数回の提供・摂食をタイムラインで記録
+3. **双方向データ交差**: 家族⇄スタッフ間でリアルタイムに情報共有
+4. **共有ビュー**: 記録閲覧は両者で同じビューを使用
+
+**作成した設計ドキュメント**:
+
+| ドキュメント | 内容 |
+|-------------|------|
+| [INVENTORY_CONSUMPTION_SPEC.md](./INVENTORY_CONSUMPTION_SPEC.md) | 3層モデル（FoodMaster/CareItem/ConsumptionLog）の詳細設計 |
+| [VIEW_ARCHITECTURE_SPEC.md](./VIEW_ARCHITECTURE_SPEC.md) | ビュー構成・ルーティング・フッターナビの設計 |
+
+**更新したドキュメント**:
+- [ITEM_MANAGEMENT_SPEC.md](./ITEM_MANAGEMENT_SPEC.md) - 3層モデル反映
+- [USER_ROLE_SPEC.md](./USER_ROLE_SPEC.md) - ビュー交差・共有ビュー反映
+
+**設計のポイント**:
+
+| 項目 | 設計 |
+|------|------|
+| データモデル | FoodMaster → CareItem → ConsumptionLog の3層 |
+| 在庫追跡 | `currentQuantity` をリアルタイム更新、小数点対応 |
+| 消費履歴 | サブコレクション `consumption_logs` で蓄積 |
+| 共有ビュー | `/view`（記録閲覧）、`/stats`（統計）、`/items/:id/timeline`（タイムライン） |
+| スタッフ専用 | `/staff/*` パス、`/staff/family-messages` で品物確認・消費記録 |
+| 家族専用 | `/family/*` パス、`/family/items/:id` で消費状況確認 |
+
+---
+
 ### 次のタスク
 
-#### Phase 8.6: プリセット管理基盤
+#### Phase 9.1: ルーティング・ページ実装
 
-**設計書**: [PRESET_MANAGEMENT_SPEC.md](./PRESET_MANAGEMENT_SPEC.md)
-
-| ステップ | 内容 | 状態 |
-|----------|------|------|
-| 1 | CarePreset型定義拡張（source追跡フィールド追加） | 未着手 |
-| 2 | 初期プリセットデータ修正（参考資料反映）- demoFamilyData.ts | ✅ 完了 |
-| 3 | プリセットCRUD API（createPreset, updatePreset, deletePreset） | 未着手 |
-| 4 | プリセット管理画面（/family/presets） | 未着手 |
-| 5 | getPresetSuggestions出所情報追加 | 未着手 |
-
-#### Phase 8.7: AI自動ストック連携
-
-**設計書**: [AI_INTEGRATION_SPEC.md](./AI_INTEGRATION_SPEC.md) (セクション10)
+**設計書**: [VIEW_ARCHITECTURE_SPEC.md](./VIEW_ARCHITECTURE_SPEC.md)
 
 | ステップ | 内容 | 状態 |
 |----------|------|------|
-| 1 | saveAISuggestionAsPreset API実装 | 未着手 |
-| 2 | SaveAISuggestionDialogコンポーネント作成 | 未着手 |
-| 3 | ItemFormに保存ダイアログ統合 | 未着手 |
-| 4 | 出所バッジ表示（🤖 AI提案 / 📌 手動） | 未着手 |
+| 1 | App.tsx ルーティング修正（/staff/* パス追加） | 未着手 |
+| 2 | FooterNav.tsx 修正（家族用に記録閲覧タブ追加） | 未着手 |
+| 3 | StaffHome.tsx 新規作成（タスク・アラート表示） | 未着手 |
+| 4 | FamilyMessages.tsx 新規作成（家族連絡一覧） | 未着手 |
+| 5 | FamilyMessageDetail.tsx 新規作成（消費記録入力） | 未着手 |
+| 6 | ItemDetail.tsx 新規作成（品物詳細・タイムライン） | 未着手 |
+| 7 | ItemTimeline.tsx 新規作成（共有タイムラインビュー） | 未着手 |
 
-#### Phase 8.4拡張: AI機能追加
+#### Phase 9.2: ConsumptionLog API・UI実装
 
-| ステップ | 内容 | 状態 |
-|----------|------|------|
-| 1 | 品物登録フォームへのAI提案UI統合 | ✅ 完了 |
-| 2 | 摂食傾向分析API（aiAnalyze） | 未着手 |
-| 3 | 週次レポート生成（aiReport） | 未着手 |
-
-#### Phase 8.3拡張: 統計ダッシュボード機能追加
+**設計書**: [INVENTORY_CONSUMPTION_SPEC.md](./INVENTORY_CONSUMPTION_SPEC.md)
 
 | ステップ | 内容 | 状態 |
 |----------|------|------|
-| 1 | 摂食傾向タブ実装 | 未着手 |
-| 2 | レポートタブ実装（CSVエクスポート） | 未着手 |
-| 3 | SVGグラフコンポーネント（折れ線・円グラフ） | 未着手 |
+| 1 | ConsumptionLog 型定義（frontend/backend） | 未着手 |
+| 2 | recordConsumption API 実装 | 未着手 |
+| 3 | getConsumptionLogs API 実装 | 未着手 |
+| 4 | CareItem 型拡張（initialQuantity, currentQuantity, consumptionSummary） | 未着手 |
+| 5 | ConsumptionRecordModal コンポーネント作成 | 未着手 |
+| 6 | useConsumptionLogs フック作成 | 未着手 |
+| 7 | 在庫バー（InventoryBar）コンポーネント作成 | 未着手 |
 
-#### その他のタスク
+#### Phase 9.3: 統計ダッシュボード拡張
+
+| ステップ | 内容 | 状態 |
+|----------|------|------|
+| 1 | 在庫サマリーAPI実装 | 未着手 |
+| 2 | 食品傾向分析API実装 | 未着手 |
+| 3 | 摂食傾向タブ実装 | 未着手 |
+| 4 | 在庫バーグラフ実装 | 未着手 |
+
+#### その他のタスク（将来）
 
 | 機能 | 説明 | 優先度 |
 |------|------|--------|
+| FoodMaster 食品マスタ | AI提案との連携、食品別統計 | 中 |
+| 摂食傾向分析API（aiAnalyze） | Gemini連携 | 中 |
+| 週次レポート生成（aiReport） | Gemini連携 | 中 |
 | ケア指示のFirestore保存 | モックデータ → Firestore永続化 | 中 |
 | 写真エビデンス表示 | Google Drive画像を家族ビューで表示 | 中 |
-| 複数入居者対応 | residentIdでの厳密フィルタ | 中 |
 | CSVエクスポート | 表示中のデータをCSVでダウンロード | 低 |
-| オフラインキャッシュ強化 | ServiceWorkerでAPI応答をキャッシュ | 低 |
 
 ---
 
