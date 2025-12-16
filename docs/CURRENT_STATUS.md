@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月16日 (MoE複眼チェック分析: 品物管理×ケア指示統合設計 完了)
+> **最終更新**: 2025年12月16日 (Phase 8.5 プリセット統合機能実装 完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -840,31 +840,54 @@ POST /aiSuggest {"itemName": "プリン", "category": "snack"}
 
 ---
 
-### 次のタスク
+### ✅ 完了: Phase 8.5 プリセット統合機能
 
-#### Phase 8.5: 品物管理×ケア指示統合（推奨）
+**コンセプト**: 品物登録フォームにプリセット候補を表示し、AI提案と「いつもの指示」をワンストップで適用可能に
 
-**MoE複眼チェック分析完了**: [MOE_ANALYSIS_ITEM_CARE_INTEGRATION.md](./MOE_ANALYSIS_ITEM_CARE_INTEGRATION.md)
+**MoE複眼チェック分析**: [MOE_ANALYSIS_ITEM_CARE_INTEGRATION.md](./MOE_ANALYSIS_ITEM_CARE_INTEGRATION.md)
 
-**背景**: 品物登録（ItemForm）とケア指示ビュー（RequestBuilder）の機能が重複しており、家族が2箇所で類似情報を管理する必要がある。AI提案に「いつもの指示（プリセット）」を統合することで、ワンストップ設定が可能に。
+**設計書**: [AI_INTEGRATION_SPEC.md](./AI_INTEGRATION_SPEC.md) (セクション9)
 
-**Phase 1: プリセット表示統合（推奨実装）**
+**実装完了**:
 
 | ステップ | 内容 | 状態 |
 |----------|------|------|
-| 1 | プリセット取得API実装（/api/presets/suggest） | 未着手 |
-| 2 | PresetSelector.tsx 新規作成 | 未着手 |
-| 3 | AISuggestion.tsx にプリセットセクション追加 | 未着手 |
-| 4 | ItemForm.tsx 統合 | 未着手 |
+| 1 | 設計書セクション追記（AI_INTEGRATION_SPEC.md セクション9） | ✅ 完了 |
+| 2 | プリセット取得API実装（getPresetSuggestions） | ✅ 完了 |
+| 3 | PresetSuggestion.tsx 新規作成 | ✅ 完了 |
+| 4 | usePresetSuggestions.ts 新規作成 | ✅ 完了 |
+| 5 | ItemForm.tsx 統合 | ✅ 完了 |
+| 6 | ビルド確認・コミット | ✅ 完了 |
 
-**期待効果**:
-- ユーザー価値向上（ワンストップ設定）
-- ケア指示設定率 +40%見込み
-- スタッフ確認工数削減（2画面→1画面）
+**実装ファイル（新規）**:
+- `functions/src/functions/getPresetSuggestions.ts` - プリセット候補取得API
+- `frontend/src/components/family/PresetSuggestion.tsx` - プリセット提案カード
+- `frontend/src/hooks/usePresetSuggestions.ts` - デバウンス付きフック
 
-**実装工数見積もり**: 約2-3日
+**実装ファイル（修正）**:
+- `functions/src/types/index.ts` - PresetSuggestion等の型定義追加
+- `functions/src/index.ts` - getPresetSuggestionsエクスポート追加
+- `frontend/src/types/careItem.ts` - プリセット関連型定義追加
+- `frontend/src/api/index.ts` - getPresetSuggestions API関数追加
+- `frontend/src/pages/family/ItemForm.tsx` - AI提案+プリセット提案の統合UI
+- `docs/AI_INTEGRATION_SPEC.md` - セクション9「プリセット統合」追記
+
+**機能詳細**:
+
+| 機能 | 説明 |
+|------|------|
+| プリセット候補取得 | 品物名2文字以上入力で500msデバウンス後にAPI呼び出し |
+| マッチングアルゴリズム | カテゴリ一致(0.8)、品物名一致(0.9)、キーワード一致(0.7) |
+| 提案カード表示 | AI提案（紫/青）の下にプリセット提案（アンバー/オレンジ）を表示 |
+| 提案適用 | 「この指示を適用」ボタンで提供方法・申し送りを自動入力 |
+
+**アクセス方法**:
+- 品物登録フォーム: `/family/items/new`
+- 品物名を入力するとAI提案とプリセット候補の両方が表示される
 
 ---
+
+### 次のタスク
 
 #### Phase 8.4拡張: AI機能追加
 
@@ -1252,6 +1275,7 @@ Phase 8.2: タスク管理                 ████████████�
 Phase 8.2.1: タスク自動生成           ████████████████████ 100% (完了)
 Phase 8.3: 統計ダッシュボード         ████████████████░░░░  80% (基本実装完了)
 Phase 8.4: Gemini AI連携             ██████████████████░░  90% (AI提案UI統合完了)
+Phase 8.5: プリセット統合             ████████████████████ 100% (完了)
 ```
 
 詳細: [docs/ROADMAP.md](./ROADMAP.md)
