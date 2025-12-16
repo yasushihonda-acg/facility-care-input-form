@@ -43,6 +43,24 @@
       ]
     },
     {
+      "collectionGroup": "care_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "residentId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "sentDate",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "tasks",
       "queryScope": "COLLECTION",
       "fields": [
@@ -60,6 +78,20 @@
         },
         {
           "fieldPath": "status",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tasks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "residentId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dueDate",
           "order": "ASCENDING"
         }
       ]
