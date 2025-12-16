@@ -1,10 +1,10 @@
 /**
- * View B: ケア仕様ビルダー（構造化入力）
- * FAXの手書き指示をアプリ入力に置き換える画面
- * @see docs/FAMILY_UX_DESIGN.md
+ * View B: ケア仕様ビルダー（一時的な指示変更・追記）
+ * 品物登録で設定済みの恒久的な指示に対し、特定日時への変更・追記を行う画面
+ * @see docs/FAMILY_UX_DESIGN.md セクション4
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import {
@@ -27,17 +27,21 @@ export function RequestBuilder() {
   const [targetDate, setTargetDate] = useState<string>(getTodayString());
   const [mealTime, setMealTime] = useState<MealTime>('lunch');
   const [menuName, setMenuName] = useState<string>('');
-  const [processingDetail, setProcessingDetail] = useState<string>('');
+  const [additionalInstruction, setAdditionalInstruction] = useState<string>('');
   const [conditions, setConditions] = useState<CareCondition[]>([]);
   const [priority, setPriority] = useState<CarePriority>('normal');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // プリセット適用
-  const applyPreset = (preset: typeof DEMO_PRESETS[0]) => {
-    setMenuName(preset.name.replace(/8等分|冷|は皮むき|月水金禁止/g, '').trim() || preset.name);
-    setProcessingDetail(preset.processingDetail);
-  };
+  // メニュー名に基づいてマッチするプリセットを参考表示用に検索
+  const matchingPreset = useMemo(() => {
+    if (!menuName || menuName.length < 2) return null;
+    const lowerName = menuName.toLowerCase();
+    return DEMO_PRESETS.find((preset) =>
+      preset.name.toLowerCase().includes(lowerName) ||
+      lowerName.includes(preset.name.replace(/[（(].*/g, '').toLowerCase())
+    );
+  }, [menuName]);
 
   // 条件追加
   const addCondition = () => {
@@ -64,8 +68,8 @@ export function RequestBuilder() {
 
   // 送信処理
   const handleSubmit = async () => {
-    if (!menuName || !processingDetail) {
-      alert('メニュー名と詳細指示は必須です');
+    if (!menuName || !additionalInstruction) {
+      alert('メニュー名と追加・変更の指示は必須です');
       return;
     }
 
@@ -77,7 +81,7 @@ export function RequestBuilder() {
     setIsSubmitting(false);
     setShowSuccess(true);
 
-    // 成功後3秒で家族ホームへ戻る
+    // 成功後2秒で家族ホームへ戻る
     setTimeout(() => {
       navigate('/family');
     }, 2000);
@@ -100,6 +104,12 @@ export function RequestBuilder() {
   return (
     <Layout title="ケア指示の作成" showBackButton={true}>
       <div className="pb-8 space-y-4">
+        {/* 説明テキスト */}
+        <div className="bg-blue-50 rounded-lg p-3 text-sm text-blue-700">
+          <p>品物登録で設定した指示への<strong>追加・変更</strong>を送信できます。</p>
+          <p className="text-xs mt-1 text-blue-600">※ 恒久的な指示は「品物登録」で設定してください</p>
+        </div>
+
         {/* 対象日 */}
         <div className="bg-white rounded-lg shadow-card p-4">
           <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
@@ -140,35 +150,11 @@ export function RequestBuilder() {
           </div>
         </div>
 
-        {/* プリセット（選択するとメニュー名と詳細指示が自動入力） */}
-        <div className="bg-white rounded-lg shadow-card p-4">
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-            <span>⚡</span>
-            <span>いつもの指示（プリセット）</span>
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {DEMO_PRESETS.map((preset) => (
-              <button
-                key={preset.id}
-                type="button"
-                onClick={() => applyPreset(preset)}
-                className="px-3 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm hover:bg-blue-100 transition flex items-center gap-1"
-              >
-                {preset.icon && <span>{preset.icon}</span>}
-                <span>{preset.name}</span>
-              </button>
-            ))}
-          </div>
-          <p className="text-xs text-gray-500 mt-2">
-            ※ プリセット選択時、メニュー名と詳細指示が自動入力されます
-          </p>
-        </div>
-
-        {/* メニュー名 */}
+        {/* メニュー名（対象品物） */}
         <div className="bg-white rounded-lg shadow-card p-4">
           <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
             <span>🥝</span>
-            <span>メニュー名</span>
+            <span>メニュー名（対象品物）</span>
             <span className="text-red-500">*</span>
           </label>
           <input
@@ -180,24 +166,44 @@ export function RequestBuilder() {
           />
         </div>
 
-        {/* 詳細指示 */}
+        {/* 追加・変更の指示 */}
         <div className="bg-white rounded-lg shadow-card p-4">
           <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
             <span>📝</span>
-            <span>詳細指示</span>
+            <span>追加・変更の指示</span>
             <span className="text-red-500">*</span>
           </label>
           <textarea
-            value={processingDetail}
-            onChange={(e) => setProcessingDetail(e.target.value)}
-            placeholder="調理方法や注意事項を詳しく記入してください"
-            rows={5}
+            value={additionalInstruction}
+            onChange={(e) => setAdditionalInstruction(e.target.value)}
+            placeholder="例: 今日は体調が良くないので、いつもより小さめにカットしてください"
+            rows={4}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary resize-none"
           />
           <p className="text-xs text-gray-500 mt-1">
-            ※ FAXと同じ内容を記入できます。省略せず詳細に記入してください。
+            ※ 品物登録で設定した指示への追加・変更内容を記入
           </p>
         </div>
+
+        {/* 参考: いつもの指示（マッチするプリセットがある場合のみ表示） */}
+        {matchingPreset && (
+          <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+            <label className="flex items-center gap-2 text-sm font-medium text-amber-700 mb-2">
+              <span>💡</span>
+              <span>参考: いつもの指示</span>
+            </label>
+            <div className="bg-white rounded-lg p-3 text-sm text-gray-700">
+              <p className="font-medium flex items-center gap-1">
+                {matchingPreset.icon && <span>{matchingPreset.icon}</span>}
+                <span>{matchingPreset.name}</span>
+              </p>
+              <p className="mt-1 text-gray-600">{matchingPreset.processingDetail}</p>
+            </div>
+            <p className="text-xs text-amber-600 mt-2">
+              → この内容に追加・変更があれば上に記入してください
+            </p>
+          </div>
+        )}
 
         {/* 条件付きロジック */}
         <div className="bg-white rounded-lg shadow-card p-4">
@@ -297,10 +303,10 @@ export function RequestBuilder() {
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={isSubmitting || !menuName || !processingDetail}
+          disabled={isSubmitting || !menuName || !additionalInstruction}
           className={`
             w-full py-4 rounded-lg font-bold text-white transition
-            ${isSubmitting || !menuName || !processingDetail
+            ${isSubmitting || !menuName || !additionalInstruction
               ? 'bg-gray-300 cursor-not-allowed'
               : 'bg-primary hover:bg-primary-dark active:bg-primary-dark'
             }

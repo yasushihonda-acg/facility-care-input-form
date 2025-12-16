@@ -99,9 +99,9 @@
 | **家族専用** ||||
 | `/family` | FamilyDashboard | 家族 | 家族ホーム（タイムライン） |
 | `/family/items` | ItemManagement | 家族 | 品物一覧 |
-| `/family/items/new` | ItemForm | 家族 | 品物登録 |
+| `/family/items/new` | ItemForm | 家族 | 品物登録（★プリセット主要適用場所） |
 | `/family/items/:id` | ItemDetail | 家族 | 品物詳細（タイムライン付き） |
-| `/family/request` | RequestBuilder | 家族 | ケア指示作成 |
+| `/family/request` | RequestBuilder | 家族 | ケア指示作成（一時的な変更・追記用） |
 | `/family/presets` | PresetManagement | 家族 | プリセット管理 |
 | `/family/tasks` | TaskList | 家族 | タスク一覧 |
 | `/family/stats` | StatsDashboard | 家族 | 統計（/stats へリダイレクト） |
