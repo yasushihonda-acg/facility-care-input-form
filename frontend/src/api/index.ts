@@ -608,3 +608,67 @@ export async function saveAISuggestionAsPreset(
 
   return response.json();
 }
+
+// =============================================================================
+// 消費ログ API（Phase 9.2）
+// =============================================================================
+
+import type {
+  RecordConsumptionLogRequest,
+  RecordConsumptionLogResponse,
+  GetConsumptionLogsResponse,
+  ConsumptionLog,
+} from '../types/consumptionLog';
+
+export type { ConsumptionLog, RecordConsumptionLogRequest, RecordConsumptionLogResponse };
+
+/**
+ * 消費ログを記録
+ * スタッフが品物の提供・摂食を記録
+ */
+export async function recordConsumptionLog(
+  params: RecordConsumptionLogRequest
+): Promise<ApiResponse<RecordConsumptionLogResponse>> {
+  const response = await fetch(`${API_BASE}/recordConsumptionLog`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to record consumption: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 消費ログ一覧を取得
+ */
+export interface GetConsumptionLogsParams {
+  itemId: string;
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
+}
+
+export async function getConsumptionLogs(
+  params: GetConsumptionLogsParams
+): Promise<ApiResponse<GetConsumptionLogsResponse>> {
+  const url = new URL(`${API_BASE}/getConsumptionLogs`);
+
+  url.searchParams.set('itemId', params.itemId);
+  if (params.startDate) url.searchParams.set('startDate', params.startDate);
+  if (params.endDate) url.searchParams.set('endDate', params.endDate);
+  if (params.limit) url.searchParams.set('limit', params.limit.toString());
+
+  const response = await fetch(url.toString());
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to get consumption logs: ${response.statusText}`);
+  }
+
+  return response.json();
+}

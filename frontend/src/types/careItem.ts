@@ -75,16 +75,18 @@ export const CONSUMPTION_STATUSES: { value: ConsumptionStatus; label: string; ra
 
 // ステータス
 export type ItemStatus =
-  | 'pending'    // 未提供（登録済み、まだ提供していない）
-  | 'served'     // 提供済み（提供したが摂食記録なし）
-  | 'consumed'   // 消費済み（摂食記録完了）
-  | 'expired'    // 期限切れ
-  | 'discarded'; // 廃棄
+  | 'pending'      // 未提供（登録済み、まだ提供していない）
+  | 'in_progress'  // 提供中（一部消費、残量あり）★新規追加
+  | 'served'       // 提供済み（旧: 互換性のため残す）
+  | 'consumed'     // 消費完了（残量ゼロ）
+  | 'expired'      // 期限切れ
+  | 'discarded';   // 廃棄
 
 export const ITEM_STATUSES: { value: ItemStatus; label: string; color: string; bgColor: string }[] = [
   { value: 'pending', label: '未提供', color: 'text-yellow-700', bgColor: 'bg-yellow-100' },
+  { value: 'in_progress', label: '提供中', color: 'text-blue-700', bgColor: 'bg-blue-100' },
   { value: 'served', label: '提供済み', color: 'text-blue-700', bgColor: 'bg-blue-100' },
-  { value: 'consumed', label: '消費済み', color: 'text-green-700', bgColor: 'bg-green-100' },
+  { value: 'consumed', label: '消費完了', color: 'text-green-700', bgColor: 'bg-green-100' },
   { value: 'expired', label: '期限切れ', color: 'text-red-700', bgColor: 'bg-red-100' },
   { value: 'discarded', label: '廃棄', color: 'text-gray-700', bgColor: 'bg-gray-100' },
 ];
@@ -101,27 +103,35 @@ export interface CareItem {
   residentId: string;
   userId: string;
 
+  // 食品マスタ参照（将来用）
+  foodMasterId?: string;
+
   // 品物基本情報（家族が入力）
   itemName: string;
   category: ItemCategory;
   sentDate: string;              // YYYY-MM-DD
-  quantity: number;
+  quantity: number;              // 旧: 互換性のため残す
   unit: string;
   expirationDate?: string;       // YYYY-MM-DD
   storageMethod?: StorageMethod;
 
+  // 在庫情報（Phase 9.2 追加）
+  initialQuantity?: number;      // 初期数量（新規）
+  currentQuantity?: number;      // 現在の残量（新規）★自動更新
+
   // 提供希望（家族が入力）
   servingMethod: ServingMethod;
   servingMethodDetail?: string;
+  preferredServingSchedule?: string; // 提供希望スケジュール（新規）
   plannedServeDate?: string;     // YYYY-MM-DD
   noteToStaff?: string;
 
-  // 提供記録（スタッフが入力）
+  // 提供記録（スタッフが入力）- 旧: 互換性のため残す
   actualServeDate?: string;      // YYYY-MM-DD
   servedQuantity?: number;
   servedBy?: string;
 
-  // 摂食記録（スタッフが入力）
+  // 摂食記録（スタッフが入力）- 旧: 互換性のため残す
   consumptionRate?: number;      // 0-100
   consumptionStatus?: ConsumptionStatus;
   consumptionNote?: string;
@@ -130,9 +140,19 @@ export interface CareItem {
   // 申し送り（スタッフ→家族）
   noteToFamily?: string;
 
+  // 集計キャッシュ（Phase 9.2 追加）
+  consumptionSummary?: {
+    totalServed: number;         // 累計提供回数
+    totalServedQuantity: number; // 累計提供量
+    totalConsumedQuantity: number; // 累計消費量
+    avgConsumptionRate: number;  // 平均摂食率
+    lastServedDate?: string;     // 最終提供日
+    lastServedBy?: string;       // 最終提供者
+  };
+
   // ステータス・メタ情報
   status: ItemStatus;
-  remainingQuantity: number;
+  remainingQuantity: number;     // 旧: 互換性のため残す（currentQuantityと同期）
   createdAt: string;             // ISO8601
   updatedAt: string;             // ISO8601
 }

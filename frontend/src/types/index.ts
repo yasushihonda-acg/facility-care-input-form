@@ -1,3 +1,6 @@
+// 型定義再エクスポート
+export * from './consumptionLog';
+
 // API response wrapper
 export interface ApiResponse<T> {
   success: boolean;

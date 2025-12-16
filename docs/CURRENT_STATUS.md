@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月16日 (Phase 9.1 バグ修正完了)
+> **最終更新**: 2025年12月17日 (Phase 9.2 ConsumptionLog API・UI実装完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -19,20 +19,6 @@
 ---
 
 ## 次のタスク
-
-### Phase 9.2: ConsumptionLog API・UI実装
-
-**設計書**: [INVENTORY_CONSUMPTION_SPEC.md](./INVENTORY_CONSUMPTION_SPEC.md)
-
-| ステップ | 内容 | 状態 |
-|----------|------|------|
-| 1 | ConsumptionLog 型定義（frontend/backend） | 未着手 |
-| 2 | recordConsumption API 実装 | 未着手 |
-| 3 | getConsumptionLogs API 実装 | 未着手 |
-| 4 | CareItem 型拡張（initialQuantity, currentQuantity, consumptionSummary） | 未着手 |
-| 5 | ConsumptionRecordModal コンポーネント作成 | 未着手 |
-| 6 | useConsumptionLogs フック作成 | 未着手 |
-| 7 | 在庫バー（InventoryBar）コンポーネント作成 | 未着手 |
 
 ### Phase 9.3: 統計ダッシュボード拡張
 
@@ -57,6 +43,35 @@
 ---
 
 ## 最近の完了タスク
+
+### Phase 9.2 ConsumptionLog API・UI実装 (2025-12-17)
+
+**設計書**: [INVENTORY_CONSUMPTION_SPEC.md](./INVENTORY_CONSUMPTION_SPEC.md)
+
+**実装ファイル（バックエンド）**:
+- `functions/src/functions/consumptionLogs.ts` - 消費ログ API（新規）
+- `functions/src/types/index.ts` - ConsumptionLog、ConsumptionSummary型追加
+
+**実装ファイル（フロントエンド）**:
+- `frontend/src/types/consumptionLog.ts` - 消費ログ型定義（新規）
+- `frontend/src/types/careItem.ts` - CareItem拡張（initialQuantity, currentQuantity, consumptionSummary）
+- `frontend/src/api/index.ts` - API呼び出し関数追加
+- `frontend/src/hooks/useConsumptionLogs.ts` - 消費ログフック（新規）
+- `frontend/src/components/staff/ConsumptionRecordModal.tsx` - 消費記録モーダル（新規）
+- `frontend/src/components/shared/InventoryBar.tsx` - 在庫バー・ステータスバッジ（新規）
+
+**API仕様**:
+- `POST /recordConsumptionLog` - 消費ログ記録（トランザクションでCareItemも更新）
+- `GET /getConsumptionLogs?itemId=xxx` - 消費ログ一覧取得
+
+**機能**:
+- 提供・摂食の詳細な履歴管理（サブコレクション）
+- 残量の自動計算と更新
+- 摂食率の自動計算
+- CareItemのステータス自動判定（pending → in_progress → consumed）
+- タイムライン形式での履歴表示用フック
+
+---
 
 ### Phase 9.1 バグ修正 - useStats無限ループ (2025-12-16)
 
@@ -130,8 +145,8 @@ Phase 8.6: プリセット管理基盤        ███████████�
 Phase 8.7: AI自動ストック            ████████████████████ 100% (完了)
 Phase 9.0: 在庫・消費追跡設計        ████████████████████ 100% (完了)
 Phase 9.1: ルーティング・ページ実装  ████████████████████ 100% (完了)
-Phase 9.2: ConsumptionLog API・UI   ░░░░░░░░░░░░░░░░░░░░   0% (次のタスク)
-Phase 9.3: 統計ダッシュボード拡張    ░░░░░░░░░░░░░░░░░░░░   0% (計画中)
+Phase 9.2: ConsumptionLog API・UI   ████████████████████ 100% (完了)
+Phase 9.3: 統計ダッシュボード拡張    ░░░░░░░░░░░░░░░░░░░░   0% (次のタスク)
 ```
 
 詳細: [docs/ROADMAP.md](./ROADMAP.md)

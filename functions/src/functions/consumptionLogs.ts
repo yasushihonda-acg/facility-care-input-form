@@ -1,0 +1,521 @@
+/**
+ * 消費ログ API
+ * docs/INVENTORY_CONSUMPTION_SPEC.md に基づく
+ *
+ * スタッフが記録する提供・摂食の履歴を管理するAPI
+ * - recordConsumptionLog: 消費ログ記録（スタッフ用）
+ * - getConsumptionLogs: 消費ログ一覧取得（全ロール）
+ */
+
+import * as functions from "firebase-functions";
+import {Request, Response} from "express";
+import {getFirestore, Timestamp, FieldValue} from "firebase-admin/firestore";
+import {FUNCTIONS_CONFIG} from "../config/sheets";
+import {
+  ApiResponse,
+  ErrorCodes,
+  RecordConsumptionLogRequest,
+  RecordConsumptionLogResponse,
+  GetConsumptionLogsRequest,
+  GetConsumptionLogsResponse,
+  ConsumptionLog,
+  ConsumptionStatus,
+  ItemStatus,
+  MealTime,
+  CareItem,
+} from "../types";
+
+// Firestoreコレクション名
+const CARE_ITEMS_COLLECTION = "care_items";
+const CONSUMPTION_LOGS_SUBCOLLECTION = "consumption_logs";
+
+// =============================================================================
+// バリデーション
+// =============================================================================
+
+/**
+ * RecordConsumptionLogRequestのバリデーション
+ */
+function validateRecordConsumptionLogRequest(
+  body: unknown
+): { valid: true; data: RecordConsumptionLogRequest } | { valid: false; error: string } {
+  if (!body || typeof body !== "object") {
+    return {valid: false, error: "Request body is required"};
+  }
+
+  const req = body as Record<string, unknown>;
+
+  // itemId
+  if (!req.itemId || typeof req.itemId !== "string") {
+    return {valid: false, error: "itemId is required"};
+  }
+
+  // servedDate (YYYY-MM-DD)
+  if (!req.servedDate || typeof req.servedDate !== "string") {
+    return {valid: false, error: "servedDate is required (YYYY-MM-DD)"};
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(req.servedDate)) {
+    return {valid: false, error: "servedDate must be in YYYY-MM-DD format"};
+  }
+
+  // servedQuantity
+  if (typeof req.servedQuantity !== "number" || req.servedQuantity <= 0) {
+    return {valid: false, error: "servedQuantity must be a positive number"};
+  }
+
+  // servedBy
+  if (!req.servedBy || typeof req.servedBy !== "string") {
+    return {valid: false, error: "servedBy is required"};
+  }
+
+  // consumedQuantity
+  if (typeof req.consumedQuantity !== "number" || req.consumedQuantity < 0) {
+    return {valid: false, error: "consumedQuantity must be a non-negative number"};
+  }
+
+  if (req.consumedQuantity > req.servedQuantity) {
+    return {valid: false, error: "consumedQuantity cannot exceed servedQuantity"};
+  }
+
+  // consumptionStatus
+  const validStatuses: ConsumptionStatus[] = ["full", "most", "half", "little", "none"];
+  if (!req.consumptionStatus || !validStatuses.includes(req.consumptionStatus as ConsumptionStatus)) {
+    return {valid: false, error: "consumptionStatus must be one of: " + validStatuses.join(", ")};
+  }
+
+  // recordedBy
+  if (!req.recordedBy || typeof req.recordedBy !== "string") {
+    return {valid: false, error: "recordedBy is required"};
+  }
+
+  // mealTime (optional)
+  if (req.mealTime !== undefined) {
+    const validMealTimes: MealTime[] = ["breakfast", "lunch", "dinner", "snack"];
+    if (!validMealTimes.includes(req.mealTime as MealTime)) {
+      return {valid: false, error: "mealTime must be one of: " + validMealTimes.join(", ")};
+    }
+  }
+
+  return {
+    valid: true,
+    data: {
+      itemId: req.itemId as string,
+      servedDate: req.servedDate as string,
+      servedTime: req.servedTime as string | undefined,
+      mealTime: req.mealTime as MealTime | undefined,
+      servedQuantity: req.servedQuantity as number,
+      servedBy: req.servedBy as string,
+      consumedQuantity: req.consumedQuantity as number,
+      consumptionStatus: req.consumptionStatus as ConsumptionStatus,
+      consumptionNote: req.consumptionNote as string | undefined,
+      noteToFamily: req.noteToFamily as string | undefined,
+      recordedBy: req.recordedBy as string,
+    },
+  };
+}
+
+// =============================================================================
+// ステータス判定ロジック
+// =============================================================================
+
+/**
+ * 品物のステータスを判定
+ */
+function determineItemStatus(
+  currentQuantity: number,
+  expirationDate: string | undefined,
+  consumptionSummary: { totalServed: number }
+): ItemStatus {
+  const today = new Date().toISOString().split("T")[0];
+
+  // 期限切れチェック
+  if (expirationDate && expirationDate < today) {
+    return "expired";
+  }
+
+  // 残量ゼロ = 消費完了
+  if (currentQuantity <= 0) {
+    return "consumed";
+  }
+
+  // 一度でも提供していれば in_progress
+  if (consumptionSummary.totalServed > 0) {
+    return "in_progress";
+  }
+
+  // まだ一度も提供していない
+  return "pending";
+}
+
+// =============================================================================
+// Handler: recordConsumptionLog
+// =============================================================================
+
+/**
+ * 消費ログを記録
+ * トランザクションでCareItemも更新
+ */
+async function recordConsumptionLogHandler(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const timestamp = new Date().toISOString();
+
+  try {
+    // CORS対応
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.set("Access-Control-Allow-Headers", "Content-Type");
+
+    if (req.method === "OPTIONS") {
+      res.status(204).send("");
+      return;
+    }
+
+    if (req.method !== "POST") {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: {
+          code: ErrorCodes.INVALID_REQUEST,
+          message: "Method not allowed. Use POST.",
+        },
+        timestamp,
+      };
+      res.status(405).json(response);
+      return;
+    }
+
+    // バリデーション
+    const validation = validateRecordConsumptionLogRequest(req.body);
+    if (!validation.valid) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: {
+          code: ErrorCodes.MISSING_REQUIRED_FIELD,
+          message: validation.error,
+        },
+        timestamp,
+      };
+      res.status(400).json(response);
+      return;
+    }
+
+    const input = validation.data;
+
+    functions.logger.info("recordConsumptionLog started", {
+      itemId: input.itemId,
+      servedQuantity: input.servedQuantity,
+      consumedQuantity: input.consumedQuantity,
+    });
+
+    const db = getFirestore();
+    const itemRef = db.collection(CARE_ITEMS_COLLECTION).doc(input.itemId);
+
+    // トランザクションで処理
+    const result = await db.runTransaction(async (transaction) => {
+      const itemDoc = await transaction.get(itemRef);
+
+      if (!itemDoc.exists) {
+        throw new Error("Item not found");
+      }
+
+      const item = itemDoc.data() as CareItem;
+
+      // 現在の残量を取得（currentQuantityがなければremainingQuantityを使用）
+      const currentQty = item.currentQuantity ?? item.remainingQuantity ?? item.quantity ?? 0;
+
+      // バリデーション: 提供数量が残量を超えていないか
+      if (input.servedQuantity > currentQty) {
+        throw new Error(`提供数量(${input.servedQuantity})が残量(${currentQty})を超えています`);
+      }
+
+      // 新しい残量を計算（消費した分だけ減らす）
+      const newQuantity = currentQty - input.consumedQuantity;
+
+      // 摂食率を計算
+      const consumptionRate = input.servedQuantity > 0 ?
+        Math.round((input.consumedQuantity / input.servedQuantity) * 100) :
+        0;
+
+      // 既存のサマリーを取得
+      const existingSummary = item.consumptionSummary ?? {
+        totalServed: 0,
+        totalServedQuantity: 0,
+        totalConsumedQuantity: 0,
+        avgConsumptionRate: 0,
+      };
+
+      // 新しいサマリーを計算
+      const newTotalServed = existingSummary.totalServed + 1;
+      const newTotalServedQty = existingSummary.totalServedQuantity + input.servedQuantity;
+      const newTotalConsumedQty = existingSummary.totalConsumedQuantity + input.consumedQuantity;
+      const newAvgRate = newTotalServedQty > 0 ?
+        Math.round((newTotalConsumedQty / newTotalServedQty) * 100) :
+        0;
+
+      const newSummary = {
+        totalServed: newTotalServed,
+        totalServedQuantity: newTotalServedQty,
+        totalConsumedQuantity: newTotalConsumedQty,
+        avgConsumptionRate: newAvgRate,
+        lastServedDate: input.servedDate,
+        lastServedBy: input.servedBy,
+      };
+
+      // ステータスを判定
+      const newStatus = determineItemStatus(
+        newQuantity,
+        item.expirationDate,
+        newSummary
+      );
+
+      // 消費ログを作成
+      const logRef = itemRef.collection(CONSUMPTION_LOGS_SUBCOLLECTION).doc();
+      const now = Timestamp.now();
+
+      const logData = {
+        id: logRef.id,
+        itemId: input.itemId,
+        servedDate: input.servedDate,
+        servedTime: input.servedTime ?? null,
+        mealTime: input.mealTime ?? null,
+        servedQuantity: input.servedQuantity,
+        servedBy: input.servedBy,
+        consumedQuantity: input.consumedQuantity,
+        consumptionRate,
+        consumptionStatus: input.consumptionStatus,
+        quantityBefore: currentQty,
+        quantityAfter: newQuantity,
+        consumptionNote: input.consumptionNote ?? null,
+        noteToFamily: input.noteToFamily ?? null,
+        recordedBy: input.recordedBy,
+        recordedAt: now,
+      };
+
+      transaction.set(logRef, logData);
+
+      // CareItemを更新
+      transaction.update(itemRef, {
+        currentQuantity: newQuantity,
+        remainingQuantity: newQuantity, // 互換性のため
+        status: newStatus,
+        consumptionSummary: newSummary,
+        // 旧フィールドも更新（互換性のため）
+        actualServeDate: input.servedDate,
+        servedQuantity: input.servedQuantity,
+        servedBy: input.servedBy,
+        consumptionRate,
+        consumptionStatus: input.consumptionStatus,
+        consumptionNote: input.consumptionNote ?? FieldValue.delete(),
+        noteToFamily: input.noteToFamily ?? FieldValue.delete(),
+        recordedBy: input.recordedBy,
+        updatedAt: now,
+      });
+
+      return {
+        logId: logRef.id,
+        currentQuantity: newQuantity,
+        status: newStatus,
+      };
+    });
+
+    functions.logger.info("recordConsumptionLog success", {
+      logId: result.logId,
+      itemId: input.itemId,
+      currentQuantity: result.currentQuantity,
+      status: result.status,
+    });
+
+    const responseData: RecordConsumptionLogResponse = {
+      logId: result.logId,
+      itemId: input.itemId,
+      currentQuantity: result.currentQuantity,
+      status: result.status,
+    };
+
+    const response: ApiResponse<RecordConsumptionLogResponse> = {
+      success: true,
+      data: responseData,
+      timestamp,
+    };
+    res.status(201).json(response);
+  } catch (error) {
+    functions.logger.error("recordConsumptionLog error", error);
+
+    const isValidationError = error instanceof Error &&
+      (error.message.includes("not found") || error.message.includes("超えています"));
+
+    const response: ApiResponse<null> = {
+      success: false,
+      error: {
+        code: isValidationError ? ErrorCodes.INVALID_REQUEST : ErrorCodes.FIRESTORE_ERROR,
+        message: error instanceof Error ? error.message : "Unknown error",
+      },
+      timestamp,
+    };
+    res.status(isValidationError ? 400 : 500).json(response);
+  }
+}
+
+// =============================================================================
+// Handler: getConsumptionLogs
+// =============================================================================
+
+/**
+ * 消費ログ一覧を取得
+ */
+async function getConsumptionLogsHandler(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const timestamp = new Date().toISOString();
+
+  try {
+    // CORS対応
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+    res.set("Access-Control-Allow-Headers", "Content-Type");
+
+    if (req.method === "OPTIONS") {
+      res.status(204).send("");
+      return;
+    }
+
+    if (req.method !== "GET") {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: {
+          code: ErrorCodes.INVALID_REQUEST,
+          message: "Method not allowed. Use GET.",
+        },
+        timestamp,
+      };
+      res.status(405).json(response);
+      return;
+    }
+
+    const params = req.query as unknown as GetConsumptionLogsRequest;
+
+    // itemIdは必須
+    if (!params.itemId) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: {
+          code: ErrorCodes.MISSING_REQUIRED_FIELD,
+          message: "itemId is required",
+        },
+        timestamp,
+      };
+      res.status(400).json(response);
+      return;
+    }
+
+    functions.logger.info("getConsumptionLogs started", {
+      itemId: params.itemId,
+      startDate: params.startDate,
+      endDate: params.endDate,
+      limit: params.limit,
+    });
+
+    const db = getFirestore();
+    const logsRef = db
+      .collection(CARE_ITEMS_COLLECTION)
+      .doc(params.itemId)
+      .collection(CONSUMPTION_LOGS_SUBCOLLECTION);
+
+    let query = logsRef.orderBy("servedDate", "desc").orderBy("recordedAt", "desc");
+
+    // 日付フィルタ
+    if (params.startDate) {
+      query = query.where("servedDate", ">=", params.startDate);
+    }
+    if (params.endDate) {
+      query = query.where("servedDate", "<=", params.endDate);
+    }
+
+    // limit
+    const limit = params.limit ? parseInt(String(params.limit), 10) : 50;
+    query = query.limit(limit);
+
+    const snapshot = await query.get();
+
+    const logs: ConsumptionLog[] = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        itemId: data.itemId,
+        servedDate: data.servedDate,
+        servedTime: data.servedTime ?? undefined,
+        mealTime: data.mealTime ?? undefined,
+        servedQuantity: data.servedQuantity,
+        servedBy: data.servedBy,
+        consumedQuantity: data.consumedQuantity,
+        consumptionRate: data.consumptionRate,
+        consumptionStatus: data.consumptionStatus,
+        quantityBefore: data.quantityBefore,
+        quantityAfter: data.quantityAfter,
+        consumptionNote: data.consumptionNote ?? undefined,
+        noteToFamily: data.noteToFamily ?? undefined,
+        recordedBy: data.recordedBy,
+        recordedAt: data.recordedAt?.toDate?.().toISOString() ?? data.recordedAt,
+        updatedAt: data.updatedAt?.toDate?.().toISOString() ?? data.updatedAt ?? undefined,
+        updatedBy: data.updatedBy ?? undefined,
+      };
+    });
+
+    // 総数を取得（日付フィルタなし）
+    const countSnapshot = await logsRef.count().get();
+    const total = countSnapshot.data().count;
+
+    functions.logger.info("getConsumptionLogs success", {
+      itemId: params.itemId,
+      count: logs.length,
+      total,
+    });
+
+    const responseData: GetConsumptionLogsResponse = {
+      logs,
+      total,
+    };
+
+    const response: ApiResponse<GetConsumptionLogsResponse> = {
+      success: true,
+      data: responseData,
+      timestamp,
+    };
+    res.status(200).json(response);
+  } catch (error) {
+    functions.logger.error("getConsumptionLogs error", error);
+    const response: ApiResponse<null> = {
+      success: false,
+      error: {
+        code: ErrorCodes.FIRESTORE_ERROR,
+        message: error instanceof Error ? error.message : "Unknown error",
+      },
+      timestamp,
+    };
+    res.status(500).json(response);
+  }
+}
+
+// =============================================================================
+// Cloud Functions エクスポート
+// =============================================================================
+
+export const recordConsumptionLog = functions
+  .region(FUNCTIONS_CONFIG.REGION)
+  .runWith({
+    timeoutSeconds: 60,
+    memory: "256MB",
+    serviceAccount: FUNCTIONS_CONFIG.SERVICE_ACCOUNT,
+  })
+  .https.onRequest(recordConsumptionLogHandler);
+
+export const getConsumptionLogs = functions
+  .region(FUNCTIONS_CONFIG.REGION)
+  .runWith({
+    timeoutSeconds: 60,
+    memory: "256MB",
+    serviceAccount: FUNCTIONS_CONFIG.SERVICE_ACCOUNT,
+  })
+  .https.onRequest(getConsumptionLogsHandler);

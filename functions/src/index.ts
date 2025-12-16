@@ -123,3 +123,12 @@ export {
   deletePreset,
   saveAISuggestionAsPreset,
 } from "./functions/presets";
+
+// =============================================================================
+// 消費ログ（Phase 9.2）
+// =============================================================================
+
+export {
+  recordConsumptionLog,
+  getConsumptionLogs,
+} from "./functions/consumptionLogs";

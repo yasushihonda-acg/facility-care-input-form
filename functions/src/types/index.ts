@@ -390,10 +390,21 @@ export type ConsumptionStatus =
 /** 品物ステータス */
 export type ItemStatus =
   | "pending" // 未提供
-  | "served" // 提供済み
-  | "consumed" // 消費済み
+  | "in_progress" // 提供中（一部消費、残量あり）★Phase 9.2
+  | "served" // 提供済み（旧: 互換性のため残す）
+  | "consumed" // 消費完了
   | "expired" // 期限切れ
   | "discarded"; // 廃棄
+
+/** 消費サマリー（CareItemに埋め込み） */
+export interface ConsumptionSummary {
+  totalServed: number; // 累計提供回数
+  totalServedQuantity: number; // 累計提供量
+  totalConsumedQuantity: number; // 累計消費量
+  avgConsumptionRate: number; // 平均摂食率
+  lastServedDate?: string; // 最終提供日
+  lastServedBy?: string; // 最終提供者
+}
 
 /**
  * 品物（Firestore: care_items/{itemId}）
@@ -404,27 +415,35 @@ export interface CareItem {
   residentId: string;
   userId: string;
 
+  // 食品マスタ参照（将来用）
+  foodMasterId?: string;
+
   // 品物基本情報（家族が入力）
   itemName: string;
   category: ItemCategory;
   sentDate: string; // YYYY-MM-DD
-  quantity: number;
+  quantity: number; // 旧: 互換性のため残す
   unit: string;
   expirationDate?: string; // YYYY-MM-DD
   storageMethod?: StorageMethod;
 
+  // 在庫情報（Phase 9.2 追加）
+  initialQuantity?: number; // 初期数量
+  currentQuantity?: number; // 現在の残量★自動更新
+
   // 提供希望（家族が入力）
   servingMethod: ServingMethod;
   servingMethodDetail?: string;
+  preferredServingSchedule?: string; // 提供希望スケジュール
   plannedServeDate?: string; // YYYY-MM-DD
   noteToStaff?: string;
 
-  // 提供記録（スタッフが入力）
+  // 提供記録（スタッフが入力）- 旧: 互換性のため残す
   actualServeDate?: string;
   servedQuantity?: number;
   servedBy?: string;
 
-  // 摂食記録（スタッフが入力）
+  // 摂食記録（スタッフが入力）- 旧: 互換性のため残す
   consumptionRate?: number; // 0-100
   consumptionStatus?: ConsumptionStatus;
   consumptionNote?: string;
@@ -433,9 +452,12 @@ export interface CareItem {
   // 申し送り（スタッフ→家族）
   noteToFamily?: string;
 
+  // 集計キャッシュ（Phase 9.2 追加）
+  consumptionSummary?: ConsumptionSummary;
+
   // ステータス・メタ情報
   status: ItemStatus;
-  remainingQuantity: number;
+  remainingQuantity: number; // 旧: 互換性のため残す
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -527,6 +549,85 @@ export interface RecordConsumptionResponse {
 /** 品物削除リクエスト */
 export interface DeleteCareItemRequest {
   itemId: string;
+}
+
+// =============================================================================
+// 消費ログ (Phase 9.2)
+// =============================================================================
+
+/** 食事時間帯 */
+export type MealTime = "breakfast" | "lunch" | "dinner" | "snack";
+
+/**
+ * 消費ログ（Firestore: care_items/{itemId}/consumption_logs/{logId}）
+ */
+export interface ConsumptionLog {
+  // 識別情報
+  id: string;
+  itemId: string;
+
+  // 提供情報
+  servedDate: string; // YYYY-MM-DD
+  servedTime?: string; // HH:mm
+  mealTime?: MealTime;
+  servedQuantity: number;
+  servedBy: string;
+
+  // 摂食情報
+  consumedQuantity: number;
+  consumptionRate: number; // 0-100
+  consumptionStatus: ConsumptionStatus;
+
+  // 残量情報
+  quantityBefore: number;
+  quantityAfter: number;
+
+  // 特記事項・申し送り
+  consumptionNote?: string;
+  noteToFamily?: string;
+
+  // メタ情報
+  recordedBy: string;
+  recordedAt: Timestamp;
+  updatedAt?: Timestamp;
+  updatedBy?: string;
+}
+
+/** 消費ログ記録リクエスト */
+export interface RecordConsumptionLogRequest {
+  itemId: string;
+  servedDate: string; // YYYY-MM-DD
+  servedTime?: string; // HH:mm
+  mealTime?: MealTime;
+  servedQuantity: number;
+  servedBy: string;
+  consumedQuantity: number;
+  consumptionStatus: ConsumptionStatus;
+  consumptionNote?: string;
+  noteToFamily?: string;
+  recordedBy: string;
+}
+
+/** 消費ログ記録レスポンス */
+export interface RecordConsumptionLogResponse {
+  logId: string;
+  itemId: string;
+  currentQuantity: number; // 更新後の残量
+  status: ItemStatus; // 更新後のステータス
+}
+
+/** 消費ログ一覧取得リクエスト */
+export interface GetConsumptionLogsRequest {
+  itemId: string;
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
+}
+
+/** 消費ログ一覧取得レスポンス */
+export interface GetConsumptionLogsResponse {
+  logs: ConsumptionLog[];
+  total: number;
 }
 
 // =============================================================================
