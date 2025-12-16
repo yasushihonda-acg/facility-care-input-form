@@ -714,7 +714,96 @@ frontend/src/
 
 ---
 
-## 8. 参照資料
+## 8. AI提案UI統合（Phase 8.4拡張）
+
+### 8.1 概要
+
+品物登録フォーム（ItemForm.tsx）にAI提案機能を統合し、品物名入力時に自動で提案を表示します。
+
+### 8.2 ユーザーフロー
+
+```
+1. 家族が「品物名」を入力（2文字以上）
+2. 500msのデバウンス後、AI APIを呼び出し
+3. ローディング表示（「AI が提案を生成中...」）
+4. 提案カードを表示:
+   - 賞味期限目安: N日
+   - 保存方法: 常温/冷蔵/冷凍
+   - おすすめの提供方法: カット、皮むき等
+   - 注意事項（あれば）
+5. 「この提案を適用」ボタンをタップ
+6. フォームに自動入力:
+   - 賞味期限: 今日 + expirationDays
+   - 保存方法: storageMethod
+   - 提供方法: servingMethods[0]
+   - 提供方法の詳細: notes（あれば）
+```
+
+### 8.3 UI仕様
+
+#### AI提案カード
+
+```
+┌─────────────────────────────────────┐
+│ 🤖 AIの提案                         │
+├─────────────────────────────────────┤
+│ 📅 賞味期限目安: 5日                │
+│ 🧊 保存方法: 冷蔵                   │
+│ 🍴 おすすめ: カット、皮むき、温める │
+│ ⚠️ 注意: 種を取り除いてください     │
+├─────────────────────────────────────┤
+│         [この提案を適用]            │
+└─────────────────────────────────────┘
+```
+
+#### 状態別表示
+
+| 状態 | 表示 |
+|------|------|
+| 入力中（<2文字） | 非表示 |
+| ローディング | スピナー + 「AI が提案を生成中...」 |
+| 成功 | 提案カード |
+| エラー | 非表示（サイレント） |
+| フォールバック | 提案カード + 警告アイコン |
+
+### 8.4 実装ファイル
+
+| ファイル | 説明 |
+|----------|------|
+| `frontend/src/components/family/AISuggestion.tsx` | AI提案カードコンポーネント（新規） |
+| `frontend/src/pages/family/ItemForm.tsx` | useAISuggestフック統合（修正） |
+
+### 8.5 適用ロジック
+
+「この提案を適用」ボタン押下時:
+
+```typescript
+const handleApplySuggestion = (suggestion: AISuggestResponse) => {
+  // 賞味期限: 今日 + expirationDays
+  const expirationDate = new Date();
+  expirationDate.setDate(expirationDate.getDate() + suggestion.expirationDays);
+  updateField('expirationDate', expirationDate.toISOString().split('T')[0]);
+
+  // 保存方法
+  if (suggestion.storageMethod) {
+    updateField('storageMethod', suggestion.storageMethod);
+  }
+
+  // 提供方法（最初の1つを選択）
+  if (suggestion.servingMethods?.length > 0) {
+    updateField('servingMethod', suggestion.servingMethods[0]);
+  }
+
+  // 注意事項を提供方法の詳細に設定
+  if (suggestion.notes) {
+    updateField('servingMethodDetail', suggestion.notes);
+  }
+};
+```
+
+---
+
+## 9. 参照資料
 
 - [USER_ROLE_SPEC.md](./USER_ROLE_SPEC.md) - ユーザーロール・権限設計
 - [ITEM_MANAGEMENT_SPEC.md](./ITEM_MANAGEMENT_SPEC.md) - 品物管理詳細設計

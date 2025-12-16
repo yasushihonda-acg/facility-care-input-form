@@ -1,19 +1,22 @@
 /**
  * 品物登録フォーム（家族用）
  * @see docs/ITEM_MANAGEMENT_SPEC.md
+ * @see docs/AI_INTEGRATION_SPEC.md (セクション8: AI提案UI統合)
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
+import { AISuggestion } from '../../components/family/AISuggestion';
 import { useSubmitCareItem } from '../../hooks/useCareItems';
+import { useAISuggest } from '../../hooks/useAISuggest';
 import {
   ITEM_CATEGORIES,
   STORAGE_METHODS,
   SERVING_METHODS,
   ITEM_UNITS,
 } from '../../types/careItem';
-import type { CareItemInput, ItemCategory, StorageMethod, ServingMethod } from '../../types/careItem';
+import type { CareItemInput, ItemCategory, StorageMethod, ServingMethod, AISuggestResponse } from '../../types/careItem';
 
 // デモ用の入居者ID・ユーザーID（将来は認証から取得）
 const DEMO_RESIDENT_ID = 'resident-001';
@@ -38,6 +41,40 @@ export function ItemForm() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // AI提案フック
+  const {
+    suggestion,
+    isLoading: isAISuggesting,
+    warning: aiWarning,
+    fetchSuggestion,
+    clear: clearSuggestion,
+  } = useAISuggest({ minLength: 2, debounceMs: 500 });
+
+  // 品物名変更時にAI提案を取得
+  useEffect(() => {
+    if (formData.itemName.length >= 2) {
+      fetchSuggestion(formData.itemName, formData.category);
+    } else {
+      clearSuggestion();
+    }
+  }, [formData.itemName, formData.category, fetchSuggestion, clearSuggestion]);
+
+  // AI提案を適用
+  const handleApplySuggestion = useCallback((aiSuggestion: AISuggestResponse) => {
+    // 賞味期限: 今日 + expirationDays
+    const expirationDate = new Date();
+    expirationDate.setDate(expirationDate.getDate() + aiSuggestion.expirationDays);
+    const expirationDateStr = expirationDate.toISOString().split('T')[0];
+
+    setFormData((prev) => ({
+      ...prev,
+      expirationDate: expirationDateStr,
+      storageMethod: aiSuggestion.storageMethod,
+      servingMethod: aiSuggestion.servingMethods?.[0] || prev.servingMethod,
+      servingMethodDetail: aiSuggestion.notes || prev.servingMethodDetail,
+    }));
+  }, []);
 
   // フィールド更新
   const updateField = <K extends keyof CareItemInput>(
@@ -124,6 +161,13 @@ export function ItemForm() {
             {errors.itemName && (
               <p className="mt-1 text-sm text-red-500">{errors.itemName}</p>
             )}
+            {/* AI提案カード */}
+            <AISuggestion
+              suggestion={suggestion}
+              isLoading={isAISuggesting}
+              warning={aiWarning}
+              onApply={handleApplySuggestion}
+            />
           </div>
 
           {/* カテゴリ */}
