@@ -17,26 +17,15 @@ import {
   DEMO_CARE_INSTRUCTIONS,
 } from '../../data/demoFamilyData';
 import { useDailyMealRecords } from '../../hooks/useFamilyMealRecords';
-import { useTaskBadgeCount } from '../../hooks/useTasks';
-import { useCareItemCounts } from '../../hooks/useCareItems';
 
 /** 食事タイミングの順序（表示順） */
 const MEAL_TIME_ORDER: MealTime[] = ['breakfast', 'lunch', 'snack', 'dinner'];
-
-// デモ用の入居者ID（将来は認証から取得）
-const DEMO_RESIDENT_ID = 'resident-001';
 
 export function FamilyDashboard() {
   const [selectedDate, setSelectedDate] = useState<string>(getTodayString());
 
   // 食事シートから当日の実績データを取得（予実管理）
   const { records: mealResults, isLoading } = useDailyMealRecords(selectedDate);
-
-  // タスクバッジカウント取得
-  const { count: taskCount, hasOverdue } = useTaskBadgeCount(DEMO_RESIDENT_ID);
-
-  // 品物カウント取得
-  const { counts: itemCounts } = useCareItemCounts(DEMO_RESIDENT_ID);
 
   // 日付の前後移動
   const handlePrevDay = () => {
@@ -128,67 +117,6 @@ export function FamilyDashboard() {
       }
     >
       <div className="pb-4">
-        {/* クイックリンク（タスク・品物管理・統計） */}
-        <div className="grid grid-cols-3 gap-3 mb-4">
-          {/* タスク管理 */}
-          <Link
-            to="/family/tasks"
-            className={`relative bg-white rounded-lg shadow-card p-3 hover:shadow-md transition flex flex-col items-center gap-1 ${
-              hasOverdue ? 'ring-2 ring-red-300' : ''
-            }`}
-          >
-            <div className="text-2xl">📋</div>
-            <p className="font-medium text-xs text-center">タスク</p>
-            <p className="text-[10px] text-gray-500 text-center">
-              {taskCount > 0 ? `${taskCount}件` : 'なし'}
-            </p>
-            {taskCount > 0 && (
-              <span className={`absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold text-white ${
-                hasOverdue ? 'bg-red-500' : 'bg-blue-500'
-              }`}>
-                {taskCount}
-              </span>
-            )}
-          </Link>
-
-          {/* 品物管理 */}
-          <Link
-            to="/family/items"
-            className="relative bg-white rounded-lg shadow-card p-3 hover:shadow-md transition flex flex-col items-center gap-1"
-          >
-            <div className="text-2xl">📦</div>
-            <p className="font-medium text-xs text-center">品物管理</p>
-            <p className="text-[10px] text-gray-500 text-center">
-              {itemCounts.pending > 0 ? `${itemCounts.pending}件` : 'なし'}
-            </p>
-            {itemCounts.pending > 0 && (
-              <span className="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold text-white bg-orange-500">
-                {itemCounts.pending}
-              </span>
-            )}
-          </Link>
-
-          {/* 統計 */}
-          <Link
-            to="/family/stats"
-            className="relative bg-white rounded-lg shadow-card p-3 hover:shadow-md transition flex flex-col items-center gap-1"
-          >
-            <div className="text-2xl">📊</div>
-            <p className="font-medium text-xs text-center">統計</p>
-            <p className="text-[10px] text-gray-500 text-center">状況確認</p>
-          </Link>
-
-          {/* いつもの指示 */}
-          <Link
-            to="/family/presets"
-            className="relative bg-white rounded-lg shadow-card p-3 hover:shadow-md transition flex flex-col items-center gap-1"
-          >
-            <div className="text-2xl">📋</div>
-            <p className="font-medium text-xs text-center">指示</p>
-            <p className="text-[10px] text-gray-500 text-center">プリセット</p>
-          </Link>
-        </div>
-
         {/* 日付セレクター */}
         <div className="bg-white rounded-lg shadow-card p-3 mb-4">
           <p className="text-center text-sm text-gray-500 mb-2">

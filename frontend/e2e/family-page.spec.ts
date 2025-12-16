@@ -47,22 +47,6 @@ test.describe('家族ページ基本動作', () => {
     await expect(page).toHaveURL(/\/family\/items/);
   });
 
-  test('家族ホームにクイックリンクが表示される', async ({ page }) => {
-    await page.goto('/family');
-
-    // クイックリンクカードの確認（メインコンテンツ内）
-    const mainContent = page.locator('main, .pb-4').first();
-
-    // タスクリンク
-    await expect(mainContent.locator('text=タスク').first()).toBeVisible();
-
-    // 品物管理リンク（クイックリンクカード）
-    await expect(mainContent.getByRole('link', { name: /品物管理/ }).first()).toBeVisible();
-
-    // 統計リンク
-    await expect(mainContent.locator('text=統計').first()).toBeVisible();
-  });
-
   test('日付セレクターが表示され機能する', async ({ page }) => {
     await page.goto('/family');
 
@@ -156,7 +140,7 @@ test.describe('タスク一覧ページ', () => {
 });
 
 test.describe('共有ビュー from 家族ページ', () => {
-  test('記録閲覧ページに遷移できる', async ({ page }) => {
+  test('記録閲覧ページに遷移しても家族用フッターが維持される', async ({ page }) => {
     await page.goto('/family');
 
     // フッターから記録閲覧をクリック
@@ -164,16 +148,22 @@ test.describe('共有ビュー from 家族ページ', () => {
 
     // /viewに遷移
     await expect(page).toHaveURL('/view');
+
+    // 家族用フッターが維持されている
+    await expect(page.locator('nav[aria-label="家族用ナビゲーション"]')).toBeVisible();
   });
 
-  test('統計ページに遷移できる', async ({ page }) => {
+  test('統計ページに遷移しても家族用フッターが維持される', async ({ page }) => {
     await page.goto('/family');
 
     // フッターから統計をクリック
     await page.locator('nav[aria-label="家族用ナビゲーション"]').getByText('統計').click();
 
-    // /statsにリダイレクト
+    // /statsに遷移
     await expect(page).toHaveURL('/stats');
+
+    // 家族用フッターが維持されている
+    await expect(page.locator('nav[aria-label="家族用ナビゲーション"]')).toBeVisible();
   });
 });
 

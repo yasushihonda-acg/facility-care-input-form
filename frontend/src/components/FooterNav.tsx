@@ -1,27 +1,49 @@
+import { useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 
 interface FooterNavProps {
   className?: string;
 }
 
+const USER_ROLE_KEY = 'userRole';
+const SHARED_PATHS = ['/view', '/stats', '/items'];
+
 /**
  * フッターナビゲーション
  *
  * ロール別に異なるタブ構成を表示
  * - スタッフ用: [記録閲覧] [記録入力] [家族連絡] [統計]
- * - 家族用: [ホーム] [品物管理] [ケア指示] [統計]
+ * - 家族用: [ホーム] [品物管理] [記録閲覧] [統計]
  *
- * @see docs/USER_ROLE_SPEC.md - セクション3「ページ構成」
+ * 共有ビュー（/view, /stats）にいる場合は、直前のロールを維持
+ *
+ * @see docs/VIEW_ARCHITECTURE_SPEC.md - セクション3「フッターナビゲーション設計」
  * @see docs/FOOTER_NAVIGATION_SPEC.md
  */
 export function FooterNav({ className = '' }: FooterNavProps) {
   const location = useLocation();
 
-  // /family パス配下かどうかを判定
+  // パスからロールを判定
   const isFamilyPath = location.pathname.startsWith('/family');
+  const isStaffPath = location.pathname.startsWith('/staff') || location.pathname.startsWith('/input');
+  const isSharedPath = SHARED_PATHS.some(p => location.pathname === p || location.pathname.startsWith(p + '/'));
+
+  // ロールを保存・取得
+  useEffect(() => {
+    if (isFamilyPath) {
+      localStorage.setItem(USER_ROLE_KEY, 'family');
+    } else if (isStaffPath) {
+      localStorage.setItem(USER_ROLE_KEY, 'staff');
+    }
+    // 共有パスの場合は保存しない（既存のロールを維持）
+  }, [isFamilyPath, isStaffPath]);
+
+  // 表示するフッターを決定
+  const savedRole = localStorage.getItem(USER_ROLE_KEY) || 'staff';
+  const showFamilyFooter = isFamilyPath || (isSharedPath && savedRole === 'family');
 
   // 家族用フッター
-  if (isFamilyPath) {
+  if (showFamilyFooter) {
     return (
       <nav
         role="navigation"
@@ -142,9 +164,9 @@ export function FooterNav({ className = '' }: FooterNavProps) {
             )}
           </NavLink>
 
-          {/* 統計タブ */}
+          {/* 統計タブ（共有ビュー） */}
           <NavLink
-            to="/family/stats"
+            to="/stats"
             className={({ isActive }) => `
               flex-1 flex flex-col items-center justify-center gap-1 relative transition-all duration-200
               ${isActive
