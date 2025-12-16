@@ -369,3 +369,62 @@ export const SERVING_METHOD_LABELS: Record<ServingMethod, string> = {
   blended: 'ミキサー',
   other: 'その他',
 };
+
+// =============================================================================
+// プリセット統合 (Phase 8.5)
+// =============================================================================
+
+/** プリセットマッチタイプ */
+export type PresetMatchType = 'category' | 'itemName' | 'keyword';
+
+/** プリセット候補取得リクエスト */
+export interface GetPresetSuggestionsRequest {
+  residentId: string;
+  itemName: string;
+  category?: ItemCategory;
+}
+
+/** プリセット候補（マッチ結果） */
+export interface PresetSuggestion {
+  presetId: string;
+  presetName: string;
+  matchReason: string;
+  matchType: PresetMatchType;
+  confidence: number;
+  instruction: {
+    title: string;
+    content: string;
+    servingMethod?: ServingMethod;
+    servingDetail?: string;
+  };
+}
+
+/** プリセット候補取得レスポンス */
+export interface GetPresetSuggestionsResponse {
+  success: boolean;
+  data?: {
+    suggestions: PresetSuggestion[];
+  };
+  error?: string;
+}
+
+/** CareItemInput 拡張フィールド（指示の出所追跡） */
+export type InstructionSource = 'ai' | 'preset' | 'manual' | 'mixed';
+
+/** 拡張版 CareItemInput（プリセット適用情報付き） */
+export interface CareItemInputExtended extends CareItemInput {
+  appliedPresetIds?: string[];
+  aiSuggestionApplied?: boolean;
+  instructionSource?: InstructionSource;
+}
+
+/** カテゴリラベルマップ（プリセットマッチ理由表示用） */
+export const CATEGORY_LABELS: Record<ItemCategory, string> = {
+  fruit: '果物',
+  snack: 'お菓子・間食',
+  drink: '飲み物',
+  dairy: '乳製品',
+  prepared: '調理済み食品',
+  supplement: '栄養補助食品',
+  other: 'その他',
+};

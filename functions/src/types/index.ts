@@ -819,3 +819,78 @@ export const DEFAULT_AI_SUGGESTION: AISuggestResponse = {
   servingMethods: ["as_is"],
   notes: undefined,
 };
+
+// =============================================================================
+// プリセット統合 Types (Phase 8.5)
+// docs/AI_INTEGRATION_SPEC.md セクション9 に基づく型定義
+// =============================================================================
+
+/** プリセットマッチタイプ */
+export type PresetMatchType = "category" | "itemName" | "keyword";
+
+/** プリセット候補取得リクエスト */
+export interface GetPresetSuggestionsRequest {
+  residentId: string;
+  itemName: string;
+  category?: ItemCategory;
+}
+
+/** プリセット候補（マッチ結果） */
+export interface PresetSuggestion {
+  presetId: string;
+  presetName: string;
+  matchReason: string;
+  matchType: PresetMatchType;
+  confidence: number;
+  instruction: {
+    title: string;
+    content: string;
+    servingMethod?: ServingMethod;
+    servingDetail?: string;
+  };
+}
+
+/** プリセット候補取得レスポンス */
+export interface GetPresetSuggestionsResponse {
+  suggestions: PresetSuggestion[];
+}
+
+/**
+ * ケア指示プリセット（Firestore: care_presets/{presetId}）
+ * 家族が作成した「いつもの指示」パターン
+ */
+export interface CarePreset {
+  id: string;
+  residentId: string;
+  userId: string;
+
+  // プリセット情報
+  presetName: string;
+  title: string;
+  content: string;
+
+  // マッチング用フィールド
+  targetCategories?: ItemCategory[];
+  keywords?: string[];
+
+  // 適用時の設定
+  servingMethod?: ServingMethod;
+  servingDetail?: string;
+
+  // メタ情報
+  isActive: boolean;
+  usageCount: number;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/** カテゴリラベル（マッチ理由表示用） */
+export const CATEGORY_LABELS: Record<ItemCategory, string> = {
+  fruit: "果物",
+  snack: "お菓子・間食",
+  drink: "飲み物",
+  dairy: "乳製品",
+  prepared: "調理済み食品",
+  supplement: "栄養補助食品",
+  other: "その他",
+};

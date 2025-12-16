@@ -1,22 +1,31 @@
 /**
  * 品物登録フォーム（家族用）
  * @see docs/ITEM_MANAGEMENT_SPEC.md
- * @see docs/AI_INTEGRATION_SPEC.md (セクション8: AI提案UI統合)
+ * @see docs/AI_INTEGRATION_SPEC.md (セクション8: AI提案UI統合, セクション9: プリセット統合)
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import { AISuggestion } from '../../components/family/AISuggestion';
+import { PresetSuggestion } from '../../components/family/PresetSuggestion';
 import { useSubmitCareItem } from '../../hooks/useCareItems';
 import { useAISuggest } from '../../hooks/useAISuggest';
+import { usePresetSuggestions } from '../../hooks/usePresetSuggestions';
 import {
   ITEM_CATEGORIES,
   STORAGE_METHODS,
   SERVING_METHODS,
   ITEM_UNITS,
 } from '../../types/careItem';
-import type { CareItemInput, ItemCategory, StorageMethod, ServingMethod, AISuggestResponse } from '../../types/careItem';
+import type {
+  CareItemInput,
+  ItemCategory,
+  StorageMethod,
+  ServingMethod,
+  AISuggestResponse,
+  PresetSuggestion as PresetSuggestionType,
+} from '../../types/careItem';
 
 // デモ用の入居者ID・ユーザーID（将来は認証から取得）
 const DEMO_RESIDENT_ID = 'resident-001';
@@ -51,14 +60,24 @@ export function ItemForm() {
     clear: clearSuggestion,
   } = useAISuggest({ minLength: 2, debounceMs: 500 });
 
-  // 品物名変更時にAI提案を取得
+  // プリセット提案フック
+  const {
+    suggestions: presetSuggestions,
+    isLoading: isPresetLoading,
+    fetchSuggestions: fetchPresetSuggestions,
+    clear: clearPresetSuggestions,
+  } = usePresetSuggestions(DEMO_RESIDENT_ID, { minLength: 2, debounceMs: 500 });
+
+  // 品物名変更時にAI提案・プリセット候補を取得
   useEffect(() => {
     if (formData.itemName.length >= 2) {
       fetchSuggestion(formData.itemName, formData.category);
+      fetchPresetSuggestions(formData.itemName, formData.category);
     } else {
       clearSuggestion();
+      clearPresetSuggestions();
     }
-  }, [formData.itemName, formData.category, fetchSuggestion, clearSuggestion]);
+  }, [formData.itemName, formData.category, fetchSuggestion, clearSuggestion, fetchPresetSuggestions, clearPresetSuggestions]);
 
   // AI提案を適用
   const handleApplySuggestion = useCallback((aiSuggestion: AISuggestResponse) => {
@@ -73,6 +92,25 @@ export function ItemForm() {
       storageMethod: aiSuggestion.storageMethod,
       servingMethod: aiSuggestion.servingMethods?.[0] || prev.servingMethod,
       servingMethodDetail: aiSuggestion.notes || prev.servingMethodDetail,
+    }));
+  }, []);
+
+  // プリセット提案を適用
+  const handleApplyPreset = useCallback((preset: PresetSuggestionType) => {
+    setFormData((prev) => ({
+      ...prev,
+      // 提供方法（あれば）
+      ...(preset.instruction.servingMethod && {
+        servingMethod: preset.instruction.servingMethod,
+      }),
+      // 提供方法の詳細（あれば）
+      ...(preset.instruction.servingDetail && {
+        servingMethodDetail: preset.instruction.servingDetail,
+      }),
+      // スタッフへの申し送り（指示内容を追加）
+      noteToStaff: prev.noteToStaff
+        ? `${prev.noteToStaff}\n\n【いつもの指示】${preset.instruction.content}`
+        : `【いつもの指示】${preset.instruction.content}`,
     }));
   }, []);
 
@@ -167,6 +205,12 @@ export function ItemForm() {
               isLoading={isAISuggesting}
               warning={aiWarning}
               onApply={handleApplySuggestion}
+            />
+            {/* プリセット提案カード */}
+            <PresetSuggestion
+              suggestions={presetSuggestions}
+              isLoading={isPresetLoading}
+              onApply={handleApplyPreset}
             />
           </div>
 

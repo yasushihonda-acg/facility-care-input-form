@@ -105,3 +105,9 @@ export {getStats} from "./functions/getStats";
 // =============================================================================
 
 export {aiSuggest} from "./functions/aiSuggest";
+
+// =============================================================================
+// プリセット統合（Phase 8.5）
+// =============================================================================
+
+export {getPresetSuggestions} from "./functions/getPresetSuggestions";

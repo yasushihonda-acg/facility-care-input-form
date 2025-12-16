@@ -830,10 +830,441 @@ const handleApplySuggestion = (suggestion: AISuggestResponse) => {
 
 ---
 
-## 9. 参照資料
+## 9. プリセット統合（Phase 8.5）
+
+### 9.1 概要
+
+品物登録フォームのAI提案に加えて、「いつもの指示（プリセット）」を統合表示します。
+これにより、家族はワンストップで品物情報とケア指示を設定できます。
+
+**関連ドキュメント**: [MOE_ANALYSIS_ITEM_CARE_INTEGRATION.md](./MOE_ANALYSIS_ITEM_CARE_INTEGRATION.md)
+
+### 9.2 設計背景
+
+現状の問題:
+- 品物登録（ItemForm）とケア指示（RequestBuilder）が別画面
+- 家族が2箇所で類似情報を管理する認知負荷
+- スタッフが両方を確認する必要
+
+解決策:
+- 品物登録時にプリセットを表示・適用可能に
+- AI提案とプリセットを並列表示
+- ワンストップで設定完了
+
+### 9.3 ユーザーフロー
+
+```
+1. 家族が「品物名」を入力（例: キウイ）
+2. 同時にAPI呼び出し:
+   - AI提案API（aiSuggest）
+   - プリセット候補API（getPresetSuggestions）← 新規
+3. 2つの提案カードを表示:
+
+   ┌──────────────────────────────────────┐
+   │ 🤖 AIの提案                          │
+   │ 📅 賞味期限目安: 7日                 │
+   │ 🧊 保存方法: 冷蔵                    │
+   │ 🍴 おすすめ: カット、皮むき          │
+   │          [この提案を適用]             │
+   └──────────────────────────────────────┘
+
+   ┌──────────────────────────────────────┐
+   │ 📌 いつもの指示                       │
+   │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+   │ 🍎 果物は一口大にカット               │
+   │    マッチ理由: カテゴリ「果物」        │
+   │          [この指示を適用]             │
+   │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+   │ 🕐 朝食時に提供                       │
+   │    マッチ理由: 品物名「キウイ」        │
+   │          [この指示を適用]             │
+   └──────────────────────────────────────┘
+
+4. 家族が任意のボタンをタップ
+5. フォームに自動入力
+6. 「指示の出所」を記録（ai / preset / manual / mixed）
+```
+
+### 9.4 API仕様
+
+#### プリセット候補取得API
+
+```
+POST /getPresetSuggestions
+```
+
+**リクエスト**:
+```typescript
+interface PresetSuggestRequest {
+  residentId: string;
+  itemName: string;
+  category?: ItemCategory;
+}
+```
+
+**レスポンス**:
+```typescript
+interface PresetSuggestResponse {
+  success: boolean;
+  data?: PresetSuggestion[];
+  error?: string;
+}
+
+interface PresetSuggestion {
+  presetId: string;           // プリセットID
+  presetName: string;         // プリセット名
+  matchReason: string;        // マッチ理由（表示用）
+  matchType: 'category' | 'itemName' | 'keyword';  // マッチタイプ
+  confidence: number;         // マッチ度（0-1）
+  instruction: {
+    title: string;            // 指示タイトル
+    content: string;          // 指示内容
+    servingMethod?: ServingMethod;  // 提供方法（あれば）
+    servingDetail?: string;   // 提供詳細（あれば）
+  };
+}
+```
+
+#### マッチングロジック
+
+```typescript
+// functions/src/functions/getPresetSuggestions.ts
+
+function matchPresets(
+  presets: CareInstruction[],
+  itemName: string,
+  category?: ItemCategory
+): PresetSuggestion[] {
+  const suggestions: PresetSuggestion[] = [];
+
+  for (const preset of presets) {
+    // 1. カテゴリマッチ
+    if (category && preset.targetCategories?.includes(category)) {
+      suggestions.push({
+        presetId: preset.id,
+        presetName: preset.presetName || preset.title,
+        matchReason: `カテゴリ「${CATEGORY_LABELS[category]}」`,
+        matchType: 'category',
+        confidence: 0.8,
+        instruction: {
+          title: preset.title,
+          content: preset.content,
+          servingMethod: preset.servingMethod,
+          servingDetail: preset.servingDetail,
+        },
+      });
+    }
+
+    // 2. 品物名マッチ（キーワード部分一致）
+    if (preset.keywords?.some(kw => itemName.includes(kw) || kw.includes(itemName))) {
+      suggestions.push({
+        presetId: preset.id,
+        presetName: preset.presetName || preset.title,
+        matchReason: `品物名「${itemName}」`,
+        matchType: 'itemName',
+        confidence: 0.9,
+        instruction: {
+          title: preset.title,
+          content: preset.content,
+          servingMethod: preset.servingMethod,
+          servingDetail: preset.servingDetail,
+        },
+      });
+    }
+
+    // 3. コンテンツキーワードマッチ
+    if (preset.content.includes(itemName)) {
+      suggestions.push({
+        presetId: preset.id,
+        presetName: preset.presetName || preset.title,
+        matchReason: `指示内容に「${itemName}」を含む`,
+        matchType: 'keyword',
+        confidence: 0.7,
+        instruction: {
+          title: preset.title,
+          content: preset.content,
+          servingMethod: preset.servingMethod,
+          servingDetail: preset.servingDetail,
+        },
+      });
+    }
+  }
+
+  // confidence降順でソート、最大3件
+  return suggestions
+    .sort((a, b) => b.confidence - a.confidence)
+    .slice(0, 3);
+}
+```
+
+### 9.5 データモデル拡張
+
+#### CareInstruction（プリセット）拡張
+
+```typescript
+// 既存の CareInstruction に追加
+interface CareInstruction {
+  // ... 既存フィールド
+
+  // プリセットマッチング用（新規追加）
+  targetCategories?: ItemCategory[];  // 対象カテゴリ
+  keywords?: string[];                // マッチキーワード
+  servingMethod?: ServingMethod;      // 提供方法
+  servingDetail?: string;             // 提供詳細
+}
+```
+
+#### CareItemInput 拡張
+
+```typescript
+// 既存の CareItemInput に追加
+interface CareItemInput {
+  // ... 既存フィールド
+
+  // 指示の出所追跡（新規追加）
+  appliedPresetIds?: string[];        // 適用したプリセットID群
+  aiSuggestionApplied?: boolean;      // AI提案適用フラグ
+  instructionSource?: 'ai' | 'preset' | 'manual' | 'mixed';  // 指示の出所
+}
+```
+
+### 9.6 フロントエンド実装
+
+#### PresetSuggestion コンポーネント
+
+```typescript
+// frontend/src/components/family/PresetSuggestion.tsx
+
+interface PresetSuggestionProps {
+  suggestions: PresetSuggestion[] | null;
+  isLoading: boolean;
+  onApply: (suggestion: PresetSuggestion) => void;
+}
+
+function PresetSuggestion({ suggestions, isLoading, onApply }: PresetSuggestionProps) {
+  const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set());
+
+  if (isLoading) {
+    return (
+      <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+        <div className="flex items-center gap-2 text-amber-600">
+          <span className="animate-pulse">📌</span>
+          <span className="text-sm">いつもの指示を検索中...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!suggestions || suggestions.length === 0) {
+    return null;
+  }
+
+  const handleApply = (suggestion: PresetSuggestion) => {
+    onApply(suggestion);
+    setAppliedIds(prev => new Set([...prev, suggestion.presetId]));
+  };
+
+  return (
+    <div className="mt-2 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg overflow-hidden">
+      {/* ヘッダー */}
+      <div className="px-3 py-2 bg-gradient-to-r from-amber-100 to-orange-100 border-b border-amber-200">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">📌</span>
+          <span className="text-sm font-medium text-amber-800">いつもの指示</span>
+          <span className="text-xs text-amber-600 ml-auto">{suggestions.length}件</span>
+        </div>
+      </div>
+
+      {/* プリセット一覧 */}
+      <div className="divide-y divide-amber-100">
+        {suggestions.map((suggestion) => (
+          <div key={suggestion.presetId} className="p-3">
+            <div className="flex items-start gap-2">
+              <span className="text-gray-500">
+                {suggestion.matchType === 'category' ? '🏷️' :
+                 suggestion.matchType === 'itemName' ? '📝' : '🔍'}
+              </span>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-800">
+                  {suggestion.instruction.title}
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {suggestion.matchReason}
+                </p>
+                {suggestion.instruction.content && (
+                  <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                    {suggestion.instruction.content}
+                  </p>
+                )}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleApply(suggestion)}
+              disabled={appliedIds.has(suggestion.presetId)}
+              className={`mt-2 w-full py-1.5 text-xs font-medium rounded transition-all ${
+                appliedIds.has(suggestion.presetId)
+                  ? 'bg-green-500 text-white cursor-default'
+                  : 'bg-amber-500 hover:bg-amber-600 text-white active:scale-95'
+              }`}
+            >
+              {appliedIds.has(suggestion.presetId) ? '✓ 適用済み' : 'この指示を適用'}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+#### usePresetSuggestions フック
+
+```typescript
+// frontend/src/hooks/usePresetSuggestions.ts
+
+import { useQuery } from '@tanstack/react-query';
+import { getPresetSuggestions } from '../api';
+
+interface UsePresetSuggestionsOptions {
+  minLength?: number;
+  debounceMs?: number;
+}
+
+export function usePresetSuggestions(
+  residentId: string,
+  itemName: string,
+  category?: ItemCategory,
+  options: UsePresetSuggestionsOptions = {}
+) {
+  const { minLength = 2, debounceMs = 500 } = options;
+  const [debouncedName, setDebouncedName] = useState(itemName);
+
+  // デバウンス処理
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedName(itemName);
+    }, debounceMs);
+    return () => clearTimeout(timer);
+  }, [itemName, debounceMs]);
+
+  return useQuery({
+    queryKey: ['presetSuggestions', residentId, debouncedName, category],
+    queryFn: () => getPresetSuggestions({ residentId, itemName: debouncedName, category }),
+    enabled: debouncedName.length >= minLength && !!residentId,
+    staleTime: 1000 * 60 * 5, // 5分キャッシュ
+  });
+}
+```
+
+#### ItemForm.tsx 統合
+
+```typescript
+// frontend/src/pages/family/ItemForm.tsx（抜粋）
+
+// フック追加
+const {
+  data: presetSuggestions,
+  isLoading: isPresetLoading,
+} = usePresetSuggestions(DEMO_RESIDENT_ID, formData.itemName, formData.category);
+
+// プリセット適用ハンドラ追加
+const handleApplyPreset = useCallback((preset: PresetSuggestion) => {
+  setFormData((prev) => ({
+    ...prev,
+    // 提供方法（あれば）
+    ...(preset.instruction.servingMethod && {
+      servingMethod: preset.instruction.servingMethod,
+    }),
+    // 提供方法の詳細（あれば）
+    ...(preset.instruction.servingDetail && {
+      servingMethodDetail: preset.instruction.servingDetail,
+    }),
+    // スタッフへの申し送り（指示内容を追加）
+    noteToStaff: prev.noteToStaff
+      ? `${prev.noteToStaff}\n\n【いつもの指示】${preset.instruction.content}`
+      : `【いつもの指示】${preset.instruction.content}`,
+    // 適用済みプリセットID記録
+    appliedPresetIds: [...(prev.appliedPresetIds || []), preset.presetId],
+    // 指示の出所更新
+    instructionSource: prev.aiSuggestionApplied ? 'mixed' : 'preset',
+  }));
+}, []);
+
+// JSX（品物名入力の下に追加）
+<AISuggestion
+  suggestion={suggestion}
+  isLoading={isAISuggesting}
+  warning={aiWarning}
+  onApply={handleApplySuggestion}
+/>
+<PresetSuggestion
+  suggestions={presetSuggestions?.data}
+  isLoading={isPresetLoading}
+  onApply={handleApplyPreset}
+/>
+```
+
+### 9.7 統合UI仕様
+
+#### 表示順序
+
+```
+品物名入力欄
+    │
+    ├── AI提案カード（紫/青グラデーション）
+    │     └── 賞味期限・保存方法・提供方法
+    │
+    └── プリセット提案カード（琥珀/オレンジグラデーション）
+          └── マッチしたプリセット一覧
+```
+
+#### 併用時の動作
+
+| 操作 | instructionSource |
+|------|-------------------|
+| AI提案のみ適用 | `'ai'` |
+| プリセットのみ適用 | `'preset'` |
+| 両方適用 | `'mixed'` |
+| 手動入力のみ | `'manual'` |
+
+#### 矛盾検出（将来実装）
+
+AI提案とプリセットで矛盾がある場合の警告表示:
+
+```
+⚠️ 注意: AIは「冷蔵」、プリセットは「常温」を推奨しています
+```
+
+### 9.8 実装チェックリスト
+
+**バックエンド**:
+- [ ] `getPresetSuggestions.ts` 新規作成
+- [ ] `functions/src/index.ts` にエクスポート追加
+- [ ] `CareInstruction` 型拡張（targetCategories, keywords）
+- [ ] Firestoreインデックス追加（必要に応じて）
+
+**フロントエンド**:
+- [ ] `PresetSuggestion.tsx` 新規作成
+- [ ] `usePresetSuggestions.ts` 新規作成
+- [ ] `api/index.ts` にAPI関数追加
+- [ ] `ItemForm.tsx` 統合
+- [ ] `CareItemInput` 型拡張
+
+**テスト**:
+- [ ] プリセットなしの場合の表示確認
+- [ ] AI提案のみの場合の動作確認
+- [ ] プリセットのみの場合の動作確認
+- [ ] 両方適用の場合の動作確認
+- [ ] 空白残りなしの確認
+
+---
+
+## 10. 参照資料
 
 - [USER_ROLE_SPEC.md](./USER_ROLE_SPEC.md) - ユーザーロール・権限設計
 - [ITEM_MANAGEMENT_SPEC.md](./ITEM_MANAGEMENT_SPEC.md) - 品物管理詳細設計
 - [STATS_DASHBOARD_SPEC.md](./STATS_DASHBOARD_SPEC.md) - 統計ダッシュボード設計
+- [MOE_ANALYSIS_ITEM_CARE_INTEGRATION.md](./MOE_ANALYSIS_ITEM_CARE_INTEGRATION.md) - MoE複眼チェック分析
 - [Vertex AI Documentation](https://cloud.google.com/vertex-ai/docs)
 - [Gemini API Reference](https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/gemini)
