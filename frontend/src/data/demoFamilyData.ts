@@ -34,11 +34,15 @@ export const DEMO_FAMILY_USER: FamilyUser = {
 
 // ============================================
 // プリセット設定（蒲池様FAX内容に基づく）
-// @see docs/PRESET_MANAGEMENT_SPEC.md - セクション4.1「蒲池様プリセット」
+// @see docs/PRESET_MANAGEMENT_SPEC.md - セクション3「初期プリセットデータ」
+//
+// 重要: プリセットには「品物のみ」を登録
+// - 禁止ルール（「〇〇は出さない」）は登録対象外
+// - 複数品物（黒砂糖・チーズ）は単品ごとに分離
 // ============================================
 
 export const DEMO_PRESETS: CarePreset[] = [
-  // カット・加工系
+  // カット・加工系（category: 'cut'）
   {
     id: 'preset-kiwi',
     name: 'キウイ（8等分・半月切り）',
@@ -48,7 +52,7 @@ export const DEMO_PRESETS: CarePreset[] = [
   },
   {
     id: 'preset-persimmon',
-    name: '熟した柿（柔らかい部分も捨てずに）',
+    name: '柿（熟した部分も捨てずに）',
     processingDetail:
       '熟して柔らかくなった部分も捨てずに提供してください。\nご本人の好物です。\n皮をむいて食べやすい大きさにカット。',
     icon: '🍑',
@@ -60,7 +64,7 @@ export const DEMO_PRESETS: CarePreset[] = [
       '煮汁をしっかり切ってから器に盛り付けてください。\n汁気が多いとこぼれやすいため。',
     icon: '⚫',
   },
-  // 提供方法系
+  // 提供方法系（category: 'serve'）
   {
     id: 'preset-rakkyo',
     name: 'らっきょう（冷・小皿で提供）',
@@ -68,6 +72,7 @@ export const DEMO_PRESETS: CarePreset[] = [
       'らっきょうは冷たいまま小皿で提供してください。\n常温で放置しないでください。\n提供直前まで冷蔵庫で保管をお願いします。',
     icon: '🧅',
   },
+  // 条件付きロジック系（category: 'condition'）
   {
     id: 'preset-mikan',
     name: 'みかん（未剥離残食は→おやつへ再提供）',
@@ -75,20 +80,20 @@ export const DEMO_PRESETS: CarePreset[] = [
       '皮を剥かずに残した場合は、おやつの時間に再度提供してください。\n剥いた状態で残した場合は廃棄。',
     icon: '🍊',
   },
-  // 禁止・制限系
+  // 単品分離系：「黒砂糖・チーズは指定日以外禁止」を分離
   {
-    id: 'preset-shichifuku-ban',
-    name: '七福のお菓子は出さない',
+    id: 'preset-kurozato',
+    name: '黒砂糖（指定日のみ提供可）',
     processingDetail:
-      '七福（しちふく）のお菓子は提供禁止です。\nご家族からの指定により。',
-    icon: '🈲',
+      'ご家族が指定した日のみ提供してください。\n指定日以外は提供しないでください。\n不明な場合はご家族に確認を。',
+    icon: '🍬',
   },
   {
-    id: 'preset-kurozato-cheese',
-    name: '黒砂糖・チーズは指定日以外禁止',
+    id: 'preset-cheese',
+    name: 'チーズ（指定日のみ提供可）',
     processingDetail:
-      '黒砂糖・チーズはご家族が指定した日のみ提供可能です。\n指定日以外は絶対に提供しないでください。\n不明な場合はご家族に確認を。',
-    icon: '⚠️',
+      'ご家族が指定した日のみ提供してください。\n指定日以外は提供しないでください。\n不明な場合はご家族に確認を。',
+    icon: '🧀',
   },
 ];
 

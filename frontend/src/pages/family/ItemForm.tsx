@@ -4,7 +4,7 @@
  * @see docs/AI_INTEGRATION_SPEC.md (セクション8: AI提案UI統合, セクション9: プリセット統合)
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import { AISuggestion } from '../../components/family/AISuggestion';
@@ -55,23 +55,22 @@ export function ItemForm() {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [pendingAISuggestion, setPendingAISuggestion] = useState<AISuggestResponse | null>(null);
 
-  // AI提案フック（品物名の手入力時のみ発動）
+  // AI提案フック（ボタン押下で発動）
+  // @see docs/ITEM_MANAGEMENT_SPEC.md - 手入力 + AI提案フロー
   const {
     suggestion,
     isLoading: isAISuggesting,
     warning: aiWarning,
     fetchSuggestion,
     clear: clearSuggestion,
-  } = useAISuggest({ minLength: 2, debounceMs: 500 });
+  } = useAISuggest({ minLength: 2, debounceMs: 0 }); // debounce不要（ボタン発動）
 
-  // 品物名変更時にAI提案を取得（手入力時のみ）
-  useEffect(() => {
+  // AI提案ボタンクリック時に提案を取得
+  const handleRequestAISuggestion = useCallback(() => {
     if (formData.itemName.length >= 2) {
       fetchSuggestion(formData.itemName, formData.category);
-    } else {
-      clearSuggestion();
     }
-  }, [formData.itemName, formData.category, fetchSuggestion, clearSuggestion]);
+  }, [formData.itemName, formData.category, fetchSuggestion]);
 
   // AI提案をフォームに適用（内部ロジック）
   const applySuggestionToForm = useCallback((aiSuggestion: AISuggestResponse) => {
@@ -237,20 +236,40 @@ export function ItemForm() {
             <label htmlFor="itemName" className="block text-sm font-medium text-gray-700 mb-1">
               品物名 <span className="text-red-500">*</span>
             </label>
-            <input
-              id="itemName"
-              type="text"
-              value={formData.itemName}
-              onChange={(e) => updateField('itemName', e.target.value)}
-              placeholder="例: キウイ（プリセット以外は手入力）"
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary ${
-                errors.itemName ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
+            <div className="flex gap-2">
+              <input
+                id="itemName"
+                type="text"
+                value={formData.itemName}
+                onChange={(e) => {
+                  updateField('itemName', e.target.value);
+                  clearSuggestion(); // 入力変更時はAI提案をクリア
+                }}
+                placeholder="例: ぶどう（プリセット以外は手入力）"
+                className={`flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary ${
+                  errors.itemName ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+              {/* AI提案ボタン（ボタン押下で発動） */}
+              <button
+                type="button"
+                onClick={handleRequestAISuggestion}
+                disabled={formData.itemName.length < 2 || isAISuggesting}
+                className={`px-4 py-3 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                  formData.itemName.length < 2
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : isAISuggesting
+                      ? 'bg-blue-100 text-blue-600'
+                      : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'
+                }`}
+              >
+                {isAISuggesting ? '🔄' : '🤖'} AI提案
+              </button>
+            </div>
             {errors.itemName && (
               <p className="mt-1 text-sm text-red-500">{errors.itemName}</p>
             )}
-            {/* AI提案カード（手入力時のみ表示） */}
+            {/* AI提案カード（ボタン押下後に表示） */}
             <AISuggestion
               suggestion={suggestion}
               isLoading={isAISuggesting}
