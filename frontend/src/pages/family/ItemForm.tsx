@@ -8,11 +8,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import { AISuggestion } from '../../components/family/AISuggestion';
-import { PresetSuggestion } from '../../components/family/PresetSuggestion';
 import { SaveAISuggestionDialog } from '../../components/family/SaveAISuggestionDialog';
 import { useSubmitCareItem } from '../../hooks/useCareItems';
 import { useAISuggest } from '../../hooks/useAISuggest';
-import { usePresetSuggestions } from '../../hooks/usePresetSuggestions';
 import {
   ITEM_CATEGORIES,
   STORAGE_METHODS,
@@ -25,8 +23,9 @@ import type {
   StorageMethod,
   ServingMethod,
   AISuggestResponse,
-  PresetSuggestion as PresetSuggestionType,
 } from '../../types/careItem';
+import { DEMO_PRESETS } from '../../data/demoFamilyData';
+import type { CarePreset } from '../../types/family';
 
 // デモ用の入居者ID・ユーザーID（将来は認証から取得）
 const DEMO_RESIDENT_ID = 'resident-001';
@@ -56,7 +55,7 @@ export function ItemForm() {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [pendingAISuggestion, setPendingAISuggestion] = useState<AISuggestResponse | null>(null);
 
-  // AI提案フック
+  // AI提案フック（品物名の手入力時のみ発動）
   const {
     suggestion,
     isLoading: isAISuggesting,
@@ -65,24 +64,14 @@ export function ItemForm() {
     clear: clearSuggestion,
   } = useAISuggest({ minLength: 2, debounceMs: 500 });
 
-  // プリセット提案フック
-  const {
-    suggestions: presetSuggestions,
-    isLoading: isPresetLoading,
-    fetchSuggestions: fetchPresetSuggestions,
-    clear: clearPresetSuggestions,
-  } = usePresetSuggestions(DEMO_RESIDENT_ID, { minLength: 2, debounceMs: 500 });
-
-  // 品物名変更時にAI提案・プリセット候補を取得
+  // 品物名変更時にAI提案を取得（手入力時のみ）
   useEffect(() => {
     if (formData.itemName.length >= 2) {
       fetchSuggestion(formData.itemName, formData.category);
-      fetchPresetSuggestions(formData.itemName, formData.category);
     } else {
       clearSuggestion();
-      clearPresetSuggestions();
     }
-  }, [formData.itemName, formData.category, fetchSuggestion, clearSuggestion, fetchPresetSuggestions, clearPresetSuggestions]);
+  }, [formData.itemName, formData.category, fetchSuggestion, clearSuggestion]);
 
   // AI提案をフォームに適用（内部ロジック）
   const applySuggestionToForm = useCallback((aiSuggestion: AISuggestResponse) => {
@@ -124,22 +113,27 @@ export function ItemForm() {
     setPendingAISuggestion(null);
   }, [pendingAISuggestion, applySuggestionToForm]);
 
-  // プリセット提案を適用
-  const handleApplyPreset = useCallback((preset: PresetSuggestionType) => {
+  // プリセット（いつもの指示）を適用
+  // @see docs/ITEM_MANAGEMENT_SPEC.md - プリセット適用フロー（推奨パス）
+  const handleApplyPreset = useCallback((preset: CarePreset) => {
+    // プリセット名から品物名を抽出（カッコ前の部分）
+    // 例: "キウイ（8等分・半月切り）" → "キウイ"
+    // 例: "黒豆（煮汁を切って器へ）" → "黒豆"
+    const extractItemName = (presetName: string): string => {
+      const match = presetName.match(/^([^（(]+)/);
+      return match ? match[1].trim() : presetName;
+    };
+
+    const itemName = extractItemName(preset.name);
+
     setFormData((prev) => ({
       ...prev,
-      // 提供方法（あれば）
-      ...(preset.instruction.servingMethod && {
-        servingMethod: preset.instruction.servingMethod,
-      }),
-      // 提供方法の詳細（あれば）
-      ...(preset.instruction.servingDetail && {
-        servingMethodDetail: preset.instruction.servingDetail,
-      }),
-      // スタッフへの申し送り（指示内容を追加）
-      noteToStaff: prev.noteToStaff
-        ? `${prev.noteToStaff}\n\n【いつもの指示】${preset.instruction.content}`
-        : `【いつもの指示】${preset.instruction.content}`,
+      // 品物名（プリセット名からカッコ前を抽出）
+      itemName,
+      // 提供方法の詳細（processingDetailを設定）
+      servingMethodDetail: preset.processingDetail,
+      // 提供方法: カットがデフォルト（プリセットには通常カット指示が含まれる）
+      servingMethod: 'cut',
     }));
   }, []);
 
@@ -211,6 +205,33 @@ export function ItemForm() {
     <Layout title="品物を登録" showBackButton>
       <div className="flex-1 overflow-y-auto">
         <form onSubmit={handleSubmit} className="p-4 space-y-6 pb-32">
+          {/* いつもの指示（プリセット）- 品物名の上に配置 */}
+          {/* @see docs/ITEM_MANAGEMENT_SPEC.md - フォーム順序の設計原則 */}
+          <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+            <label className="flex items-center gap-2 text-sm font-medium text-amber-700 mb-3">
+              <span>⚡</span>
+              <span>いつもの指示（プリセット）</span>
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {DEMO_PRESETS.map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => handleApplyPreset(preset)}
+                  className="flex flex-col items-center gap-1 p-2 bg-white rounded-lg border border-amber-200 hover:border-amber-400 hover:bg-amber-100 transition-colors text-center"
+                >
+                  <span className="text-xl">{preset.icon}</span>
+                  <span className="text-xs text-gray-700 line-clamp-2">
+                    {preset.name.replace(/[（(].*/g, '')}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-amber-600 mt-2">
+              ※ 選択すると品物名と提供方法詳細が自動入力されます
+            </p>
+          </div>
+
           {/* 品物名 */}
           <div>
             <label htmlFor="itemName" className="block text-sm font-medium text-gray-700 mb-1">
@@ -221,7 +242,7 @@ export function ItemForm() {
               type="text"
               value={formData.itemName}
               onChange={(e) => updateField('itemName', e.target.value)}
-              placeholder="例: キウイ"
+              placeholder="例: キウイ（プリセット以外は手入力）"
               className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary ${
                 errors.itemName ? 'border-red-500' : 'border-gray-300'
               }`}
@@ -229,18 +250,12 @@ export function ItemForm() {
             {errors.itemName && (
               <p className="mt-1 text-sm text-red-500">{errors.itemName}</p>
             )}
-            {/* AI提案カード */}
+            {/* AI提案カード（手入力時のみ表示） */}
             <AISuggestion
               suggestion={suggestion}
               isLoading={isAISuggesting}
               warning={aiWarning}
               onApply={handleApplySuggestion}
-            />
-            {/* プリセット提案カード */}
-            <PresetSuggestion
-              suggestions={presetSuggestions}
-              isLoading={isPresetLoading}
-              onApply={handleApplyPreset}
             />
           </div>
 
