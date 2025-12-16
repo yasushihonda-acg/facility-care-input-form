@@ -213,10 +213,11 @@ export function ItemForm() {
         <form onSubmit={handleSubmit} className="p-4 space-y-6 pb-32">
           {/* 品物名 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="itemName" className="block text-sm font-medium text-gray-700 mb-1">
               品物名 <span className="text-red-500">*</span>
             </label>
             <input
+              id="itemName"
               type="text"
               value={formData.itemName}
               onChange={(e) => updateField('itemName', e.target.value)}
@@ -270,10 +271,11 @@ export function ItemForm() {
           {/* 送付日・個数 */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="sentDate" className="block text-sm font-medium text-gray-700 mb-1">
                 送付日 <span className="text-red-500">*</span>
               </label>
               <input
+                id="sentDate"
                 type="date"
                 value={formData.sentDate}
                 onChange={(e) => updateField('sentDate', e.target.value)}
@@ -287,11 +289,12 @@ export function ItemForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                個数 <span className="text-red-500">*</span>
+              <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
+                数量 <span className="text-red-500">*</span>
               </label>
               <div className="flex gap-2">
                 <input
+                  id="quantity"
                   type="number"
                   min="1"
                   value={formData.quantity}
@@ -301,6 +304,8 @@ export function ItemForm() {
                   }`}
                 />
                 <select
+                  id="unit"
+                  aria-label="単位"
                   value={formData.unit}
                   onChange={(e) => updateField('unit', e.target.value)}
                   className="px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
