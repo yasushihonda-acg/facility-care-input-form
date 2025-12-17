@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月18日 (間食記録連携 Phase 1-3 実装完了)
+> **最終更新**: 2025年12月18日 (間食記録連携 Phase 4 実装完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -21,7 +21,7 @@
 
 ## 現在のタスク
 
-### 間食記録連携機能 Phase 4: 家族ページ連携
+### 間食記録連携機能 Phase 5-6: AIサジェスト統合・E2Eテスト
 
 **設計書**: [SNACK_RECORD_INTEGRATION_SPEC.md](./SNACK_RECORD_INTEGRATION_SPEC.md)
 
@@ -29,11 +29,11 @@
 - [x] Phase 1: API拡張（submitMealRecord + 消費ログ連携）完了
 - [x] Phase 2: フロントエンド - 品物リスト表示 完了
 - [x] Phase 3: フロントエンド - 提供記録入力UI 完了
-- [ ] Phase 4: 家族ページ連携（次のタスク）
-- [ ] Phase 5: AIサジェスト統合
+- [x] Phase 4: 家族ページ連携 完了
+- [ ] Phase 5: AIサジェスト統合（次のタスク）
 - [ ] Phase 6: E2Eテスト
 
-**Phase 1-3 実装ファイル**:
+**Phase 1-4 実装ファイル**:
 - `functions/src/types/index.ts` - SnackRecord型、ConsumptionLog拡張
 - `functions/src/services/consumptionLogService.ts` - 消費ログ連携サービス
 - `functions/src/functions/submitMealRecord.ts` - API拡張
@@ -45,10 +45,29 @@
   - `SnackRecordCard.tsx` - 提供記録入力カード
   - `SnackSection.tsx` - 間食セクション統合コンポーネント
 - `frontend/src/pages/MealInputPage.tsx` - SnackSection組み込み
+- `frontend/src/pages/family/ItemDetail.tsx` - 消費ログ表示・指示対応確認
+- `frontend/src/data/demo/demoConsumptionLogs.ts` - デモデータ修正
+- `frontend/e2e/family-page.spec.ts` - 品物詳細E2Eテスト追加
 
 ---
 
 ## 最近の完了タスク
+
+### 間食記録連携 Phase 4 実装完了 (2025-12-18)
+
+**設計書**: [SNACK_RECORD_INTEGRATION_SPEC.md](./SNACK_RECORD_INTEGRATION_SPEC.md)
+
+**Phase 4 - 家族ページ連携**:
+- demoConsumptionLogs.ts: ConsumptionStatus型を正しい値に修正
+  - 'mostly_eaten' → 'most', 'all_eaten' → 'full' 等
+  - followedInstruction, sourceType, linkedMealRecordId フィールド追加
+- ItemDetail.tsx: useConsumptionLogsフックを使用してリアルデータ表示
+  - 摂食状況（完食/ほぼ完食等）の色分け表示
+  - 家族指示対応確認（✅マーク）の表示
+  - sourceType（食事入力/品物詳細）のタグ表示
+- family-page.spec.ts: 品物詳細ページのE2Eテスト追加（3件）
+
+---
 
 ### 間食記録連携 Phase 2-3 実装完了 (2025-12-18)
 
