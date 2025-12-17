@@ -56,7 +56,7 @@ npx playwright test e2e/demo-page.spec.ts
 # 本番環境でテスト
 BASE_URL=https://facility-care-input-form.web.app npx playwright test
 
-# テスト件数: 61件（デモ43件 + 家族ページ18件）
+# テスト件数: 43件（家族向けデモ特化）
 ```
 
 ## デプロイ
