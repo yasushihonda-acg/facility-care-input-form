@@ -5,4 +5,5 @@
 
 export { FamilyItemCard } from './FamilyItemCard';
 export { FamilyItemList } from './FamilyItemList';
+export { SnackRecordCard } from './SnackRecordCard';
 export { SnackSection } from './SnackSection';

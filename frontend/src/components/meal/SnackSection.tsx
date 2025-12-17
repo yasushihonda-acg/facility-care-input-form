@@ -5,11 +5,12 @@
  * @see docs/SNACK_RECORD_INTEGRATION_SPEC.md セクション5
  */
 
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import type { CareItem } from '../../types/careItem';
 import type { SnackRecord } from '../../types/mealForm';
 import { useCareItems } from '../../hooks/useCareItems';
 import { FamilyItemList } from './FamilyItemList';
+import { SnackRecordCard } from './SnackRecordCard';
 
 interface SnackSectionProps {
   /** 入居者ID（品物フィルタリング用） */
@@ -46,6 +47,17 @@ export function SnackSection({
     [snackRecords]
   );
 
+  // itemIdから家族指示を取得するマップ
+  const itemInstructionMap = useMemo(() => {
+    const map = new Map<string, string>();
+    items.forEach((item) => {
+      if (item.noteToStaff) {
+        map.set(item.id, item.noteToStaff);
+      }
+    });
+    return map;
+  }, [items]);
+
   /**
    * 品物を選択/選択解除
    */
@@ -70,6 +82,30 @@ export function SnackSection({
       onSnackRecordsChange([...snackRecords, newRecord]);
     }
   };
+
+  /**
+   * レコードを更新
+   */
+  const handleRecordChange = useCallback(
+    (index: number, updates: Partial<SnackRecord>) => {
+      const newRecords = [...snackRecords];
+      newRecords[index] = { ...newRecords[index], ...updates };
+      onSnackRecordsChange(newRecords);
+    },
+    [snackRecords, onSnackRecordsChange]
+  );
+
+  /**
+   * レコードを削除
+   */
+  const handleRecordRemove = useCallback(
+    (index: number) => {
+      const newRecords = [...snackRecords];
+      newRecords.splice(index, 1);
+      onSnackRecordsChange(newRecords);
+    },
+    [snackRecords, onSnackRecordsChange]
+  );
 
   // 品物がない場合は従来の自由テキスト入力のみ表示
   const hasItems = items.length > 0;
@@ -98,36 +134,22 @@ export function SnackSection({
         </div>
       )}
 
-      {/* 選択済み品物サマリー（Phase 3で詳細入力UIに置き換え予定） */}
+      {/* 提供記録入力カード */}
       {snackRecords.length > 0 && (
-        <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
-          <p className="text-sm font-medium text-gray-700 mb-2">
+        <div className="space-y-3">
+          <p className="text-sm text-gray-600 font-medium">
             【今回の提供記録】{snackRecords.length}件
           </p>
-          <ul className="space-y-1">
-            {snackRecords.map((record, index) => (
-              <li
-                key={record.itemId || index}
-                className="flex items-center justify-between text-sm"
-              >
-                <span className="text-gray-800">
-                  📦 {record.itemName} ({record.servedQuantity}{record.unit || '個'})
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const newRecords = [...snackRecords];
-                    newRecords.splice(index, 1);
-                    onSnackRecordsChange(newRecords);
-                  }}
-                  className="text-gray-400 hover:text-red-500 transition-colors"
-                  aria-label={`${record.itemName}を削除`}
-                >
-                  ×
-                </button>
-              </li>
-            ))}
-          </ul>
+          {snackRecords.map((record, index) => (
+            <SnackRecordCard
+              key={record.itemId || index}
+              record={record}
+              index={index}
+              familyInstruction={record.itemId ? itemInstructionMap.get(record.itemId) : undefined}
+              onChange={handleRecordChange}
+              onRemove={handleRecordRemove}
+            />
+          ))}
         </div>
       )}
 
