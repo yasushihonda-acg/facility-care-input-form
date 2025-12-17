@@ -93,3 +93,33 @@ firebase functions:log
 # curl でAPI確認
 curl https://asia-northeast1-facility-care-input-form.cloudfunctions.net/healthCheck
 ```
+
+## E2Eテスト
+
+```bash
+# ローカルでテスト
+cd frontend && npm run build
+npm run preview -- --port 4173 &
+npx playwright test
+
+# 本番環境でテスト
+BASE_URL=https://facility-care-input-form.web.app npx playwright test
+
+# 特定テスト実行
+npx playwright test e2e/demo-page.spec.ts
+```
+
+## APIテスト
+
+```bash
+# 詳細は docs/API_TEST_PLAN.md 参照
+
+# Emulator使用（推奨）
+firebase emulators:start --only functions,firestore
+# localhost:5001 でテスト
+
+# 本番テスト（注意: テストデータは必ず削除）
+curl -X POST "https://asia-northeast1-facility-care-input-form.cloudfunctions.net/submitCareItem" \
+  -H "Content-Type: application/json" \
+  -d '{"residentId":"test-xxx","userId":"test-xxx","item":{...}}'
+```

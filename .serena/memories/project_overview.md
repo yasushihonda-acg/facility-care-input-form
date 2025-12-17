@@ -170,3 +170,18 @@ admin.firestore().settings({
 - **テスト計画書**: `docs/API_TEST_PLAN.md`
 - **対象API**: submitCareItem, createPreset, createProhibition, createTask
 - **テスト結果**: 全て成功（2025-12-17）
+
+## ドキュメント構成（36ファイル）
+
+### 必読（引き継ぎ時）
+| 優先度 | ファイル | 用途 |
+|--------|----------|------|
+| ⭐⭐⭐ | `docs/CURRENT_STATUS.md` | 進捗・次のタスク（最初に読む） |
+| ⭐⭐⭐ | `docs/HANDOVER.md` | 引き継ぎ（クイックスタート付き） |
+| ⭐⭐ | `CLAUDE.md` | アカウント設定・開発方針 |
+| ⭐ | `docs/API_SPEC.md` | API仕様書 |
+
+### GitHub Pages
+- **URL**: https://yasushihonda-acg.github.io/facility-care-input-form/
+- **ファイル**: `gh-pages/index.html`, `gh-pages/architecture.html`
+- **自動デプロイ**: mainへpushで自動更新
