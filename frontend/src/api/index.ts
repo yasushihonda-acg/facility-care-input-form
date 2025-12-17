@@ -775,3 +775,76 @@ export async function deleteProhibition(
 
   return response.json();
 }
+
+// =============================================================================
+// 在庫・食品統計 API（Phase 9.3）
+// =============================================================================
+
+import type {
+  GetInventorySummaryResponse,
+  GetFoodStatsResponse,
+} from '../types/stats';
+
+export type { GetInventorySummaryResponse, GetFoodStatsResponse };
+
+/**
+ * 在庫サマリーを取得
+ */
+export interface GetInventorySummaryParams {
+  residentId?: string;
+  status?: ItemStatus | ItemStatus[];
+  includeExpiringSoon?: boolean;
+}
+
+export async function getInventorySummary(
+  params: GetInventorySummaryParams = {}
+): Promise<ApiResponse<GetInventorySummaryResponse>> {
+  const url = new URL(`${API_BASE}/getInventorySummary`);
+
+  if (params.residentId) url.searchParams.set('residentId', params.residentId);
+  if (params.status) {
+    if (Array.isArray(params.status)) {
+      url.searchParams.set('status', params.status.join(','));
+    } else {
+      url.searchParams.set('status', params.status);
+    }
+  }
+  if (params.includeExpiringSoon) {
+    url.searchParams.set('includeExpiringSoon', 'true');
+  }
+
+  const response = await fetch(url.toString());
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to get inventory summary: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 食品統計を取得
+ */
+export interface GetFoodStatsParams {
+  residentId?: string;
+  limit?: number;
+}
+
+export async function getFoodStats(
+  params: GetFoodStatsParams = {}
+): Promise<ApiResponse<GetFoodStatsResponse>> {
+  const url = new URL(`${API_BASE}/getFoodStats`);
+
+  if (params.residentId) url.searchParams.set('residentId', params.residentId);
+  if (params.limit) url.searchParams.set('limit', params.limit.toString());
+
+  const response = await fetch(url.toString());
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to get food stats: ${response.statusText}`);
+  }
+
+  return response.json();
+}

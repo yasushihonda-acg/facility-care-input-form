@@ -1209,3 +1209,138 @@ export interface DeleteProhibitionRequest {
   residentId: string;
   prohibitionId: string;
 }
+
+// =============================================================================
+// 在庫サマリー Types (Phase 9.3)
+// docs/INVENTORY_CONSUMPTION_SPEC.md セクション4.3 に基づく型定義
+// =============================================================================
+
+/** 在庫サマリーアイテム */
+export interface InventorySummaryItem {
+  // 品物基本情報
+  itemId: string;
+  itemName: string;
+  category: ItemCategory;
+
+  // 在庫状況
+  initialQuantity: number;
+  currentQuantity: number;
+  unit: string;
+  consumedQuantity: number;
+  consumptionPercentage: number;
+
+  // 期限情報
+  expirationDate?: string;
+  daysUntilExpiration?: number;
+  isExpiringSoon: boolean;
+  isExpired: boolean;
+
+  // 摂食傾向
+  avgConsumptionRate: number;
+  totalServings: number;
+
+  // ステータス
+  status: ItemStatus;
+
+  // 最新の申し送り
+  latestNoteToFamily?: string;
+  latestNoteDate?: string;
+}
+
+/** 在庫サマリー集計 */
+export interface InventorySummaryTotals {
+  totalItems: number;
+  pendingCount: number;
+  inProgressCount: number;
+  consumedCount: number;
+  expiredCount: number;
+  expiringSoonCount: number;
+}
+
+/** 在庫サマリー取得リクエスト */
+export interface GetInventorySummaryRequest {
+  residentId?: string;
+  status?: ItemStatus | ItemStatus[];
+  includeExpiringSoon?: boolean;
+}
+
+/** 在庫サマリー取得レスポンス */
+export interface GetInventorySummaryResponse {
+  items: InventorySummaryItem[];
+  totals: InventorySummaryTotals;
+}
+
+// =============================================================================
+// 食品統計 Types (Phase 9.3)
+// docs/INVENTORY_CONSUMPTION_SPEC.md セクション4.4 に基づく型定義
+// =============================================================================
+
+/** 食品ランキングアイテム */
+export interface FoodRankingItem {
+  foodName: string;
+  avgConsumptionRate: number;
+  totalServings: number;
+  wastedQuantity?: number;
+}
+
+/** カテゴリ別統計 */
+export interface CategoryStats {
+  category: ItemCategory;
+  avgConsumptionRate: number;
+  totalItems: number;
+  totalServings: number;
+}
+
+/** 食品統計取得リクエスト */
+export interface GetFoodStatsRequest {
+  residentId?: string;
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
+}
+
+/** 食品統計取得レスポンス */
+export interface GetFoodStatsResponse {
+  mostPreferred: FoodRankingItem[];
+  leastPreferred: FoodRankingItem[];
+  categoryStats: CategoryStats[];
+}
+
+// =============================================================================
+// 摂食傾向 Types (Phase 9.3)
+// docs/STATS_DASHBOARD_SPEC.md セクション4 に基づく型定義
+// =============================================================================
+
+/** 摂食率推移データポイント */
+export interface ConsumptionTrendPoint {
+  date: string;
+  averageRate: number;
+  recordCount: number;
+}
+
+/** 摂食傾向統計データ（拡張版） */
+export interface ConsumptionTrendData {
+  // 摂食率推移
+  trend: ConsumptionTrendPoint[];
+
+  // 品目別ランキング
+  topItems: ItemRankingEntry[];
+  bottomItems: ItemRankingEntry[];
+
+  // 食事摂取傾向（既存記録から）
+  mealTrend?: {
+    mainDish: {
+      high: number;
+      medium: number;
+      low: number;
+    };
+    sideDish: {
+      high: number;
+      medium: number;
+      low: number;
+    };
+  };
+
+  // サマリ
+  summary: ConsumptionStatsSummary;
+}

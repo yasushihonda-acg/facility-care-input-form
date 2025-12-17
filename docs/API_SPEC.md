@@ -1848,6 +1848,123 @@ export interface DeleteProhibitionRequest {
 
 ---
 
+### 4.30 GET /getInventorySummary (Phase 9.3)
+
+在庫サマリーを取得します。各品物の残量・期限・摂食率を一覧で取得。
+
+> **詳細設計**: [INVENTORY_CONSUMPTION_SPEC.md](./INVENTORY_CONSUMPTION_SPEC.md) セクション4.3 を参照
+
+**エンドポイント**: `GET /getInventorySummary`
+
+**クエリパラメータ**:
+
+| パラメータ | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `residentId` | string | No | 入居者IDで絞り込み |
+| `status` | string | No | ステータスで絞り込み（カンマ区切りで複数指定可） |
+| `includeExpiringSoon` | boolean | No | `true`の場合、期限3日以内のみ取得 |
+
+**成功レスポンス (200)**:
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "itemId": "item-abc123",
+        "itemName": "バナナ",
+        "category": "fruit",
+        "initialQuantity": 4,
+        "currentQuantity": 2.5,
+        "unit": "房",
+        "consumedQuantity": 1.5,
+        "consumptionPercentage": 37,
+        "expirationDate": "2025-12-20",
+        "daysUntilExpiration": 3,
+        "isExpiringSoon": true,
+        "isExpired": false,
+        "avgConsumptionRate": 75,
+        "totalServings": 3,
+        "status": "in_progress",
+        "latestNoteToFamily": "おいしそうに召し上がっていました"
+      }
+    ],
+    "totals": {
+      "totalItems": 10,
+      "pendingCount": 3,
+      "inProgressCount": 4,
+      "consumedCount": 2,
+      "expiredCount": 1,
+      "expiringSoonCount": 2
+    }
+  },
+  "timestamp": "2025-12-17T12:00:00.000Z"
+}
+```
+
+---
+
+### 4.31 GET /getFoodStats (Phase 9.3)
+
+食品統計を取得します。よく食べる/残す品目ランキング、カテゴリ別摂食率。
+
+> **詳細設計**: [STATS_DASHBOARD_SPEC.md](./STATS_DASHBOARD_SPEC.md) セクション4 を参照
+
+**エンドポイント**: `GET /getFoodStats`
+
+**クエリパラメータ**:
+
+| パラメータ | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `residentId` | string | No | 入居者IDで絞り込み |
+| `limit` | number | No | ランキング件数（デフォルト: 5） |
+
+**成功レスポンス (200)**:
+```json
+{
+  "success": true,
+  "data": {
+    "mostPreferred": [
+      {
+        "foodName": "プリン",
+        "avgConsumptionRate": 95,
+        "totalServings": 10
+      },
+      {
+        "foodName": "バナナ",
+        "avgConsumptionRate": 85,
+        "totalServings": 8
+      }
+    ],
+    "leastPreferred": [
+      {
+        "foodName": "リンゴ",
+        "avgConsumptionRate": 20,
+        "totalServings": 5,
+        "wastedQuantity": 3
+      }
+    ],
+    "categoryStats": [
+      {
+        "category": "fruit",
+        "avgConsumptionRate": 72,
+        "totalItems": 5,
+        "totalServings": 15
+      },
+      {
+        "category": "snack",
+        "avgConsumptionRate": 88,
+        "totalItems": 3,
+        "totalServings": 12
+      }
+    ]
+  },
+  "timestamp": "2025-12-17T12:00:00.000Z"
+}
+```
+
+---
+
 ## 6. cURLサンプル
 
 ### 6.1 ヘルスチェック
@@ -1910,6 +2027,7 @@ curl -X POST \
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
+| 2025-12-17 | 1.10.0 | Phase 9.3: 在庫・食品統計API（getInventorySummary, getFoodStats）追加 |
 | 2025-12-17 | 1.9.0 | Phase 9.x: 禁止ルールAPI（getProhibitions, createProhibition, updateProhibition, deleteProhibition）追加 |
 | 2025-12-16 | 1.8.0 | Phase 8.7: saveAISuggestionAsPreset API追加 |
 | 2025-12-16 | 1.7.0 | Phase 8.6: プリセット管理API（getPresets, createPreset, updatePreset, deletePreset）追加 |

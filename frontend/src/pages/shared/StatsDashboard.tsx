@@ -1,18 +1,21 @@
 /**
- * 統計ダッシュボード (Phase 8.3)
+ * 統計ダッシュボード (Phase 8.3 + 9.3)
  * スタッフ・家族共通ビュー
  * @see docs/STATS_DASHBOARD_SPEC.md
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Layout } from '../../components/Layout';
 import { useStats } from '../../hooks/useStats';
+import { getFoodStats } from '../../api';
 import type {
   ItemStatsData,
   Alert,
   AlertSeverity,
   CategoryDistribution,
   ExpirationCalendarEntry,
+  GetFoodStatsResponse,
+  FoodRankingItem,
 } from '../../types/stats';
 import { ALERT_SEVERITY_COLORS, ALERT_SEVERITY_LABELS, ALERT_TYPE_LABELS } from '../../types/stats';
 import { getCategoryLabel } from '../../types/careItem';
@@ -20,7 +23,7 @@ import { getCategoryLabel } from '../../types/careItem';
 // デモ用の入居者ID（将来は認証から取得）
 const DEMO_RESIDENT_ID = 'resident-001';
 
-type StatsTab = 'items' | 'alerts';
+type StatsTab = 'items' | 'consumption' | 'alerts';
 
 export function StatsDashboard() {
   const [activeTab, setActiveTab] = useState<StatsTab>('items');
@@ -29,8 +32,49 @@ export function StatsDashboard() {
     include: ['items', 'alerts'],
   });
 
+  // 食品統計データ
+  const [foodStats, setFoodStats] = useState<GetFoodStatsResponse | null>(null);
+  const [foodStatsLoading, setFoodStatsLoading] = useState(false);
+  const [foodStatsError, setFoodStatsError] = useState<string | null>(null);
+
+  // 食品統計を取得
+  useEffect(() => {
+    const fetchFoodStats = async () => {
+      setFoodStatsLoading(true);
+      setFoodStatsError(null);
+      try {
+        const response = await getFoodStats({ residentId: DEMO_RESIDENT_ID, limit: 5 });
+        if (response.success && response.data) {
+          setFoodStats(response.data);
+        }
+      } catch (err) {
+        setFoodStatsError(err instanceof Error ? err.message : 'エラーが発生しました');
+      } finally {
+        setFoodStatsLoading(false);
+      }
+    };
+    fetchFoodStats();
+  }, []);
+
+  const handleRefresh = () => {
+    refetch();
+    // 食品統計も再取得
+    const fetchFoodStats = async () => {
+      setFoodStatsLoading(true);
+      try {
+        const response = await getFoodStats({ residentId: DEMO_RESIDENT_ID, limit: 5 });
+        if (response.success && response.data) {
+          setFoodStats(response.data);
+        }
+      } finally {
+        setFoodStatsLoading(false);
+      }
+    };
+    fetchFoodStats();
+  };
+
   return (
-    <Layout title="統計" subtitle="品物・アラート状況" showBackButton>
+    <Layout title="統計" subtitle="品物・摂食傾向・アラート" showBackButton>
       <div className="pb-4">
         {/* タブ切り替え */}
         <div className="flex border-b border-gray-200 mb-4 bg-white rounded-t-lg">
@@ -39,6 +83,12 @@ export function StatsDashboard() {
             icon="📦"
             isActive={activeTab === 'items'}
             onClick={() => setActiveTab('items')}
+          />
+          <TabButton
+            label="摂食傾向"
+            icon="🍽️"
+            isActive={activeTab === 'consumption'}
+            onClick={() => setActiveTab('consumption')}
           />
           <TabButton
             label="アラート"
@@ -50,7 +100,7 @@ export function StatsDashboard() {
         </div>
 
         {/* ローディング */}
-        {isLoading && (
+        {(isLoading || (activeTab === 'consumption' && foodStatsLoading)) && (
           <div className="bg-white rounded-lg shadow-card p-6">
             <div className="flex flex-col items-center text-gray-400">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-2" />
@@ -60,11 +110,11 @@ export function StatsDashboard() {
         )}
 
         {/* エラー */}
-        {error && (
+        {(error || (activeTab === 'consumption' && foodStatsError)) && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-            <p className="text-red-700 text-sm">{error}</p>
+            <p className="text-red-700 text-sm">{error || foodStatsError}</p>
             <button
-              onClick={refetch}
+              onClick={handleRefresh}
               className="mt-2 text-sm text-red-600 underline"
             >
               再読み込み
@@ -76,6 +126,9 @@ export function StatsDashboard() {
         {!isLoading && !error && (
           <>
             {activeTab === 'items' && <ItemStatsTab data={itemStats} />}
+            {activeTab === 'consumption' && !foodStatsLoading && !foodStatsError && (
+              <ConsumptionStatsTab data={foodStats} />
+            )}
             {activeTab === 'alerts' && <AlertsTab alerts={alerts} />}
           </>
         )}
@@ -406,4 +459,163 @@ function getAlertIcon(type: Alert['type']): string {
     default:
       return '⚠️';
   }
+}
+
+// =============================================================================
+// 摂食傾向タブ (Phase 9.3)
+// =============================================================================
+
+interface ConsumptionStatsTabProps {
+  data: GetFoodStatsResponse | null;
+}
+
+function ConsumptionStatsTab({ data }: ConsumptionStatsTabProps) {
+  if (!data) {
+    return (
+      <div className="bg-white rounded-lg shadow-card p-6 text-center text-gray-500">
+        <p>摂食データがありません</p>
+        <p className="text-sm text-gray-400 mt-1">品物の提供記録を入力すると、ここに傾向が表示されます</p>
+      </div>
+    );
+  }
+
+  const { mostPreferred, leastPreferred, categoryStats } = data;
+
+  // データがない場合
+  const hasData = mostPreferred.length > 0 || leastPreferred.length > 0;
+
+  if (!hasData) {
+    return (
+      <div className="bg-white rounded-lg shadow-card p-6 text-center text-gray-500">
+        <p className="text-4xl mb-2">📊</p>
+        <p>摂食データがありません</p>
+        <p className="text-sm text-gray-400 mt-1">品物の提供記録を入力すると、ここに傾向が表示されます</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* よく食べる品目 */}
+      {mostPreferred.length > 0 && (
+        <div className="bg-white rounded-lg shadow-card p-4">
+          <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+            <span className="text-lg">😋</span>
+            よく食べる品目 TOP{mostPreferred.length}
+          </h3>
+          <FoodRankingList items={mostPreferred} color="#10B981" />
+        </div>
+      )}
+
+      {/* よく残す品目 */}
+      {leastPreferred.length > 0 && (
+        <div className="bg-white rounded-lg shadow-card p-4">
+          <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+            <span className="text-lg">😔</span>
+            よく残す品目 TOP{leastPreferred.length}
+          </h3>
+          <FoodRankingList items={leastPreferred} color="#F59E0B" showSuggestion />
+        </div>
+      )}
+
+      {/* カテゴリ別摂食率 */}
+      {categoryStats.length > 0 && (
+        <div className="bg-white rounded-lg shadow-card p-4">
+          <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+            <span className="text-lg">📊</span>
+            カテゴリ別摂食率
+          </h3>
+          <CategoryRateChart data={categoryStats} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// =============================================================================
+// 品目ランキングリスト
+// =============================================================================
+
+interface FoodRankingListProps {
+  items: FoodRankingItem[];
+  color: string;
+  showSuggestion?: boolean;
+}
+
+function FoodRankingList({ items, color, showSuggestion }: FoodRankingListProps) {
+  return (
+    <div className="space-y-2">
+      {items.map((item, index) => (
+        <div key={item.foodName} className="flex items-center gap-2">
+          <span className="w-5 text-sm text-gray-500 font-medium">{index + 1}.</span>
+          <span className="w-24 text-sm truncate">{item.foodName}</span>
+          <div className="flex-1 bg-gray-100 rounded h-5 overflow-hidden">
+            <div
+              className="h-full rounded flex items-center justify-end pr-2 text-xs text-white font-medium"
+              style={{
+                width: `${Math.max(item.avgConsumptionRate, 10)}%`,
+                backgroundColor: color,
+              }}
+            >
+              {item.avgConsumptionRate}%
+            </div>
+          </div>
+          <span className="w-16 text-xs text-gray-400 text-right">
+            {item.totalServings}回
+          </span>
+        </div>
+      ))}
+      {showSuggestion && items.length > 0 && items[0].avgConsumptionRate < 50 && (
+        <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-700">
+          <span className="mr-1">💡</span>
+          摂食率が低い品目は提供方法の変更を検討してみてください
+        </div>
+      )}
+    </div>
+  );
+}
+
+// =============================================================================
+// カテゴリ別摂食率チャート
+// =============================================================================
+
+import type { CategoryStats } from '../../types/stats';
+
+interface CategoryRateChartProps {
+  data: CategoryStats[];
+}
+
+function CategoryRateChart({ data }: CategoryRateChartProps) {
+  const getBarColor = (rate: number): string => {
+    if (rate >= 80) return '#10B981'; // green
+    if (rate >= 60) return '#3B82F6'; // blue
+    if (rate >= 40) return '#F59E0B'; // yellow
+    return '#EF4444'; // red
+  };
+
+  return (
+    <div className="space-y-2">
+      {data.map((item) => (
+        <div key={item.category} className="flex items-center gap-2">
+          <span className="w-20 text-xs text-gray-600 truncate">
+            {getCategoryLabel(item.category)}
+          </span>
+          <div className="flex-1 bg-gray-100 rounded h-5 overflow-hidden">
+            <div
+              className="h-full rounded flex items-center justify-end pr-2 text-xs text-white font-medium"
+              style={{
+                width: `${Math.max(item.avgConsumptionRate, 10)}%`,
+                backgroundColor: getBarColor(item.avgConsumptionRate),
+              }}
+            >
+              {item.avgConsumptionRate}%
+            </div>
+          </div>
+          <span className="w-20 text-xs text-gray-400 text-right">
+            {item.totalItems}品/{item.totalServings}回
+          </span>
+        </div>
+      ))}
+    </div>
+  );
 }

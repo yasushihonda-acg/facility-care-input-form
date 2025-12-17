@@ -183,3 +183,104 @@ export const ALERT_SEVERITY_COLORS: Record<AlertSeverity, { bg: string; text: st
     border: 'border-blue-200',
   },
 };
+
+// =============================================================================
+// 在庫サマリー (Phase 9.3)
+// =============================================================================
+
+import type { ItemStatus } from './careItem';
+
+/** 在庫サマリーアイテム */
+export interface InventorySummaryItem {
+  itemId: string;
+  itemName: string;
+  category: ItemCategory;
+  initialQuantity: number;
+  currentQuantity: number;
+  unit: string;
+  consumedQuantity: number;
+  consumptionPercentage: number;
+  expirationDate?: string;
+  daysUntilExpiration?: number;
+  isExpiringSoon: boolean;
+  isExpired: boolean;
+  avgConsumptionRate: number;
+  totalServings: number;
+  status: ItemStatus;
+  latestNoteToFamily?: string;
+  latestNoteDate?: string;
+}
+
+/** 在庫サマリー集計 */
+export interface InventorySummaryTotals {
+  totalItems: number;
+  pendingCount: number;
+  inProgressCount: number;
+  consumedCount: number;
+  expiredCount: number;
+  expiringSoonCount: number;
+}
+
+/** 在庫サマリー取得レスポンス */
+export interface GetInventorySummaryResponse {
+  items: InventorySummaryItem[];
+  totals: InventorySummaryTotals;
+}
+
+// =============================================================================
+// 食品統計 (Phase 9.3)
+// =============================================================================
+
+/** 食品ランキングアイテム */
+export interface FoodRankingItem {
+  foodName: string;
+  avgConsumptionRate: number;
+  totalServings: number;
+  wastedQuantity?: number;
+}
+
+/** カテゴリ別統計 */
+export interface CategoryStats {
+  category: ItemCategory;
+  avgConsumptionRate: number;
+  totalItems: number;
+  totalServings: number;
+}
+
+/** 食品統計取得レスポンス */
+export interface GetFoodStatsResponse {
+  mostPreferred: FoodRankingItem[];
+  leastPreferred: FoodRankingItem[];
+  categoryStats: CategoryStats[];
+}
+
+// =============================================================================
+// 摂食傾向 (Phase 9.3)
+// =============================================================================
+
+/** 摂食率推移データポイント */
+export interface ConsumptionTrendPoint {
+  date: string;
+  averageRate: number;
+  recordCount: number;
+}
+
+/** 摂食傾向統計データ */
+export interface ConsumptionTrendData {
+  trend: ConsumptionTrendPoint[];
+  topItems: ItemRankingEntry[];
+  bottomItems: ItemRankingEntry[];
+  mealTrend?: {
+    mainDish: {
+      high: number;
+      medium: number;
+      low: number;
+    };
+    sideDish: {
+      high: number;
+      medium: number;
+      low: number;
+    };
+  };
+  summary: ConsumptionStatsSummary;
+}

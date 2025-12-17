@@ -143,3 +143,12 @@ export {
   updateProhibition,
   deleteProhibition,
 } from "./functions/prohibitions";
+
+// =============================================================================
+// 在庫・食品統計（Phase 9.3）
+// =============================================================================
+
+export {
+  getInventorySummary,
+  getFoodStats,
+} from "./functions/inventoryStats";
