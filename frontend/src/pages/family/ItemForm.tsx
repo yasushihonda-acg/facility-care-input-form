@@ -203,7 +203,7 @@ export function ItemForm() {
   return (
     <Layout title="品物を登録" showBackButton>
       <div className="flex-1 overflow-y-auto">
-        <form onSubmit={handleSubmit} className="p-4 space-y-6 pb-32">
+        <form onSubmit={handleSubmit} className="p-4 space-y-6 pb-44">
           {/* いつもの指示（プリセット）- 品物名の上に配置 */}
           {/* @see docs/ITEM_MANAGEMENT_SPEC.md - フォーム順序の設計原則 */}
           <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
@@ -465,8 +465,12 @@ export function ItemForm() {
             />
           </div>
 
-          {/* 送信ボタン（固定） */}
-          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t">
+          {/* 送信ボタン（固定、フッター上に配置） */}
+          {/* @see docs/FOOTER_NAVIGATION_SPEC.md - フッター高さ64px + Safe Area */}
+          <div
+            className="fixed left-0 right-0 p-4 bg-white border-t z-30"
+            style={{ bottom: 'calc(64px + env(safe-area-inset-bottom, 0))' }}
+          >
             <button
               type="submit"
               disabled={isSubmitting}
