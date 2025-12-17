@@ -153,6 +153,11 @@ facility-care-input-form/
 - スクロールしても常に見える（sticky header）
 - `frontend/src/components/demo/DemoHeaderButton.tsx`
 
+### デモモードフッター統一 (2025-12-18)
+- `/demo/*` 内では常に家族用フッター（ホーム/品物管理/記録閲覧/統計）を表示
+- `FooterNav.tsx` で `isDemoMode` 判定を追加
+- 設計書: DEMO_FAMILY_REDESIGN.md セクション4.3に準拠
+
 ### デモモード書き込み安全対策
 - デモモード（`/demo/*`）での書き込み操作は本番Firestoreに保存されない
 - 書き込み時にアラート表示: 「〇〇しました（デモモード - 実際には保存されません）」
