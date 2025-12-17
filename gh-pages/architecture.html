@@ -305,17 +305,139 @@ graph TB
                             <td class="px-4 py-3">画像アップロード</td>
                             <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
                         </tr>
-                        <tr class="bg-yellow-50">
+                        <tr>
                             <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
                             <td class="px-4 py-3 font-mono text-xs">/testWebhook</td>
                             <td class="px-4 py-3">Webhookテスト</td>
-                            <td class="px-4 py-3"><span class="text-yellow-600">📋</span></td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
                         </tr>
-                        <tr class="bg-yellow-50">
+                        <tr>
                             <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
                             <td class="px-4 py-3 font-mono text-xs">/testDriveAccess</td>
                             <td class="px-4 py-3">Driveアクセステスト</td>
-                            <td class="px-4 py-3"><span class="text-yellow-600">📋</span></td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <!-- Phase 8: 品物管理 -->
+                        <tr class="bg-purple-50">
+                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/createCareItem</td>
+                            <td class="px-4 py-3">品物登録</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr class="bg-purple-50">
+                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/getCareItems</td>
+                            <td class="px-4 py-3">品物一覧取得</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr class="bg-purple-50">
+                            <td class="px-4 py-3"><span class="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs">PUT</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/updateCareItem</td>
+                            <td class="px-4 py-3">品物更新</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr class="bg-purple-50">
+                            <td class="px-4 py-3"><span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs">DELETE</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/deleteCareItem</td>
+                            <td class="px-4 py-3">品物削除</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <!-- Phase 8: タスク管理 -->
+                        <tr class="bg-purple-50">
+                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/createTask</td>
+                            <td class="px-4 py-3">タスク作成</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr class="bg-purple-50">
+                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/getTasks</td>
+                            <td class="px-4 py-3">タスク一覧取得</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr class="bg-purple-50">
+                            <td class="px-4 py-3"><span class="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs">PUT</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/updateTask</td>
+                            <td class="px-4 py-3">タスク更新・完了</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <!-- Phase 8: 統計・AI -->
+                        <tr class="bg-purple-50">
+                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/getStats</td>
+                            <td class="px-4 py-3">統計データ取得</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr class="bg-purple-50">
+                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/aiSuggest</td>
+                            <td class="px-4 py-3">AI品物入力補助（Gemini）</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <!-- Phase 8: プリセット -->
+                        <tr class="bg-purple-50">
+                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/getPresets</td>
+                            <td class="px-4 py-3">プリセット一覧取得</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr class="bg-purple-50">
+                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/createPreset</td>
+                            <td class="px-4 py-3">プリセット作成</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr class="bg-purple-50">
+                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/saveAISuggestionAsPreset</td>
+                            <td class="px-4 py-3">AI提案をプリセット保存</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <!-- Phase 9: 禁止ルール -->
+                        <tr class="bg-indigo-50">
+                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/getProhibitions</td>
+                            <td class="px-4 py-3">禁止ルール一覧取得</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr class="bg-indigo-50">
+                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/createProhibition</td>
+                            <td class="px-4 py-3">禁止ルール作成</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <!-- Phase 9: 消費記録 -->
+                        <tr class="bg-indigo-50">
+                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/recordConsumptionLog</td>
+                            <td class="px-4 py-3">消費ログ記録</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr class="bg-indigo-50">
+                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/getConsumptionLogs</td>
+                            <td class="px-4 py-3">消費ログ一覧取得</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <!-- Phase 9.3: 統計拡張 -->
+                        <tr class="bg-indigo-50">
+                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/getInventorySummary</td>
+                            <td class="px-4 py-3">在庫サマリー取得</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr class="bg-indigo-50">
+                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/getFoodStats</td>
+                            <td class="px-4 py-3">食品傾向分析取得</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <!-- Scheduler -->
+                        <tr class="bg-gray-50">
+                            <td class="px-4 py-3"><span class="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs">SCHED</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/generateDailyTasks</td>
+                            <td class="px-4 py-3">タスク自動生成（毎日6時）</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
                         </tr>
                     </tbody>
                 </table>

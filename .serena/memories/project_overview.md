@@ -72,13 +72,67 @@ facility-care-input-form/
 
 ## Cloud Functions エンドポイント
 
+### コア機能
 | メソッド | パス | 説明 |
 |----------|------|------|
 | GET | `/healthCheck` | ヘルスチェック |
 | POST | `/syncPlanData` | 記録データ同期 |
-| POST | `/submitMealRecord` | 食事記録入力 |
-| POST | `/submitCareRecord` | ケア実績入力 (deprecated) |
-| POST | `/submitFamilyRequest` | 家族要望送信 |
-| POST | `/uploadCareImage` | 画像アップロード |
 | GET | `/getPlanData` | 記録データ取得 |
-| GET | `/getFamilyRequests` | 家族要望一覧取得 |
+| POST | `/submitMealRecord` | 食事記録入力 |
+| POST | `/uploadCareImage` | 画像アップロード |
+| GET | `/getMealFormSettings` | 設定取得 |
+| POST | `/updateMealFormSettings` | 設定更新 |
+| POST | `/testWebhook` | Webhookテスト |
+| POST | `/testDriveAccess` | Driveアクセステスト |
+
+### 品物管理 (Phase 8.1)
+| メソッド | パス | 説明 |
+|----------|------|------|
+| POST | `/createCareItem` | 品物登録 |
+| GET | `/getCareItems` | 品物一覧取得 |
+| PUT | `/updateCareItem` | 品物更新 |
+| DELETE | `/deleteCareItem` | 品物削除 |
+
+### タスク管理 (Phase 8.2)
+| メソッド | パス | 説明 |
+|----------|------|------|
+| POST | `/createTask` | タスク作成 |
+| GET | `/getTasks` | タスク一覧取得 |
+| PUT | `/updateTask` | タスク更新・完了 |
+| DELETE | `/deleteTask` | タスク削除 |
+| SCHED | `/generateDailyTasks` | タスク自動生成（毎日6時） |
+
+### 統計・AI (Phase 8.3-8.4)
+| メソッド | パス | 説明 |
+|----------|------|------|
+| GET | `/getStats` | 統計データ取得 |
+| POST | `/aiSuggest` | AI品物入力補助（Gemini） |
+
+### プリセット (Phase 8.6-8.7)
+| メソッド | パス | 説明 |
+|----------|------|------|
+| GET | `/getPresets` | プリセット一覧取得 |
+| POST | `/createPreset` | プリセット作成 |
+| PUT | `/updatePreset` | プリセット更新 |
+| DELETE | `/deletePreset` | プリセット削除 |
+| POST | `/saveAISuggestionAsPreset` | AI提案をプリセット保存 |
+
+### 禁止ルール (Phase 9.x)
+| メソッド | パス | 説明 |
+|----------|------|------|
+| GET | `/getProhibitions` | 禁止ルール一覧取得 |
+| POST | `/createProhibition` | 禁止ルール作成 |
+| PUT | `/updateProhibition` | 禁止ルール更新 |
+| DELETE | `/deleteProhibition` | 禁止ルール削除 |
+
+### 消費記録 (Phase 9.2)
+| メソッド | パス | 説明 |
+|----------|------|------|
+| POST | `/recordConsumptionLog` | 消費ログ記録 |
+| GET | `/getConsumptionLogs` | 消費ログ一覧取得 |
+
+### 統計拡張 (Phase 9.3)
+| メソッド | パス | 説明 |
+|----------|------|------|
+| GET | `/getInventorySummary` | 在庫サマリー取得 |
+| GET | `/getFoodStats` | 食品傾向分析取得 |
