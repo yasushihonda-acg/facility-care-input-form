@@ -145,10 +145,11 @@ facility-care-input-form/
 - **デモモード判定**: `useDemoMode` フック（パスが `/demo` で始まるか判定）
 - **シードデータ**: `frontend/src/data/demo/` に12品物、18ログ、9タスク等
 
-### ツアーナビゲーション（TourReturnBanner）
-- `/demo/*` ページ（`/demo/showcase` 除く）にバナー表示
-- 「ガイド付きツアー中」テキストと「ツアーに戻る」リンク
-- `frontend/src/components/demo/TourReturnBanner.tsx`
+### ツアーナビゲーション（ヘッダーボタン）
+- `/demo/*` ページ（`/demo/showcase` 除く）でヘッダー右側にオレンジ色のボタン表示
+- 「🎯 ツアー」ボタンでいつでもツアートップに戻れる
+- スクロールしても常に見える（sticky header）
+- `frontend/src/components/demo/DemoHeaderButton.tsx`
 
 ### E2Eテスト
 - **テストファイル**: `frontend/e2e/demo-page.spec.ts`

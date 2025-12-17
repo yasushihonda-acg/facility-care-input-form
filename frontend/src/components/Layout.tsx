@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FooterNav } from './FooterNav';
-import { TourReturnBanner } from './demo/TourReturnBanner';
+import { DemoHeaderButton } from './demo/DemoHeaderButton';
 
 interface LayoutProps {
   children: ReactNode;
@@ -69,16 +69,15 @@ export function Layout({
               )}
             </div>
 
-            {/* 右側: カスタム要素 or スペーサー */}
-            <div className="w-10 flex-shrink-0 flex justify-end">
+            {/* 右側: デモボタン + カスタム要素 */}
+            <div className="w-auto flex-shrink-0 flex justify-end items-center gap-2">
+              <DemoHeaderButton />
               {rightElement}
             </div>
           </div>
         </header>
       )}
 
-      {/* ツアーバナー（デモモード時のみ表示） */}
-      <TourReturnBanner />
 
       {/* メインコンテンツ */}
       <main className={`flex-1 px-4 ${title ? 'py-4' : ''}`}>

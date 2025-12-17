@@ -478,50 +478,59 @@ Step 6/6: 在庫状況の確認
 
 ---
 
-## 10. ツアーナビゲーション改善
+## 10. ツアーナビゲーション
 
 > **追加日**: 2025年12月17日
+> **更新日**: 2025年12月17日（ヘッダー統合型に改善）
 > **実装状況**: ✅ 実装完了
 
 ### 10.1 背景・課題
 
-現状のガイド付きツアーでは、「この機能を見る」ボタンでデモページに遷移した後、ツアートップ（`/demo/showcase`）に戻る方法が分かりづらい。
+#### 旧方式の問題点
+
+以前はヘッダー下に薄いバナーを表示する方式だったが、以下の問題があった：
 
 | 課題 | 詳細 |
 |------|------|
-| 戻り方が不明確 | ブラウザの戻るボタンに依存 |
-| 履歴依存 | 複数ページを遷移するとツアートップに戻れない |
-| ツアー中の認識 | 現在ツアー中であることが分かりにくい |
+| **目立たない** | 薄い青バナーが小さく、気づきにくい |
+| **スクロールで消える** | ページ上部にあるため、スクロールすると見えなくなる |
+| **アクセスしにくい** | ツアートップに戻るのが大変 |
+| **UX悪化** | ユーザーが迷子になりやすい |
 
-### 10.2 解決策
+### 10.2 解決策: ヘッダー統合型
 
-**デモページ上部に「ツアーに戻る」バナーを表示**
+**ヘッダー右側に目立つ「ツアー」ボタンを常時表示**
 
-- `/demo/*` ページ（`/demo/showcase` 以外）に薄いバナーを表示
-- ワンタップでツアートップに戻れる
-- ツアー中であることを視覚的に示す
+- sticky headerの右側にボタンを配置
+- スクロールしても常に表示される
+- 目立つオレンジ色でアクセント
+- いつでも1タップでツアートップに戻れる
 
 ### 10.3 UI設計
 
 ```
-┌─────────────────────────────────────────────────────┐
-│ 🎯 ガイド付きツアー中        [ツアーに戻る →]       │  ← 薄い青背景バナー
-├─────────────────────────────────────────────────────┤
-│                                                     │
-│   （既存のページコンテンツ）                         │
-│                                                     │
-└─────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────┐
+│ [←]       ページタイトル           [🎯 ツアー →]     │  ← ヘッダー内にボタン
+├───────────────────────────────────────────────────────┤
+│                                                       │
+│              （ページコンテンツ）                      │
+│                                                       │
+│              スクロールしても                          │
+│              ヘッダーは固定表示                        │
+│                                                       │
+└───────────────────────────────────────────────────────┘
 ```
 
 **デザイン仕様**:
 
 | 項目 | 値 |
 |------|-----|
-| 背景色 | `bg-blue-50` |
-| テキスト色 | `text-blue-700` |
-| 高さ | 固定（約40px） |
-| 位置 | ページ最上部（ヘッダーの下） |
-| 表示条件 | `/demo/*` かつ `/demo/showcase` 以外 |
+| 背景色 | `bg-orange-500` (ホバー時 `bg-orange-600`) |
+| テキスト色 | `text-white` |
+| サイズ | コンパクト（px-2 py-1） |
+| 角丸 | `rounded-full` |
+| 位置 | ヘッダー右側（`rightElement`） |
+| アイコン | 🎯 + テキスト「ツアー」 |
 
 ### 10.4 実装設計
 
@@ -529,21 +538,23 @@ Step 6/6: 在庫状況の確認
 
 ```
 frontend/src/components/demo/
-└── TourReturnBanner.tsx    # 新規作成
+├── TourReturnBanner.tsx    # 削除（不要になる）
+└── DemoHeaderButton.tsx    # 新規作成
 ```
 
-#### 10.4.2 TourReturnBanner コンポーネント
+#### 10.4.2 DemoHeaderButton コンポーネント
 
 ```typescript
-// components/demo/TourReturnBanner.tsx
+// components/demo/DemoHeaderButton.tsx
 
 import { Link, useLocation } from 'react-router-dom';
 
 /**
- * デモページ用「ツアーに戻る」バナー
- * /demo/* ページ（/demo/showcase 以外）で表示
+ * デモモード時にヘッダー右側に表示する「ツアーに戻る」ボタン
+ * - /demo/* ページでのみ表示
+ * - /demo/showcase では非表示（ツアートップ自体のため）
  */
-export function TourReturnBanner() {
+export function DemoHeaderButton() {
   const location = useLocation();
 
   // /demo/showcase では非表示
@@ -557,42 +568,47 @@ export function TourReturnBanner() {
   }
 
   return (
-    <div className="bg-blue-50 border-b border-blue-100">
-      <div className="px-4 py-2 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-blue-700 text-sm">
-          <span>🎯</span>
-          <span>ガイド付きツアー中</span>
-        </div>
-        <Link
-          to="/demo/showcase"
-          className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
-        >
-          ツアーに戻る
-          <span>→</span>
-        </Link>
-      </div>
-    </div>
+    <Link
+      to="/demo/showcase"
+      className="flex items-center gap-1 bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium px-2 py-1 rounded-full transition-colors"
+    >
+      <span>🎯</span>
+      <span>ツアー</span>
+    </Link>
   );
 }
 ```
 
-#### 10.4.3 組み込み方法
-
-**方法A: Layout コンポーネントに組み込み（推奨）**
+#### 10.4.3 Layout への統合
 
 ```typescript
 // components/Layout.tsx
 
-import { TourReturnBanner } from './demo/TourReturnBanner';
+import { DemoHeaderButton } from './demo/DemoHeaderButton';
 
-export function Layout({ children, ... }: LayoutProps) {
+export function Layout({ children, title, rightElement, ... }: LayoutProps) {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* ヘッダー */}
-      {title && <header>...</header>}
+      {title && (
+        <header className="bg-gradient-to-r from-primary to-primary-dark text-white sticky top-0 z-50">
+          <div className="px-4 py-3 flex items-center justify-between">
+            {/* 左側: 戻るボタン */}
+            <div className="w-10">...</div>
 
-      {/* ツアーバナー（デモモード時のみ表示） */}
-      <TourReturnBanner />
+            {/* 中央: タイトル */}
+            <div className="flex-1 text-center">
+              <h1>{title}</h1>
+            </div>
+
+            {/* 右側: デモボタン or カスタム要素 */}
+            <div className="w-auto flex-shrink-0 flex justify-end gap-2">
+              <DemoHeaderButton />  {/* 常に表示判定 */}
+              {rightElement}
+            </div>
+          </div>
+        </header>
+      )}
 
       {/* メインコンテンツ */}
       <main>...</main>
@@ -606,29 +622,40 @@ export function Layout({ children, ... }: LayoutProps) {
 
 ### 10.5 表示条件まとめ
 
-| パス | バナー表示 |
-|------|----------|
-| `/demo` | ✅ 表示 |
-| `/demo/showcase` | ❌ 非表示（ツアートップ自体） |
-| `/demo/staff` | ✅ 表示 |
-| `/demo/family` | ✅ 表示 |
-| `/demo/family/items/new` | ✅ 表示 |
-| `/demo/stats` | ✅ 表示 |
-| `/staff` | ❌ 非表示（本番ページ） |
-| `/family` | ❌ 非表示（本番ページ） |
+| パス | ボタン表示 | 理由 |
+|------|----------|------|
+| `/demo` | ✅ 表示 | デモホーム |
+| `/demo/showcase` | ❌ 非表示 | ツアートップ自体 |
+| `/demo/staff` | ✅ 表示 | デモページ |
+| `/demo/family` | ✅ 表示 | デモページ |
+| `/demo/family/items/new` | ✅ 表示 | デモページ |
+| `/demo/stats` | ✅ 表示 | デモページ |
+| `/staff` | ❌ 非表示 | 本番ページ |
+| `/family` | ❌ 非表示 | 本番ページ |
 
-### 10.6 実装タスク
+### 10.6 旧方式との比較
+
+| 項目 | 旧方式（バナー） | 新方式（ヘッダーボタン） |
+|------|------------------|------------------------|
+| 位置 | ヘッダー下 | ヘッダー内（右側） |
+| 視認性 | △ 薄い青で目立たない | ◎ オレンジで目立つ |
+| スクロール時 | ✗ 見えなくなる | ◎ 常に表示（sticky） |
+| アクセス性 | △ 上部に戻る必要 | ◎ いつでも1タップ |
+| デザイン | テキストリンク | ボタン型（明確なCTA） |
+
+### 10.7 実装タスク
 
 | # | タスク | 工数 |
 |---|--------|------|
-| 1 | `TourReturnBanner.tsx` コンポーネント作成 | 小 |
-| 2 | `Layout.tsx` にバナー組み込み | 小 |
-| 3 | 動作確認・微調整 | 小 |
+| 1 | `DemoHeaderButton.tsx` 作成 | 小 |
+| 2 | `Layout.tsx` 修正（右側にボタン配置） | 小 |
+| 3 | `TourReturnBanner.tsx` 削除 | 小 |
+| 4 | E2Eテスト更新 | 小 |
 
-### 10.7 将来の拡張案
+### 10.8 将来の拡張案
 
 | 機能 | 説明 |
 |------|------|
-| ステップ番号表示 | 「ステップ 2/6」など現在位置を表示 |
-| 次のステップボタン | 「次へ」ボタンでツアーを進める |
-| 閉じるボタン | バナーを非表示にするオプション |
+| ステップ番号表示 | ボタンに「2/6」など現在位置を表示 |
+| ツールチップ | ホバー時に「ガイド付きツアーに戻る」と表示 |
+| アニメーション | 初回訪問時にパルスアニメーションで注目を集める |
