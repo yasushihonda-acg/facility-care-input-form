@@ -116,6 +116,9 @@ function App() {
       {/* デモ: 統計ダッシュボード */}
       <Route path="/demo/stats" element={<StatsDashboard />} />
 
+      {/* デモ: 記録閲覧（共有ビュー） */}
+      <Route path="/demo/view" element={<ViewPage />} />
+
       {/* デモ: 品物タイムライン */}
       <Route path="/demo/items/:id/timeline" element={<ItemTimeline />} />
     </Routes>

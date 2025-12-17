@@ -8,6 +8,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import { useCareItems, useDeleteCareItem } from '../../hooks/useCareItems';
+import { useDemoMode } from '../../hooks/useDemoMode';
 import {
   getCategoryIcon,
   getStatusLabel,
@@ -35,6 +36,8 @@ function formatDateTime(dateStr: string): string {
 export function ItemDetail() {
   const { id } = useParams<{ id: string }>();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const isDemo = useDemoMode();
+  const pathPrefix = isDemo ? '/demo' : '';
 
   // 品物一覧から該当品物を取得
   const { data, isLoading, error } = useCareItems({
@@ -48,8 +51,8 @@ export function ItemDetail() {
     if (!item) return;
     try {
       await deleteItem.mutateAsync(item.id);
-      // 削除後は一覧に戻る
-      window.location.href = '/family/items';
+      // 削除後は一覧に戻る（デモモード対応）
+      window.location.href = `${pathPrefix}/family/items`;
     } catch (error) {
       console.error('Delete failed:', error);
       alert('削除に失敗しました');
@@ -73,7 +76,7 @@ export function ItemDetail() {
           <div className="bg-red-50 text-red-600 p-4 rounded-lg">
             {error ? 'エラーが発生しました' : '品物が見つかりません'}
           </div>
-          <Link to="/family/items" className="block mt-4 text-primary text-center">
+          <Link to={`${pathPrefix}/family/items`} className="block mt-4 text-primary text-center">
             ← 品物一覧に戻る
           </Link>
         </div>
@@ -276,7 +279,7 @@ export function ItemDetail() {
         {/* タイムラインへのリンク */}
         <div className="px-4 mb-4">
           <Link
-            to={`/items/${item.id}/timeline`}
+            to={`${pathPrefix}/items/${item.id}/timeline`}
             state={{ from: 'family' }}
             className="block bg-white rounded-lg shadow-card p-4 hover:shadow-md transition"
           >

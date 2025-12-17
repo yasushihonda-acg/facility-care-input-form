@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import { useCareItems, useDeleteCareItem } from '../../hooks/useCareItems';
+import { useDemoMode } from '../../hooks/useDemoMode';
 import {
   getCategoryIcon,
   getStatusLabel,
@@ -23,6 +24,10 @@ const DEMO_RESIDENT_ID = 'resident-001';
 export function ItemManagement() {
   const [statusFilter, setStatusFilter] = useState<ItemStatus | 'all'>('all');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const isDemo = useDemoMode();
+
+  // デモモード対応: リンク先プレフィックス
+  const pathPrefix = isDemo ? '/demo' : '';
 
   // 品物一覧を取得
   const { data, isLoading, error } = useCareItems({
@@ -65,7 +70,7 @@ export function ItemManagement() {
             品物管理
           </h1>
           <Link
-            to="/family/items/new"
+            to={`${pathPrefix}/family/items/new`}
             className="px-4 py-2 bg-primary text-white rounded-lg font-medium text-sm"
           >
             + 新規登録
@@ -109,7 +114,7 @@ export function ItemManagement() {
                 : `${filterTabs.find(t => t.value === statusFilter)?.label}の品物はありません`}
             </p>
             <Link
-              to="/family/items/new"
+              to={`${pathPrefix}/family/items/new`}
               className="inline-block px-6 py-3 bg-primary text-white rounded-lg font-medium"
             >
               品物を登録する
@@ -160,6 +165,8 @@ export function ItemManagement() {
  * 品物カードコンポーネント
  */
 function ItemCard({ item, onDelete }: { item: CareItem; onDelete: () => void }) {
+  const isDemo = useDemoMode();
+  const pathPrefix = isDemo ? '/demo' : '';
   const statusColor = getStatusColorClass(item.status);
   const categoryIcon = getCategoryIcon(item.category);
   const hasExpiration = !!item.expirationDate;
@@ -169,7 +176,7 @@ function ItemCard({ item, onDelete }: { item: CareItem; onDelete: () => void }) 
 
   return (
     <Link
-      to={`/family/items/${item.id}`}
+      to={`${pathPrefix}/family/items/${item.id}`}
       className="block bg-white rounded-lg shadow-sm border p-4 hover:shadow-md transition-shadow"
     >
       <div className="flex items-start gap-3">

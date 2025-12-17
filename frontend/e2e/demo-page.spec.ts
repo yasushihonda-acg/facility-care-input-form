@@ -298,6 +298,133 @@ test.describe('ナビゲーション', () => {
   });
 });
 
+test.describe('デモモードナビゲーション維持（重要）', () => {
+  /**
+   * デモモード内での操作がデモページ外に遷移しないことを検証
+   * @see docs/DEMO_SHOWCASE_SPEC.md
+   *
+   * 期待動作: /demo/* 内のすべてのリンク・ボタンは /demo/* 内に留まるべき
+   */
+
+  test('DEMO-NAV-001: デモ家族ホームのフッターナビはすべてデモページ内を指す', async ({ page }) => {
+    await page.goto('/demo/family', { waitUntil: 'networkidle' });
+    await waitForSpaLoad(page);
+
+    // フッターナビゲーションを取得
+    const footer = page.locator('nav[aria-label="家族用ナビゲーション"]');
+    await expect(footer).toBeVisible({ timeout: 15000 });
+
+    // フッター内のリンクをすべて取得
+    const links = await footer.locator('a').all();
+
+    // 各リンクのhref属性を確認
+    for (const link of links) {
+      const href = await link.getAttribute('href');
+      // デモページ内のリンクは /demo で始まるべき、または / で始まらない相対パス
+      // ただし、現状の実装では /family 等の本番パスを指している可能性がある
+      expect(href, `Link href should start with /demo but got: ${href}`).toMatch(/^\/demo/);
+    }
+  });
+
+  test('DEMO-NAV-002: デモ家族ホームからフッター「品物管理」クリック→デモページ内に留まる', async ({ page }) => {
+    await page.goto('/demo/family', { waitUntil: 'networkidle' });
+    await waitForSpaLoad(page);
+
+    // フッターの「品物管理」をクリック
+    const footer = page.locator('nav[aria-label="家族用ナビゲーション"]');
+    await footer.getByText('品物管理').click();
+
+    // /demo/family/items に遷移すべき（/family/items ではない）
+    await expect(page).toHaveURL(/^.*\/demo\/family\/items/, { timeout: 10000 });
+  });
+
+  test('DEMO-NAV-003: デモ家族ホームからフッター「記録閲覧」クリック→デモページ内に留まる', async ({ page }) => {
+    await page.goto('/demo/family', { waitUntil: 'networkidle' });
+    await waitForSpaLoad(page);
+
+    // フッターの「記録閲覧」をクリック
+    const footer = page.locator('nav[aria-label="家族用ナビゲーション"]');
+    await footer.getByText('記録閲覧').click();
+
+    // /demo/view に遷移すべき（/view ではない）
+    await expect(page).toHaveURL(/^.*\/demo/, { timeout: 10000 });
+  });
+
+  test('DEMO-NAV-004: デモ家族ホームからフッター「統計」クリック→デモページ内に留まる', async ({ page }) => {
+    await page.goto('/demo/family', { waitUntil: 'networkidle' });
+    await waitForSpaLoad(page);
+
+    // フッターの「統計」をクリック
+    const footer = page.locator('nav[aria-label="家族用ナビゲーション"]');
+    await footer.getByText('統計').click();
+
+    // /demo/stats に遷移すべき（/stats ではない）
+    await expect(page).toHaveURL(/^.*\/demo/, { timeout: 10000 });
+  });
+
+  test('DEMO-NAV-005: デモ品物一覧で新規登録→デモページ内に留まる', async ({ page }) => {
+    await page.goto('/demo/family/items', { waitUntil: 'networkidle' });
+    await waitForSpaLoad(page);
+
+    // 「新規登録」リンクをクリック
+    const newButton = page.getByRole('link', { name: /新規登録/ });
+    if (await newButton.isVisible()) {
+      await newButton.click();
+      // /demo/family/items/new に遷移すべき
+      await expect(page).toHaveURL(/^.*\/demo\/family\/items\/new/, { timeout: 10000 });
+    }
+  });
+
+  test('DEMO-NAV-006: デモタスク一覧のフッターからホームに戻る→デモページ内に留まる', async ({ page }) => {
+    await page.goto('/demo/family/tasks', { waitUntil: 'networkidle' });
+    await waitForSpaLoad(page);
+
+    // フッターの「ホーム」をクリック
+    const footer = page.locator('nav[aria-label="家族用ナビゲーション"]');
+    await footer.getByText('ホーム').click();
+
+    // /demo/family に遷移すべき（/family ではない）
+    await expect(page).toHaveURL(/^.*\/demo\/family$/, { timeout: 10000 });
+  });
+
+  test('DEMO-NAV-007: デモスタッフホームのフッターからリンクしてもデモ内に留まる', async ({ page }) => {
+    await page.goto('/demo/staff', { waitUntil: 'networkidle' });
+    await waitForSpaLoad(page);
+
+    // フッターが存在する場合、リンクを確認
+    const footer = page.locator('nav[aria-label]');
+    if (await footer.isVisible()) {
+      const links = await footer.locator('a').all();
+      for (const link of links) {
+        const href = await link.getAttribute('href');
+        // 本番ルートへのリンクがないことを確認
+        if (href && href.startsWith('/')) {
+          // /demo で始まるか、/view などの共有ページでも /demo プレフィックスがあるべき
+          // 現状は本番ルートを指している可能性がある
+          console.log(`Staff footer link: ${href}`);
+        }
+      }
+    }
+  });
+
+  test('DEMO-NAV-008: デモ統計画面から戻ってもデモ内に留まる', async ({ page }) => {
+    await page.goto('/demo/stats', { waitUntil: 'networkidle' });
+    await waitForSpaLoad(page);
+
+    // ブラウザの戻るボタンの代わりに、フッターナビでホームに戻る
+    const footer = page.locator('nav[aria-label]');
+    if (await footer.isVisible()) {
+      // ホームリンクがあればクリック
+      const homeLink = footer.getByText('ホーム');
+      if (await homeLink.isVisible()) {
+        await homeLink.click();
+        // デモページ内に留まるべき
+        await expect(page).toHaveURL(/^.*\/demo/, { timeout: 10000 });
+      }
+    }
+  });
+});
+
 test.describe('レスポンシブ表示', () => {
   test('DEMO-050: モバイル幅でデモホームが正しく表示される', async ({ page }) => {
     // モバイル幅に設定

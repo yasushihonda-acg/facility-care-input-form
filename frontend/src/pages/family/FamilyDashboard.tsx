@@ -18,6 +18,7 @@ import {
 } from '../../data/demoFamilyData';
 import { useDailyMealRecords } from '../../hooks/useFamilyMealRecords';
 import { useTaskBadgeCount } from '../../hooks/useTasks';
+import { useDemoMode } from '../../hooks/useDemoMode';
 
 // デモ用の入居者ID（将来は認証から取得）
 const DEMO_RESIDENT_ID = 'resident-001';
@@ -33,6 +34,10 @@ export function FamilyDashboard() {
 
   // タスクバッジカウント取得（フッターに無い機能なのでホームに表示）
   const { count: taskCount, hasOverdue } = useTaskBadgeCount(DEMO_RESIDENT_ID);
+
+  // デモモード対応: リンク先プレフィックス
+  const isDemo = useDemoMode();
+  const pathPrefix = isDemo ? '/demo' : '';
 
   // 日付の前後移動
   const handlePrevDay = () => {
@@ -117,7 +122,7 @@ export function FamilyDashboard() {
         <div className="grid grid-cols-2 gap-3 mb-4">
           {/* タスク管理 */}
           <Link
-            to="/family/tasks"
+            to={`${pathPrefix}/family/tasks`}
             className={`block bg-white rounded-lg shadow-card p-3 hover:shadow-md transition ${
               hasOverdue ? 'ring-2 ring-red-300' : ''
             }`}
@@ -142,7 +147,7 @@ export function FamilyDashboard() {
 
           {/* 入居者設定 */}
           <Link
-            to="/family/settings/resident"
+            to={`${pathPrefix}/family/settings/resident`}
             className="block bg-white rounded-lg shadow-card p-3 hover:shadow-md transition"
           >
             <div className="flex items-center gap-2">
@@ -231,7 +236,7 @@ export function FamilyDashboard() {
 
         {/* ケア指示作成ボタン（FAB風） */}
         <Link
-          to="/family/request"
+          to={`${pathPrefix}/family/request`}
           className="fixed bottom-24 right-4 w-14 h-14 bg-primary text-white rounded-full shadow-lg flex items-center justify-center hover:bg-primary-dark transition z-30"
           aria-label="新しいケア指示を作成"
         >

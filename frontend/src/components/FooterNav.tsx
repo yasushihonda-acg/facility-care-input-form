@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 
 interface FooterNavProps {
@@ -7,6 +7,7 @@ interface FooterNavProps {
 
 const USER_ROLE_KEY = 'userRole';
 const SHARED_PATHS = ['/view', '/stats', '/items'];
+const DEMO_SHARED_PATHS = ['/demo/view', '/demo/stats', '/demo/items'];
 
 /**
  * フッターナビゲーション
@@ -16,17 +17,26 @@ const SHARED_PATHS = ['/view', '/stats', '/items'];
  * - 家族用: [ホーム] [品物管理] [記録閲覧] [統計]
  *
  * 共有ビュー（/view, /stats）にいる場合は、直前のロールを維持
+ * デモモード（/demo/*）では、リンク先も /demo/* 内に留まる
  *
  * @see docs/VIEW_ARCHITECTURE_SPEC.md - セクション3「フッターナビゲーション設計」
  * @see docs/FOOTER_NAVIGATION_SPEC.md
+ * @see docs/DEMO_SHOWCASE_SPEC.md - デモモード対応
  */
 export function FooterNav({ className = '' }: FooterNavProps) {
   const location = useLocation();
 
-  // パスからロールを判定
-  const isFamilyPath = location.pathname.startsWith('/family');
-  const isStaffPath = location.pathname.startsWith('/staff') || location.pathname.startsWith('/input');
-  const isSharedPath = SHARED_PATHS.some(p => location.pathname === p || location.pathname.startsWith(p + '/'));
+  // デモモード判定
+  const isDemoMode = location.pathname.startsWith('/demo');
+
+  // パスからロールを判定（デモモードも含む）
+  const isFamilyPath = location.pathname.startsWith('/family') ||
+                       location.pathname.startsWith('/demo/family');
+  const isStaffPath = location.pathname.startsWith('/staff') ||
+                      location.pathname.startsWith('/input') ||
+                      location.pathname.startsWith('/demo/staff');
+  const isSharedPath = SHARED_PATHS.some(p => location.pathname === p || location.pathname.startsWith(p + '/')) ||
+                       DEMO_SHARED_PATHS.some(p => location.pathname === p || location.pathname.startsWith(p + '/'));
 
   // ロールを保存・取得
   useEffect(() => {
@@ -42,6 +52,17 @@ export function FooterNav({ className = '' }: FooterNavProps) {
   const savedRole = localStorage.getItem(USER_ROLE_KEY) || 'staff';
   const showFamilyFooter = isFamilyPath || (isSharedPath && savedRole === 'family');
 
+  // デモモード対応: リンク先を動的生成
+  const paths = useMemo(() => ({
+    familyHome: isDemoMode ? '/demo/family' : '/family',
+    familyItems: isDemoMode ? '/demo/family/items' : '/family/items',
+    view: isDemoMode ? '/demo/view' : '/view',
+    stats: isDemoMode ? '/demo/stats' : '/stats',
+    staffInput: isDemoMode ? '/demo/staff/input/meal' : '/input/meal',
+    staffFamilyMessages: isDemoMode ? '/demo/staff/family-messages' : '/staff/family-messages',
+    staffStats: isDemoMode ? '/demo/staff/stats' : '/staff/stats',
+  }), [isDemoMode]);
+
   // 家族用フッター
   if (showFamilyFooter) {
     return (
@@ -54,7 +75,7 @@ export function FooterNav({ className = '' }: FooterNavProps) {
         <div className="flex h-16">
           {/* ホームタブ */}
           <NavLink
-            to="/family"
+            to={paths.familyHome}
             end
             className={({ isActive }) => `
               flex-1 flex flex-col items-center justify-center gap-1 relative transition-all duration-200
@@ -91,17 +112,17 @@ export function FooterNav({ className = '' }: FooterNavProps) {
 
           {/* 品物管理タブ */}
           <NavLink
-            to="/family/items"
+            to={paths.familyItems}
             className={({ isActive }) => `
               flex-1 flex flex-col items-center justify-center gap-1 relative transition-all duration-200
-              ${isActive || location.pathname.startsWith('/family/items')
+              ${isActive || location.pathname.includes('/family/items')
                 ? 'bg-primary text-white'
                 : 'bg-white text-gray-500 hover:bg-gray-50'
               }
             `}
           >
             {({ isActive }) => {
-              const isItemsActive = isActive || location.pathname.startsWith('/family/items');
+              const isItemsActive = isActive || location.pathname.includes('/family/items');
               return (
                 <>
                   {isItemsActive && (
@@ -130,7 +151,7 @@ export function FooterNav({ className = '' }: FooterNavProps) {
 
           {/* 記録閲覧タブ（共有ビュー） */}
           <NavLink
-            to="/view"
+            to={paths.view}
             className={({ isActive }) => `
               flex-1 flex flex-col items-center justify-center gap-1 relative transition-all duration-200
               ${isActive
@@ -166,7 +187,7 @@ export function FooterNav({ className = '' }: FooterNavProps) {
 
           {/* 統計タブ（共有ビュー） */}
           <NavLink
-            to="/stats"
+            to={paths.stats}
             className={({ isActive }) => `
               flex-1 flex flex-col items-center justify-center gap-1 relative transition-all duration-200
               ${isActive
@@ -215,7 +236,7 @@ export function FooterNav({ className = '' }: FooterNavProps) {
       <div className="flex h-16">
         {/* 記録閲覧タブ */}
         <NavLink
-          to="/view"
+          to={paths.view}
           className={({ isActive }) => `
             flex-1 flex flex-col items-center justify-center gap-1 relative transition-all duration-200
             ${isActive
@@ -251,7 +272,7 @@ export function FooterNav({ className = '' }: FooterNavProps) {
 
         {/* 記録入力タブ */}
         <NavLink
-          to="/input/meal"
+          to={paths.staffInput}
           className={({ isActive }) => `
             flex-1 flex flex-col items-center justify-center gap-1 relative transition-all duration-200
             ${isActive
@@ -287,17 +308,17 @@ export function FooterNav({ className = '' }: FooterNavProps) {
 
         {/* 家族連絡タブ（スタッフ向け：閲覧用） */}
         <NavLink
-          to="/staff/family-messages"
+          to={paths.staffFamilyMessages}
           className={({ isActive }) => `
             flex-1 flex flex-col items-center justify-center gap-1 relative transition-all duration-200
-            ${isActive || location.pathname.startsWith('/staff/family-messages')
+            ${isActive || location.pathname.includes('/staff/family-messages')
               ? 'bg-primary text-white'
               : 'bg-white text-gray-500 hover:bg-gray-50'
             }
           `}
         >
           {({ isActive }) => {
-            const isMessagesActive = isActive || location.pathname.startsWith('/staff/family-messages');
+            const isMessagesActive = isActive || location.pathname.includes('/staff/family-messages');
             return (
               <>
                 {isMessagesActive && (
@@ -326,7 +347,7 @@ export function FooterNav({ className = '' }: FooterNavProps) {
 
         {/* 統計タブ */}
         <NavLink
-          to="/staff/stats"
+          to={paths.staffStats}
           className={({ isActive }) => `
             flex-1 flex flex-col items-center justify-center gap-1 relative transition-all duration-200
             ${isActive
