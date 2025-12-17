@@ -257,6 +257,7 @@ Phase 9.3: 統計ダッシュボード拡張    ░░░░░░░░░░�
 | GET | `/getStats` | 統計データ取得 |
 | POST | `/aiSuggest` | AI品物入力補助 |
 | GET/POST | `/presets/*` | プリセットCRUD |
+| GET/POST/PUT/DELETE | `/prohibitions/*` | 禁止ルールCRUD |
 | Scheduler | `/generateDailyTasks` | タスク自動生成（毎日6時） |
 
 ---

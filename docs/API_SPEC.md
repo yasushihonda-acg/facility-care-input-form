@@ -93,6 +93,10 @@ https://asia-northeast1-facility-care-input-form.cloudfunctions.net
 | PUT | `/updatePreset` | プリセットを更新 | Phase 8.6 | ✅ |
 | DELETE | `/deletePreset` | プリセットを削除 | Phase 8.6 | ✅ |
 | POST | `/saveAISuggestionAsPreset` | AI提案をプリセット保存 | Phase 8.7 | ✅ |
+| GET | `/getProhibitions` | 禁止ルール一覧を取得 | Phase 9.x | ✅ |
+| POST | `/createProhibition` | 禁止ルールを作成 | Phase 9.x | ✅ |
+| PUT | `/updateProhibition` | 禁止ルールを更新 | Phase 9.x | ✅ |
+| DELETE | `/deleteProhibition` | 禁止ルールを削除（論理削除） | Phase 9.x | ✅ |
 | POST | `/submitCareRecord` | ケア実績を入力 (deprecated) | Flow B | ❌ |
 | POST | `/submitFamilyRequest` | 家族要望を送信 | Flow C | ❌ |
 | GET | `/getFamilyRequests` | 家族要望一覧を取得 | - | ❌ |
@@ -1361,6 +1365,152 @@ AI提案をプリセットとして保存します。
 
 ---
 
+### 4.26 GET /getProhibitions (Phase 9.x)
+
+禁止ルール（提供禁止品目）一覧を取得します。
+
+> **詳細設計**: [ITEM_MANAGEMENT_SPEC.md セクション8](./ITEM_MANAGEMENT_SPEC.md#8-禁止ルール提供禁止品目) を参照
+
+**エンドポイント**: `GET /getProhibitions`
+
+**クエリパラメータ**:
+
+| パラメータ | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `residentId` | string | Yes | 入居者ID |
+| `activeOnly` | boolean | No | アクティブのみ取得（デフォルト: true） |
+
+**成功レスポンス (200)**:
+```json
+{
+  "success": true,
+  "data": {
+    "prohibitions": [
+      {
+        "id": "prohibition-001",
+        "residentId": "resident-001",
+        "itemName": "七福のお菓子",
+        "category": "snack",
+        "reason": "ご家族の希望（FAX指示）",
+        "createdBy": "family-001",
+        "createdAt": "2024-12-01T00:00:00.000Z",
+        "updatedAt": "2024-12-01T00:00:00.000Z",
+        "isActive": true
+      }
+    ],
+    "total": 1
+  }
+}
+```
+
+---
+
+### 4.27 POST /createProhibition (Phase 9.x)
+
+禁止ルールを作成します。
+
+**エンドポイント**: `POST /createProhibition`
+
+**リクエスト**:
+```json
+{
+  "residentId": "resident-001",
+  "userId": "family-001",
+  "prohibition": {
+    "itemName": "七福のお菓子",
+    "category": "snack",
+    "reason": "ご家族の希望（FAX指示）"
+  }
+}
+```
+
+| フィールド | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `residentId` | string | Yes | 入居者ID |
+| `userId` | string | Yes | 作成した家族ID |
+| `prohibition` | object | Yes | 禁止ルール定義 |
+| `prohibition.itemName` | string | Yes | 禁止品目名（部分一致でマッチング） |
+| `prohibition.category` | string | No | カテゴリ（`snack`, `fruit`, `dairy`, `other`など） |
+| `prohibition.reason` | string | No | 禁止理由 |
+
+**成功レスポンス (201)**:
+```json
+{
+  "success": true,
+  "data": {
+    "prohibitionId": "prohibition-abc123",
+    "createdAt": "2025-12-17T10:00:00.000Z"
+  }
+}
+```
+
+---
+
+### 4.28 PUT /updateProhibition (Phase 9.x)
+
+禁止ルールを更新します。
+
+**エンドポイント**: `PUT /updateProhibition`
+
+**リクエスト**:
+```json
+{
+  "residentId": "resident-001",
+  "prohibitionId": "prohibition-abc123",
+  "updates": {
+    "itemName": "七福のお菓子（全種類）",
+    "reason": "ご家族の希望（FAX指示）- 全種類禁止に変更"
+  }
+}
+```
+
+| フィールド | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `residentId` | string | Yes | 入居者ID |
+| `prohibitionId` | string | Yes | 更新対象の禁止ルールID |
+| `updates` | object | Yes | 更新内容（部分更新） |
+
+**更新可能フィールド**:
+- `itemName`: 禁止品目名
+- `category`: カテゴリ
+- `reason`: 禁止理由
+- `isActive`: 有効フラグ
+
+**成功レスポンス (200)**:
+```json
+{
+  "success": true,
+  "data": {
+    "prohibitionId": "prohibition-abc123",
+    "updatedAt": "2025-12-17T12:00:00.000Z"
+  }
+}
+```
+
+---
+
+### 4.29 DELETE /deleteProhibition (Phase 9.x)
+
+禁止ルールを論理削除します（isActive: false に変更）。
+
+**エンドポイント**: `DELETE /deleteProhibition`
+
+**クエリパラメータ**:
+
+| パラメータ | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `residentId` | string | Yes | 入居者ID |
+| `prohibitionId` | string | Yes | 削除対象の禁止ルールID |
+
+**成功レスポンス (200)**:
+```json
+{
+  "success": true
+}
+```
+
+---
+
 ## 5. TypeScript 型定義
 
 ```typescript
@@ -1645,6 +1795,55 @@ export interface GetFamilyRequestsResponse {
   requests: FamilyRequestRecord[];
   totalCount: number;
 }
+
+// === Phase 9.x: 禁止ルール (Prohibitions) ===
+
+export type ProhibitionCategory = 'snack' | 'fruit' | 'dairy' | 'meat' | 'seafood' | 'beverage' | 'other';
+
+export interface ProhibitionRule {
+  id: string;
+  residentId: string;
+  itemName: string;                    // 禁止品目名（部分一致でマッチング）
+  category?: ProhibitionCategory;      // カテゴリ
+  reason?: string;                     // 禁止理由
+  createdBy: string;                   // 作成者ID
+  createdAt: string;                   // 作成日時
+  updatedAt: string;                   // 更新日時
+  isActive: boolean;                   // 有効フラグ
+}
+
+export interface ProhibitionRuleInput {
+  itemName: string;
+  category?: ProhibitionCategory;
+  reason?: string;
+}
+
+export interface GetProhibitionsParams {
+  residentId: string;
+  activeOnly?: boolean;                // デフォルト: true
+}
+
+export interface GetProhibitionsResponse {
+  prohibitions: ProhibitionRule[];
+  total: number;
+}
+
+export interface CreateProhibitionRequest {
+  residentId: string;
+  userId: string;
+  prohibition: ProhibitionRuleInput;
+}
+
+export interface UpdateProhibitionRequest {
+  residentId: string;
+  prohibitionId: string;
+  updates: Partial<ProhibitionRuleInput & { isActive: boolean }>;
+}
+
+export interface DeleteProhibitionRequest {
+  residentId: string;
+  prohibitionId: string;
+}
 ```
 
 ---
@@ -1711,6 +1910,7 @@ curl -X POST \
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
+| 2025-12-17 | 1.9.0 | Phase 9.x: 禁止ルールAPI（getProhibitions, createProhibition, updateProhibition, deleteProhibition）追加 |
 | 2025-12-16 | 1.8.0 | Phase 8.7: saveAISuggestionAsPreset API追加 |
 | 2025-12-16 | 1.7.0 | Phase 8.6: プリセット管理API（getPresets, createPreset, updatePreset, deletePreset）追加 |
 | 2025-12-16 | 1.6.1 | Phase 8.5: getPresetSuggestions API追加 |
