@@ -12,6 +12,11 @@ import * as admin from "firebase-admin";
 // Firebase Admin SDK 初期化
 admin.initializeApp();
 
+// Firestore設定: undefined値を無視（オプショナルフィールド対応）
+admin.firestore().settings({
+  ignoreUndefinedProperties: true,
+});
+
 // =============================================================================
 // Health Check
 // =============================================================================
