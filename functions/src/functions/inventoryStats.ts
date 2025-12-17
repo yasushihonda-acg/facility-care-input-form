@@ -43,7 +43,6 @@ async function calculateInventorySummary(
   statusFilter?: ItemStatus | ItemStatus[],
   includeExpiringSoon?: boolean
 ): Promise<GetInventorySummaryResponse> {
-
   // 品物データを取得
   let query: FirebaseFirestore.Query = db.collection(CARE_ITEMS_COLLECTION);
   if (residentId) {
