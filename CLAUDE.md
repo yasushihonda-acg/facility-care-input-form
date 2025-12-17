@@ -76,6 +76,7 @@ gh run list --repo yasushihonda-acg/facility-care-input-form --workflow=gh-pages
 | `docs/TASK_MANAGEMENT_SPEC.md` | タスク管理機能設計（Phase 8.0） |
 | `docs/STATS_DASHBOARD_SPEC.md` | 統計ダッシュボード設計（Phase 8.0） |
 | `docs/AI_INTEGRATION_SPEC.md` | Gemini AI連携設計（Phase 8.0） |
+| `docs/MOE_ANALYSIS_ITEM_CARE_INTEGRATION.md` | 品物管理×ケア指示統合分析 |
 | `docs/PRESET_MANAGEMENT_SPEC.md` | プリセット管理機能設計（Phase 8.6/8.7） |
 | `docs/INVENTORY_CONSUMPTION_SPEC.md` | 在庫・消費追跡設計（Phase 9.0） |
 | `docs/VIEW_ARCHITECTURE_SPEC.md` | View構成・ルーティング設計（Phase 9.1） |
@@ -88,6 +89,7 @@ gh run list --repo yasushihonda-acg/facility-care-input-form --workflow=gh-pages
 | `docs/DAY_SERVICE_OPTIONS_SPEC.md` | デイサービス選択肢固定リスト（Phase 5.9） |
 | `docs/DEMO_SHOWCASE_SPEC.md` | デモショーケース設計 |
 | `docs/E2E_TEST_SPEC.md` | E2Eテスト仕様 |
+| `docs/API_TEST_PLAN.md` | APIテスト計画・Firestore修正記録 |
 | `docs/FIX_DEMO_NAVIGATION.md` | デモナビゲーション修正記録 |
 
 #### データ構造

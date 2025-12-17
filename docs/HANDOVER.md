@@ -1,8 +1,44 @@
 # 引き継ぎドキュメント
 
-> **最終更新**: 2025年12月17日（Firestore修正・APIテスト追加）
+> **最終更新**: 2025年12月17日（ドキュメント整合性更新）
 >
 > 本ドキュメントは、開発を引き継ぐ際に必要な情報をまとめたものです。
+
+---
+
+## クイックスタート（5分で把握）
+
+### 今すぐ確認すべきこと
+
+| 優先度 | 確認項目 | URL/コマンド |
+|--------|----------|--------------|
+| ⭐⭐⭐ | デモサイト動作確認 | https://facility-care-input-form.web.app |
+| ⭐⭐⭐ | 現在の進捗確認 | `docs/CURRENT_STATUS.md` を読む |
+| ⭐⭐ | APIヘルスチェック | `curl https://asia-northeast1-facility-care-input-form.cloudfunctions.net/healthCheck` |
+
+### ドキュメント優先順位
+
+```
+1. docs/CURRENT_STATUS.md  ← 最初に読む（進捗・次のタスク）
+2. docs/HANDOVER.md        ← 今読んでいるこのファイル（全体像）
+3. CLAUDE.md               ← アカウント設定・開発方針
+4. docs/API_SPEC.md        ← API仕様（必要に応じて）
+```
+
+### 開発再開の3ステップ
+
+```bash
+# 1. リポジトリクローン（初回のみ）
+git clone https://github.com/yasushihonda-acg/facility-care-input-form.git
+
+# 2. アカウント切り替え
+gh auth switch --user yasushihonda-acg
+gcloud config set account yasushi.honda@aozora-cg.com
+firebase login:use yasushi.honda@aozora-cg.com
+
+# 3. 開発サーバー起動
+cd frontend && npm install && npm run dev
+```
 
 ---
 
