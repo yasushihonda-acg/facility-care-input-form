@@ -196,6 +196,12 @@ interface ConsumptionLog {
   consumptionNote?: string;            // 摂食時の特記事項
   noteToFamily?: string;               // 家族への申し送り
 
+  // === 家族指示対応（間食記録連携用）===
+  followedInstruction?: boolean;       // 家族指示に従ったか
+  instructionNote?: string;            // 指示対応メモ
+  linkedMealRecordId?: string;         // 食事記録の投稿ID（Sheet Bとの紐づけ）
+  sourceType?: 'meal_form' | 'item_detail' | 'task'; // 記録元
+
   // === メタ情報 ===
   recordedBy: string;                  // 記録者
   recordedAt: Timestamp;               // 記録日時
@@ -839,6 +845,7 @@ async function migrateCareItems() {
 ## 8. 参照資料
 
 - [ITEM_MANAGEMENT_SPEC.md](./ITEM_MANAGEMENT_SPEC.md) - 品物管理詳細設計
+- [SNACK_RECORD_INTEGRATION_SPEC.md](./SNACK_RECORD_INTEGRATION_SPEC.md) - 間食記録連携設計（食事記録からの消費ログ連携）
 - [VIEW_ARCHITECTURE_SPEC.md](./VIEW_ARCHITECTURE_SPEC.md) - ビュー構成設計
 - [USER_ROLE_SPEC.md](./USER_ROLE_SPEC.md) - ユーザーロール・権限設計
 - [STATS_DASHBOARD_SPEC.md](./STATS_DASHBOARD_SPEC.md) - 統計ダッシュボード設計

@@ -79,6 +79,7 @@ gh run list --repo yasushihonda-acg/facility-care-input-form --workflow=gh-pages
 | `docs/MOE_ANALYSIS_ITEM_CARE_INTEGRATION.md` | 品物管理×ケア指示統合分析 |
 | `docs/PRESET_MANAGEMENT_SPEC.md` | プリセット管理機能設計（Phase 8.6/8.7） |
 | `docs/INVENTORY_CONSUMPTION_SPEC.md` | 在庫・消費追跡設計（Phase 9.0） |
+| `docs/SNACK_RECORD_INTEGRATION_SPEC.md` | 間食記録連携設計（スタッフ入力↔家族品物連携） |
 | `docs/VIEW_ARCHITECTURE_SPEC.md` | View構成・ルーティング設計（Phase 9.1） |
 | `docs/ADMIN_TEST_FEATURE_SPEC.md` | 管理設定テスト機能（Phase 5.8） |
 | `docs/MEAL_INPUT_FORM_SPEC.md` | 食事入力フォーム設計 |
