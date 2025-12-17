@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月18日 (間食記録連携 Phase 1 実装完了)
+> **最終更新**: 2025年12月18日 (間食記録連携 Phase 1-3 実装完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -21,34 +21,52 @@
 
 ## 現在のタスク
 
-### 間食記録連携機能 Phase 2: フロントエンド品物リスト表示
+### 間食記録連携機能 Phase 4: 家族ページ連携
 
 **設計書**: [SNACK_RECORD_INTEGRATION_SPEC.md](./SNACK_RECORD_INTEGRATION_SPEC.md)
 
 **進捗**:
 - [x] Phase 1: API拡張（submitMealRecord + 消費ログ連携）完了
-  - [x] SnackRecord型定義追加（バックエンド・フロントエンド）
-  - [x] submitMealRecord API拡張（snackRecords対応）
-  - [x] consumptionLogService実装（消費ログ自動作成）
-  - [x] フロントエンド型同期
-  - [x] 単体テスト作成・パス
-- [ ] Phase 2: フロントエンド - 品物リスト表示（作業中）
-- [ ] Phase 3: フロントエンド - 提供記録入力UI
-- [ ] Phase 4: 家族ページ連携
+- [x] Phase 2: フロントエンド - 品物リスト表示 完了
+- [x] Phase 3: フロントエンド - 提供記録入力UI 完了
+- [ ] Phase 4: 家族ページ連携（次のタスク）
 - [ ] Phase 5: AIサジェスト統合
 - [ ] Phase 6: E2Eテスト
 
-**Phase 1 実装ファイル**:
-- `functions/src/types/index.ts` - SnackRecord型、SubmitMealRecordRequest拡張、ConsumptionLog拡張
-- `functions/src/services/consumptionLogService.ts` - 消費ログ連携サービス（新規）
+**Phase 1-3 実装ファイル**:
+- `functions/src/types/index.ts` - SnackRecord型、ConsumptionLog拡張
+- `functions/src/services/consumptionLogService.ts` - 消費ログ連携サービス
 - `functions/src/functions/submitMealRecord.ts` - API拡張
 - `frontend/src/types/mealForm.ts` - SnackRecord型追加
 - `frontend/src/types/consumptionLog.ts` - ConsumptionLog拡張
-- `functions/src/services/consumptionLogService.test.ts` - 単体テスト
+- `frontend/src/components/meal/` - 間食セクションコンポーネント群
+  - `FamilyItemCard.tsx` - 品物カード（在庫・期限・指示表示）
+  - `FamilyItemList.tsx` - 品物リスト
+  - `SnackRecordCard.tsx` - 提供記録入力カード
+  - `SnackSection.tsx` - 間食セクション統合コンポーネント
+- `frontend/src/pages/MealInputPage.tsx` - SnackSection組み込み
 
 ---
 
 ## 最近の完了タスク
+
+### 間食記録連携 Phase 2-3 実装完了 (2025-12-18)
+
+**設計書**: [SNACK_RECORD_INTEGRATION_SPEC.md](./SNACK_RECORD_INTEGRATION_SPEC.md)
+
+**Phase 2 - 品物リスト表示**:
+- FamilyItemCard: 在庫状況（残量・期限）、家族指示を視覚的に表示
+- FamilyItemList: 在庫ありの品物を一覧表示
+- SnackSection: MealInputPageに組み込み
+
+**Phase 3 - 提供記録入力UI**:
+- SnackRecordCard: 詳細な提供記録入力
+  - 提供数入力（0.5刻み）
+  - 摂食状況選択（絵文字付き5段階）
+  - 家族指示対応チェック
+  - 家族へのメモ入力
+
+---
 
 ### 間食記録連携 Phase 1 実装完了 (2025-12-18)
 
