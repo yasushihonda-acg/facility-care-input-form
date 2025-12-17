@@ -203,7 +203,7 @@ export function ItemForm() {
   return (
     <Layout title="品物を登録" showBackButton>
       <div className="flex-1 overflow-y-auto">
-        <form onSubmit={handleSubmit} className="p-4 space-y-6 pb-44">
+        <form onSubmit={handleSubmit} className="p-4 space-y-6 pb-8">
           {/* いつもの指示（プリセット）- 品物名の上に配置 */}
           {/* @see docs/ITEM_MANAGEMENT_SPEC.md - フォーム順序の設計原則 */}
           <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
@@ -465,19 +465,21 @@ export function ItemForm() {
             />
           </div>
 
-          {/* 送信ボタン（固定、フッター上に配置） */}
-          {/* @see docs/FOOTER_NAVIGATION_SPEC.md - フッター高さ64px + Safe Area */}
-          <div
-            className="fixed left-0 right-0 p-4 bg-white border-t z-30"
-            style={{ bottom: 'calc(64px + env(safe-area-inset-bottom, 0))' }}
-          >
+          {/* 送信ボタン（フォーム最下部に通常配置） */}
+          {/* 必須項目未入力時はdisabled */}
+          <div className="pt-4">
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="w-full py-4 bg-primary text-white font-bold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isSubmitting || !formData.itemName.trim()}
+              className="w-full py-4 bg-primary text-white font-bold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
             >
               {isSubmitting ? '登録中...' : '登録する'}
             </button>
+            {!formData.itemName.trim() && (
+              <p className="mt-2 text-sm text-gray-500 text-center">
+                ※ 品物名を入力すると登録できます
+              </p>
+            )}
           </div>
         </form>
       </div>
