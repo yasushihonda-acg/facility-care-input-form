@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月17日 (ツアーナビゲーション改善・E2Eテスト追加完了)
+> **最終更新**: 2025年12月17日 (Firestore undefined エラー修正・APIテスト完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -20,6 +20,33 @@
 ---
 
 ## 最近の完了タスク
+
+### Firestore undefined エラー修正・APIテスト (2025-12-17)
+
+**テスト計画書**: [API_TEST_PLAN.md](./API_TEST_PLAN.md)
+
+**概要**: 品物登録時の Firestore undefined エラーを修正し、全 Firestore 書き込み API をテスト
+
+**問題**:
+- `submitCareItem` API でオプショナルフィールド（noteToStaff 等）が undefined の場合に Firestore エラー発生
+- 同様のパターンが `createPreset`、`createProhibition` にも存在
+
+**修正内容**:
+- `functions/src/index.ts`: Firebase Admin SDK 初期化時に `ignoreUndefinedProperties: true` を設定
+
+**APIテスト結果**:
+| API | 結果 |
+|-----|------|
+| submitCareItem | ✅ 成功 |
+| createPreset | ✅ 成功 |
+| createProhibition | ✅ 成功 |
+| createTask | ✅ 成功 |
+
+**UI修正**:
+- `ItemForm.tsx`: 登録ボタンをフォーム最下部に配置（フッター追従からスタンダードなフォームレイアウトに変更）
+- 必須項目未入力時のボタン無効化を追加
+
+---
 
 ### ツアーナビゲーション改善・E2Eテスト追加 (2025-12-17)
 
