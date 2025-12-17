@@ -1,15 +1,20 @@
 /**
  * 統計データ取得カスタムフック (Phase 8.3)
  * @see docs/STATS_DASHBOARD_SPEC.md
+ *
+ * デモモード対応: /demo パス配下ではローカルデモデータを返却
+ * @see docs/DEMO_SHOWCASE_SPEC.md
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { getStats } from '../api';
 import type {
   GetStatsRequest,
   ItemStatsData,
   Alert,
 } from '../types/stats';
+import { DEMO_ITEM_STATS, DEMO_ALERTS } from '../data/demo';
 
 interface UseStatsOptions {
   residentId?: string;
@@ -50,6 +55,8 @@ function getTodayString(): string {
  */
 export function useStats(options: UseStatsOptions = {}): UseStatsReturn {
   const { residentId, include, autoFetch = true } = options;
+  const location = useLocation();
+  const isDemo = location.pathname.startsWith('/demo');
 
   // include配列をuseRefで初回の値に固定（参照の変化を無視）
   const includeRef = useRef<GetStatsRequest['include']>(include ?? DEFAULT_INCLUDE);
@@ -67,6 +74,16 @@ export function useStats(options: UseStatsOptions = {}): UseStatsReturn {
     setError(null);
 
     try {
+      // デモモードではローカルデータを返却
+      if (isDemo) {
+        const today = getTodayString();
+        setItemStats(DEMO_ITEM_STATS);
+        setAlerts(DEMO_ALERTS);
+        setPeriod({ start: today, end: today });
+        setIsLoading(false);
+        return;
+      }
+
       const today = getTodayString();
       const response = await getStats({
         residentId: params.residentId ?? residentId,
@@ -89,7 +106,7 @@ export function useStats(options: UseStatsOptions = {}): UseStatsReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [residentId]);
+  }, [residentId, isDemo]);
 
   const refetch = useCallback(async () => {
     await fetchStats();

@@ -1069,7 +1069,7 @@ Phase 9.1: ルーティング・ページ ████████████�
 Phase 9.2: 消費記録連携        ████████████████████ 100% (完了)
 Phase 9.x: 禁止ルール機能      ████████████████████ 100% (完了)
 Phase 9.3: 統計拡張            ████████████████████ 100% (完了)
-デモショーケース実装           ██████████████░░░░░░  70% (開発中)
+デモショーケース実装           ████████████████████ 100% (完了)
                                ─────────────────────
                                合計: 130+ tasks
 ```
@@ -1112,7 +1112,7 @@ Phase 9.3: 統計拡張            ███████████████
 | Phase 9.2 | 6 | 消費記録連携（ConsumptionLog API・UI） | ✅ 完了 |
 | Phase 9.x | 5 | 禁止ルール機能（入居者設定・警告表示） | ✅ 完了 |
 | Phase 9.3 | 4 | 統計ダッシュボード拡張（在庫サマリー・食品傾向） | ✅ 完了 |
-| Demo | 4 | デモショーケース実装（シードデータ・専用ページ） | 🚧 開発中 |
+| Demo | 4 | デモショーケース実装（シードデータ・専用ページ・フック対応） | ✅ 完了 |
 
 ---
 
@@ -1688,18 +1688,20 @@ interface Task {
 
 ---
 
-## デモショーケース実装 🚧 開発中
+## デモショーケース実装 ✅ 完了
 
 **設計書**: [DEMO_SHOWCASE_SPEC.md](./DEMO_SHOWCASE_SPEC.md)
 
 **目的**: 本番データに影響せず、デモ・プレゼン用の専用環境を提供
+
+**URL**: https://facility-care-input-form.web.app/demo
 
 **進捗**:
 | Phase | 内容 | 状態 |
 |-------|------|------|
 | Phase 1 | 基盤構築（useDemoMode, ルーティング, DemoHome） | ✅ 完了 |
 | Phase 2 | シードデータ作成（demoCareItems, demoStats等） | ✅ 完了 |
-| Phase 3 | データフック対応（useCareItems等のデモモード対応） | ⏳ 未着手 |
+| Phase 3 | データフック対応（useCareItems等のデモモード対応） | ✅ 完了 |
 | Phase 4 | ショーケース（DemoShowcase完成） | ✅ 完了 |
 
 **完成済みファイル**:
@@ -1707,14 +1709,11 @@ interface Task {
 - `frontend/src/data/demo/` - シードデータ（12品物、18ログ、9タスク等）
 - `frontend/src/pages/demo/DemoHome.tsx` - デモホームページ
 - `frontend/src/pages/demo/DemoShowcase.tsx` - ガイド付きツアー
+- `frontend/src/hooks/useCareItems.ts` - デモモード対応済み
+- `frontend/src/hooks/useStats.ts` - デモモード対応済み
+- `frontend/src/hooks/useTasks.ts` - デモモード対応済み
+- `frontend/src/hooks/useConsumptionLogs.ts` - デモモード対応済み
 - `frontend/src/App.tsx` - デモルート追加済み
-
-**次のステップ（Phase 3）**:
-各データフックをデモモードに対応させる：
-1. `useCareItems` - デモ時はDEMO_CARE_ITEMSを返す
-2. `useStats` - デモ時はDEMO_FOOD_STATS等を返す
-3. `useTasks` - デモ時はDEMO_TASKSを返す
-4. `useConsumptionLogs` - デモ時はDEMO_CONSUMPTION_LOGSを返す
 
 ---
 

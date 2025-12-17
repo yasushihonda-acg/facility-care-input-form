@@ -1,6 +1,9 @@
 /**
  * 消費ログ カスタムフック
  * docs/INVENTORY_CONSUMPTION_SPEC.md に基づく
+ *
+ * デモモード対応: /demo パス配下ではローカルデモデータを返却
+ * @see docs/DEMO_SHOWCASE_SPEC.md
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -10,6 +13,8 @@ import {
 } from '../api';
 import type { GetConsumptionLogsParams } from '../api';
 import type { RecordConsumptionLogRequest, ConsumptionLog, GetConsumptionLogsResponse } from '../types/consumptionLog';
+import { useDemoMode } from './useDemoMode';
+import { getDemoConsumptionLogsForItem } from '../data/demo';
 
 // クエリキー
 const CONSUMPTION_LOGS_KEY = 'consumptionLogs';
@@ -19,9 +24,22 @@ const CARE_ITEMS_KEY = 'careItems';
  * 消費ログ一覧を取得するフック
  */
 export function useConsumptionLogs(params: GetConsumptionLogsParams) {
+  const isDemo = useDemoMode();
+
   return useQuery<GetConsumptionLogsResponse>({
-    queryKey: [CONSUMPTION_LOGS_KEY, params.itemId, params],
+    queryKey: [CONSUMPTION_LOGS_KEY, params.itemId, params, isDemo],
     queryFn: async (): Promise<GetConsumptionLogsResponse> => {
+      // デモモードではローカルデータを返却
+      if (isDemo) {
+        const logs = getDemoConsumptionLogsForItem(params.itemId);
+        const limit = params.limit ?? 50;
+        const paginatedLogs = logs.slice(0, limit);
+        return {
+          logs: paginatedLogs,
+          total: logs.length,
+        };
+      }
+
       const response = await getConsumptionLogs(params);
       if (!response.success || !response.data) {
         const errorMsg = typeof response.error === 'string'

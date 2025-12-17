@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月17日 (デモショーケース実装: Phase 1-2完了)
+> **最終更新**: 2025年12月17日 (デモショーケース実装: 全Phase完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -19,19 +19,19 @@
 
 ---
 
-## 次のタスク
+## 最近の完了タスク
 
-### デモショーケース実装（進行中）
+### デモショーケース実装（完了）
 
 **設計書**: [DEMO_SHOWCASE_SPEC.md](./DEMO_SHOWCASE_SPEC.md)
 
-**進捗**: Phase 1-2 完了、Phase 3 未着手
+**進捗**: 全Phase完了
 
 | Phase | 内容 | 状態 |
 |-------|------|------|
 | Phase 1 | 基盤構築（useDemoMode, ルーティング, DemoHome） | ✅ 完了 |
 | Phase 2 | シードデータ作成（demoCareItems, demoStats等） | ✅ 完了 |
-| Phase 3 | データフック対応（useCareItems等のデモモード対応） | ⏳ 未着手 |
+| Phase 3 | データフック対応（useCareItems等のデモモード対応） | ✅ 完了 |
 | Phase 4 | ショーケース（DemoShowcase完成） | ✅ 完了 |
 
 **完成済みファイル**:
@@ -39,18 +39,15 @@
 - `frontend/src/data/demo/` - シードデータ（12品物、18ログ、9タスク等）
 - `frontend/src/pages/demo/DemoHome.tsx` - デモホームページ
 - `frontend/src/pages/demo/DemoShowcase.tsx` - ガイド付きツアー
+- `frontend/src/hooks/useCareItems.ts` - デモモード対応済み
+- `frontend/src/hooks/useStats.ts` - デモモード対応済み
+- `frontend/src/hooks/useTasks.ts` - デモモード対応済み
+- `frontend/src/hooks/useConsumptionLogs.ts` - デモモード対応済み
 - `frontend/src/App.tsx` - デモルート追加済み
-
-**次のステップ（Phase 3）**:
-各データフックをデモモードに対応させる必要があります：
-1. `useCareItems` - デモ時はDEMO_CARE_ITEMSを返す
-2. `useStats` - デモ時はDEMO_FOOD_STATS等を返す
-3. `useTasks` - デモ時はDEMO_TASKSを返す
-4. `useConsumptionLogs` - デモ時はDEMO_CONSUMPTION_LOGSを返す
 
 ---
 
-### その他のタスク（将来）
+## 次のタスク（将来）
 
 | 機能 | 説明 | 優先度 |
 |------|------|--------|

@@ -1,6 +1,9 @@
 /**
  * タスク管理 カスタムフック
  * docs/TASK_MANAGEMENT_SPEC.md に基づく
+ *
+ * デモモード対応: /demo パス配下ではローカルデモデータを返却
+ * @see docs/DEMO_SHOWCASE_SPEC.md
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -12,21 +15,91 @@ import {
 } from '../api';
 import type { GetTasksParams } from '../api';
 import type {
+  Task,
+  TaskStatus,
   CreateTaskInput,
   UpdateTaskInput,
   TaskCounts,
 } from '../types/task';
+import { useDemoMode } from './useDemoMode';
+import { DEMO_TASKS } from '../data/demo';
 
 // クエリキー
 const TASKS_KEY = 'tasks';
 
 /**
+ * デモデータをAPI形式にフィルタリング
+ */
+function filterDemoTasks(params: GetTasksParams): { tasks: Task[]; counts: TaskCounts; total: number } {
+  let tasks = [...DEMO_TASKS];
+
+  // 入居者IDでフィルタ
+  if (params.residentId) {
+    tasks = tasks.filter(task => task.residentId === params.residentId);
+  }
+
+  // ステータスでフィルタ
+  if (params.status && params.status.length > 0) {
+    tasks = tasks.filter(task => (params.status as TaskStatus[]).includes(task.status));
+  }
+
+  // 期日でフィルタ
+  if (params.dueDate) {
+    tasks = tasks.filter(task => task.dueDate === params.dueDate);
+  }
+
+  // 優先度でフィルタ
+  if (params.priority) {
+    tasks = tasks.filter(task => task.priority === params.priority);
+  }
+
+  // ソート（期日順デフォルト）
+  if (params.sortBy) {
+    tasks.sort((a, b) => {
+      const aVal = a[params.sortBy as keyof Task];
+      const bVal = b[params.sortBy as keyof Task];
+      if (aVal == null) return 1;
+      if (bVal == null) return -1;
+      const comparison = String(aVal).localeCompare(String(bVal));
+      return params.sortOrder === 'desc' ? -comparison : comparison;
+    });
+  }
+
+  // 件数カウントを計算（フィルタ前の全タスクから計算）
+  const today = new Date().toISOString().split('T')[0];
+  const counts: TaskCounts = {
+    pending: DEMO_TASKS.filter(t => t.status === 'pending').length,
+    inProgress: DEMO_TASKS.filter(t => t.status === 'in_progress').length,
+    completed: DEMO_TASKS.filter(t => t.status === 'completed').length,
+    overdue: DEMO_TASKS.filter(t =>
+      (t.status === 'pending' || t.status === 'in_progress') && t.dueDate < today
+    ).length,
+  };
+
+  const total = tasks.length;
+
+  // ページネーション
+  const limit = params.limit ?? 50;
+  const offset = params.offset ?? 0;
+  tasks = tasks.slice(offset, offset + limit);
+
+  return { tasks, counts, total };
+}
+
+/**
  * タスク一覧を取得するフック
  */
 export function useTasks(params: GetTasksParams = {}) {
+  const isDemo = useDemoMode();
+
   return useQuery({
-    queryKey: [TASKS_KEY, params],
+    queryKey: [TASKS_KEY, params, isDemo],
     queryFn: async () => {
+      // デモモードではローカルデータを返却
+      if (isDemo) {
+        return filterDemoTasks(params);
+      }
+
       const response = await getTasks(params);
       if (!response.success || !response.data) {
         throw new Error(response.error?.message || 'Failed to fetch tasks');
