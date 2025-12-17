@@ -9,6 +9,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import { useCareItems, useDeleteCareItem } from '../../hooks/useCareItems';
 import { useDemoMode } from '../../hooks/useDemoMode';
+import { useConsumptionLogs } from '../../hooks/useConsumptionLogs';
 import {
   getCategoryIcon,
   getStatusLabel,
@@ -17,7 +18,9 @@ import {
   getDaysUntilExpiration,
   getStorageLabel,
   getServingMethodLabel,
+  CONSUMPTION_STATUSES,
 } from '../../types/careItem';
+import type { ConsumptionStatus } from '../../types/careItem';
 import { useState } from 'react';
 
 // デモ用の入居者ID（将来は認証から取得）
@@ -33,6 +36,31 @@ function formatDateTime(dateStr: string): string {
   return `${month}/${day} ${hours}:${minutes}`;
 }
 
+/** 摂食状況のラベルとスタイルを取得 */
+function getConsumptionStatusDisplay(status: ConsumptionStatus): { label: string; emoji: string; color: string; bgColor: string } {
+  const statusConfig = CONSUMPTION_STATUSES.find(s => s.value === status);
+  const config = {
+    full: { emoji: '🎉', color: 'text-green-600', bgColor: 'bg-green-100' },
+    most: { emoji: '😊', color: 'text-blue-600', bgColor: 'bg-blue-100' },
+    half: { emoji: '😐', color: 'text-yellow-600', bgColor: 'bg-yellow-100' },
+    little: { emoji: '😟', color: 'text-orange-600', bgColor: 'bg-orange-100' },
+    none: { emoji: '😢', color: 'text-red-600', bgColor: 'bg-red-100' },
+  };
+  const display = config[status] || config.half;
+  return {
+    label: statusConfig?.label || status,
+    ...display,
+  };
+}
+
+/** 摂食率に基づくボーダー色を取得 */
+function getLogBorderColor(rate: number): string {
+  if (rate >= 90) return 'border-green-400';
+  if (rate >= 70) return 'border-blue-400';
+  if (rate >= 50) return 'border-yellow-400';
+  return 'border-orange-400';
+}
+
 export function ItemDetail() {
   const { id } = useParams<{ id: string }>();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -46,6 +74,13 @@ export function ItemDetail() {
 
   const deleteItem = useDeleteCareItem();
   const item = data?.items.find((i) => i.id === id);
+
+  // 消費ログを取得
+  const { data: logsData, isLoading: logsLoading } = useConsumptionLogs({
+    itemId: id || '',
+    limit: 10,
+  });
+  const consumptionLogs = logsData?.logs || [];
 
   // 削除処理
   // @see docs/DEMO_SHOWCASE_SPEC.md セクション11 - デモモードでの書き込み操作
@@ -225,62 +260,82 @@ export function ItemDetail() {
           <div className="bg-white rounded-lg shadow-card p-4">
             <h2 className="font-bold text-sm text-gray-700 mb-3">提供・摂食の記録</h2>
 
-            {/* TODO: Phase 9.2 で ConsumptionLog APIと連携 */}
-            {item.status === 'pending' ? (
+            {logsLoading ? (
+              <p className="text-gray-500 text-center py-4">読み込み中...</p>
+            ) : consumptionLogs.length === 0 && item.status === 'pending' ? (
               <p className="text-gray-500 text-center py-4">
                 まだ提供されていません
               </p>
+            ) : consumptionLogs.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">
+                記録がありません
+              </p>
             ) : (
               <div className="space-y-4">
-                {/* モックデータ表示 */}
-                <div className="border-l-4 border-green-400 pl-3 py-2">
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <span>🍽️</span>
-                    <span>12/18 15:00</span>
-                    <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">間食</span>
-                  </div>
-                  <p className="text-sm mt-1">
-                    佐藤さんが提供: 1{item.unit}
-                  </p>
-                  <p className="text-sm">
-                    摂食: 1{item.unit} (100%) <span className="text-green-600">🎉完食</span>
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">→ 残り 2.5{item.unit}</p>
-                  <div className="mt-2 p-2 bg-green-50 rounded text-sm">
-                    <span className="text-green-800">💬 今日は完食されました！</span>
-                  </div>
-                </div>
+                {/* 消費ログ表示 */}
+                {consumptionLogs.map((log) => {
+                  const statusDisplay = getConsumptionStatusDisplay(log.consumptionStatus);
+                  const borderColor = getLogBorderColor(log.consumptionRate);
 
-                <div className="border-l-4 border-yellow-400 pl-3 py-2">
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <span>🍽️</span>
-                    <span>12/17 15:00</span>
-                    <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">間食</span>
-                  </div>
-                  <p className="text-sm mt-1">
-                    山田さんが提供: 1{item.unit}
-                  </p>
-                  <p className="text-sm">
-                    摂食: 0.5{item.unit} (50%)
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">→ 残り 3.5{item.unit}</p>
-                  <div className="mt-2 p-2 bg-yellow-50 rounded text-sm">
-                    <span className="text-yellow-800">💬 皮が硬かったようで半分残されました</span>
-                  </div>
-                </div>
+                  return (
+                    <div key={log.id} className={`border-l-4 ${borderColor} pl-3 py-2`}>
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <span>🍽️</span>
+                        <span>{formatDateTime(log.recordedAt)}</span>
+                        {log.mealTime && (
+                          <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">
+                            {log.mealTime === 'breakfast' ? '朝食' :
+                             log.mealTime === 'lunch' ? '昼食' :
+                             log.mealTime === 'dinner' ? '夕食' : '間食'}
+                          </span>
+                        )}
+                        {log.sourceType === 'meal_form' && (
+                          <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
+                            食事入力
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm mt-1">
+                        {log.servedBy}さんが提供: {log.servedQuantity}{item.unit}
+                      </p>
+                      <p className="text-sm">
+                        摂食: {log.consumedQuantity}{item.unit} ({log.consumptionRate}%)
+                        <span className={`ml-1 ${statusDisplay.color}`}>
+                          {statusDisplay.emoji}{statusDisplay.label}
+                        </span>
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        → 残り {log.quantityAfter}{item.unit}
+                      </p>
+
+                      {/* 家族指示対応表示 */}
+                      {log.followedInstruction && (
+                        <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm">
+                          <span className="text-blue-800">
+                            ✅ 家族の指示に従いました
+                            {log.instructionNote && ` - ${log.instructionNote}`}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* 家族へのメモ */}
+                      {log.noteToFamily && (
+                        <div className={`mt-2 p-2 ${statusDisplay.bgColor} rounded text-sm`}>
+                          <span className={statusDisplay.color}>💬 {log.noteToFamily}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
 
                 {/* 登録イベント */}
-                <div className="border-l-4 border-blue-400 pl-3 py-2">
+                <div className="border-l-4 border-gray-300 pl-3 py-2">
                   <div className="flex items-center gap-2 text-sm text-gray-500">
                     <span>📦</span>
                     <span>{formatDateTime(item.sentDate + 'T10:30:00')}</span>
                   </div>
                   <p className="text-sm mt-1">登録しました</p>
                 </div>
-
-                <p className="text-xs text-gray-400 text-center mt-2">
-                  ※ 消費履歴機能は Phase 9.2 で実装予定
-                </p>
               </div>
             )}
           </div>

@@ -206,6 +206,41 @@ test.describe('ナビゲーションフロー', () => {
   });
 });
 
+test.describe('品物詳細ページ', () => {
+  test('品物詳細ページで消費ログが表示される（デモモード）', async ({ page }) => {
+    // デモモードで品物詳細にアクセス（キウイ: demo-item-002）
+    await page.goto('/demo/family/items/demo-item-002');
+
+    // ページタイトルが表示される（メイン領域のh1）
+    await expect(page.getByRole('main').getByRole('heading', { name: 'キウイ' })).toBeVisible();
+
+    // 「提供・摂食の記録」セクションが表示される
+    await expect(page.locator('text=提供・摂食の記録')).toBeVisible();
+
+    // 消費ログが表示される（摂食状況）
+    await expect(page.locator('text=完食').first()).toBeVisible({ timeout: 10000 });
+  });
+
+  test('消費ログに家族指示対応が表示される', async ({ page }) => {
+    // デモモードで品物詳細にアクセス（キウイ: demo-item-002 - followedInstruction: true のログあり）
+    await page.goto('/demo/family/items/demo-item-002');
+
+    // 「家族の指示に従いました」表示を確認（複数あるので first() を使用）
+    await expect(page.locator('text=家族の指示に従いました').first()).toBeVisible({ timeout: 10000 });
+  });
+
+  test('消費ログに提供者名と摂食率が表示される', async ({ page }) => {
+    // デモモードで品物詳細にアクセス
+    await page.goto('/demo/family/items/demo-item-002');
+
+    // 提供者名が表示される
+    await expect(page.locator('text=田中花子さんが提供').first()).toBeVisible({ timeout: 10000 });
+
+    // 摂食率が表示される
+    await expect(page.locator('text=/\\d+%/').first()).toBeVisible();
+  });
+});
+
 test.describe('VIEW_ARCHITECTURE_SPEC準拠チェック', () => {
   test('家族用フッターは4タブ構成である', async ({ page }) => {
     await page.goto('/family');
