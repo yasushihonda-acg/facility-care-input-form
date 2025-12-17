@@ -343,6 +343,28 @@ firebase deploy --only functions  # バックエンド
 - mainブランチへのマージで自動デプロイ
 - `.github/workflows/deploy.yml` で設定済み
 
+### 7.3 E2Eテスト
+
+```bash
+# ローカルでテスト（preview server使用）
+cd frontend && npm run build
+npm run preview -- --port 4173 &
+npx playwright test
+
+# 特定のテストを実行
+npx playwright test e2e/demo-page.spec.ts
+
+# 本番環境でテスト（環境変数で指定）
+BASE_URL=https://facility-care-input-form.web.app npx playwright test
+```
+
+**テスト構成**:
+- `frontend/e2e/` - E2Eテストファイル
+- `frontend/playwright.config.ts` - Playwright設定
+- デフォルトbaseURL: `http://localhost:4173`（環境変数で上書き可能）
+
+**現在のテスト**: 全35件（デモページ機能・ナビゲーション）
+
 ---
 
 ## 8. トラブルシューティング
@@ -501,6 +523,7 @@ docs/CURRENT_STATUS.md を読んで、次のタスクから再開してくださ
 
 | 日付 | 内容 |
 |------|------|
+| 2025-12-17 | デモモードナビゲーション修正（E2Eテスト追加、全35件パス） |
 | 2025-12-17 | デモショーケース全Phase完了、ドキュメント整合性更新 |
 | 2025-12-17 | Phase 9.2/9.3/禁止ルール完了追加、デモショーケース進行中追加 |
 | 2025-12-16 | Phase 9.0/9.1完了追加、計画中をPhase 9.2/9.3に更新 |

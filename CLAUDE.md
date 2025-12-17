@@ -86,6 +86,9 @@ gh run list --repo yasushihonda-acg/facility-care-input-form --workflow=gh-pages
 | `docs/SETTINGS_MODAL_UI_SPEC.md` | 設定モーダルUI仕様 |
 | `docs/FOOTER_NAVIGATION_SPEC.md` | フッターナビゲーション仕様 |
 | `docs/DAY_SERVICE_OPTIONS_SPEC.md` | デイサービス選択肢固定リスト（Phase 5.9） |
+| `docs/DEMO_SHOWCASE_SPEC.md` | デモショーケース設計 |
+| `docs/E2E_TEST_SPEC.md` | E2Eテスト仕様 |
+| `docs/FIX_DEMO_NAVIGATION.md` | デモナビゲーション修正記録 |
 
 #### データ構造
 | ファイル | 用途 |
