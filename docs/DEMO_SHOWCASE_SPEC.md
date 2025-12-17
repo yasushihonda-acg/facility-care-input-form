@@ -475,3 +475,160 @@ Step 6/6: 在庫状況の確認
 | シナリオ切り替え | 「通常シナリオ」「異常シナリオ」等 |
 | 時間シミュレーション | 日付を進めて期限切れ状態を再現 |
 | 多言語デモ | 英語版デモデータ |
+
+---
+
+## 10. ツアーナビゲーション改善
+
+> **追加日**: 2025年12月17日
+> **実装状況**: ✅ 実装完了
+
+### 10.1 背景・課題
+
+現状のガイド付きツアーでは、「この機能を見る」ボタンでデモページに遷移した後、ツアートップ（`/demo/showcase`）に戻る方法が分かりづらい。
+
+| 課題 | 詳細 |
+|------|------|
+| 戻り方が不明確 | ブラウザの戻るボタンに依存 |
+| 履歴依存 | 複数ページを遷移するとツアートップに戻れない |
+| ツアー中の認識 | 現在ツアー中であることが分かりにくい |
+
+### 10.2 解決策
+
+**デモページ上部に「ツアーに戻る」バナーを表示**
+
+- `/demo/*` ページ（`/demo/showcase` 以外）に薄いバナーを表示
+- ワンタップでツアートップに戻れる
+- ツアー中であることを視覚的に示す
+
+### 10.3 UI設計
+
+```
+┌─────────────────────────────────────────────────────┐
+│ 🎯 ガイド付きツアー中        [ツアーに戻る →]       │  ← 薄い青背景バナー
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│   （既存のページコンテンツ）                         │
+│                                                     │
+└─────────────────────────────────────────────────────┘
+```
+
+**デザイン仕様**:
+
+| 項目 | 値 |
+|------|-----|
+| 背景色 | `bg-blue-50` |
+| テキスト色 | `text-blue-700` |
+| 高さ | 固定（約40px） |
+| 位置 | ページ最上部（ヘッダーの下） |
+| 表示条件 | `/demo/*` かつ `/demo/showcase` 以外 |
+
+### 10.4 実装設計
+
+#### 10.4.1 コンポーネント構成
+
+```
+frontend/src/components/demo/
+└── TourReturnBanner.tsx    # 新規作成
+```
+
+#### 10.4.2 TourReturnBanner コンポーネント
+
+```typescript
+// components/demo/TourReturnBanner.tsx
+
+import { Link, useLocation } from 'react-router-dom';
+
+/**
+ * デモページ用「ツアーに戻る」バナー
+ * /demo/* ページ（/demo/showcase 以外）で表示
+ */
+export function TourReturnBanner() {
+  const location = useLocation();
+
+  // /demo/showcase では非表示
+  if (location.pathname === '/demo/showcase') {
+    return null;
+  }
+
+  // /demo/* 以外では非表示
+  if (!location.pathname.startsWith('/demo')) {
+    return null;
+  }
+
+  return (
+    <div className="bg-blue-50 border-b border-blue-100">
+      <div className="px-4 py-2 flex items-center justify-between">
+        <div className="flex items-center gap-2 text-blue-700 text-sm">
+          <span>🎯</span>
+          <span>ガイド付きツアー中</span>
+        </div>
+        <Link
+          to="/demo/showcase"
+          className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
+        >
+          ツアーに戻る
+          <span>→</span>
+        </Link>
+      </div>
+    </div>
+  );
+}
+```
+
+#### 10.4.3 組み込み方法
+
+**方法A: Layout コンポーネントに組み込み（推奨）**
+
+```typescript
+// components/Layout.tsx
+
+import { TourReturnBanner } from './demo/TourReturnBanner';
+
+export function Layout({ children, ... }: LayoutProps) {
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* ヘッダー */}
+      {title && <header>...</header>}
+
+      {/* ツアーバナー（デモモード時のみ表示） */}
+      <TourReturnBanner />
+
+      {/* メインコンテンツ */}
+      <main>...</main>
+
+      {/* フッター */}
+      {showFooter && <FooterNav />}
+    </div>
+  );
+}
+```
+
+### 10.5 表示条件まとめ
+
+| パス | バナー表示 |
+|------|----------|
+| `/demo` | ✅ 表示 |
+| `/demo/showcase` | ❌ 非表示（ツアートップ自体） |
+| `/demo/staff` | ✅ 表示 |
+| `/demo/family` | ✅ 表示 |
+| `/demo/family/items/new` | ✅ 表示 |
+| `/demo/stats` | ✅ 表示 |
+| `/staff` | ❌ 非表示（本番ページ） |
+| `/family` | ❌ 非表示（本番ページ） |
+
+### 10.6 実装タスク
+
+| # | タスク | 工数 |
+|---|--------|------|
+| 1 | `TourReturnBanner.tsx` コンポーネント作成 | 小 |
+| 2 | `Layout.tsx` にバナー組み込み | 小 |
+| 3 | 動作確認・微調整 | 小 |
+
+### 10.7 将来の拡張案
+
+| 機能 | 説明 |
+|------|------|
+| ステップ番号表示 | 「ステップ 2/6」など現在位置を表示 |
+| 次のステップボタン | 「次へ」ボタンでツアーを進める |
+| 閉じるボタン | バナーを非表示にするオプション |

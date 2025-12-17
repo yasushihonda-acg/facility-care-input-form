@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月17日 (デモモードナビゲーション修正完了)
+> **最終更新**: 2025年12月17日 (ツアーナビゲーション改善完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -20,6 +20,21 @@
 ---
 
 ## 最近の完了タスク
+
+### ツアーナビゲーション改善 (2025-12-17)
+
+**設計書**: [DEMO_SHOWCASE_SPEC.md](./DEMO_SHOWCASE_SPEC.md) セクション10
+
+**概要**: デモページからガイド付きツアーに戻る「ツアーに戻る」バナーを追加
+
+**実装内容**:
+- `TourReturnBanner.tsx`: `/demo/*` ページ上部に表示されるバナーコンポーネント
+- `Layout.tsx`: TourReturnBannerを組み込み
+- `/demo/showcase` 自体ではバナー非表示
+
+**検証**: ビルド成功、E2Eテスト52件パス（1件は既存の問題）
+
+---
 
 ### デモモードナビゲーション修正 (2025-12-17)
 
@@ -54,6 +69,7 @@
 - `frontend/src/data/demo/` - シードデータ（12品物、18ログ、9タスク等）
 - `frontend/src/pages/demo/DemoHome.tsx` - デモホームページ
 - `frontend/src/pages/demo/DemoShowcase.tsx` - ガイド付きツアー
+- `frontend/src/components/demo/TourReturnBanner.tsx` - ツアーに戻るバナー
 - `frontend/src/hooks/useCareItems.ts` - デモモード対応済み
 - `frontend/src/hooks/useStats.ts` - デモモード対応済み
 - `frontend/src/hooks/useTasks.ts` - デモモード対応済み

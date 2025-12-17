@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FooterNav } from './FooterNav';
+import { TourReturnBanner } from './demo/TourReturnBanner';
 
 interface LayoutProps {
   children: ReactNode;
@@ -75,6 +76,9 @@ export function Layout({
           </div>
         </header>
       )}
+
+      {/* ツアーバナー（デモモード時のみ表示） */}
+      <TourReturnBanner />
 
       {/* メインコンテンツ */}
       <main className={`flex-1 px-4 ${title ? 'py-4' : ''}`}>
