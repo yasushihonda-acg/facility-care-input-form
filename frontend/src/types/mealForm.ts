@@ -1,5 +1,25 @@
 // 食事入力フォームの型定義
 // docs/MEAL_INPUT_FORM_SPEC.md に基づく
+// docs/SNACK_RECORD_INTEGRATION_SPEC.md 間食記録連携対応
+
+import type { ConsumptionStatus } from './careItem';
+
+/**
+ * 間食詳細記録（品物管理連携用）
+ * @see docs/SNACK_RECORD_INTEGRATION_SPEC.md
+ */
+export interface SnackRecord {
+  itemId?: string;               // care_items のID（紐づけ用）
+  itemName: string;              // 品物名（表示・Sheet B用）
+  servedQuantity: number;        // 提供数
+  unit?: string;                 // 単位（個、切れ等）
+  consumptionStatus: ConsumptionStatus;  // full/most/half/little/none
+  consumptionRate?: number;      // 0-100（オプション、statusから自動計算可）
+  followedInstruction?: boolean; // 家族指示に従ったか
+  instructionNote?: string;      // 指示対応メモ
+  note?: string;                 // スタッフメモ
+  noteToFamily?: string;         // 家族への申し送り
+}
 
 export interface MealInputForm {
   // 必須フィールド
@@ -22,6 +42,10 @@ export interface MealInputForm {
   snack?: string;              // 間食は何を食べましたか？
   note?: string;               // 特記事項
   photo?: File | null;         // 写真アップロード
+
+  // 間食記録連携（Phase 9.0）
+  snackRecords?: SnackRecord[]; // 間食詳細記録（品物管理連携）
+  residentId?: string;         // 入居者ID（品物連携用）
 }
 
 // フォームの初期値

@@ -51,6 +51,14 @@ export interface ConsumptionLog {
   consumptionNote?: string;
   noteToFamily?: string;
 
+  // 家族指示対応情報
+  followedInstruction?: boolean;  // 家族指示に従ったか
+  instructionNote?: string;       // 指示対応メモ
+
+  // 連携情報
+  linkedMealRecordId?: string;    // 食事記録からの連携時の投稿ID
+  sourceType?: 'meal_form' | 'item_detail' | 'task';  // 記録のソース
+
   // メタ情報
   recordedBy: string;
   recordedAt: string;              // ISO8601

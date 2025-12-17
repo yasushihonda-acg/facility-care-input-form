@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月18日 (間食記録連携設計書作成・MoEレビュー完了)
+> **最終更新**: 2025年12月18日 (間食記録連携 Phase 1 実装完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -19,7 +19,54 @@
 
 ---
 
+## 現在のタスク
+
+### 間食記録連携機能 Phase 2: フロントエンド品物リスト表示
+
+**設計書**: [SNACK_RECORD_INTEGRATION_SPEC.md](./SNACK_RECORD_INTEGRATION_SPEC.md)
+
+**進捗**:
+- [x] Phase 1: API拡張（submitMealRecord + 消費ログ連携）完了
+  - [x] SnackRecord型定義追加（バックエンド・フロントエンド）
+  - [x] submitMealRecord API拡張（snackRecords対応）
+  - [x] consumptionLogService実装（消費ログ自動作成）
+  - [x] フロントエンド型同期
+  - [x] 単体テスト作成・パス
+- [ ] Phase 2: フロントエンド - 品物リスト表示（作業中）
+- [ ] Phase 3: フロントエンド - 提供記録入力UI
+- [ ] Phase 4: 家族ページ連携
+- [ ] Phase 5: AIサジェスト統合
+- [ ] Phase 6: E2Eテスト
+
+**Phase 1 実装ファイル**:
+- `functions/src/types/index.ts` - SnackRecord型、SubmitMealRecordRequest拡張、ConsumptionLog拡張
+- `functions/src/services/consumptionLogService.ts` - 消費ログ連携サービス（新規）
+- `functions/src/functions/submitMealRecord.ts` - API拡張
+- `frontend/src/types/mealForm.ts` - SnackRecord型追加
+- `frontend/src/types/consumptionLog.ts` - ConsumptionLog拡張
+- `functions/src/services/consumptionLogService.test.ts` - 単体テスト
+
+---
+
 ## 最近の完了タスク
+
+### 間食記録連携 Phase 1 実装完了 (2025-12-18)
+
+**設計書**: [SNACK_RECORD_INTEGRATION_SPEC.md](./SNACK_RECORD_INTEGRATION_SPEC.md)
+
+**実装内容**:
+
+| 項目 | 内容 |
+|------|------|
+| **SnackRecord型** | itemId, itemName, servedQuantity, unit, consumptionStatus, etc. |
+| **API拡張** | submitMealRecord に snackRecords[], residentId オプション追加 |
+| **消費ログ連携** | snackRecords → consumption_logs 自動作成、在庫自動更新 |
+| **Sheet B互換** | generateSnackTextFromRecords() でテキスト自動生成 |
+| **単体テスト** | 6テストケース全パス |
+
+**後方互換性**: snackRecordsなしでも従来通り動作（オプショナル）
+
+---
 
 ### 間食記録連携設計書作成・MoEレビュー完了 (2025-12-18)
 
