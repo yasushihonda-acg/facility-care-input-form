@@ -166,9 +166,13 @@ facility-care-input-form/
 - 設計書: `docs/DEMO_SHOWCASE_SPEC.md` セクション11
 - 品質チェック: `docs/QUALITY_CHECK_DEMO_WRITE_OPS.md`
 
-### E2Eテスト
-- **テストファイル**: `frontend/e2e/demo-page.spec.ts`
-- **テスト件数**: 43件（家族向けデモ特化）
+### E2Eテスト（77件）
+| ファイル | 件数 | 内容 |
+|----------|------|------|
+| `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |
+| `family-user-scenario.spec.ts` | 34件 | 家族シナリオ・パリティ・本番準備 |
+
+- **パリティテスト**: デモと本番で同じUIが表示されることを検証
 - **実行**: `cd frontend && npx playwright test`
 
 ## 重要な設定
