@@ -7,6 +7,7 @@
 | リンク | 説明 |
 |--------|------|
 | [デモサイト](https://facility-care-input-form.web.app) | PWAアプリ |
+| [デモショーケース](https://facility-care-input-form.web.app/demo) | ガイド付きデモ（本番データに影響なし） |
 | [管理者モード](https://facility-care-input-form.web.app/input/meal?admin=true) | 設定変更画面 |
 | [プロジェクト紹介](https://yasushihonda-acg.github.io/facility-care-input-form/) | GitHub Pages（Mermaid図付き） |
 
@@ -116,10 +117,15 @@ flowchart LR
 | Google Chat通知 | 入力時にWebhookで自動通知 | ✅ 完了 |
 | 写真アップロード | Google Driveへの画像保存 | ✅ 完了 |
 | 管理者設定 | 初期値・Webhook URL・フォルダID設定 | ✅ 完了 |
-| 家族ホーム | タイムライン形式で食事状況確認 | ✅ 完了 |
-| エビデンス・モニター | Plan vs Result対比表示 | ✅ 完了 |
-| ケア指示作成 | プリセット＋条件付き指示 | ✅ 完了 |
-| 設定テスト機能 | Webhook/Driveの事前テスト | 📋 計画中 |
+| 家族ビュー | タイムライン形式・エビデンス・ケア指示 | ✅ 完了 |
+| 品物管理 | 家族からの差し入れ品物の登録・追跡 | ✅ 完了 |
+| タスク管理 | 賞味期限警告・リマインダー等のタスク管理 | ✅ 完了 |
+| 統計ダッシュボード | 品物状況・摂食傾向・アラートの可視化 | ✅ 完了 |
+| AI提案 | Gemini APIによる賞味期限・提供方法の自動提案 | ✅ 完了 |
+| プリセット管理 | 「いつもの指示」のCRUD管理・AI自動ストック | ✅ 完了 |
+| 消費記録連携 | 提供・摂食記録API、タイムライン表示 | ✅ 完了 |
+| 禁止ルール機能 | 提供禁止品目の設定・警告表示 | ✅ 完了 |
+| デモショーケース | デモ専用ページ・シードデータ（本番影響なし） | ✅ 完了 |
 
 ---
 
@@ -149,11 +155,13 @@ graph TB
 ## 開発進捗
 
 ```
-Phase 1-4: 基盤〜デモ版      ████████████████████ 100%
-Phase 5.0-5.7: 食事入力関連   ████████████████████ 100%
-Phase 5.8: 設定テスト機能     ██████░░░░░░░░░░░░░░  30% (設計完了)
-Phase 6.0: フッターナビ       ████████████████████ 100%
-Phase 7.0-7.1: 家族ビュー     ████████████████████ 100%
+Phase 1-4: 基盤〜デモ版        ████████████████████ 100%
+Phase 5.x: 食事入力・設定機能   ████████████████████ 100%
+Phase 6.0: フッターナビ        ████████████████████ 100%
+Phase 7.x: 家族ビュー・予実管理  ████████████████████ 100%
+Phase 8.x: 品物・タスク・統計    ████████████████████ 100%
+Phase 9.x: 在庫追跡・禁止ルール  ████████████████████ 100%
+デモショーケース               ████████████████████ 100%
 ```
 
 ---
@@ -262,8 +270,14 @@ facility-care-input-form/
 | GET | `/getMealFormSettings` | 設定取得 | ✅ |
 | POST | `/updateMealFormSettings` | 設定更新 | ✅ |
 | POST | `/uploadCareImage` | 画像アップロード | ✅ |
-| POST | `/testWebhook` | Webhookテスト | 📋 |
-| POST | `/testDriveAccess` | Driveテスト | 📋 |
+| POST | `/testWebhook` | Webhookテスト | ✅ |
+| POST | `/testDriveAccess` | Driveテスト | ✅ |
+| GET/POST | `/careItems/*` | 品物CRUD | ✅ |
+| GET/POST | `/tasks/*` | タスクCRUD | ✅ |
+| GET | `/getStats` | 統計データ取得 | ✅ |
+| POST | `/aiSuggest` | AI品物入力補助 | ✅ |
+| GET/POST | `/presets/*` | プリセットCRUD | ✅ |
+| GET/POST | `/prohibitions/*` | 禁止ルールCRUD | ✅ |
 
 ---
 
@@ -296,4 +310,4 @@ Private - All rights reserved
 
 ---
 
-**最終更新**: 2025年12月15日
+**最終更新**: 2025年12月17日
