@@ -1,9 +1,9 @@
 /**
- * デモページ E2Eテスト
- * @see docs/DEMO_SHOWCASE_SPEC.md
+ * デモページ E2Eテスト - 家族向け特化版
+ * @see docs/DEMO_FAMILY_REDESIGN.md
  * @see docs/E2E_TEST_SPEC.md
  *
- * デモモード専用ページの表示・ナビゲーションを検証します。
+ * 家族向けデモモード専用ページの表示・ナビゲーションを検証します。
  * デモモードは本番データに影響せず、ローカルシードデータで動作します。
  */
 
@@ -28,8 +28,8 @@ test.describe('デモホーム基本動作', () => {
     // ページが正常に読み込まれる
     await expect(page).toHaveURL(/\/demo/);
 
-    // タイトルが「デモモード」であることを確認（タイムアウト延長）
-    await expect(page.getByRole('heading', { name: 'デモモード', exact: true })).toBeVisible({ timeout: 15000 });
+    // タイトルが「家族向けデモ」であることを確認
+    await expect(page.getByRole('heading', { name: '家族向けデモ', exact: true })).toBeVisible({ timeout: 15000 });
   });
 
   test('DEMO-002: デモモード説明が表示される', async ({ page }) => {
@@ -39,25 +39,28 @@ test.describe('デモホーム基本動作', () => {
     // デモモードについての説明セクションが表示される
     await expect(page.locator('text=デモモードについて')).toBeVisible({ timeout: 15000 });
 
-    // 「本番データには影響しません」というメッセージが表示される（複数マッチ対策：first()）
+    // 「本番データには影響しません」というメッセージが表示される
     await expect(page.locator('text=本番データには').first()).toBeVisible({ timeout: 10000 });
   });
 
-  test('DEMO-003: 機能カードが4つ表示される', async ({ page }) => {
+  test('DEMO-003: 機能カードが5つ表示される', async ({ page }) => {
     await page.goto('/demo', { waitUntil: 'networkidle' });
     await waitForSpaLoad(page);
 
-    // 品物管理カード
-    await expect(page.locator('text=品物管理').first()).toBeVisible({ timeout: 15000 });
+    // 品物を登録するカード
+    await expect(page.locator('text=品物を登録する')).toBeVisible({ timeout: 15000 });
 
-    // 統計ダッシュボードカード
-    await expect(page.locator('text=統計ダッシュボード')).toBeVisible({ timeout: 10000 });
+    // 今日の様子を確認カード
+    await expect(page.locator('text=今日の様子を確認')).toBeVisible({ timeout: 10000 });
 
-    // タスク管理カード
-    await expect(page.locator('text=タスク管理').first()).toBeVisible({ timeout: 10000 });
+    // いつもの指示を設定カード
+    await expect(page.locator('text=いつもの指示を設定')).toBeVisible({ timeout: 10000 });
 
-    // 家族ホームカード
-    await expect(page.locator('text=家族ホーム')).toBeVisible({ timeout: 10000 });
+    // 入居者設定カード
+    await expect(page.locator('text=入居者設定')).toBeVisible({ timeout: 10000 });
+
+    // 傾向を分析カード
+    await expect(page.locator('text=傾向を分析')).toBeVisible({ timeout: 10000 });
   });
 
   test('DEMO-004: 本番モードへのリンクがある', async ({ page }) => {
@@ -72,8 +75,8 @@ test.describe('デモホーム基本動作', () => {
     await page.goto('/demo', { waitUntil: 'networkidle' });
     await waitForSpaLoad(page);
 
-    // 「ガイド付きツアーを開始」リンクが表示される
-    await expect(page.locator('text=ガイド付きツアーを開始')).toBeVisible({ timeout: 15000 });
+    // 「使い方ツアーを開始」リンクが表示される
+    await expect(page.locator('text=使い方ツアーを開始')).toBeVisible({ timeout: 15000 });
   });
 });
 
@@ -96,8 +99,8 @@ test.describe('デモショーケース', () => {
     // 「ステップ 1/6」という表示がある
     await expect(page.locator('text=ステップ 1/6')).toBeVisible({ timeout: 15000 });
 
-    // 最初のステップタイトル「家族による品物登録」が表示される
-    await expect(page.getByRole('heading', { name: '家族による品物登録' })).toBeVisible({ timeout: 10000 });
+    // 最初のステップタイトル「品物を登録する」が表示される
+    await expect(page.getByRole('heading', { name: '品物を登録する' })).toBeVisible({ timeout: 10000 });
   });
 
   test('DEMO-012: 次へボタンで進める', async ({ page }) => {
@@ -110,9 +113,9 @@ test.describe('デモショーケース', () => {
     // 「次へ」ボタンをクリック
     await page.getByRole('button', { name: /次へ/ }).click();
 
-    // Step 2に進む
+    // Step 2に進む（タイトルが「登録した品物を確認」）
     await expect(page.locator('text=ステップ 2/6')).toBeVisible({ timeout: 10000 });
-    await expect(page.getByRole('heading', { name: 'スタッフの家族連絡確認' })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: '登録した品物を確認' })).toBeVisible({ timeout: 10000 });
   });
 
   test('DEMO-013: 前へボタンで戻れる', async ({ page }) => {
@@ -154,22 +157,22 @@ test.describe('デモショーケース', () => {
     // 「全ステップ一覧」のdetails要素を開く
     await page.locator('summary:has-text("全ステップ一覧")').click();
 
-    // 全6ステップのタイトルが表示される
-    await expect(page.locator('text=1. 家族による品物登録')).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('text=2. スタッフの家族連絡確認')).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('text=6. 在庫状況の確認')).toBeVisible({ timeout: 10000 });
+    // 全6ステップのタイトルが表示される（家族向けに変更）
+    await expect(page.locator('text=1. 品物を登録する')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=2. 登録した品物を確認')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=6. 傾向を分析する')).toBeVisible({ timeout: 10000 });
+  });
+
+  test('DEMO-017: ストーリーが表示される', async ({ page }) => {
+    await page.goto('/demo/showcase', { waitUntil: 'networkidle' });
+    await waitForSpaLoad(page);
+
+    // ストーリーテキストが表示される
+    await expect(page.locator('text=週末に施設を訪問')).toBeVisible({ timeout: 15000 });
   });
 });
 
 test.describe('デモ機能ページ', () => {
-  test('DEMO-020: デモスタッフホームにアクセスできる', async ({ page }) => {
-    await page.goto('/demo/staff', { waitUntil: 'networkidle' });
-    await waitForSpaLoad(page);
-
-    // ページが正常に読み込まれる
-    await expect(page).toHaveURL(/\/demo\/staff/);
-  });
-
   test('DEMO-021: デモ家族ホームにアクセスできる', async ({ page }) => {
     await page.goto('/demo/family', { waitUntil: 'networkidle' });
     await waitForSpaLoad(page);
@@ -210,6 +213,22 @@ test.describe('デモ機能ページ', () => {
     // タスクのタイトルが表示される
     await expect(page.getByRole('heading', { name: /タスク/ }).first()).toBeVisible({ timeout: 15000 });
   });
+
+  test('DEMO-025: デモプリセット管理にアクセスできる', async ({ page }) => {
+    await page.goto('/demo/family/presets', { waitUntil: 'networkidle' });
+    await waitForSpaLoad(page);
+
+    // ページが正常に読み込まれる
+    await expect(page).toHaveURL(/\/demo\/family\/presets/);
+  });
+
+  test('DEMO-026: デモ入居者設定にアクセスできる', async ({ page }) => {
+    await page.goto('/demo/family/settings/resident', { waitUntil: 'networkidle' });
+    await waitForSpaLoad(page);
+
+    // ページが正常に読み込まれる
+    await expect(page).toHaveURL(/\/demo\/family\/settings\/resident/);
+  });
 });
 
 test.describe('デモデータ表示', () => {
@@ -246,7 +265,7 @@ test.describe('ナビゲーション', () => {
     await page.goto('/demo', { waitUntil: 'networkidle' });
     await waitForSpaLoad(page);
 
-    // 「家族視点」リンクをクリック（品物管理カード内）
+    // 「品物を登録する」カードをクリック
     await page.locator('a[href="/demo/family/items"]').click();
 
     // 品物管理ページに遷移
@@ -257,7 +276,7 @@ test.describe('ナビゲーション', () => {
     await page.goto('/demo', { waitUntil: 'networkidle' });
     await waitForSpaLoad(page);
 
-    // 「ダッシュボード」リンクをクリック（統計カード内）
+    // 「傾向を分析」カードをクリック
     await page.locator('a[href="/demo/stats"]').click();
 
     // 統計ページに遷移
@@ -268,8 +287,8 @@ test.describe('ナビゲーション', () => {
     await page.goto('/demo', { waitUntil: 'networkidle' });
     await waitForSpaLoad(page);
 
-    // 「ガイド付きツアーを開始」リンクをクリック
-    await page.locator('text=ガイド付きツアーを開始').click();
+    // 「使い方ツアーを開始」リンクをクリック
+    await page.locator('text=使い方ツアーを開始').click();
 
     // ショーケースページに遷移
     await expect(page).toHaveURL(/\/demo\/showcase/, { timeout: 15000 });
@@ -301,7 +320,7 @@ test.describe('ナビゲーション', () => {
 test.describe('デモモードナビゲーション維持（重要）', () => {
   /**
    * デモモード内での操作がデモページ外に遷移しないことを検証
-   * @see docs/DEMO_SHOWCASE_SPEC.md
+   * @see docs/DEMO_FAMILY_REDESIGN.md
    *
    * 期待動作: /demo/* 内のすべてのリンク・ボタンは /demo/* 内に留まるべき
    */
@@ -320,8 +339,6 @@ test.describe('デモモードナビゲーション維持（重要）', () => {
     // 各リンクのhref属性を確認
     for (const link of links) {
       const href = await link.getAttribute('href');
-      // デモページ内のリンクは /demo で始まるべき、または / で始まらない相対パス
-      // ただし、現状の実装では /family 等の本番パスを指している可能性がある
       expect(href, `Link href should start with /demo but got: ${href}`).toMatch(/^\/demo/);
     }
   });
@@ -387,31 +404,11 @@ test.describe('デモモードナビゲーション維持（重要）', () => {
     await expect(page).toHaveURL(/^.*\/demo\/family$/, { timeout: 10000 });
   });
 
-  test('DEMO-NAV-007: デモスタッフホームのフッターからリンクしてもデモ内に留まる', async ({ page }) => {
-    await page.goto('/demo/staff', { waitUntil: 'networkidle' });
-    await waitForSpaLoad(page);
-
-    // フッターが存在する場合、リンクを確認
-    const footer = page.locator('nav[aria-label]');
-    if (await footer.isVisible()) {
-      const links = await footer.locator('a').all();
-      for (const link of links) {
-        const href = await link.getAttribute('href');
-        // 本番ルートへのリンクがないことを確認
-        if (href && href.startsWith('/')) {
-          // /demo で始まるか、/view などの共有ページでも /demo プレフィックスがあるべき
-          // 現状は本番ルートを指している可能性がある
-          console.log(`Staff footer link: ${href}`);
-        }
-      }
-    }
-  });
-
-  test('DEMO-NAV-008: デモ統計画面から戻ってもデモ内に留まる', async ({ page }) => {
+  test('DEMO-NAV-007: デモ統計画面から戻ってもデモ内に留まる', async ({ page }) => {
     await page.goto('/demo/stats', { waitUntil: 'networkidle' });
     await waitForSpaLoad(page);
 
-    // ブラウザの戻るボタンの代わりに、フッターナビでホームに戻る
+    // フッターナビでホームに戻る
     const footer = page.locator('nav[aria-label]');
     if (await footer.isVisible()) {
       // ホームリンクがあればクリック
@@ -428,34 +425,23 @@ test.describe('デモモードナビゲーション維持（重要）', () => {
 test.describe('ツアーナビゲーション（ヘッダーボタン）', () => {
   /**
    * ツアーナビゲーション改善テスト
-   * @see docs/DEMO_SHOWCASE_SPEC.md セクション10
-   * @see docs/E2E_TEST_SPEC.md セクション2.2.6
+   * @see docs/DEMO_FAMILY_REDESIGN.md
    *
    * /demo/* ページ（/demo/showcase 以外）のヘッダー右側に「← ツアーTOPに戻る」ボタンが表示されることを検証
-   * - ユーザーはツアーの「中」にいる
-   * - 戻るのはツアーの「トップ」（/demo/showcase）
    */
 
   test('DEMO-TOUR-001: /demo/familyでツアーボタンがヘッダーに表示される', async ({ page }) => {
     await page.goto('/demo/family', { waitUntil: 'networkidle' });
     await waitForSpaLoad(page);
 
-    // ヘッダー内の「ツアーTOPに戻る」ボタンが表示される（data-testid使用）
+    // ヘッダー内の「ツアーTOPに戻る」ボタンが表示される
     await expect(page.getByTestId('demo-tour-button')).toBeVisible({ timeout: 15000 });
 
     // ボタンに「ツアーTOPに戻る」テキストが含まれる
     await expect(page.getByTestId('demo-tour-button')).toContainText('ツアーTOPに戻る');
   });
 
-  test('DEMO-TOUR-002: /demo/staffでツアーボタンがヘッダーに表示される', async ({ page }) => {
-    await page.goto('/demo/staff', { waitUntil: 'networkidle' });
-    await waitForSpaLoad(page);
-
-    // ヘッダー内の「ツアー」ボタンが表示される
-    await expect(page.getByTestId('demo-tour-button')).toBeVisible({ timeout: 15000 });
-  });
-
-  test('DEMO-TOUR-003: /demo/statsでツアーボタンがヘッダーに表示される', async ({ page }) => {
+  test('DEMO-TOUR-002: /demo/statsでツアーボタンがヘッダーに表示される', async ({ page }) => {
     await page.goto('/demo/stats', { waitUntil: 'networkidle' });
     await waitForSpaLoad(page);
 
@@ -463,7 +449,7 @@ test.describe('ツアーナビゲーション（ヘッダーボタン）', () =>
     await expect(page.getByTestId('demo-tour-button')).toBeVisible({ timeout: 15000 });
   });
 
-  test('DEMO-TOUR-004: /demo/showcaseではツアーボタン非表示', async ({ page }) => {
+  test('DEMO-TOUR-003: /demo/showcaseではツアーボタン非表示', async ({ page }) => {
     await page.goto('/demo/showcase', { waitUntil: 'networkidle' });
     await waitForSpaLoad(page);
 
@@ -471,7 +457,7 @@ test.describe('ツアーナビゲーション（ヘッダーボタン）', () =>
     await expect(page.getByTestId('demo-tour-button')).not.toBeVisible({ timeout: 5000 });
   });
 
-  test('DEMO-TOUR-005: ツアーボタンクリックで/demo/showcaseに遷移', async ({ page }) => {
+  test('DEMO-TOUR-004: ツアーボタンクリックで/demo/showcaseに遷移', async ({ page }) => {
     await page.goto('/demo/family', { waitUntil: 'networkidle' });
     await waitForSpaLoad(page);
 
@@ -482,7 +468,7 @@ test.describe('ツアーナビゲーション（ヘッダーボタン）', () =>
     await expect(page).toHaveURL(/\/demo\/showcase/, { timeout: 15000 });
   });
 
-  test('DEMO-TOUR-006: 本番ページ(/family)ではツアーボタン非表示', async ({ page }) => {
+  test('DEMO-TOUR-005: 本番ページ(/family)ではツアーボタン非表示', async ({ page }) => {
     await page.goto('/family', { waitUntil: 'networkidle' });
     await waitForSpaLoad(page);
 
@@ -490,7 +476,7 @@ test.describe('ツアーナビゲーション（ヘッダーボタン）', () =>
     await expect(page.getByTestId('demo-tour-button')).not.toBeVisible({ timeout: 5000 });
   });
 
-  test('DEMO-TOUR-007: /demo でもツアーボタンが表示される', async ({ page }) => {
+  test('DEMO-TOUR-006: /demo でもツアーボタンが表示される', async ({ page }) => {
     await page.goto('/demo', { waitUntil: 'networkidle' });
     await waitForSpaLoad(page);
 
@@ -498,7 +484,7 @@ test.describe('ツアーナビゲーション（ヘッダーボタン）', () =>
     await expect(page.getByTestId('demo-tour-button')).toBeVisible({ timeout: 15000 });
   });
 
-  test('DEMO-TOUR-008: スクロールしてもツアーボタンは常に見える', async ({ page }) => {
+  test('DEMO-TOUR-007: スクロールしてもツアーボタンは常に見える', async ({ page }) => {
     await page.goto('/demo/family/items', { waitUntil: 'networkidle' });
     await waitForSpaLoad(page);
 
@@ -523,10 +509,10 @@ test.describe('レスポンシブ表示', () => {
     await waitForSpaLoad(page);
 
     // タイトルが表示される
-    await expect(page.getByRole('heading', { name: 'デモモード', exact: true })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('heading', { name: '家族向けデモ', exact: true })).toBeVisible({ timeout: 15000 });
 
     // 機能カードが表示される
-    await expect(page.locator('text=品物管理').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=品物を登録する').first()).toBeVisible({ timeout: 10000 });
   });
 
   test('DEMO-RESP-002: モバイル幅でショーケースが正しく表示される', async ({ page }) => {

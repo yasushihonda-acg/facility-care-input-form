@@ -1,8 +1,9 @@
 /**
- * デモショーケース（ガイド付きツアー）
- * @see docs/DEMO_SHOWCASE_SPEC.md セクション5.2
+ * デモショーケース（ガイド付きツアー）- 家族向け特化版
+ * @see docs/DEMO_FAMILY_REDESIGN.md
  *
- * プレゼン時に順番に機能を紹介するステップ形式のガイド
+ * 家族の使い方に沿ったストーリー仕立てのガイド
+ * テーマ: 「離れて暮らす親御さんへの差し入れを、施設スタッフと連携して見守る」
  */
 
 import { useState } from 'react';
@@ -13,6 +14,7 @@ interface ShowcaseStep {
   id: number;
   title: string;
   description: string;
+  story: string; // ストーリー（感情移入用）
   icon: string;
   path: string;
   highlights: string[];
@@ -21,74 +23,80 @@ interface ShowcaseStep {
 const SHOWCASE_STEPS: ShowcaseStep[] = [
   {
     id: 1,
-    title: '家族による品物登録',
-    description: '家族が入居者への差し入れを登録します',
+    title: '品物を登録する',
+    description: '差し入れ品を登録します',
+    story: '週末に施設を訪問。お母さんの好きな羊羹を持っていきました',
     icon: '📦',
     path: '/demo/family/items/new',
     highlights: [
       '品物名・カテゴリ・数量を入力',
       '賞味期限・保存方法を指定',
-      'AIによる入力補助機能',
+      'AIが入力をサポート',
     ],
   },
   {
     id: 2,
-    title: 'スタッフの家族連絡確認',
-    description: 'スタッフが家族からの品物情報を確認します',
+    title: '登録した品物を確認',
+    description: '現在の品物一覧を確認します',
+    story: '今どんな品物が施設にあるか確認しましょう',
     icon: '📋',
-    path: '/demo/staff/family-messages',
+    path: '/demo/family/items',
     highlights: [
-      '新着の品物一覧',
-      '賞味期限アラート表示',
-      '提供指示の確認',
+      '在庫状況を一目で把握',
+      '期限が近い品物にアラート',
+      'カテゴリ別に絞り込み',
     ],
   },
   {
     id: 3,
-    title: '品物の提供・摂食記録',
-    description: 'スタッフが提供と摂食状況を記録します',
-    icon: '🍽️',
-    path: '/demo/staff/family-messages/demo-item-001',
+    title: 'いつもの指示を設定',
+    description: 'よく使う提供指示を登録します',
+    story: '毎回同じ品物を持っていくので、よく使う指示を保存しておきます',
+    icon: '⭐',
+    path: '/demo/family/presets',
     highlights: [
-      '提供数量の入力',
-      '摂食率の記録',
-      '家族への申し送りメモ',
+      'よく持っていく品物をプリセット保存',
+      'AI提案をワンクリックで保存',
+      '次回からの入力がラクラク',
     ],
   },
   {
     id: 4,
-    title: '家族への結果共有',
-    description: '家族がタイムラインで結果を確認します',
-    icon: '👨‍👩‍👧',
-    path: '/demo/family',
+    title: '入居者設定を確認',
+    description: '禁止品目などを設定します',
+    story: 'お母さんは甘すぎるお菓子が苦手なので、禁止設定をしておきます',
+    icon: '⚙️',
+    path: '/demo/family/settings/resident',
     highlights: [
-      '今日の食事タイムライン',
-      '写真付きエビデンス',
-      'スタッフからの申し送り',
+      '禁止品目の登録',
+      'スタッフに自動で警告表示',
+      '家族の希望を確実に伝える',
     ],
   },
   {
     id: 5,
-    title: '摂食傾向の確認',
-    description: 'よく食べる/残す品目を確認します',
+    title: '今日の様子を確認',
+    description: 'タイムラインで食事状況を確認',
+    story: '今日の食事はどうだったかな？離れていても様子がわかります',
+    icon: '👨‍👩‍👧',
+    path: '/demo/family',
+    highlights: [
+      '朝食・昼食・夕食のタイムライン',
+      '摂食率（完食/半分/残した）',
+      'スタッフからのメモ',
+    ],
+  },
+  {
+    id: 6,
+    title: '傾向を分析する',
+    description: '統計で摂食傾向を確認します',
+    story: '最近の傾向を見て、次回持っていくものを決めましょう',
     icon: '📊',
     path: '/demo/stats',
     highlights: [
       'よく食べる品目 TOP5',
       'よく残す品目 TOP5',
-      'カテゴリ別摂食率',
-    ],
-  },
-  {
-    id: 6,
-    title: '在庫状況の確認',
-    description: '品物の残量・期限を一覧で確認します',
-    icon: '📈',
-    path: '/demo/stats',
-    highlights: [
-      '品物サマリー',
-      '賞味期限カレンダー',
-      '期限切れアラート',
+      'カテゴリ別摂食率グラフ',
     ],
   },
 ];
@@ -133,12 +141,17 @@ export function DemoShowcase() {
 
         {/* ステップカード */}
         <div className="bg-white rounded-lg shadow-card p-5 border border-gray-100">
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3 mb-3">
             <span className="text-4xl">{step.icon}</span>
             <div>
               <h2 className="text-lg font-bold text-gray-900">{step.title}</h2>
               <p className="text-sm text-gray-600">{step.description}</p>
             </div>
+          </div>
+
+          {/* ストーリー（感情移入用） */}
+          <div className="bg-blue-50 border-l-4 border-blue-400 p-3 mb-4 rounded-r">
+            <p className="text-sm text-blue-800 italic">"{step.story}"</p>
           </div>
 
           <div className="bg-gray-50 rounded-lg p-4 mb-4">

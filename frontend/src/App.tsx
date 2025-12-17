@@ -100,18 +100,20 @@ function App() {
       {/* ガイド付きツアー */}
       <Route path="/demo/showcase" element={<DemoShowcase />} />
 
-      {/* デモ: スタッフビュー（本番と同じコンポーネントを使用） */}
-      <Route path="/demo/staff" element={<StaffHome />} />
-      <Route path="/demo/staff/family-messages" element={<FamilyMessages />} />
-      <Route path="/demo/staff/family-messages/:id" element={<FamilyMessageDetail />} />
-
-      {/* デモ: 家族ビュー */}
+      {/* デモ: 家族ビュー（家族向け特化） */}
       <Route path="/demo/family" element={<FamilyDashboard />} />
       <Route path="/demo/family/items" element={<ItemManagement />} />
       <Route path="/demo/family/items/new" element={<ItemForm />} />
       <Route path="/demo/family/items/:id" element={<ItemDetail />} />
       <Route path="/demo/family/tasks" element={<TaskList />} />
       <Route path="/demo/family/presets" element={<PresetManagement />} />
+      <Route path="/demo/family/settings/resident" element={<ResidentSettings />} />
+
+      {/* デモ: スタッフビュー（無効化: 将来 /demo/staff-app として復活予定）
+      <Route path="/demo/staff" element={<StaffHome />} />
+      <Route path="/demo/staff/family-messages" element={<FamilyMessages />} />
+      <Route path="/demo/staff/family-messages/:id" element={<FamilyMessageDetail />} />
+      */}
 
       {/* デモ: 統計ダッシュボード */}
       <Route path="/demo/stats" element={<StatsDashboard />} />

@@ -1,8 +1,9 @@
 /**
- * デモホームページ
- * @see docs/DEMO_SHOWCASE_SPEC.md セクション5
+ * デモホームページ - 家族向け特化版
+ * @see docs/DEMO_FAMILY_REDESIGN.md
  *
- * デモモードのエントリポイント。機能一覧と説明を表示します。
+ * 家族向けデモのエントリポイント。
+ * テーマ: 「離れて暮らす親御さんのケアを見守る」
  */
 
 import { Link } from 'react-router-dom';
@@ -12,97 +13,91 @@ interface DemoCardProps {
   title: string;
   description: string;
   icon: string;
-  links: { label: string; to: string }[];
+  to: string;
 }
 
-function DemoCard({ title, description, icon, links }: DemoCardProps) {
+function DemoCard({ title, description, icon, to }: DemoCardProps) {
   return (
-    <div className="bg-white rounded-lg shadow-card p-4 border border-gray-100">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-2xl">{icon}</span>
-        <h3 className="font-medium text-gray-900">{title}</h3>
+    <Link
+      to={to}
+      className="block bg-white rounded-lg shadow-card p-4 border border-gray-100 hover:shadow-md hover:border-blue-200 transition"
+    >
+      <div className="flex items-center gap-3">
+        <span className="text-3xl">{icon}</span>
+        <div>
+          <h3 className="font-medium text-gray-900">{title}</h3>
+          <p className="text-sm text-gray-600">{description}</p>
+        </div>
+        <svg className="w-5 h-5 text-gray-400 ml-auto" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
       </div>
-      <p className="text-sm text-gray-600 mb-3">{description}</p>
-      <div className="flex flex-wrap gap-2">
-        {links.map((link) => (
-          <Link
-            key={link.to}
-            to={link.to}
-            className="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium hover:bg-blue-100 transition"
-          >
-            {link.label}
-          </Link>
-        ))}
-      </div>
-    </div>
+    </Link>
   );
 }
 
 export function DemoHome() {
   return (
     <Layout
-      title="デモモード"
-      subtitle="機能を安全にお試しいただけます"
+      title="家族向けデモ"
+      subtitle="離れて暮らす親御さんのケアを見守る"
       showBackButton={false}
     >
       <div className="pb-4 space-y-4">
         {/* ヘッダーバナー */}
         <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-2xl">🎯</span>
-            <h2 className="text-lg font-bold">デモショーケース</h2>
+            <span className="text-2xl">👨‍👩‍👧</span>
+            <h2 className="text-lg font-bold">ケアみまもりアプリ</h2>
           </div>
           <p className="text-sm opacity-90 mb-3">
-            サンプルデータで各機能をご確認いただけます。
-            本番データには影響しません。
+            施設への差し入れ管理から、食事の様子の確認まで。
+            離れていても安心のケアサポートです。
           </p>
           <Link
             to="/demo/showcase"
             className="inline-flex items-center px-4 py-2 bg-white text-blue-600 rounded-lg font-medium text-sm hover:bg-blue-50 transition"
           >
-            ガイド付きツアーを開始
+            使い方ツアーを開始
             <span className="ml-1">→</span>
           </Link>
         </div>
 
         {/* 機能カード一覧 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-3">
           <DemoCard
-            title="品物管理"
-            description="品物の登録・提供・摂食記録をお試しいただけます"
+            title="品物を登録する"
+            description="差し入れ品を登録・管理"
             icon="📦"
-            links={[
-              { label: '家族視点', to: '/demo/family/items' },
-              { label: 'スタッフ視点', to: '/demo/staff/family-messages' },
-            ]}
+            to="/demo/family/items"
           />
 
           <DemoCard
-            title="統計ダッシュボード"
-            description="摂食傾向・在庫サマリーをグラフで確認"
+            title="今日の様子を確認"
+            description="タイムラインで食事状況をチェック"
+            icon="📅"
+            to="/demo/family"
+          />
+
+          <DemoCard
+            title="いつもの指示を設定"
+            description="よく使う提供方法をプリセット保存"
+            icon="⭐"
+            to="/demo/family/presets"
+          />
+
+          <DemoCard
+            title="入居者設定"
+            description="禁止品目などを設定"
+            icon="⚙️"
+            to="/demo/family/settings/resident"
+          />
+
+          <DemoCard
+            title="傾向を分析"
+            description="摂食傾向をグラフで確認"
             icon="📊"
-            links={[
-              { label: 'ダッシュボード', to: '/demo/stats' },
-            ]}
-          />
-
-          <DemoCard
-            title="タスク管理"
-            description="期限アラート・提供リマインダーを確認"
-            icon="✅"
-            links={[
-              { label: 'タスク一覧', to: '/demo/family/tasks' },
-              { label: 'スタッフホーム', to: '/demo/staff' },
-            ]}
-          />
-
-          <DemoCard
-            title="家族ホーム"
-            description="タイムライン・エビデンス確認"
-            icon="👨‍👩‍👧"
-            links={[
-              { label: '家族ダッシュボード', to: '/demo/family' },
-            ]}
+            to="/demo/stats"
           />
         </div>
 
@@ -113,10 +108,9 @@ export function DemoHome() {
             デモモードについて
           </h3>
           <ul className="text-sm text-amber-700 space-y-1">
+            <li>• サンプルデータで機能を体験できます</li>
             <li>• 本番データには<strong>影響しません</strong></li>
-            <li>• サンプルデータで機能を確認できます</li>
-            <li>• オフラインでも動作します</li>
-            <li>• プレゼンテーション用に最適化されています</li>
+            <li>• 実際の使い方をイメージしやすい内容です</li>
           </ul>
         </div>
 
