@@ -139,11 +139,13 @@ facility-care-input-form/
 
 ## デモ機能
 
-### デモショーケース
+### デモショーケース（家族向け特化）
 - **URL**: https://facility-care-input-form.web.app/demo
-- **ガイド付きツアー**: `/demo/showcase`
+- **ガイド付きツアー**: `/demo/showcase`（家族視点の6ステップ）
 - **デモモード判定**: `useDemoMode` フック（パスが `/demo` で始まるか判定）
 - **シードデータ**: `frontend/src/data/demo/` に12品物、18ログ、9タスク等
+- **設計書**: `docs/DEMO_FAMILY_REDESIGN.md`
+- **スタッフ機能**: 無効化（将来 `/demo/staff-app` として復活予定）
 
 ### ツアーナビゲーション（ヘッダーボタン）
 - `/demo/*` ページ（`/demo/showcase` 除く）でヘッダー右側にオレンジ色のボタン表示
@@ -161,7 +163,7 @@ facility-care-input-form/
 
 ### E2Eテスト
 - **テストファイル**: `frontend/e2e/demo-page.spec.ts`
-- **テスト件数**: 61件（デモ43件 + 家族ページ18件）
+- **テスト件数**: 43件（家族向けデモ特化）
 - **実行**: `cd frontend && npx playwright test`
 
 ## 重要な設定

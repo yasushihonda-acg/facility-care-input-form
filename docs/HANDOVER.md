@@ -1,6 +1,6 @@
 # 引き継ぎドキュメント
 
-> **最終更新**: 2025年12月17日（デモモード書き込み安全対策）
+> **最終更新**: 2025年12月17日（家族向けデモ特化リデザイン完了）
 >
 > 本ドキュメントは、開発を引き継ぐ際に必要な情報をまとめたものです。
 
@@ -79,6 +79,7 @@ cd frontend && npm install && npm run dev
 | デモショーケース | デモ専用ページ・シードデータ・フック対応 | ✅ 完了 |
 | ツアーナビゲーション | ヘッダーに「← ツアーTOPに戻る」ボタン常時表示 | ✅ 完了 |
 | デモモード書き込み安全対策 | デモモードでの書き込み操作は本番に影響しない | ✅ 完了 |
+| 家族向けデモ特化リデザイン | スタッフ機能分離、家族視点6ステップツアー | ✅ 完了 |
 
 ---
 
@@ -206,6 +207,7 @@ facility-care-input-form/
 | ⭐ | `docs/PRESET_MANAGEMENT_SPEC.md` | プリセット管理機能設計（Phase 8.6/8.7） |
 | ⭐ | `docs/AI_INTEGRATION_SPEC.md` | AI連携設計（Phase 8.4/8.5/8.7） |
 | ⭐ | `docs/DEMO_SHOWCASE_SPEC.md` | デモショーケース設計 |
+| ⭐ | `docs/DEMO_FAMILY_REDESIGN.md` | 家族向けデモ特化リデザイン設計 |
 | ⭐ | `docs/API_TEST_PLAN.md` | APIテスト計画・Firestore修正記録 |
 | ⭐ | `docs/E2E_TEST_SPEC.md` | E2Eテスト仕様（Playwright） |
 | ⭐ | `docs/QUALITY_CHECK_DEMO_WRITE_OPS.md` | デモモード書き込み安全対策の品質チェック |
@@ -238,6 +240,7 @@ facility-care-input-form/
 | Phase 9.3 | 統計ダッシュボード拡張 | 2025-12-17 |
 | Demo | デモショーケース（全Phase完了） | 2025-12-17 |
 | Demo | デモモード書き込み安全対策 | 2025-12-17 |
+| Demo | 家族向けデモ特化リデザイン | 2025-12-17 |
 
 ### 4.2 将来のタスク
 
@@ -407,7 +410,7 @@ BASE_URL=https://facility-care-input-form.web.app npx playwright test
 - `frontend/playwright.config.ts` - Playwright設定
 - デフォルトbaseURL: `http://localhost:4173`（環境変数で上書き可能）
 
-**現在のテスト**: 全42件（デモページ機能・ナビゲーション・ツアーナビゲーション）
+**現在のテスト**: 全43件（家族向けデモ特化・ナビゲーション・ツアーナビゲーション）
 
 ---
 
@@ -590,7 +593,8 @@ docs/CURRENT_STATUS.md を読んで、次のタスクから再開してくださ
 
 | 日付 | 内容 |
 |------|------|
-| 2025-12-17 | ツアーナビゲーション改善（TourReturnBanner）、E2Eテスト42件 |
+| 2025-12-17 | 家族向けデモ特化リデザイン完了、E2Eテスト43件 |
+| 2025-12-17 | ツアーナビゲーション改善（TourReturnBanner）|
 | 2025-12-17 | デモモードナビゲーション修正（E2Eテスト追加） |
 | 2025-12-17 | デモショーケース全Phase完了、ドキュメント整合性更新 |
 | 2025-12-17 | Phase 9.2/9.3/禁止ルール完了追加、デモショーケース進行中追加 |
