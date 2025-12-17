@@ -2027,6 +2027,7 @@ curl -X POST \
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
+| 2025-12-17 | 1.10.1 | Firestore undefined エラー修正（ignoreUndefinedProperties設定追加） |
 | 2025-12-17 | 1.10.0 | Phase 9.3: 在庫・食品統計API（getInventorySummary, getFoodStats）追加 |
 | 2025-12-17 | 1.9.0 | Phase 9.x: 禁止ルールAPI（getProhibitions, createProhibition, updateProhibition, deleteProhibition）追加 |
 | 2025-12-16 | 1.8.0 | Phase 8.7: saveAISuggestionAsPreset API追加 |

@@ -154,3 +154,19 @@ facility-care-input-form/
 - **テストファイル**: `frontend/e2e/demo-page.spec.ts`
 - **テスト件数**: 42件
 - **実行**: `cd frontend && npx playwright test`
+
+## 重要な設定
+
+### Firestore undefined 対策
+`functions/src/index.ts` で以下の設定によりオプショナルフィールドのundefinedエラーを防止:
+```typescript
+admin.firestore().settings({
+  ignoreUndefinedProperties: true,
+});
+```
+詳細は `docs/API_TEST_PLAN.md` 参照。
+
+### APIテスト
+- **テスト計画書**: `docs/API_TEST_PLAN.md`
+- **対象API**: submitCareItem, createPreset, createProhibition, createTask
+- **テスト結果**: 全て成功（2025-12-17）

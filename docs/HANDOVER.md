@@ -1,6 +1,6 @@
 # 引き継ぎドキュメント
 
-> **最終更新**: 2025年12月17日
+> **最終更新**: 2025年12月17日（Firestore修正・APIテスト追加）
 >
 > 本ドキュメントは、開発を引き継ぐ際に必要な情報をまとめたものです。
 
@@ -169,6 +169,8 @@ facility-care-input-form/
 | ⭐ | `docs/PRESET_MANAGEMENT_SPEC.md` | プリセット管理機能設計（Phase 8.6/8.7） |
 | ⭐ | `docs/AI_INTEGRATION_SPEC.md` | AI連携設計（Phase 8.4/8.5/8.7） |
 | ⭐ | `docs/DEMO_SHOWCASE_SPEC.md` | デモショーケース設計 |
+| ⭐ | `docs/API_TEST_PLAN.md` | APIテスト計画・Firestore修正記録 |
+| ⭐ | `docs/E2E_TEST_SPEC.md` | E2Eテスト仕様（Playwright） |
 
 ---
 
@@ -443,7 +445,30 @@ firebase projects:list
 - GCPで`gcloud config set account`しても、Firebase CLIには反映されない
 - 複数アカウントを`login:add`で追加し、`login:use`で切り替え可能
 
-### 8.4 ログ確認
+### 8.4 Firestore undefined エラー（修正済み）
+
+**問題**: 品物登録などでオプショナルフィールドが未入力の場合、Firestoreエラーが発生
+
+```
+Value for argument 'data' is not a valid Firestore document.
+Cannot use 'undefined' as a Firestore value (found in field 'noteToStaff')
+```
+
+**原因**: オプショナルフィールド（`noteToStaff`, `expirationDate`等）が `undefined` のままFirestoreに渡される
+
+**解決**: `functions/src/index.ts` で Firebase Admin SDK 初期化時に設定追加
+
+```typescript
+admin.firestore().settings({
+  ignoreUndefinedProperties: true,
+});
+```
+
+**影響範囲**: 全ての Firestore 書き込み API に適用
+
+**検証**: 全APIでテスト済み（詳細は `docs/API_TEST_PLAN.md` 参照）
+
+### 8.5 ログ確認
 
 ```bash
 # Cloud Functionsログ

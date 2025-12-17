@@ -27,6 +27,22 @@ npm run build --prefix functions
 firebase emulators:start --only functions,firestore
 ```
 
+### APIテスト（バックエンド変更時）
+```bash
+# curlでAPIテスト（本番環境）
+# テストデータは必ずクリーンアップすること
+# 詳細は docs/API_TEST_PLAN.md 参照
+
+# 例: submitCareItem テスト
+curl -X POST "https://asia-northeast1-facility-care-input-form.cloudfunctions.net/submitCareItem" \
+  -H "Content-Type: application/json" \
+  -d '{"residentId":"test-xxx","userId":"test-xxx","item":{...}}'
+
+# 推奨: Emulatorを使用した安全なテスト
+firebase emulators:start --only functions,firestore
+# localhost:5001 に対してテスト
+```
+
 ### E2Eテスト実行
 ```bash
 # ビルド + ローカルテスト
