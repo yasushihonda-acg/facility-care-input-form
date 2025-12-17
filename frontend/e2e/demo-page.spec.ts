@@ -265,8 +265,8 @@ test.describe('ナビゲーション', () => {
     await page.goto('/demo', { waitUntil: 'networkidle' });
     await waitForSpaLoad(page);
 
-    // 「品物を登録する」カードをクリック
-    await page.locator('a[href="/demo/family/items"]').click();
+    // 「品物を登録する」カードをクリック（フッターではなくメインコンテンツのカード）
+    await page.getByRole('link', { name: '📦 品物を登録する' }).click();
 
     // 品物管理ページに遷移
     await expect(page).toHaveURL(/\/demo\/family\/items/, { timeout: 15000 });
@@ -276,8 +276,8 @@ test.describe('ナビゲーション', () => {
     await page.goto('/demo', { waitUntil: 'networkidle' });
     await waitForSpaLoad(page);
 
-    // 「傾向を分析」カードをクリック
-    await page.locator('a[href="/demo/stats"]').click();
+    // 「傾向を分析」カードをクリック（フッターではなくメインコンテンツのカード）
+    await page.getByRole('link', { name: '📊 傾向を分析' }).click();
 
     // 統計ページに遷移
     await expect(page).toHaveURL(/\/demo\/stats/, { timeout: 15000 });

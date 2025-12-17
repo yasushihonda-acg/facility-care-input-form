@@ -49,8 +49,9 @@ export function FooterNav({ className = '' }: FooterNavProps) {
   }, [isFamilyPath, isStaffPath]);
 
   // 表示するフッターを決定
+  // デモモードでは常に家族フッターを表示（設計書: DEMO_FAMILY_REDESIGN.md セクション4.3）
   const savedRole = localStorage.getItem(USER_ROLE_KEY) || 'staff';
-  const showFamilyFooter = isFamilyPath || (isSharedPath && savedRole === 'family');
+  const showFamilyFooter = isDemoMode || isFamilyPath || (isSharedPath && savedRole === 'family');
 
   // デモモード対応: リンク先を動的生成
   const paths = useMemo(() => ({
