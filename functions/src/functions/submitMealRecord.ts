@@ -16,7 +16,12 @@ import {
   MealFormSettings,
   MealRecordForChat,
   ErrorCodes,
+  SnackRecord,
 } from "../types";
+import {
+  createConsumptionLogsFromSnackRecords,
+  generateSnackTextFromRecords,
+} from "../services/consumptionLogService";
 
 /**
  * 食事記録レスポンス型
@@ -88,6 +93,9 @@ function validateRequest(
       injectionAmount: req.injectionAmount as string | undefined,
       snack: req.snack as string | undefined,
       note: req.note as string | undefined,
+      // 間食記録連携用（オプショナル）
+      snackRecords: req.snackRecords as SnackRecord[] | undefined,
+      residentId: req.residentId as string | undefined,
     },
   };
 }
@@ -142,11 +150,23 @@ async function submitMealRecordHandler(
 
     const mealRecord = validation.data;
 
+    // snackRecords がある場合は snack テキストを自動生成（後方互換性）
+    if (mealRecord.snackRecords && mealRecord.snackRecords.length > 0) {
+      const generatedSnackText = generateSnackTextFromRecords(
+        mealRecord.snackRecords
+      );
+      // 既存の snack テキストがなければ自動生成テキストを使用
+      if (!mealRecord.snack) {
+        mealRecord.snack = generatedSnackText;
+      }
+    }
+
     functions.logger.info("submitMealRecord started", {
       staffName: mealRecord.staffName,
       residentName: mealRecord.residentName,
       facility: mealRecord.facility,
       mealTime: mealRecord.mealTime,
+      hasSnackRecords: !!mealRecord.snackRecords?.length,
     });
 
     // Sheet B に追記
@@ -192,6 +212,26 @@ async function submitMealRecordHandler(
     } catch (webhookError) {
       // Webhookエラーは記録成功には影響させない
       functions.logger.warn("Webhook setup failed:", webhookError);
+    }
+
+    // 間食記録から消費ログを作成（非同期・エラーでも処理続行）
+    let consumptionLogResult: {createdCount: number; errors: string[]} | null =
+      null;
+    if (mealRecord.snackRecords && mealRecord.snackRecords.length > 0) {
+      try {
+        consumptionLogResult = await createConsumptionLogsFromSnackRecords(
+          mealRecord.snackRecords,
+          mealRecord.staffName,
+          postId
+        );
+        functions.logger.info("Consumption logs created", {
+          createdCount: consumptionLogResult.createdCount,
+          errors: consumptionLogResult.errors,
+        });
+      } catch (consumptionError) {
+        // 消費ログエラーは記録成功には影響させない
+        functions.logger.warn("Consumption log creation failed:", consumptionError);
+      }
     }
 
     const responseData: SubmitMealRecordResponse = {

@@ -23,6 +23,32 @@ export interface SyncPlanDataRequest {
  * 食事入力フォームのリクエスト型
  * docs/MEAL_INPUT_FORM_SPEC.md に基づく
  */
+/**
+ * 間食詳細記録
+ * docs/SNACK_RECORD_INTEGRATION_SPEC.md に基づく
+ */
+export interface SnackRecord {
+  // 品物識別
+  itemId?: string; // care_items のID（紐づけ用）
+  itemName: string; // 品物名（表示・Sheet B用）
+
+  // 提供情報
+  servedQuantity: number; // 提供数
+  unit?: string; // 単位（個、切れ等）
+
+  // 摂食情報
+  consumptionStatus: ConsumptionStatus; // full/most/half/little/none
+  consumptionRate?: number; // 0-100（オプション、statusから自動計算可）
+
+  // 家族指示対応
+  followedInstruction?: boolean; // 家族指示に従ったか
+  instructionNote?: string; // 指示対応メモ
+
+  // その他
+  note?: string; // スタッフメモ
+  noteToFamily?: string; // 家族への申し送り
+}
+
 export interface SubmitMealRecordRequest {
   // 必須フィールド
   staffName: string; // 入力者（あなた）は？
@@ -43,6 +69,11 @@ export interface SubmitMealRecordRequest {
   snack?: string; // 間食は何を食べましたか？
   note?: string; // 特記事項
   // photo は別途アップロードAPI経由
+
+  // === 間食記録連携用（オプショナル）===
+  // docs/SNACK_RECORD_INTEGRATION_SPEC.md
+  snackRecords?: SnackRecord[]; // 間食詳細記録
+  residentId?: string; // 入居者ID（品物連携用）
 }
 
 /**
@@ -585,6 +616,12 @@ export interface ConsumptionLog {
   // 特記事項・申し送り
   consumptionNote?: string;
   noteToFamily?: string;
+
+  // 家族指示対応（間食記録連携用）
+  followedInstruction?: boolean; // 家族指示に従ったか
+  instructionNote?: string; // 指示対応メモ
+  linkedMealRecordId?: string; // 食事記録の投稿ID（Sheet Bとの紐づけ）
+  sourceType?: "meal_form" | "item_detail" | "task"; // 記録元
 
   // メタ情報
   recordedBy: string;
