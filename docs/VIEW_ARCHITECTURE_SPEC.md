@@ -1,6 +1,6 @@
 # ビュー構成設計書
 
-> **最終更新**: 2025年12月16日
+> **最終更新**: 2025年12月17日
 >
 > 本ドキュメントは、スタッフ・家族間でデータが交差するビュー構成を定義します。
 > 両者が同じデータを異なる視点で閲覧・操作できる整合性のある設計を目指します。
@@ -106,6 +106,19 @@
 | `/family/tasks` | TaskList | 家族 | タスク一覧 |
 | `/family/stats` | StatsDashboard | 家族 | 統計（/stats へリダイレクト） |
 | `/family/evidence/:date` | EvidenceMonitor | 家族 | エビデンス確認 |
+| **デモ専用** ||||
+| `/demo` | DemoHome | 全員 | デモホーム（機能一覧） |
+| `/demo/showcase` | DemoShowcase | 全員 | ガイド付きツアー |
+| `/demo/staff` | StaffHome (デモ) | 全員 | スタッフホームのデモ |
+| `/demo/family` | FamilyDashboard (デモ) | 全員 | 家族ホームのデモ |
+| `/demo/family/items` | ItemManagement (デモ) | 全員 | 品物管理のデモ |
+| `/demo/family/items/new` | ItemForm (デモ) | 全員 | 品物登録のデモ |
+| `/demo/stats` | StatsDashboard (デモ) | 全員 | 統計ダッシュボードのデモ |
+
+**デモモード特記事項**:
+- `/demo/*` ページでは `TourReturnBanner` が表示される（`/demo/showcase` 除く）
+- デモモードはローカルシードデータで動作（本番APIを呼ばない）
+- 詳細は [DEMO_SHOWCASE_SPEC.md](./DEMO_SHOWCASE_SPEC.md) を参照
 
 ### 2.2 App.tsx ルーティング実装
 
