@@ -530,7 +530,18 @@ Step 6/6: 在庫状況の確認
 | サイズ | コンパクト（px-2 py-1） |
 | 角丸 | `rounded-full` |
 | 位置 | ヘッダー右側（`rightElement`） |
-| アイコン | 🎯 + テキスト「ツアー」 |
+| ラベル | `← ツアーTOPに戻る` |
+
+**ラベル設計の考え方**:
+
+ユーザーの画面遷移を考慮：
+1. `/demo/showcase` (ツアートップ) → 「この機能を見る」クリック
+2. `/demo/family` 等（デモページ）← ここはまだ「ツアー中」
+3. 戻りたい先 → ツアートップ
+
+- ユーザーはツアーの**中**にいる
+- 戻りたいのはツアーの**トップ**
+- 「← ツアーTOPに戻る」が最も正確で分かりやすい
 
 ### 10.4 実装設計
 
@@ -572,8 +583,8 @@ export function DemoHeaderButton() {
       to="/demo/showcase"
       className="flex items-center gap-1 bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium px-2 py-1 rounded-full transition-colors"
     >
-      <span>🎯</span>
-      <span>ツアー</span>
+      <span>←</span>
+      <span>ツアーTOPに戻る</span>
     </Link>
   );
 }

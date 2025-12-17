@@ -147,7 +147,7 @@ facility-care-input-form/
 
 ### ツアーナビゲーション（ヘッダーボタン）
 - `/demo/*` ページ（`/demo/showcase` 除く）でヘッダー右側にオレンジ色のボタン表示
-- 「🎯 ツアー」ボタンでいつでもツアートップに戻れる
+- 「← ツアーTOPに戻る」ボタン（ユーザーはツアー中、戻るのはツアートップ）
 - スクロールしても常に見える（sticky header）
 - `frontend/src/components/demo/DemoHeaderButton.tsx`
 
