@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import type { MealInputForm } from '../types/mealForm';
+import type { MealInputForm, SnackRecord } from '../types/mealForm';
 import {
   initialMealForm,
   RESIDENTS,
@@ -14,6 +14,7 @@ import { submitMealRecord } from '../api';
 import { Layout } from '../components/Layout';
 import { useMealFormSettings } from '../hooks/useMealFormSettings';
 import { MealSettingsModal } from '../components/MealSettingsModal';
+import { SnackSection } from '../components/meal';
 
 export function MealInputPage() {
   const [searchParams] = useSearchParams();
@@ -25,6 +26,8 @@ export function MealInputPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  // 間食記録連携用 (Phase 9.0)
+  const [snackRecords, setSnackRecords] = useState<SnackRecord[]>([]);
 
   // 設定が読み込まれたら初期値を適用
   useEffect(() => {
@@ -141,6 +144,9 @@ export function MealInputPage() {
         ...(form.injectionAmount && { injectionAmount: form.injectionAmount }),
         ...(form.snack && { snack: form.snack }),
         ...(form.note && { note: form.note }),
+        // 間食記録連携（Phase 9.0）
+        ...(snackRecords.length > 0 && { snackRecords }),
+        ...(form.residentId && { residentId: form.residentId }),
       };
 
       const response = await submitMealRecord(requestData);
@@ -157,6 +163,7 @@ export function MealInputPage() {
           dayServiceUsage: '利用中ではない',
           dayServiceName: '',
         });
+        setSnackRecords([]); // 間食記録もリセット
         setShowSuccess(false);
       }, 3000);
     } catch (error) {
@@ -485,16 +492,14 @@ export function MealInputPage() {
             </div>
           )}
 
-          {/* 間食 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              間食は何を食べましたか？
-            </label>
-            <input
-              type="text"
-              value={form.snack}
-              onChange={(e) => updateField('snack', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+          {/* 間食セクション (Phase 9.0 拡張) */}
+          <div className="border-t border-gray-200 pt-4">
+            <SnackSection
+              residentId="resident-001"
+              snackRecords={snackRecords}
+              onSnackRecordsChange={setSnackRecords}
+              freeText={form.snack || ''}
+              onFreeTextChange={(text) => updateField('snack', text)}
             />
           </div>
 
