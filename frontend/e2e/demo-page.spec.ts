@@ -425,8 +425,86 @@ test.describe('デモモードナビゲーション維持（重要）', () => {
   });
 });
 
+test.describe('ツアーナビゲーション（TourReturnBanner）', () => {
+  /**
+   * ツアーナビゲーション改善テスト
+   * @see docs/DEMO_SHOWCASE_SPEC.md セクション10
+   * @see docs/E2E_TEST_SPEC.md セクション2.2.6
+   *
+   * /demo/* ページ（/demo/showcase 以外）に「ツアーに戻る」バナーが表示されることを検証
+   */
+
+  test('DEMO-TOUR-001: /demo/familyでツアーバナーが表示される', async ({ page }) => {
+    await page.goto('/demo/family', { waitUntil: 'networkidle' });
+    await waitForSpaLoad(page);
+
+    // 「ガイド付きツアー中」テキストが表示される
+    await expect(page.locator('text=ガイド付きツアー中')).toBeVisible({ timeout: 15000 });
+
+    // 「ツアーに戻る」リンクが表示される
+    await expect(page.locator('text=ツアーに戻る')).toBeVisible({ timeout: 10000 });
+  });
+
+  test('DEMO-TOUR-002: /demo/staffでツアーバナーが表示される', async ({ page }) => {
+    await page.goto('/demo/staff', { waitUntil: 'networkidle' });
+    await waitForSpaLoad(page);
+
+    // 「ガイド付きツアー中」テキストが表示される
+    await expect(page.locator('text=ガイド付きツアー中')).toBeVisible({ timeout: 15000 });
+
+    // 「ツアーに戻る」リンクが表示される
+    await expect(page.locator('text=ツアーに戻る')).toBeVisible({ timeout: 10000 });
+  });
+
+  test('DEMO-TOUR-003: /demo/statsでツアーバナーが表示される', async ({ page }) => {
+    await page.goto('/demo/stats', { waitUntil: 'networkidle' });
+    await waitForSpaLoad(page);
+
+    // 「ガイド付きツアー中」テキストが表示される
+    await expect(page.locator('text=ガイド付きツアー中')).toBeVisible({ timeout: 15000 });
+
+    // 「ツアーに戻る」リンクが表示される
+    await expect(page.locator('text=ツアーに戻る')).toBeVisible({ timeout: 10000 });
+  });
+
+  test('DEMO-TOUR-004: /demo/showcaseではバナー非表示', async ({ page }) => {
+    await page.goto('/demo/showcase', { waitUntil: 'networkidle' });
+    await waitForSpaLoad(page);
+
+    // 「ガイド付きツアー中」テキストが表示されない（ツアートップ自体）
+    await expect(page.locator('text=ガイド付きツアー中')).not.toBeVisible({ timeout: 5000 });
+  });
+
+  test('DEMO-TOUR-005: 「ツアーに戻る」クリックで/demo/showcaseに遷移', async ({ page }) => {
+    await page.goto('/demo/family', { waitUntil: 'networkidle' });
+    await waitForSpaLoad(page);
+
+    // 「ツアーに戻る」リンクをクリック
+    await page.locator('text=ツアーに戻る').click();
+
+    // /demo/showcase に遷移
+    await expect(page).toHaveURL(/\/demo\/showcase/, { timeout: 15000 });
+  });
+
+  test('DEMO-TOUR-006: 本番ページ(/family)ではバナー非表示', async ({ page }) => {
+    await page.goto('/family', { waitUntil: 'networkidle' });
+    await waitForSpaLoad(page);
+
+    // 「ガイド付きツアー中」テキストが表示されない（本番ページ）
+    await expect(page.locator('text=ガイド付きツアー中')).not.toBeVisible({ timeout: 5000 });
+  });
+
+  test('DEMO-TOUR-007: /demo でもツアーバナーが表示される', async ({ page }) => {
+    await page.goto('/demo', { waitUntil: 'networkidle' });
+    await waitForSpaLoad(page);
+
+    // 「ガイド付きツアー中」テキストが表示される
+    await expect(page.locator('text=ガイド付きツアー中')).toBeVisible({ timeout: 15000 });
+  });
+});
+
 test.describe('レスポンシブ表示', () => {
-  test('DEMO-050: モバイル幅でデモホームが正しく表示される', async ({ page }) => {
+  test('DEMO-RESP-001: モバイル幅でデモホームが正しく表示される', async ({ page }) => {
     // モバイル幅に設定
     await page.setViewportSize({ width: 375, height: 667 });
 
@@ -440,7 +518,7 @@ test.describe('レスポンシブ表示', () => {
     await expect(page.locator('text=品物管理').first()).toBeVisible({ timeout: 10000 });
   });
 
-  test('DEMO-051: モバイル幅でショーケースが正しく表示される', async ({ page }) => {
+  test('DEMO-RESP-002: モバイル幅でショーケースが正しく表示される', async ({ page }) => {
     // モバイル幅に設定
     await page.setViewportSize({ width: 375, height: 667 });
 
