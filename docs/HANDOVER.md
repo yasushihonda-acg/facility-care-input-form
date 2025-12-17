@@ -1,6 +1,6 @@
 # 引き継ぎドキュメント
 
-> **最終更新**: 2025年12月17日（ドキュメント整合性更新）
+> **最終更新**: 2025年12月17日（デモモード書き込み安全対策）
 >
 > 本ドキュメントは、開発を引き継ぐ際に必要な情報をまとめたものです。
 
@@ -77,7 +77,8 @@ cd frontend && npm install && npm run dev
 | 禁止ルール機能 | 提供禁止品目の設定・警告表示 | ✅ 完了 |
 | 統計拡張 | 在庫サマリー・摂食傾向分析 | ✅ 完了 |
 | デモショーケース | デモ専用ページ・シードデータ・フック対応 | ✅ 完了 |
-| ツアーナビゲーション | デモページからツアーに戻るバナー表示 | ✅ 完了 |
+| ツアーナビゲーション | ヘッダーに「← ツアーTOPに戻る」ボタン常時表示 | ✅ 完了 |
+| デモモード書き込み安全対策 | デモモードでの書き込み操作は本番に影響しない | ✅ 完了 |
 
 ---
 
@@ -158,7 +159,7 @@ facility-care-input-form/
 │   │   │       └── PresetManagement.tsx # プリセット管理
 │   │   ├── components/    # UIコンポーネント
 │   │   │   ├── demo/
-│   │   │   │   └── TourReturnBanner.tsx   # ツアーに戻るバナー
+│   │   │   │   └── DemoHeaderButton.tsx   # ツアーTOPに戻るボタン
 │   │   │   └── family/
 │   │   │       ├── AISuggestion.tsx         # AI提案カード
 │   │   │       ├── PresetSuggestion.tsx     # プリセット候補
@@ -207,6 +208,7 @@ facility-care-input-form/
 | ⭐ | `docs/DEMO_SHOWCASE_SPEC.md` | デモショーケース設計 |
 | ⭐ | `docs/API_TEST_PLAN.md` | APIテスト計画・Firestore修正記録 |
 | ⭐ | `docs/E2E_TEST_SPEC.md` | E2Eテスト仕様（Playwright） |
+| ⭐ | `docs/QUALITY_CHECK_DEMO_WRITE_OPS.md` | デモモード書き込み安全対策の品質チェック |
 
 ---
 
@@ -235,6 +237,7 @@ facility-care-input-form/
 | Phase 9.x | 禁止ルール機能 | 2025-12-17 |
 | Phase 9.3 | 統計ダッシュボード拡張 | 2025-12-17 |
 | Demo | デモショーケース（全Phase完了） | 2025-12-17 |
+| Demo | デモモード書き込み安全対策 | 2025-12-17 |
 
 ### 4.2 将来のタスク
 

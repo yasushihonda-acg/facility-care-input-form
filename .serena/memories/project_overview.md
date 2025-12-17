@@ -151,9 +151,17 @@ facility-care-input-form/
 - スクロールしても常に見える（sticky header）
 - `frontend/src/components/demo/DemoHeaderButton.tsx`
 
+### デモモード書き込み安全対策
+- デモモード（`/demo/*`）での書き込み操作は本番Firestoreに保存されない
+- 書き込み時にアラート表示: 「〇〇しました（デモモード - 実際には保存されません）」
+- リダイレクト先もデモページ内に維持
+- 対象: ItemForm, ItemDetail, ItemManagement, TaskList, ResidentSettings, PresetManagement
+- 設計書: `docs/DEMO_SHOWCASE_SPEC.md` セクション11
+- 品質チェック: `docs/QUALITY_CHECK_DEMO_WRITE_OPS.md`
+
 ### E2Eテスト
 - **テストファイル**: `frontend/e2e/demo-page.spec.ts`
-- **テスト件数**: 42件
+- **テスト件数**: 61件（デモ43件 + 家族ページ18件）
 - **実行**: `cd frontend && npx playwright test`
 
 ## 重要な設定
