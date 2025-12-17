@@ -113,32 +113,47 @@ export function FamilyDashboard() {
       showBackButton={false}
     >
       <div className="pb-4">
-        {/* フッターに無い機能へのクイックアクセス（タスク管理のみ） */}
-        <Link
-          to="/family/tasks"
-          className={`block bg-white rounded-lg shadow-card p-3 mb-4 hover:shadow-md transition ${
-            hasOverdue ? 'ring-2 ring-red-300' : ''
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">📋</span>
-              <div>
-                <p className="font-medium text-gray-800">タスク管理</p>
-                <p className="text-xs text-gray-500">
-                  {taskCount > 0 ? `${taskCount}件の未完了タスク` : 'タスクはありません'}
+        {/* フッターに無い機能へのクイックアクセス */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          {/* タスク管理 */}
+          <Link
+            to="/family/tasks"
+            className={`block bg-white rounded-lg shadow-card p-3 hover:shadow-md transition ${
+              hasOverdue ? 'ring-2 ring-red-300' : ''
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-xl">📋</span>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-gray-800 text-sm">タスク</p>
+                <p className="text-xs text-gray-500 truncate">
+                  {taskCount > 0 ? `${taskCount}件` : 'なし'}
                 </p>
               </div>
+              {taskCount > 0 && (
+                <span className={`px-2 py-0.5 rounded-full text-xs font-bold text-white ${
+                  hasOverdue ? 'bg-red-500' : 'bg-blue-500'
+                }`}>
+                  {taskCount}
+                </span>
+              )}
             </div>
-            {taskCount > 0 && (
-              <span className={`px-2 py-1 rounded-full text-xs font-bold text-white ${
-                hasOverdue ? 'bg-red-500' : 'bg-blue-500'
-              }`}>
-                {taskCount}
-              </span>
-            )}
-          </div>
-        </Link>
+          </Link>
+
+          {/* 入居者設定 */}
+          <Link
+            to="/family/settings/resident"
+            className="block bg-white rounded-lg shadow-card p-3 hover:shadow-md transition"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-xl">👤</span>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-gray-800 text-sm">入居者設定</p>
+                <p className="text-xs text-gray-500 truncate">禁止品目など</p>
+              </div>
+            </div>
+          </Link>
+        </div>
 
         {/* 日付セレクター */}
         <div className="bg-white rounded-lg shadow-card p-3 mb-4">

@@ -672,3 +672,106 @@ export async function getConsumptionLogs(
 
   return response.json();
 }
+
+// =============================================================================
+// 禁止ルール CRUD API（Phase 9.x）
+// =============================================================================
+
+import type {
+  ProhibitionRule,
+  ProhibitionRuleInput,
+  GetProhibitionsRequest,
+  GetProhibitionsResponse,
+  CreateProhibitionRequest,
+  CreateProhibitionResponse,
+  UpdateProhibitionRequest,
+  UpdateProhibitionResponse,
+} from '../types/careItem';
+
+export type { ProhibitionRule, ProhibitionRuleInput };
+
+/**
+ * 禁止ルール一覧を取得
+ */
+export async function getProhibitions(
+  params: GetProhibitionsRequest
+): Promise<ApiResponse<GetProhibitionsResponse>> {
+  const url = new URL(`${API_BASE}/getProhibitions`);
+
+  url.searchParams.set('residentId', params.residentId);
+  if (params.activeOnly !== undefined) {
+    url.searchParams.set('activeOnly', String(params.activeOnly));
+  }
+
+  const response = await fetch(url.toString());
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Failed to get prohibitions: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 禁止ルールを作成
+ */
+export async function createProhibition(
+  params: CreateProhibitionRequest
+): Promise<ApiResponse<CreateProhibitionResponse>> {
+  const response = await fetch(`${API_BASE}/createProhibition`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Failed to create prohibition: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 禁止ルールを更新
+ */
+export async function updateProhibition(
+  params: UpdateProhibitionRequest
+): Promise<ApiResponse<UpdateProhibitionResponse>> {
+  const response = await fetch(`${API_BASE}/updateProhibition`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Failed to update prohibition: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 禁止ルールを削除（論理削除）
+ */
+export async function deleteProhibition(
+  residentId: string,
+  prohibitionId: string
+): Promise<ApiResponse<Record<string, never>>> {
+  const url = new URL(`${API_BASE}/deleteProhibition`);
+  url.searchParams.set('residentId', residentId);
+  url.searchParams.set('prohibitionId', prohibitionId);
+
+  const response = await fetch(url.toString(), {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Failed to delete prohibition: ${response.statusText}`);
+  }
+
+  return response.json();
+}

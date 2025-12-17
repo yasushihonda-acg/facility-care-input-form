@@ -20,6 +20,7 @@ import { ItemForm } from './pages/family/ItemForm';
 import { ItemDetail } from './pages/family/ItemDetail';
 import { TaskList } from './pages/family/TaskList';
 import { PresetManagement } from './pages/family/PresetManagement';
+import { ResidentSettings } from './pages/family/ResidentSettings';
 
 // レガシー
 import { SheetDetailPage } from './pages/SheetDetailPage';
@@ -71,6 +72,9 @@ function App() {
 
       {/* プリセット管理 */}
       <Route path="/family/presets" element={<PresetManagement />} />
+
+      {/* 入居者設定（禁止ルール等） */}
+      <Route path="/family/settings/resident" element={<ResidentSettings />} />
 
       {/* タスク一覧 */}
       <Route path="/family/tasks" element={<TaskList />} />

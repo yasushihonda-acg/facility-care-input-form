@@ -132,3 +132,14 @@ export {
   recordConsumptionLog,
   getConsumptionLogs,
 } from "./functions/consumptionLogs";
+
+// =============================================================================
+// 禁止ルール（Phase 9.x）
+// =============================================================================
+
+export {
+  getProhibitions,
+  createProhibition,
+  updateProhibition,
+  deleteProhibition,
+} from "./functions/prohibitions";

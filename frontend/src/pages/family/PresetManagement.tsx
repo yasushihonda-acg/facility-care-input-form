@@ -70,11 +70,11 @@ export function PresetManagement() {
   };
 
   // フィルタタブ
+  // 注: '禁止' カテゴリは ProhibitionRule として別画面（入居者設定）で管理
   const filterTabs: { value: PresetCategory | 'all'; label: string; icon: string }[] = [
     { value: 'all', label: '全て', icon: '' },
     { value: 'cut', label: 'カット', icon: PRESET_CATEGORY_ICONS.cut },
     { value: 'serve', label: '提供', icon: PRESET_CATEGORY_ICONS.serve },
-    { value: 'ban', label: '禁止', icon: PRESET_CATEGORY_ICONS.ban },
     { value: 'condition', label: '条件', icon: PRESET_CATEGORY_ICONS.condition },
   ];
 

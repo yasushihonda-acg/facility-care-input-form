@@ -121,10 +121,10 @@ export function useSaveAISuggestionAsPreset() {
 }
 
 // カテゴリラベル
+// 注: 'ban'（禁止・制限）は ProhibitionRule として別管理
 export const PRESET_CATEGORY_LABELS: Record<PresetCategory, string> = {
   cut: 'カット・調理',
   serve: '提供方法',
-  ban: '禁止・制限',
   condition: '条件付き',
 };
 
@@ -132,7 +132,6 @@ export const PRESET_CATEGORY_LABELS: Record<PresetCategory, string> = {
 export const PRESET_CATEGORY_ICONS: Record<PresetCategory, string> = {
   cut: '✂️',
   serve: '🍽️',
-  ban: '🈲',
   condition: '🔀',
 };
 

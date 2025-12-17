@@ -974,10 +974,11 @@ export const CATEGORY_LABELS: Record<ItemCategory, string> = {
 // =============================================================================
 
 /** プリセットカテゴリ */
+// 注: 'ban'（禁止・制限）はプリセットではなく ProhibitionRule として別管理
+// @see docs/ITEM_MANAGEMENT_SPEC.md セクション8
 export type PresetCategory =
   | "cut" // カット・調理方法
   | "serve" // 提供方法・温度
-  | "ban" // 禁止・制限
   | "condition"; // 条件付き対応
 
 /** プリセット出所 */
@@ -1124,4 +1125,87 @@ export interface SaveAISuggestionAsPresetRequest {
 export interface SaveAISuggestionAsPresetResponse {
   presetId: string;
   createdAt: string;
+}
+
+// =============================================================================
+// 禁止ルール Types (Phase 9.x)
+// docs/ITEM_MANAGEMENT_SPEC.md セクション8 に基づく型定義
+// =============================================================================
+
+/**
+ * 禁止ルール（提供禁止品目）
+ * Firestore: residents/{residentId}/prohibitions/{prohibitionId}
+ *
+ * プリセット（品物の提供方法）とは別概念：
+ * - プリセット: 「何を・どう提供するか」の指示
+ * - 禁止ルール: 「何を提供しないか」の制約
+ */
+export interface ProhibitionRule {
+  // 識別情報
+  id: string;
+  residentId: string;
+
+  // ルール内容
+  itemName: string; // 禁止品目名（例: 「七福のお菓子」）
+  category?: ItemCategory; // カテゴリ（任意、絞り込み用）
+  reason?: string; // 禁止理由（例: 「糖分過多のため」）
+
+  // メタ情報
+  createdBy: string; // 設定した家族ID
+  createdAt: Timestamp; // 設定日時
+  updatedAt: Timestamp; // 更新日時
+  isActive: boolean; // 有効フラグ（無効化可能）
+}
+
+/** 禁止ルール作成入力 */
+export interface ProhibitionRuleInput {
+  itemName: string;
+  category?: ItemCategory;
+  reason?: string;
+}
+
+// === 禁止ルール APIリクエスト/レスポンス型 ===
+
+/** 禁止ルール一覧取得リクエスト */
+export interface GetProhibitionsRequest {
+  residentId: string;
+  activeOnly?: boolean;
+}
+
+/** 禁止ルール一覧取得レスポンス */
+export interface GetProhibitionsResponse {
+  prohibitions: ProhibitionRule[];
+  total: number;
+}
+
+/** 禁止ルール作成リクエスト */
+export interface CreateProhibitionRequest {
+  residentId: string;
+  userId: string;
+  prohibition: ProhibitionRuleInput;
+}
+
+/** 禁止ルール作成レスポンス */
+export interface CreateProhibitionResponse {
+  prohibitionId: string;
+  createdAt: string;
+}
+
+/** 禁止ルール更新リクエスト */
+export interface UpdateProhibitionRequest {
+  residentId: string;
+  prohibitionId: string;
+  updates: Partial<ProhibitionRuleInput> & { isActive?: boolean };
+}
+
+/** 禁止ルール更新レスポンス */
+export interface UpdateProhibitionResponse {
+  prohibitionId: string;
+  updatedAt: string;
+}
+
+/** 禁止ルール削除リクエスト */
+export interface DeleteProhibitionRequest {
+  residentId: string;
+  prohibitionId: string;
 }

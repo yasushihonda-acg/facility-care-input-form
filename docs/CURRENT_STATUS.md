@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月17日 (プリセット・AI提案改善、禁止ルール設計追加)
+> **最終更新**: 2025年12月17日 (Phase 9.x 禁止ルール機能完全実装)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -19,17 +19,6 @@
 ---
 
 ## 次のタスク
-
-### Phase 9.x: 禁止ルール機能実装
-
-| ステップ | 内容 | 状態 |
-|----------|------|------|
-| 1 | ProhibitionRule型定義・Firestoreモデル | 未着手 |
-| 2 | 禁止ルールCRUD API実装 | 未着手 |
-| 3 | 家族向け「入居者設定」画面実装 | 未着手 |
-| 4 | スタッフ向け禁止品目警告表示 | 未着手 |
-
-**設計書**: [ITEM_MANAGEMENT_SPEC.md セクション8](./ITEM_MANAGEMENT_SPEC.md#8-禁止ルール提供禁止品目)
 
 ### Phase 9.3: 統計ダッシュボード拡張
 
@@ -54,6 +43,42 @@
 ---
 
 ## 最近の完了タスク
+
+### Phase 9.x: 禁止ルール機能完全実装 (2025-12-17)
+
+**概要**: 家族が設定した「提供禁止品目」をスタッフに警告表示する機能の完全実装
+
+**設計書**: [ITEM_MANAGEMENT_SPEC.md セクション8](./ITEM_MANAGEMENT_SPEC.md#8-禁止ルール提供禁止品目)
+
+**実装ステップ**:
+1. ✅ ProhibitionRule型定義・Firestoreモデル
+2. ✅ 禁止ルールCRUD API実装
+3. ✅ 家族向け「入居者設定」画面実装
+4. ✅ スタッフ向け禁止品目警告表示
+
+**実装ファイル（バックエンド）**:
+- `functions/src/functions/prohibitions.ts` - 禁止ルールCRUD API（新規）
+- `functions/src/types/index.ts` - ProhibitionRule型追加
+
+**実装ファイル（フロントエンド）**:
+- `frontend/src/types/careItem.ts` - ProhibitionRule型定義追加、PresetCategoryから'ban'削除
+- `frontend/src/hooks/useProhibitions.ts` - 禁止ルールCRUDフック（新規）
+- `frontend/src/api/index.ts` - API呼び出し関数追加
+- `frontend/src/pages/family/ResidentSettings.tsx` - 入居者設定画面（新規）
+- `frontend/src/pages/family/FamilyDashboard.tsx` - 入居者設定へのナビゲーション追加
+- `frontend/src/components/staff/ProhibitionWarning.tsx` - 禁止品目警告（新規）
+- `frontend/src/components/staff/ProhibitionBadge.tsx` - 禁止品目バッジ（新規）
+- `frontend/src/pages/staff/FamilyMessageDetail.tsx` - 禁止警告表示追加
+- `frontend/src/pages/staff/FamilyMessages.tsx` - 禁止バッジ表示追加
+- `frontend/src/App.tsx` - `/family/settings/resident` ルート追加
+
+**機能**:
+- 家族が「入居者設定」画面で禁止品目を登録・削除
+- 品名またはカテゴリでマッチング（部分一致）
+- スタッフの家族連絡一覧・詳細画面で警告表示
+- Firestoreサブコレクション: `residents/{residentId}/prohibitions`
+
+---
 
 ### プリセット・AI提案改善、禁止ルール設計 (2025-12-17)
 
@@ -184,6 +209,7 @@ Phase 8.7: AI自動ストック            ████████████�
 Phase 9.0: 在庫・消費追跡設計        ████████████████████ 100% (完了)
 Phase 9.1: ルーティング・ページ実装  ████████████████████ 100% (完了)
 Phase 9.2: ConsumptionLog API・UI   ████████████████████ 100% (完了)
+Phase 9.x: 禁止ルール機能            ████████████████████ 100% (完了)
 Phase 9.3: 統計ダッシュボード拡張    ░░░░░░░░░░░░░░░░░░░░   0% (次のタスク)
 ```
 

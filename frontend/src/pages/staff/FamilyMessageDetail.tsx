@@ -8,6 +8,7 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
+import { ProhibitionWarning } from '../../components/staff/ProhibitionWarning';
 import { useCareItems, useUpdateCareItem } from '../../hooks/useCareItems';
 import {
   getCategoryIcon,
@@ -85,6 +86,9 @@ export function FamilyMessageDetail() {
               </span>
             </div>
           </div>
+
+          {/* 禁止品目警告 */}
+          <ProhibitionWarning item={item} residentId={DEMO_RESIDENT_ID} />
         </div>
 
         {/* 在庫状況カード */}

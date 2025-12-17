@@ -7,6 +7,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
+import { ProhibitionBadge } from '../../components/staff/ProhibitionBadge';
 import { useCareItems } from '../../hooks/useCareItems';
 import {
   getCategoryIcon,
@@ -146,11 +147,12 @@ function FamilyMessageCard({ item }: { item: CareItem }) {
 
         {/* メイン情報 */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             <h3 className="font-bold text-base truncate">{item.itemName}</h3>
             <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusColor.bgColor} ${statusColor.color}`}>
               {isExpired ? '⚠️期限切れ' : isToday ? '⚠️今日期限' : getStatusLabel(item.status)}
             </span>
+            <ProhibitionBadge item={item} residentId={DEMO_RESIDENT_ID} />
           </div>
 
           <div className="text-sm text-gray-600 space-y-1">
