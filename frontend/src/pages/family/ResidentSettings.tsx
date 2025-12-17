@@ -14,13 +14,18 @@ import {
   type ProhibitionRule,
   type ProhibitionRuleInput,
 } from '../../hooks/useProhibitions';
+import { useDemoMode } from '../../hooks/useDemoMode';
 import { DEMO_RESIDENT, DEMO_FAMILY_USER } from '../../data/demoFamilyData';
 import { ITEM_CATEGORIES, type ItemCategory } from '../../types/careItem';
 
 export function ResidentSettings() {
   const navigate = useNavigate();
+  const isDemo = useDemoMode();
   const residentId = DEMO_RESIDENT.id;
   const userId = DEMO_FAMILY_USER.id;
+
+  // デモモード対応: リンク先プレフィックス
+  const pathPrefix = isDemo ? '/demo' : '';
 
   // 禁止ルール一覧取得
   const { data, isLoading, error } = useProhibitions(residentId);
@@ -36,12 +41,22 @@ export function ResidentSettings() {
   });
 
   // 新規作成
+  // @see docs/DEMO_SHOWCASE_SPEC.md セクション11 - デモモードでの書き込み操作
   const handleCreate = useCallback(async () => {
     if (!newProhibition.itemName.trim()) {
       alert('禁止品目名を入力してください');
       return;
     }
 
+    // デモモードの場合: APIを呼ばず、成功メッセージを表示
+    if (isDemo) {
+      alert('追加しました（デモモード - 実際には保存されません）');
+      setNewProhibition({ itemName: '', category: undefined, reason: '' });
+      setIsAddingNew(false);
+      return;
+    }
+
+    // 本番モードの場合: 通常通りAPI呼び出し
     try {
       await createMutation.mutateAsync({
         residentId,
@@ -53,15 +68,23 @@ export function ResidentSettings() {
     } catch {
       alert('追加に失敗しました');
     }
-  }, [createMutation, residentId, userId, newProhibition]);
+  }, [createMutation, residentId, userId, newProhibition, isDemo]);
 
   // 削除
+  // @see docs/DEMO_SHOWCASE_SPEC.md セクション11 - デモモードでの書き込み操作
   const handleDelete = useCallback(
     async (prohibition: ProhibitionRule) => {
       if (!confirm(`「${prohibition.itemName}」を削除しますか？`)) {
         return;
       }
 
+      // デモモードの場合: APIを呼ばず、成功メッセージを表示
+      if (isDemo) {
+        alert('削除しました（デモモード - 実際には削除されません）');
+        return;
+      }
+
+      // 本番モードの場合: 通常通りAPI呼び出し
       try {
         await deleteMutation.mutateAsync({
           residentId,
@@ -71,7 +94,7 @@ export function ResidentSettings() {
         alert('削除に失敗しました');
       }
     },
-    [deleteMutation, residentId]
+    [deleteMutation, residentId, isDemo]
   );
 
   const prohibitions = data?.prohibitions || [];
@@ -264,7 +287,7 @@ export function ResidentSettings() {
             品物ごとの提供方法は「プリセット管理」で設定してください
           </p>
           <button
-            onClick={() => navigate('/family/presets')}
+            onClick={() => navigate(`${pathPrefix}/family/presets`)}
             className="w-full py-2 px-4 bg-white border rounded-lg text-sm font-medium text-blue-600 flex items-center justify-center gap-1"
           >
             プリセット管理へ

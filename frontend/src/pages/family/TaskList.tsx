@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { Layout } from '../../components/Layout';
 import { useTasks, useUpdateTask, useCompleteTask } from '../../hooks/useTasks';
+import { useDemoMode } from '../../hooks/useDemoMode';
 import {
   getTaskTypeLabel,
   getTaskTypeIcon,
@@ -27,6 +28,7 @@ export function TaskList() {
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all');
   const [showCompleteModal, setShowCompleteModal] = useState<Task | null>(null);
   const [completionNote, setCompletionNote] = useState('');
+  const isDemo = useDemoMode();
 
   // タスク一覧を取得
   const { data, isLoading, error } = useTasks({
@@ -40,9 +42,19 @@ export function TaskList() {
   const completeTask = useCompleteTask();
 
   // 完了処理
+  // @see docs/DEMO_SHOWCASE_SPEC.md セクション11 - デモモードでの書き込み操作
   const handleComplete = async () => {
     if (!showCompleteModal) return;
 
+    // デモモードの場合: APIを呼ばず、成功メッセージを表示
+    if (isDemo) {
+      alert('完了しました（デモモード - 実際には保存されません）');
+      setShowCompleteModal(null);
+      setCompletionNote('');
+      return;
+    }
+
+    // 本番モードの場合: 通常通りAPI呼び出し
     try {
       await completeTask.mutateAsync({
         taskId: showCompleteModal.id,
@@ -58,7 +70,15 @@ export function TaskList() {
   };
 
   // ステータス変更
+  // @see docs/DEMO_SHOWCASE_SPEC.md セクション11 - デモモードでの書き込み操作
   const handleStatusChange = async (taskId: string, newStatus: TaskStatus) => {
+    // デモモードの場合: APIを呼ばず、成功メッセージを表示
+    if (isDemo) {
+      alert('ステータスを変更しました（デモモード - 実際には保存されません）');
+      return;
+    }
+
+    // 本番モードの場合: 通常通りAPI呼び出し
     try {
       await updateTask.mutateAsync({
         taskId,

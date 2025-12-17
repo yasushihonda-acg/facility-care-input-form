@@ -10,6 +10,7 @@ import { Layout } from '../../components/Layout';
 import { AISuggestion } from '../../components/family/AISuggestion';
 import { SaveAISuggestionDialog } from '../../components/family/SaveAISuggestionDialog';
 import { useSubmitCareItem } from '../../hooks/useCareItems';
+import { useDemoMode } from '../../hooks/useDemoMode';
 import { useAISuggest } from '../../hooks/useAISuggest';
 import {
   ITEM_CATEGORIES,
@@ -36,6 +37,7 @@ const getTodayString = () => new Date().toISOString().split('T')[0];
 
 export function ItemForm() {
   const navigate = useNavigate();
+  const isDemo = useDemoMode();
   const submitItem = useSubmitCareItem();
 
   // フォーム状態
@@ -177,11 +179,20 @@ export function ItemForm() {
   };
 
   // 送信処理
+  // @see docs/DEMO_SHOWCASE_SPEC.md セクション11 - デモモードでの書き込み操作
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validate()) return;
 
+    // デモモードの場合: APIを呼ばず、成功メッセージを表示してデモページにリダイレクト
+    if (isDemo) {
+      alert('登録しました（デモモード - 実際には保存されません）');
+      navigate('/demo/family/items');
+      return;
+    }
+
+    // 本番モードの場合: 通常通りAPI呼び出し
     setIsSubmitting(true);
     try {
       await submitItem.mutateAsync({

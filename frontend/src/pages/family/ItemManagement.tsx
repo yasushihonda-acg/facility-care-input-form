@@ -42,7 +42,17 @@ export function ItemManagement() {
     setShowDeleteConfirm(itemId);
   };
 
+  // 削除処理
+  // @see docs/DEMO_SHOWCASE_SPEC.md セクション11 - デモモードでの書き込み操作
   const handleDelete = async (itemId: string) => {
+    // デモモードの場合: APIを呼ばず、成功メッセージを表示
+    if (isDemo) {
+      alert('削除しました（デモモード - 実際には削除されません）');
+      setShowDeleteConfirm(null);
+      return;
+    }
+
+    // 本番モードの場合: 通常通りAPI呼び出し
     try {
       await deleteItem.mutateAsync(itemId);
       setShowDeleteConfirm(null);

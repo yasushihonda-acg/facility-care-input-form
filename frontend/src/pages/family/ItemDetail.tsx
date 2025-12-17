@@ -47,12 +47,22 @@ export function ItemDetail() {
   const deleteItem = useDeleteCareItem();
   const item = data?.items.find((i) => i.id === id);
 
+  // 削除処理
+  // @see docs/DEMO_SHOWCASE_SPEC.md セクション11 - デモモードでの書き込み操作
   const handleDelete = async () => {
     if (!item) return;
+
+    // デモモードの場合: APIを呼ばず、成功メッセージを表示してデモページにリダイレクト
+    if (isDemo) {
+      alert('削除しました（デモモード - 実際には削除されません）');
+      window.location.href = '/demo/family/items';
+      return;
+    }
+
+    // 本番モードの場合: 通常通りAPI呼び出し
     try {
       await deleteItem.mutateAsync(item.id);
-      // 削除後は一覧に戻る（デモモード対応）
-      window.location.href = `${pathPrefix}/family/items`;
+      window.location.href = '/family/items';
     } catch (error) {
       console.error('Delete failed:', error);
       alert('削除に失敗しました');

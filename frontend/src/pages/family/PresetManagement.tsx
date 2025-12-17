@@ -16,6 +16,7 @@ import {
   PRESET_SOURCE_LABELS,
   PRESET_SOURCE_ICONS,
 } from '../../hooks/usePresets';
+import { useDemoMode } from '../../hooks/useDemoMode';
 import type {
   CarePreset,
   CarePresetInput,
@@ -35,6 +36,7 @@ export function PresetManagement() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [editingPreset, setEditingPreset] = useState<CarePreset | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const isDemo = useDemoMode();
 
   // プリセット一覧を取得
   const { data, isLoading, error } = usePresets({
@@ -60,7 +62,16 @@ export function PresetManagement() {
   });
 
   // 削除処理
+  // @see docs/DEMO_SHOWCASE_SPEC.md セクション11 - デモモードでの書き込み操作
   const handleDelete = async (presetId: string) => {
+    // デモモードの場合: APIを呼ばず、成功メッセージを表示
+    if (isDemo) {
+      alert('削除しました（デモモード - 実際には削除されません）');
+      setShowDeleteConfirm(null);
+      return;
+    }
+
+    // 本番モードの場合: 通常通りAPI呼び出し
     try {
       await deletePresetMutation.mutateAsync(presetId);
       setShowDeleteConfirm(null);
@@ -189,6 +200,7 @@ export function PresetManagement() {
       )}
 
       {/* 作成/編集モーダル */}
+      {/* @see docs/DEMO_SHOWCASE_SPEC.md セクション11 - デモモードでの書き込み操作 */}
       {(isCreating || editingPreset) && (
         <PresetFormModal
           preset={editingPreset}
@@ -197,6 +209,16 @@ export function PresetManagement() {
             setEditingPreset(null);
           }}
           onSave={async (input) => {
+            // デモモードの場合: APIを呼ばず、成功メッセージを表示
+            if (isDemo) {
+              const action = editingPreset ? '更新' : '作成';
+              alert(`${action}しました（デモモード - 実際には保存されません）`);
+              setIsCreating(false);
+              setEditingPreset(null);
+              return;
+            }
+
+            // 本番モードの場合: 通常通りAPI呼び出し
             if (editingPreset) {
               await updatePresetMutation.mutateAsync({
                 presetId: editingPreset.id,

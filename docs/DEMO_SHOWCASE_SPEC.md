@@ -670,3 +670,117 @@ export function Layout({ children, title, rightElement, ... }: LayoutProps) {
 | ステップ番号表示 | ボタンに「2/6」など現在位置を表示 |
 | ツールチップ | ホバー時に「ガイド付きツアーに戻る」と表示 |
 | アニメーション | 初回訪問時にパルスアニメーションで注目を集める |
+
+---
+
+## 11. デモモードでの書き込み操作
+
+> **追加日**: 2025年12月17日
+> **実装状況**: 🔄 実装中
+
+### 11.1 背景・課題
+
+デモモードで「読み取り」はローカルデータを使用するが、「書き込み」（登録・更新・削除）は本番APIを呼び出してしまう問題が発覚。
+
+| 問題 | 詳細 |
+|------|------|
+| **本番APIを呼び出し** | `/demo/family/items/new` で登録すると本番Firestoreに保存 |
+| **本番ページにリダイレクト** | 登録成功後に `/family/items`（本番）に遷移 |
+| **データ汚染** | デモ操作で本番データが汚染される |
+| **設計原則違反** | 「完全分離」原則に違反 |
+
+### 11.2 設計原則（再確認）
+
+セクション1.2より：
+> **完全分離**: デモモードは本番APIを呼ばず、ローカルデータのみで動作
+
+この原則に基づき、**全ての書き込み操作**をデモモードでは抑制する。
+
+### 11.3 解決策
+
+デモモード時の書き込み操作は：
+1. **本番APIを呼ばない**
+2. **成功メッセージを表示**（「登録しました（デモ）」等）
+3. **デモページにリダイレクト**（`/demo/family/items` 等）
+4. **ローカルデータは更新しない**（リロードで元に戻る）
+
+### 11.4 影響範囲
+
+デモモードで書き込み操作が可能な画面を特定し、対応が必要：
+
+| 画面 | パス | 操作 | 対応 |
+|------|------|------|------|
+| 品物登録 | `/demo/family/items/new` | 登録 | 🔄 対応中 |
+| 品物詳細 | `/demo/items/:id` | 削除 | 要確認 |
+| タスク一覧 | `/demo/family/tasks` | 完了/削除 | 要確認 |
+| 入居者設定 | `/demo/family/settings/resident` | 禁止ルール追加/削除 | 要確認 |
+| プリセット管理 | `/demo/family/presets` | 追加/削除 | 要確認 |
+| 消費記録 | `/demo/items/:id/timeline` | 記録追加 | 要確認 |
+
+### 11.5 実装設計
+
+#### 11.5.1 品物登録フォーム（ItemForm.tsx）
+
+```typescript
+import { useDemoMode } from '../../hooks/useDemoMode';
+
+export function ItemForm() {
+  const navigate = useNavigate();
+  const isDemo = useDemoMode();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+
+    // デモモードの場合
+    if (isDemo) {
+      // APIを呼ばず、成功メッセージを表示
+      alert('登録しました（デモモード - 実際には保存されません）');
+      // デモページにリダイレクト
+      navigate('/demo/family/items');
+      return;
+    }
+
+    // 本番モードの場合は通常通りAPI呼び出し
+    await submitItem.mutateAsync({...});
+    navigate('/family/items');
+  };
+}
+```
+
+#### 11.5.2 共通パターン
+
+全ての書き込み操作で以下のパターンを適用：
+
+```typescript
+const isDemo = useDemoMode();
+
+const handleAction = async () => {
+  if (isDemo) {
+    // 1. APIを呼ばない
+    // 2. 成功メッセージ（デモであることを明示）
+    // 3. デモページにリダイレクト
+    return;
+  }
+  // 本番処理
+};
+```
+
+### 11.6 ユーザーへの明示
+
+デモモードでの操作結果は、ユーザーに以下を明示：
+- 「デモモード」であること
+- 「実際には保存されない」こと
+- リロードで元に戻ること
+
+### 11.7 実装タスク
+
+| # | タスク | 工数 |
+|---|--------|------|
+| 1 | ItemForm.tsx 修正 | 小 |
+| 2 | ItemDetail.tsx 削除操作対応 | 小 |
+| 3 | TaskList.tsx 完了/削除操作対応 | 小 |
+| 4 | ResidentSettings.tsx 禁止ルール操作対応 | 小 |
+| 5 | PresetManagement.tsx 操作対応 | 小 |
+| 6 | ConsumptionRecordModal.tsx 操作対応 | 小 |
+| 7 | E2Eテスト追加 | 中 |
