@@ -16,12 +16,14 @@ import type {
   CreateProhibitionRequest,
   UpdateProhibitionRequest,
 } from '../types/careItem';
+import { DEMO_PROHIBITIONS } from '../data/demoFamilyData';
 
 // クエリキー
 const PROHIBITIONS_QUERY_KEY = 'prohibitions';
 
 /**
  * 禁止ルール一覧を取得
+ * APIが空の場合はデモデータをフォールバック
  */
 export function useProhibitions(residentId: string, activeOnly = true) {
   return useQuery({
@@ -30,6 +32,14 @@ export function useProhibitions(residentId: string, activeOnly = true) {
       const response = await getProhibitions({ residentId, activeOnly });
       if (!response.success || !response.data) {
         throw new Error('Failed to fetch prohibitions');
+      }
+      // APIからデータがない場合、デモデータをフォールバック
+      if (response.data.prohibitions.length === 0) {
+        return {
+          prohibitions: DEMO_PROHIBITIONS.filter(
+            (p) => p.residentId === residentId && (!activeOnly || p.isActive)
+          ),
+        };
       }
       return response.data;
     },

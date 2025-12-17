@@ -13,6 +13,7 @@ import type {
   Resident,
   FamilyUser,
 } from '../types/family';
+import type { ProhibitionRule } from '../types/careItem';
 
 // ============================================
 // デモユーザー・入居者情報
@@ -20,16 +21,16 @@ import type {
 
 /** デモ入居者（蒲池 キヌヱ様） */
 export const DEMO_RESIDENT: Resident = {
-  id: 'resident-kinue',
+  id: 'resident-001',
   name: '蒲池 キヌヱ',
   roomNumber: '215',
 };
 
 /** デモ家族ユーザー */
 export const DEMO_FAMILY_USER: FamilyUser = {
-  id: 'family-kamachi',
+  id: 'family-001',
   name: '蒲池（ご家族）',
-  residentId: 'resident-kinue',
+  residentId: 'resident-001',
 };
 
 // ============================================
@@ -98,6 +99,28 @@ export const DEMO_PRESETS: CarePreset[] = [
 ];
 
 // ============================================
+// 禁止ルールデモデータ（蒲池様FAX内容に基づく）
+// @see docs/ITEM_MANAGEMENT_SPEC.md - セクション8「禁止ルール」
+//
+// 「七福のお菓子は出さない」が初期設定済み
+// ============================================
+
+/** 初期禁止ルール */
+export const DEMO_PROHIBITIONS: ProhibitionRule[] = [
+  {
+    id: 'prohibition-001',
+    residentId: 'resident-001',
+    itemName: '七福のお菓子',
+    category: 'snack',
+    reason: 'ご家族の希望（FAX指示）',
+    createdBy: 'family-001',
+    createdAt: '2024-12-01T00:00:00',
+    updatedAt: '2024-12-01T00:00:00',
+    isActive: true,
+  },
+];
+
+// ============================================
 // ケア指示デモデータ
 // ============================================
 
@@ -116,8 +139,8 @@ export const DEMO_CARE_INSTRUCTIONS: CareInstruction[] = [
   // 今日の昼食 - キウイ指示（完了済み）
   {
     id: 'demo-001',
-    userId: 'family-kamachi',
-    residentId: 'resident-kinue',
+    userId: 'family-001',
+    residentId: 'resident-001',
     targetDate: formatDate(today),
     mealTime: 'lunch',
     menuName: 'キウイ',
@@ -132,8 +155,8 @@ export const DEMO_CARE_INSTRUCTIONS: CareInstruction[] = [
   // 今日の夕食 - らっきょう指示（確認済み）
   {
     id: 'demo-002',
-    userId: 'family-kamachi',
-    residentId: 'resident-kinue',
+    userId: 'family-001',
+    residentId: 'resident-001',
     targetDate: formatDate(today),
     mealTime: 'dinner',
     menuName: 'らっきょう',
@@ -147,8 +170,8 @@ export const DEMO_CARE_INSTRUCTIONS: CareInstruction[] = [
   // 明日の昼食 - 熟した柿指示（未確認）
   {
     id: 'demo-003',
-    userId: 'family-kamachi',
-    residentId: 'resident-kinue',
+    userId: 'family-001',
+    residentId: 'resident-001',
     targetDate: formatDate(tomorrow),
     mealTime: 'lunch',
     menuName: '熟した柿',
