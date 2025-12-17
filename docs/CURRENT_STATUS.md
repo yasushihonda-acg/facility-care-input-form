@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月17日 (デモモード書き込み操作の安全対策)
+> **最終更新**: 2025年12月17日 (スタッフ家族連絡ページのデモナビゲーション修正)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -20,6 +20,34 @@
 ---
 
 ## 最近の完了タスク
+
+### スタッフ家族連絡ページのデモナビゲーション修正 (2025-12-17)
+
+**設計書**: [FIX_DEMO_NAVIGATION.md](./FIX_DEMO_NAVIGATION.md) セクション6
+
+**背景・問題**:
+`/demo/staff/family-messages` で品物をクリックすると、本番ページ `/staff/family-messages/{id}` に遷移してしまい、エラーが発生。
+
+**原因**:
+`FamilyMessages.tsx` と `FamilyMessageDetail.tsx` でリンク先がハードコードされており、デモモードを考慮していなかった。
+
+**修正内容**:
+
+| ファイル | 修正箇所 |
+|----------|----------|
+| `FamilyMessages.tsx` | 品物カードのリンク先をデモモード対応 |
+| `FamilyMessageDetail.tsx` | 「一覧に戻る」リンク、タイムラインリンクをデモモード対応 |
+
+**修正パターン**:
+```typescript
+const isDemo = useDemoMode();
+const pathPrefix = isDemo ? '/demo' : '';
+<Link to={`${pathPrefix}/staff/family-messages/${item.id}`}
+```
+
+**E2Eテスト**: 60/61 パス（1件の失敗は本修正と無関係）
+
+---
 
 ### デモモード書き込み操作の安全対策 (2025-12-17)
 

@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import { ProhibitionBadge } from '../../components/staff/ProhibitionBadge';
 import { useCareItems } from '../../hooks/useCareItems';
+import { useDemoMode } from '../../hooks/useDemoMode';
 import {
   getCategoryIcon,
   getStatusLabel,
@@ -115,6 +116,8 @@ export function FamilyMessages() {
  * 家族連絡カードコンポーネント
  */
 function FamilyMessageCard({ item }: { item: CareItem }) {
+  const isDemo = useDemoMode();
+  const pathPrefix = isDemo ? '/demo' : '';
   const statusColor = getStatusColorClass(item.status);
   const categoryIcon = getCategoryIcon(item.category);
   const hasExpiration = !!item.expirationDate;
@@ -130,7 +133,7 @@ function FamilyMessageCard({ item }: { item: CareItem }) {
 
   return (
     <Link
-      to={`/staff/family-messages/${item.id}`}
+      to={`${pathPrefix}/staff/family-messages/${item.id}`}
       className={`block bg-white rounded-lg shadow-sm border p-4 hover:shadow-md transition-shadow ${
         isExpired
           ? 'border-l-4 border-l-red-500'

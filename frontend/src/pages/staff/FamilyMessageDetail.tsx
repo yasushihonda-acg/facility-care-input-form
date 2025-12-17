@@ -10,6 +10,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import { ProhibitionWarning } from '../../components/staff/ProhibitionWarning';
 import { useCareItems, useUpdateCareItem } from '../../hooks/useCareItems';
+import { useDemoMode } from '../../hooks/useDemoMode';
 import {
   getCategoryIcon,
   getStatusLabel,
@@ -27,6 +28,8 @@ const DEMO_RESIDENT_ID = 'resident-001';
 export function FamilyMessageDetail() {
   const { id } = useParams<{ id: string }>();
   const [showRecordModal, setShowRecordModal] = useState(false);
+  const isDemo = useDemoMode();
+  const pathPrefix = isDemo ? '/demo' : '';
 
   // 品物一覧から該当品物を取得
   const { data, isLoading, error } = useCareItems({
@@ -52,7 +55,7 @@ export function FamilyMessageDetail() {
           <div className="bg-red-50 text-red-600 p-4 rounded-lg">
             {error ? 'エラーが発生しました' : '品物が見つかりません'}
           </div>
-          <Link to="/staff/family-messages" className="block mt-4 text-primary text-center">
+          <Link to={`${pathPrefix}/staff/family-messages`} className="block mt-4 text-primary text-center">
             ← 一覧に戻る
           </Link>
         </div>
@@ -223,7 +226,7 @@ export function FamilyMessageDetail() {
         {/* 品物タイムラインへのリンク */}
         <div className="px-4 mb-4">
           <Link
-            to={`/items/${item.id}/timeline`}
+            to={`${pathPrefix}/items/${item.id}/timeline`}
             className="block bg-white rounded-lg shadow-card p-4 hover:shadow-md transition"
           >
             <div className="flex items-center justify-between">

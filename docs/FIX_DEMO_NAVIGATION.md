@@ -83,3 +83,50 @@
 | `frontend/src/pages/family/ItemDetail.tsx` | デモモード対応リンク |
 | `frontend/src/pages/family/FamilyDashboard.tsx` | デモモード対応リンク |
 | `frontend/playwright.config.ts` | ローカルテスト対応 |
+
+---
+
+## 6. 追加修正（2025-12-17）
+
+### 6.1 問題の報告
+
+`/demo/staff/family-messages` で品物をクリックすると、本番ページ `/staff/family-messages/{id}` に遷移してしまう。
+
+### 6.2 原因
+
+`FamilyMessages.tsx` の `FamilyMessageCard` コンポーネントでリンク先がハードコードされている:
+
+```tsx
+<Link to={`/staff/family-messages/${item.id}`}
+```
+
+### 6.3 修正内容
+
+| ファイル | 変更内容 |
+|----------|----------|
+| `frontend/src/pages/staff/FamilyMessages.tsx` | `FamilyMessageCard` のリンク先をデモモード対応 |
+| `frontend/src/pages/staff/FamilyMessageDetail.tsx` | 「一覧に戻る」リンク、タイムラインリンクをデモモード対応 |
+
+### 6.4 修正パターン
+
+```tsx
+// 修正前
+<Link to={`/staff/family-messages/${item.id}`}
+
+// 修正後
+const { pathPrefix } = useDemoMode();
+<Link to={`${pathPrefix}/staff/family-messages/${item.id}`}
+```
+
+### 6.5 修正箇所詳細
+
+**FamilyMessages.tsx**:
+- `FamilyMessageCard` コンポーネント内のリンク
+
+**FamilyMessageDetail.tsx**:
+- エラー時の「一覧に戻る」リンク
+- 品物タイムラインへのリンク
+
+### 6.6 検証結果
+
+✅ E2Eテスト パス（デモナビゲーション関連テスト追加）
