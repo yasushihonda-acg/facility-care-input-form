@@ -22,6 +22,10 @@ import { TaskList } from './pages/family/TaskList';
 import { PresetManagement } from './pages/family/PresetManagement';
 import { ResidentSettings } from './pages/family/ResidentSettings';
 
+// デモショーケース
+import { DemoHome } from './pages/demo/DemoHome';
+import { DemoShowcase } from './pages/demo/DemoShowcase';
+
 // レガシー
 import { SheetDetailPage } from './pages/SheetDetailPage';
 
@@ -88,6 +92,32 @@ function App() {
       {/* レガシーパス（後方互換） */}
       <Route path="/input/meal" element={<Navigate to="/staff/input/meal" replace />} />
       <Route path="/sheet/:sheetName" element={<SheetDetailPage />} />
+
+      {/* ========== デモショーケース ========== */}
+      {/* デモホーム */}
+      <Route path="/demo" element={<DemoHome />} />
+
+      {/* ガイド付きツアー */}
+      <Route path="/demo/showcase" element={<DemoShowcase />} />
+
+      {/* デモ: スタッフビュー（本番と同じコンポーネントを使用） */}
+      <Route path="/demo/staff" element={<StaffHome />} />
+      <Route path="/demo/staff/family-messages" element={<FamilyMessages />} />
+      <Route path="/demo/staff/family-messages/:id" element={<FamilyMessageDetail />} />
+
+      {/* デモ: 家族ビュー */}
+      <Route path="/demo/family" element={<FamilyDashboard />} />
+      <Route path="/demo/family/items" element={<ItemManagement />} />
+      <Route path="/demo/family/items/new" element={<ItemForm />} />
+      <Route path="/demo/family/items/:id" element={<ItemDetail />} />
+      <Route path="/demo/family/tasks" element={<TaskList />} />
+      <Route path="/demo/family/presets" element={<PresetManagement />} />
+
+      {/* デモ: 統計ダッシュボード */}
+      <Route path="/demo/stats" element={<StatsDashboard />} />
+
+      {/* デモ: 品物タイムライン */}
+      <Route path="/demo/items/:id/timeline" element={<ItemTimeline />} />
     </Routes>
   );
 }
