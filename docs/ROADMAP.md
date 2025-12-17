@@ -1066,7 +1066,10 @@ Phase 8.6: プリセット管理CRUD  ██████████████
 Phase 8.7: AI自動ストック      ████████████████████ 100% (完了)
 Phase 9.0: ビュー構成設計      ████████████████████ 100% (完了)
 Phase 9.1: ルーティング・ページ ████████████████████ 100% (完了)
-Phase 9.2: 消費記録連携        ░░░░░░░░░░░░░░░░░░░░   0% (計画中)
+Phase 9.2: 消費記録連携        ████████████████████ 100% (完了)
+Phase 9.x: 禁止ルール機能      ████████████████████ 100% (完了)
+Phase 9.3: 統計拡張            ████████████████████ 100% (完了)
+デモショーケース実装           ██████████████░░░░░░  70% (開発中)
                                ─────────────────────
                                合計: 130+ tasks
 ```
@@ -1106,7 +1109,10 @@ Phase 9.2: 消費記録連携        ░░░░░░░░░░░░░░�
 | Phase 8.7 | 5 | AI自動ストック（saveAISuggestionAsPreset） | ✅ 完了 |
 | Phase 9.0 | 3 | ビュー構成設計（VIEW_ARCHITECTURE_SPEC.md） | ✅ 完了 |
 | Phase 9.1 | 8 | ルーティング・ページ実装（スタッフ/家族ビュー） | ✅ 完了 |
-| Phase 9.2 | - | 消費記録連携（ConsumptionLog API） | 📋 計画中 |
+| Phase 9.2 | 6 | 消費記録連携（ConsumptionLog API・UI） | ✅ 完了 |
+| Phase 9.x | 5 | 禁止ルール機能（入居者設定・警告表示） | ✅ 完了 |
+| Phase 9.3 | 4 | 統計ダッシュボード拡張（在庫サマリー・食品傾向） | ✅ 完了 |
+| Demo | 4 | デモショーケース実装（シードデータ・専用ページ） | 🚧 開発中 |
 
 ---
 
@@ -1630,7 +1636,89 @@ interface Task {
 
 ---
 
-## Phase 9.2: 消費記録連携 📋 計画中
+## Phase 9.2: 消費記録連携 ✅ 完了
+
+**完了日**: 2025-12-17
+
+**目的**: 品物の提供・摂食記録をAPIで管理し、タイムライン形式で表示
+
+**実装ファイル（バックエンド）**:
+- `functions/src/functions/consumptionLogs.ts` - 消費ログCRUD API
+- `functions/src/types/index.ts` - ConsumptionLog型追加
+
+**実装ファイル（フロントエンド）**:
+- `frontend/src/types/consumptionLog.ts` - 消費ログ型定義
+- `frontend/src/hooks/useConsumptionLogs.ts` - 消費ログフック
+- `frontend/src/components/staff/ConsumptionRecordModal.tsx` - 消費記録モーダル
+- `frontend/src/components/shared/InventoryBar.tsx` - 在庫バー
+
+---
+
+## Phase 9.x: 禁止ルール機能 ✅ 完了
+
+**完了日**: 2025-12-17
+
+**目的**: 家族が設定した「提供禁止品目」をスタッフに警告表示
+
+**設計書**: [ITEM_MANAGEMENT_SPEC.md セクション8](./ITEM_MANAGEMENT_SPEC.md#8-禁止ルール提供禁止品目)
+
+**実装ファイル（バックエンド）**:
+- `functions/src/functions/prohibitions.ts` - 禁止ルールCRUD API
+
+**実装ファイル（フロントエンド）**:
+- `frontend/src/hooks/useProhibitions.ts` - 禁止ルールフック
+- `frontend/src/pages/family/ResidentSettings.tsx` - 入居者設定画面
+- `frontend/src/components/staff/ProhibitionWarning.tsx` - 禁止警告
+- `frontend/src/components/staff/ProhibitionBadge.tsx` - 禁止バッジ
+
+---
+
+## Phase 9.3: 統計ダッシュボード拡張 ✅ 完了
+
+**完了日**: 2025-12-17
+
+**目的**: 在庫サマリー・食品傾向分析API、摂食傾向タブの実装
+
+**実装ファイル（バックエンド）**:
+- `functions/src/functions/inventoryStats.ts` - 在庫サマリー・食品統計API
+
+**実装ファイル（フロントエンド）**:
+- `frontend/src/types/stats.ts` - 統計型定義追加
+- `frontend/src/pages/shared/StatsDashboard.tsx` - 摂食傾向タブ追加
+
+---
+
+## デモショーケース実装 🚧 開発中
+
+**設計書**: [DEMO_SHOWCASE_SPEC.md](./DEMO_SHOWCASE_SPEC.md)
+
+**目的**: 本番データに影響せず、デモ・プレゼン用の専用環境を提供
+
+**進捗**:
+| Phase | 内容 | 状態 |
+|-------|------|------|
+| Phase 1 | 基盤構築（useDemoMode, ルーティング, DemoHome） | ✅ 完了 |
+| Phase 2 | シードデータ作成（demoCareItems, demoStats等） | ✅ 完了 |
+| Phase 3 | データフック対応（useCareItems等のデモモード対応） | ⏳ 未着手 |
+| Phase 4 | ショーケース（DemoShowcase完成） | ✅ 完了 |
+
+**完成済みファイル**:
+- `frontend/src/hooks/useDemoMode.ts` - デモモード判定フック
+- `frontend/src/data/demo/` - シードデータ（12品物、18ログ、9タスク等）
+- `frontend/src/pages/demo/DemoHome.tsx` - デモホームページ
+- `frontend/src/pages/demo/DemoShowcase.tsx` - ガイド付きツアー
+- `frontend/src/App.tsx` - デモルート追加済み
+
+**次のステップ（Phase 3）**:
+各データフックをデモモードに対応させる：
+1. `useCareItems` - デモ時はDEMO_CARE_ITEMSを返す
+2. `useStats` - デモ時はDEMO_FOOD_STATS等を返す
+3. `useTasks` - デモ時はDEMO_TASKSを返す
+4. `useConsumptionLogs` - デモ時はDEMO_CONSUMPTION_LOGSを返す
+
+---
+
+## 旧Phase 9.2 セクション（参考）
 
 **目的**: ConsumptionLog APIを実装し、FamilyMessageDetailからの消費記録をFirestoreに保存、タイムラインに表示。
 

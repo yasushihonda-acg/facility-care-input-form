@@ -1,6 +1,6 @@
 # 引き継ぎドキュメント
 
-> **最終更新**: 2025年12月16日
+> **最終更新**: 2025年12月17日
 >
 > 本ドキュメントは、開発を引き継ぐ際に必要な情報をまとめたものです。
 
@@ -37,6 +37,10 @@
 | 統計ダッシュボード | 品物状況・アラートの可視化 | ✅ 完了 |
 | AI提案 | Gemini APIによる賞味期限・提供方法の自動提案 | ✅ 完了 |
 | プリセット管理 | 「いつもの指示」のCRUD管理・AI自動ストック | ✅ 完了 |
+| 消費記録連携 | 提供・摂食記録API、タイムライン表示 | ✅ 完了 |
+| 禁止ルール機能 | 提供禁止品目の設定・警告表示 | ✅ 完了 |
+| 統計拡張 | 在庫サマリー・摂食傾向分析 | ✅ 完了 |
+| デモショーケース | デモ専用ページ・シードデータ | 🚧 開発中 |
 
 ---
 
@@ -104,6 +108,9 @@ facility-care-input-form/
 │   │   │   ├── MealInputPage.tsx     # 食事入力
 │   │   │   ├── shared/               # 共有ページ
 │   │   │   │   └── StatsDashboard.tsx # 統計ダッシュボード
+│   │   │   ├── demo/                 # デモ専用ページ
+│   │   │   │   ├── DemoHome.tsx      # デモホーム
+│   │   │   │   └── DemoShowcase.tsx  # ガイド付きツアー
 │   │   │   └── family/               # 家族向けページ
 │   │   │       ├── FamilyDashboard.tsx
 │   │   │       ├── EvidenceMonitor.tsx
@@ -120,7 +127,10 @@ facility-care-input-form/
 │   │   ├── hooks/         # カスタムフック
 │   │   │   ├── usePresets.ts   # プリセットCRUD
 │   │   │   ├── useStats.ts     # 統計データ
-│   │   │   └── useAISuggest.ts # AI提案
+│   │   │   ├── useAISuggest.ts # AI提案
+│   │   │   └── useDemoMode.ts  # デモモード判定
+│   │   ├── data/
+│   │   │   └── demo/           # デモ用シードデータ
 │   │   ├── types/         # 型定義
 │   │   └── services/      # APIサービス
 │   └── package.json
@@ -155,6 +165,7 @@ facility-care-input-form/
 | ⭐ | `docs/API_SPEC.md` | API仕様書 |
 | ⭐ | `docs/PRESET_MANAGEMENT_SPEC.md` | プリセット管理機能設計（Phase 8.6/8.7） |
 | ⭐ | `docs/AI_INTEGRATION_SPEC.md` | AI連携設計（Phase 8.4/8.5/8.7） |
+| ⭐ | `docs/DEMO_SHOWCASE_SPEC.md` | デモショーケース設計 |
 
 ---
 
@@ -179,17 +190,29 @@ facility-care-input-form/
 | Phase 8.7 | AI自動ストック | 2025-12-16 |
 | Phase 9.0 | 在庫・消費追跡システム設計 | 2025-12-16 |
 | Phase 9.1 | ルーティング・ページ実装 + バグ修正 | 2025-12-16 |
+| Phase 9.2 | ConsumptionLog API・UI実装 | 2025-12-17 |
+| Phase 9.x | 禁止ルール機能 | 2025-12-17 |
+| Phase 9.3 | 統計ダッシュボード拡張 | 2025-12-17 |
 
-### 4.2 計画中（次のタスク）
+### 4.2 現在進行中
 
-| Phase | 内容 | 優先度 |
-|-------|------|--------|
-| Phase 9.2 | ConsumptionLog API・UI実装 | 高 |
-| Phase 9.3 | 統計ダッシュボード拡張 | 中 |
-| - | ケア指示のFirestore保存 | 中 |
-| - | 写真エビデンス表示 | 中 |
+| 機能 | 内容 | 進捗 |
+|------|------|------|
+| デモショーケース | デモ専用ページ・シードデータ | Phase 1-2完了、Phase 3未着手 |
 
-### 4.3 Phase 5.8-5.10 管理設定関連機能（完了）
+**設計書**: [DEMO_SHOWCASE_SPEC.md](./DEMO_SHOWCASE_SPEC.md)
+
+**次のステップ**: 各データフック（useCareItems, useStats等）をデモモードに対応させる
+
+### 4.3 将来のタスク
+
+| 機能 | 内容 | 優先度 |
+|------|------|--------|
+| データフック対応 | デモモードでローカルデータを使用 | 高 |
+| ケア指示のFirestore保存 | モックデータ → Firestore永続化 | 中 |
+| 写真エビデンス表示 | Google Drive画像を家族ビューで表示 | 中 |
+
+### 4.4 Phase 5.8-5.10 管理設定関連機能（完了）
 
 **設計書**:
 - `docs/ADMIN_TEST_FEATURE_SPEC.md` - テスト機能詳細
@@ -487,6 +510,7 @@ docs/CURRENT_STATUS.md を読んで、次のタスクから再開してくださ
 
 | 日付 | 内容 |
 |------|------|
+| 2025-12-17 | Phase 9.2/9.3/禁止ルール完了追加、デモショーケース進行中追加 |
 | 2025-12-16 | Phase 9.0/9.1完了追加、計画中をPhase 9.2/9.3に更新 |
 | 2025-12-16 | Firebase CLI認証トラブルシューティング追加（8.3節）、認証手順整理 |
 | 2025-12-16 | フッター用語統一: 「家族指示」→「家族連絡」、パス変更、Mermaid修正 |
