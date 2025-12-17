@@ -136,3 +136,21 @@ facility-care-input-form/
 |----------|------|------|
 | GET | `/getInventorySummary` | 在庫サマリー取得 |
 | GET | `/getFoodStats` | 食品傾向分析取得 |
+
+## デモ機能
+
+### デモショーケース
+- **URL**: https://facility-care-input-form.web.app/demo
+- **ガイド付きツアー**: `/demo/showcase`
+- **デモモード判定**: `useDemoMode` フック（パスが `/demo` で始まるか判定）
+- **シードデータ**: `frontend/src/data/demo/` に12品物、18ログ、9タスク等
+
+### ツアーナビゲーション（TourReturnBanner）
+- `/demo/*` ページ（`/demo/showcase` 除く）にバナー表示
+- 「ガイド付きツアー中」テキストと「ツアーに戻る」リンク
+- `frontend/src/components/demo/TourReturnBanner.tsx`
+
+### E2Eテスト
+- **テストファイル**: `frontend/e2e/demo-page.spec.ts`
+- **テスト件数**: 42件
+- **実行**: `cd frontend && npx playwright test`

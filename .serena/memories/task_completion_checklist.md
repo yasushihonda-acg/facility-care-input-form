@@ -27,6 +27,22 @@ npm run build --prefix functions
 firebase emulators:start --only functions,firestore
 ```
 
+### E2Eテスト実行
+```bash
+# ビルド + ローカルテスト
+cd frontend && npm run build
+npm run preview -- --port 4173 &
+npx playwright test
+
+# 特定のテストを実行
+npx playwright test e2e/demo-page.spec.ts
+
+# 本番環境でテスト
+BASE_URL=https://facility-care-input-form.web.app npx playwright test
+
+# テスト件数: 42件（デモページ・ナビゲーション）
+```
+
 ## デプロイ
 
 ### フロントエンドデプロイ
