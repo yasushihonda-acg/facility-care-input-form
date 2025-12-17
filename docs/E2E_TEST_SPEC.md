@@ -156,36 +156,17 @@ npx playwright test --headed
 
 | 結果 | 件数 | 割合 |
 |------|------|------|
-| 成功 | 3 | 11% |
-| 失敗 | 24 | 89% |
+| ✅ 成功 | 27 | 100% |
+| ❌ 失敗 | 0 | 0% |
 
-### 6.2 成功したテスト
+### 6.2 テスト実行コマンド
 
-| テストID | テスト名 | 備考 |
-|----------|----------|------|
-| DEMO-020 | デモスタッフホームにアクセスできる | `/demo/staff` |
-| DEMO-022 | デモ統計にアクセスできる | `/demo/stats` |
-| DEMO-031 | 統計ダッシュボードにタブがある | |
+```bash
+cd frontend
+npx playwright test e2e/demo-page.spec.ts --reporter=list
+```
 
-### 6.3 失敗原因の分析
+### 6.3 実行時間
 
-**問題**: `/demo` と `/demo/showcase` にアクセスした際、ページが真っ白で表示されない。
-
-**成功パターン**:
-- `/demo/staff` → StaffHome コンポーネント（既存）
-- `/demo/stats` → StatsDashboard コンポーネント（既存）
-
-**失敗パターン**:
-- `/demo` → DemoHome コンポーネント（新規作成）
-- `/demo/showcase` → DemoShowcase コンポーネント（新規作成）
-
-**推測される原因**:
-1. 本番環境（Firebase Hosting）に最新のビルドがデプロイされていない
-2. DemoHome/DemoShowcaseコンポーネントでのJavaScriptエラー
-3. ビルド時の問題
-
-### 6.4 推奨アクション
-
-1. **ブラウザで直接確認**: https://facility-care-input-form.web.app/demo にアクセスして画面表示を確認
-2. **開発者ツールでエラー確認**: Consoleタブでエラーがないか確認
-3. **再デプロイ**: `firebase deploy --only hosting` で再デプロイ
+- 全27テスト: 約22秒
+- 並列実行: 4ワーカー使用

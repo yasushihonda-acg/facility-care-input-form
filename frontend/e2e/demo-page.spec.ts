@@ -29,7 +29,7 @@ test.describe('デモホーム基本動作', () => {
     await expect(page).toHaveURL(/\/demo/);
 
     // タイトルが「デモモード」であることを確認（タイムアウト延長）
-    await expect(page.locator('text=デモモード')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('heading', { name: 'デモモード', exact: true })).toBeVisible({ timeout: 15000 });
   });
 
   test('DEMO-002: デモモード説明が表示される', async ({ page }) => {
@@ -39,8 +39,8 @@ test.describe('デモホーム基本動作', () => {
     // デモモードについての説明セクションが表示される
     await expect(page.locator('text=デモモードについて')).toBeVisible({ timeout: 15000 });
 
-    // 「本番データには影響しません」というメッセージが表示される
-    await expect(page.locator('text=本番データには')).toBeVisible({ timeout: 10000 });
+    // 「本番データには影響しません」というメッセージが表示される（複数マッチ対策：first()）
+    await expect(page.locator('text=本番データには').first()).toBeVisible({ timeout: 10000 });
   });
 
   test('DEMO-003: 機能カードが4つ表示される', async ({ page }) => {
@@ -97,7 +97,7 @@ test.describe('デモショーケース', () => {
     await expect(page.locator('text=ステップ 1/6')).toBeVisible({ timeout: 15000 });
 
     // 最初のステップタイトル「家族による品物登録」が表示される
-    await expect(page.locator('text=家族による品物登録')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: '家族による品物登録' })).toBeVisible({ timeout: 10000 });
   });
 
   test('DEMO-012: 次へボタンで進める', async ({ page }) => {
@@ -112,7 +112,7 @@ test.describe('デモショーケース', () => {
 
     // Step 2に進む
     await expect(page.locator('text=ステップ 2/6')).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('text=スタッフの家族連絡確認')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: 'スタッフの家族連絡確認' })).toBeVisible({ timeout: 10000 });
   });
 
   test('DEMO-013: 前へボタンで戻れる', async ({ page }) => {
@@ -307,7 +307,7 @@ test.describe('レスポンシブ表示', () => {
     await waitForSpaLoad(page);
 
     // タイトルが表示される
-    await expect(page.locator('text=デモモード')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('heading', { name: 'デモモード', exact: true })).toBeVisible({ timeout: 15000 });
 
     // 機能カードが表示される
     await expect(page.locator('text=品物管理').first()).toBeVisible({ timeout: 10000 });
