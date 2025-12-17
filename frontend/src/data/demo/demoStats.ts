@@ -80,7 +80,7 @@ export const DEMO_INVENTORY_SUMMARY: GetInventorySummaryResponse = {
     {
       itemId: 'demo-item-009',
       itemName: '麦茶',
-      category: 'beverage' as ItemCategory,
+      category: 'drink' as ItemCategory,
       initialQuantity: 2,
       currentQuantity: 1,
       unit: 'L',
@@ -259,7 +259,7 @@ export const DEMO_FOOD_STATS: GetFoodStatsResponse = {
   ],
   categoryStats: [
     { category: 'snack' as ItemCategory, avgConsumptionRate: 88, totalItems: 4, totalServings: 10 },
-    { category: 'beverage' as ItemCategory, avgConsumptionRate: 90, totalItems: 1, totalServings: 5 },
+    { category: 'drink' as ItemCategory, avgConsumptionRate: 90, totalItems: 1, totalServings: 5 },
     { category: 'fruit' as ItemCategory, avgConsumptionRate: 71, totalItems: 5, totalServings: 12 },
     { category: 'other' as ItemCategory, avgConsumptionRate: 60, totalItems: 2, totalServings: 7 },
   ],
@@ -280,7 +280,7 @@ export const DEMO_ITEM_STATS: ItemStatsData = {
     { category: 'fruit' as ItemCategory, count: 5, percentage: 42 },
     { category: 'snack' as ItemCategory, count: 4, percentage: 33 },
     { category: 'other' as ItemCategory, count: 2, percentage: 17 },
-    { category: 'beverage' as ItemCategory, count: 1, percentage: 8 },
+    { category: 'drink' as ItemCategory, count: 1, percentage: 8 },
   ],
   expirationCalendar: [
     {
