@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月18日 (Phase 8.4.1完了・ドキュメント整備)
+> **最終更新**: 2025年12月18日 (Phase 11: FoodMaster食品マスタ完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -21,7 +21,60 @@
 
 ## 現在のタスク
 
-### 間食記録連携機能 - 全Phase完了 ✅
+現在、アクティブなタスクはありません。将来のタスクは末尾の「次のタスク（将来）」セクションを参照してください。
+
+---
+
+## 最近の完了タスク
+
+### Phase 11: FoodMaster食品マスタ実装 (2025-12-18)
+
+**設計書**: [INVENTORY_CONSUMPTION_SPEC.md](./INVENTORY_CONSUMPTION_SPEC.md) セクション2.2
+
+**概要**: 食品の正規化情報と統計を管理する食品マスタ機能。AI提案のキャッシュとして機能し、よく登録される食品の情報を保持。
+
+**実装ファイル（バックエンド）**:
+
+| ファイル | 内容 |
+|----------|------|
+| `functions/src/types/index.ts` | FoodMaster型定義（FoodMaster, FoodMasterInput, FoodMasterStats等） |
+| `functions/src/functions/foodMasters.ts` | CRUD API（getFoodMasters, searchFoodMaster, createFoodMaster, updateFoodMaster, deleteFoodMaster） |
+| `functions/src/functions/aiSuggest.ts` | FoodMaster連携拡張（優先検索、AI生成結果の保存オプション） |
+| `functions/src/index.ts` | エクスポート追加 |
+
+**実装ファイル（フロントエンド）**:
+
+| ファイル | 内容 |
+|----------|------|
+| `frontend/src/types/careItem.ts` | FoodMaster型定義追加 |
+| `frontend/src/api/index.ts` | FoodMaster API呼び出し関数追加 |
+| `frontend/src/hooks/useFoodMasters.ts` | FoodMaster CRUDフック（新規） |
+| `frontend/src/data/demo/demoFoodMasters.ts` | 食品マスタデモデータ（15品目） |
+| `frontend/src/data/demo/index.ts` | エクスポート追加 |
+
+**API仕様**:
+
+| メソッド | パス | 説明 |
+|----------|------|------|
+| GET | `/getFoodMasters` | 食品マスタ一覧取得（カテゴリフィルタ対応） |
+| GET | `/searchFoodMaster` | 食品マスタ検索（名前・別名でマッチ） |
+| POST | `/createFoodMaster` | 食品マスタ作成 |
+| PUT | `/updateFoodMaster` | 食品マスタ更新 |
+| DELETE | `/deleteFoodMaster` | 食品マスタ削除（論理削除） |
+
+**aiSuggest連携フロー**:
+1. まずFoodMasterを検索
+2. 見つかればそのデータを返却（source: "food_master"）
+3. 見つからなければGeminiで生成して返却（source: "ai"）
+4. `saveToFoodMaster=true`の場合、AI生成結果をFoodMasterに自動保存
+
+**デモデータ**: 15品目（バナナ、みかん、りんご、キウイ、羊羹、黒豆、らっきょう、カステラ、緑茶、りんごジュース、ヨーグルト、チーズ、エンシュア、おにぎり、黒砂糖）
+
+**E2Eテスト**: 109件全パス（既存機能への影響なし）
+
+---
+
+### 間食記録連携機能 - 全Phase完了 ✅ (2025-12-18)
 
 **設計書**: [SNACK_RECORD_INTEGRATION_SPEC.md](./SNACK_RECORD_INTEGRATION_SPEC.md)
 
@@ -33,31 +86,7 @@
 - [x] Phase 5: AIサジェスト統合 完了
 - [x] Phase 6: E2Eテスト 完了
 
-**Phase 1-6 実装ファイル**:
-- `functions/src/types/index.ts` - SnackRecord型、ConsumptionLog拡張
-- `functions/src/services/consumptionLogService.ts` - 消費ログ連携サービス
-- `functions/src/functions/submitMealRecord.ts` - API拡張
-- `frontend/src/types/mealForm.ts` - SnackRecord型追加
-- `frontend/src/types/consumptionLog.ts` - ConsumptionLog拡張
-- `frontend/src/components/meal/` - 間食セクションコンポーネント群
-  - `FamilyItemCard.tsx` - 品物カード（在庫・期限・指示表示）
-  - `FamilyItemList.tsx` - 品物リスト
-  - `SnackRecordCard.tsx` - 提供記録入力カード（サジェスト表示付き）
-  - `SnackSection.tsx` - 間食セクション統合コンポーネント
-- `frontend/src/utils/snackSuggestion.ts` - サジェスト計算ユーティリティ
-- `frontend/src/utils/snackSuggestion.test.ts` - ユニットテスト（16件）
-- `frontend/src/hooks/useSnackSuggestion.ts` - サジェストフック（摂食傾向連携）
-- `frontend/src/pages/MealInputPage.tsx` - SnackSection組み込み
-- `frontend/src/pages/family/ItemDetail.tsx` - 消費ログ表示・指示対応確認
-- `frontend/src/data/demo/demoConsumptionLogs.ts` - デモデータ修正
-- `frontend/e2e/family-page.spec.ts` - 品物詳細E2Eテスト追加
-- `frontend/e2e/snack-record.spec.ts` - 間食記録連携E2Eテスト（11件）
-- `frontend/src/App.tsx` - `/demo/staff/input/meal` ルート追加
-- `frontend/src/data/demo/demoCareItems.ts` - noteToStaff追加（羊羹）
-
 ---
-
-## 最近の完了タスク
 
 ### ドキュメント整備・引き継ぎ品質更新 (2025-12-18)
 
@@ -677,7 +706,6 @@ await mutation.mutateAsync(data);
 
 | 機能 | 説明 | 優先度 |
 |------|------|--------|
-| FoodMaster 食品マスタ | AI提案との連携、食品別統計 | 中 |
 | 週次レポート生成（aiReport） | Gemini連携 | 中 |
 | ケア指示のFirestore保存 | モックデータ → Firestore永続化 | 中 |
 | 写真エビデンス表示 | Google Drive画像を家族ビューで表示 | 中 |

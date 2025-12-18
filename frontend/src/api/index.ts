@@ -871,3 +871,126 @@ export async function getFoodStats(
 
   return response.json();
 }
+
+// =============================================================================
+// FoodMaster APIs (Phase 11)
+// =============================================================================
+
+import type {
+  FoodMaster,
+  GetFoodMastersRequest,
+  GetFoodMastersResponse,
+  SearchFoodMasterRequest,
+  CreateFoodMasterRequest,
+  CreateFoodMasterResponse,
+  UpdateFoodMasterRequest,
+  UpdateFoodMasterResponse,
+  DeleteFoodMasterRequest,
+} from '../types/careItem';
+
+/**
+ * 食品マスタ一覧を取得
+ */
+export async function getFoodMasters(
+  params?: GetFoodMastersRequest
+): Promise<ApiResponse<GetFoodMastersResponse>> {
+  const url = new URL(`${API_BASE}/getFoodMasters`);
+
+  if (params?.category) url.searchParams.set('category', params.category);
+  if (params?.isActive !== undefined) {
+    url.searchParams.set('isActive', String(params.isActive));
+  }
+  if (params?.limit) url.searchParams.set('limit', String(params.limit));
+  if (params?.offset) url.searchParams.set('offset', String(params.offset));
+
+  const response = await fetch(url.toString());
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to get food masters: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 食品マスタを検索（名前・別名でマッチ）
+ */
+export async function searchFoodMaster(
+  params: SearchFoodMasterRequest
+): Promise<ApiResponse<{ items: FoodMaster[]; total: number; found: boolean }>> {
+  const url = new URL(`${API_BASE}/searchFoodMaster`);
+
+  url.searchParams.set('query', params.query);
+  if (params.category) url.searchParams.set('category', params.category);
+  if (params.limit) url.searchParams.set('limit', String(params.limit));
+
+  const response = await fetch(url.toString());
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to search food master: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 食品マスタを作成
+ */
+export async function createFoodMaster(
+  params: CreateFoodMasterRequest
+): Promise<ApiResponse<CreateFoodMasterResponse>> {
+  const response = await fetch(`${API_BASE}/createFoodMaster`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params.foodMaster),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to create food master: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 食品マスタを更新
+ */
+export async function updateFoodMaster(
+  params: UpdateFoodMasterRequest
+): Promise<ApiResponse<UpdateFoodMasterResponse>> {
+  const response = await fetch(`${API_BASE}/updateFoodMaster`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to update food master: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 食品マスタを削除
+ */
+export async function deleteFoodMaster(
+  params: DeleteFoodMasterRequest
+): Promise<ApiResponse<Record<string, never>>> {
+  const response = await fetch(`${API_BASE}/deleteFoodMaster`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to delete food master: ${response.statusText}`);
+  }
+
+  return response.json();
+}

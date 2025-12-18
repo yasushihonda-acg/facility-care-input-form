@@ -812,3 +812,146 @@ export interface DeleteProhibitionRequest {
 
 // 削除成功時は空
 export type DeleteProhibitionResponse = Record<string, never>;
+
+// =============================================================================
+// FoodMaster Types (Phase 11)
+// docs/INVENTORY_CONSUMPTION_SPEC.md セクション2.2 に基づく型定義
+// =============================================================================
+
+/** 食品マスタ統計データ */
+export interface FoodMasterStats {
+  totalServed: number;         // 累計提供回数
+  totalConsumed: number;       // 累計消費量
+  avgConsumptionRate: number;  // 平均摂食率（0-100）
+  preferenceScore: number;     // 好み度スコア（0-100）
+  wasteRate: number;           // 廃棄率（0-100）
+  lastUpdated?: string;        // ISO8601
+}
+
+/**
+ * FoodMaster - 食品マスタ
+ * 正規化された食品情報と統計データを管理
+ */
+export interface FoodMaster {
+  // === 識別情報 ===
+  id: string;
+
+  // === 基本情報 ===
+  name: string;                        // 正規化された食品名（例: "バナナ"）
+  aliases: string[];                   // 別名（"ばなな", "banana", "バナナ（フィリピン産）"）
+  category: ItemCategory;              // カテゴリ
+
+  // === デフォルト値（AI提案のベース）===
+  defaultUnit: string;                 // デフォルト単位（房、個、本、袋）
+  defaultExpirationDays: number;       // 平均賞味期限（日）
+  defaultStorageMethod: StorageMethod; // 推奨保存方法
+  defaultServingMethods: ServingMethod[]; // 推奨提供方法
+
+  // === 注意事項 ===
+  careNotes?: string;                  // ケア時の注意点（誤嚥リスク等）
+  allergyInfo?: string;                // アレルギー情報
+
+  // === 統計データ（定期バッチで更新）===
+  stats: FoodMasterStats;
+
+  // === メタ情報 ===
+  isActive: boolean;                   // 有効フラグ
+  source: 'manual' | 'ai';             // 登録ソース（手動 or AI自動生成）
+  createdAt: string;                   // ISO8601
+  updatedAt: string;                   // ISO8601
+}
+
+/** FoodMaster作成入力 */
+export interface FoodMasterInput {
+  name: string;
+  aliases?: string[];
+  category: ItemCategory;
+  defaultUnit: string;
+  defaultExpirationDays: number;
+  defaultStorageMethod: StorageMethod;
+  defaultServingMethods: ServingMethod[];
+  careNotes?: string;
+  allergyInfo?: string;
+  source?: 'manual' | 'ai';
+}
+
+/** FoodMaster更新入力 */
+export interface FoodMasterUpdateInput {
+  name?: string;
+  aliases?: string[];
+  category?: ItemCategory;
+  defaultUnit?: string;
+  defaultExpirationDays?: number;
+  defaultStorageMethod?: StorageMethod;
+  defaultServingMethods?: ServingMethod[];
+  careNotes?: string;
+  allergyInfo?: string;
+  isActive?: boolean;
+}
+
+// === FoodMaster APIリクエスト/レスポンス型 ===
+
+/** FoodMaster検索リクエスト */
+export interface SearchFoodMasterRequest {
+  query: string;              // 検索クエリ（名前・別名でマッチ）
+  category?: ItemCategory;    // カテゴリ絞り込み
+  limit?: number;             // 結果上限
+}
+
+/** FoodMaster一覧取得リクエスト */
+export interface GetFoodMastersRequest {
+  category?: ItemCategory;
+  isActive?: boolean;
+  limit?: number;
+  offset?: number;
+}
+
+/** FoodMaster一覧取得レスポンス */
+export interface GetFoodMastersResponse {
+  items: FoodMaster[];
+  total: number;
+  hasMore: boolean;
+}
+
+/** FoodMaster作成リクエスト */
+export interface CreateFoodMasterRequest {
+  foodMaster: FoodMasterInput;
+}
+
+/** FoodMaster作成レスポンス */
+export interface CreateFoodMasterResponse {
+  foodMasterId: string;
+  createdAt: string;
+}
+
+/** FoodMaster更新リクエスト */
+export interface UpdateFoodMasterRequest {
+  foodMasterId: string;
+  updates: FoodMasterUpdateInput;
+}
+
+/** FoodMaster更新レスポンス */
+export interface UpdateFoodMasterResponse {
+  foodMasterId: string;
+  updatedAt: string;
+}
+
+/** FoodMaster削除リクエスト */
+export interface DeleteFoodMasterRequest {
+  foodMasterId: string;
+}
+
+// 削除成功時は空
+export type DeleteFoodMasterResponse = Record<string, never>;
+
+/** FoodMaster検索レスポンス（aiSuggest連携用） */
+export interface SearchFoodMasterResponse {
+  found: boolean;
+  foodMaster?: FoodMaster;
+  suggestion?: {
+    expirationDays: number;
+    storageMethod: StorageMethod;
+    servingMethods: ServingMethod[];
+    notes?: string;
+  };
+}

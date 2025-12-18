@@ -152,6 +152,23 @@ facility-care-input-form/
 | GET | `/getInventorySummary` | 在庫サマリー取得 |
 | GET | `/getFoodStats` | 食品傾向分析取得 |
 
+### FoodMaster食品マスタ (Phase 11)
+| メソッド | パス | 説明 |
+|----------|------|------|
+| GET | `/getFoodMasters` | 食品マスタ一覧取得 |
+| GET | `/searchFoodMaster` | 食品マスタ検索（名前・別名） |
+| POST | `/createFoodMaster` | 食品マスタ作成 |
+| PUT | `/updateFoodMaster` | 食品マスタ更新 |
+| DELETE | `/deleteFoodMaster` | 食品マスタ削除（論理削除） |
+
+**aiSuggest連携フロー**:
+1. まずFoodMasterを検索
+2. 見つかればそのデータを返却（source: "food_master"）
+3. 見つからなければGeminiで生成して返却（source: "ai"）
+4. `saveToFoodMaster=true`の場合、AI生成結果をFoodMasterに自動保存
+
+**デモデータ**: 15品目（バナナ、みかん、りんご、キウイ、羊羹、黒豆、らっきょう、カステラ、緑茶、りんごジュース、ヨーグルト、チーズ、エンシュア、おにぎり、黒砂糖）
+
 ## デモ機能
 
 ### デモショーケース（家族向け特化）

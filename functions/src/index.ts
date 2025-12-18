@@ -158,3 +158,15 @@ export {
   getInventorySummary,
   getFoodStats,
 } from "./functions/inventoryStats";
+
+// =============================================================================
+// 食品マスタ（Phase 11）
+// =============================================================================
+
+export {
+  getFoodMasters,
+  searchFoodMaster,
+  createFoodMaster,
+  updateFoodMaster,
+  deleteFoodMaster,
+} from "./functions/foodMasters";
