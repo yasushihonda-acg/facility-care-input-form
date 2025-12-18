@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月18日 (間食記録連携 Phase 4 実装完了)
+> **最終更新**: 2025年12月18日 (間食記録連携 Phase 5 実装完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -21,7 +21,7 @@
 
 ## 現在のタスク
 
-### 間食記録連携機能 Phase 5-6: AIサジェスト統合・E2Eテスト
+### 間食記録連携機能 Phase 6: E2Eテスト
 
 **設計書**: [SNACK_RECORD_INTEGRATION_SPEC.md](./SNACK_RECORD_INTEGRATION_SPEC.md)
 
@@ -30,10 +30,10 @@
 - [x] Phase 2: フロントエンド - 品物リスト表示 完了
 - [x] Phase 3: フロントエンド - 提供記録入力UI 完了
 - [x] Phase 4: 家族ページ連携 完了
-- [ ] Phase 5: AIサジェスト統合（次のタスク）
-- [ ] Phase 6: E2Eテスト
+- [x] Phase 5: AIサジェスト統合 完了
+- [ ] Phase 6: E2Eテスト（次のタスク）
 
-**Phase 1-4 実装ファイル**:
+**Phase 1-5 実装ファイル**:
 - `functions/src/types/index.ts` - SnackRecord型、ConsumptionLog拡張
 - `functions/src/services/consumptionLogService.ts` - 消費ログ連携サービス
 - `functions/src/functions/submitMealRecord.ts` - API拡張
@@ -42,8 +42,11 @@
 - `frontend/src/components/meal/` - 間食セクションコンポーネント群
   - `FamilyItemCard.tsx` - 品物カード（在庫・期限・指示表示）
   - `FamilyItemList.tsx` - 品物リスト
-  - `SnackRecordCard.tsx` - 提供記録入力カード
+  - `SnackRecordCard.tsx` - 提供記録入力カード（サジェスト表示付き）
   - `SnackSection.tsx` - 間食セクション統合コンポーネント
+- `frontend/src/utils/snackSuggestion.ts` - サジェスト計算ユーティリティ
+- `frontend/src/utils/snackSuggestion.test.ts` - ユニットテスト（16件）
+- `frontend/src/hooks/useSnackSuggestion.ts` - サジェストフック（摂食傾向連携）
 - `frontend/src/pages/MealInputPage.tsx` - SnackSection組み込み
 - `frontend/src/pages/family/ItemDetail.tsx` - 消費ログ表示・指示対応確認
 - `frontend/src/data/demo/demoConsumptionLogs.ts` - デモデータ修正
@@ -52,6 +55,33 @@
 ---
 
 ## 最近の完了タスク
+
+### 間食記録連携 Phase 5 実装完了 (2025-12-18)
+
+**設計書**: [SNACK_RECORD_INTEGRATION_SPEC.md](./SNACK_RECORD_INTEGRATION_SPEC.md)
+
+**Phase 5 - AIサジェスト統合**:
+
+| ファイル | 内容 |
+|----------|------|
+| `snackSuggestion.ts` | 家族指示から推奨提供数を抽出するユーティリティ |
+| `useSnackSuggestion.ts` | 品物情報と摂食傾向からサジェストを生成するフック |
+| `SnackRecordCard.tsx` | サジェスト情報の表示（期限警告・在庫残量・推奨理由） |
+| `SnackSection.tsx` | 品物選択時にサジェスト量で初期化 |
+| `snackSuggestion.test.ts` | ユニットテスト16件 |
+| `tsconfig.app.json` | テストファイル除外設定 |
+
+**サジェスト機能**:
+- 家族指示から数量抽出（例: 「1日1切れまで」→ 1）
+- 在庫制限でキャップ（残量より多い指示は残量に調整）
+- 賞味期限警告（期限切れ/まもなく期限）
+- 摂食傾向連携（平均摂食率が低い場合に提供数を減らす提案）
+
+**テスト結果**:
+- ユニットテスト: 16/16 パス
+- E2Eテスト: demo-page 43/43 パス、family-page 20/21 パス
+
+---
 
 ### 間食記録連携 Phase 4 実装完了 (2025-12-18)
 
