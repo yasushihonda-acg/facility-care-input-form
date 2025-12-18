@@ -5,10 +5,12 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import { useStats } from '../../hooks/useStats';
 import { getFoodStats } from '../../api';
 import { AIAnalysis } from '../../components/family/AIAnalysis';
+import { DEMO_FOOD_STATS } from '../../data/demo';
 import type {
   ItemStatsData,
   Alert,
@@ -29,6 +31,9 @@ type StatsTab = 'items' | 'consumption' | 'alerts';
 
 export function StatsDashboard() {
   const [activeTab, setActiveTab] = useState<StatsTab>('items');
+  const location = useLocation();
+  const isDemo = location.pathname.startsWith('/demo');
+
   const { itemStats, alerts, isLoading, error, refetch } = useStats({
     residentId: DEMO_RESIDENT_ID,
     include: ['items', 'alerts'],
@@ -42,6 +47,12 @@ export function StatsDashboard() {
   // 食品統計を取得
   useEffect(() => {
     const fetchFoodStats = async () => {
+      // デモモードではローカルデータを使用
+      if (isDemo) {
+        setFoodStats(DEMO_FOOD_STATS);
+        return;
+      }
+
       setFoodStatsLoading(true);
       setFoodStatsError(null);
       try {
@@ -56,10 +67,13 @@ export function StatsDashboard() {
       }
     };
     fetchFoodStats();
-  }, []);
+  }, [isDemo]);
 
   const handleRefresh = () => {
     refetch();
+    // デモモードでは再取得不要（静的データ）
+    if (isDemo) return;
+
     // 食品統計も再取得
     const fetchFoodStats = async () => {
       setFoodStatsLoading(true);
