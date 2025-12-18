@@ -11,6 +11,7 @@ import type { SnackRecord } from '../../types/mealForm';
 import { useCareItems } from '../../hooks/useCareItems';
 import { FamilyItemList } from './FamilyItemList';
 import { SnackRecordCard } from './SnackRecordCard';
+import { FIFOWarning } from '../family/FIFOWarning';
 import { extractSuggestedQuantity } from '../../utils/snackSuggestion';
 
 interface SnackSectionProps {
@@ -65,6 +66,18 @@ export function SnackSection({
       if (item.noteToStaff) {
         map.set(item.id, item.noteToStaff);
       }
+    });
+    return map;
+  }, [items]);
+
+  // 品物名別にグループ化（FIFOWarning用）
+  // docs/FIFO_DESIGN_SPEC.md セクション4.2に基づく
+  const itemsByName = useMemo(() => {
+    const map = new Map<string, CareItem[]>();
+    items.forEach((item) => {
+      const existing = map.get(item.itemName) || [];
+      existing.push(item);
+      map.set(item.itemName, existing);
     });
     return map;
   }, [items]);
@@ -143,6 +156,18 @@ export function SnackSection({
             isLoading={isLoading}
             error={error as Error | null}
           />
+          {/* FIFOガイド（同じ品物が複数ある場合）*/}
+          {/* docs/FIFO_DESIGN_SPEC.md セクション4.2に基づく */}
+          {Array.from(itemsByName.entries())
+            .filter(([_, groupItems]) => groupItems.length > 1)
+            .map(([itemName, groupItems]) => (
+              <FIFOWarning
+                key={itemName}
+                itemName={itemName}
+                items={groupItems}
+                compact
+              />
+            ))}
         </div>
       )}
 

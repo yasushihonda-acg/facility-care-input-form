@@ -348,6 +348,49 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     createdAt: getDateTimeString(-10),
     updatedAt: getDateTimeString(-2),
   },
+
+  // ===== FIFO テスト用: 同じ品物名の重複アイテム =====
+  // docs/FIFO_DESIGN_SPEC.md テスト用データ
+  {
+    id: 'demo-item-013',
+    residentId: 'resident-001',
+    userId: 'family-001',
+    itemName: 'りんご',
+    category: 'fruit' as ItemCategory,
+    sentDate: getDateString(-10),
+    initialQuantity: 3,
+    currentQuantity: 2,
+    remainingQuantity: 2,
+    quantity: 3,
+    unit: '個',
+    status: 'in_progress' as ItemStatus,
+    expirationDate: getDateString(2), // demo-item-003より早い期限
+    storageMethod: 'refrigerated',
+    servingMethod: 'cut' as ServingMethod,
+    servingMethodDetail: '一口大にカット',
+    createdAt: getDateTimeString(-10),
+    updatedAt: getDateTimeString(-1),
+  },
+  {
+    id: 'demo-item-014',
+    residentId: 'resident-001',
+    userId: 'family-001',
+    itemName: 'バナナ',
+    category: 'fruit' as ItemCategory,
+    sentDate: getDateString(-10),
+    initialQuantity: 3,
+    currentQuantity: 1,
+    remainingQuantity: 1,
+    quantity: 3,
+    unit: '房',
+    status: 'in_progress' as ItemStatus,
+    expirationDate: getDateString(0), // demo-item-001より早い期限（今日）
+    storageMethod: 'room_temp',
+    servingMethod: 'cut' as ServingMethod,
+    servingMethodDetail: '皮を剥いてカット',
+    createdAt: getDateTimeString(-10),
+    updatedAt: getDateTimeString(0),
+  },
 ];
 
 // ===== ヘルパー関数 =====

@@ -1,6 +1,7 @@
 /**
  * 品物管理 カスタムフック
  * docs/ITEM_MANAGEMENT_SPEC.md に基づく
+ * docs/FIFO_DESIGN_SPEC.md に基づくFIFOソート対応
  *
  * デモモード対応: /demo パス配下ではローカルデモデータを返却
  * @see docs/DEMO_SHOWCASE_SPEC.md
@@ -20,6 +21,29 @@ import { DEMO_CARE_ITEMS } from '../data/demo';
 
 // クエリキー
 const CARE_ITEMS_KEY = 'careItems';
+
+/**
+ * FIFOソート: 賞味期限が近い順 → 送付日が古い順
+ * docs/FIFO_DESIGN_SPEC.md セクション3.2に基づく
+ */
+function sortByExpirationFirst(items: CareItem[]): CareItem[] {
+  return [...items].sort((a, b) => {
+    // 期限なしは末尾に
+    if (!a.expirationDate && !b.expirationDate) {
+      return new Date(a.sentDate).getTime() - new Date(b.sentDate).getTime();
+    }
+    if (!a.expirationDate) return 1;
+    if (!b.expirationDate) return -1;
+
+    // 期限が近い順
+    const expA = new Date(a.expirationDate).getTime();
+    const expB = new Date(b.expirationDate).getTime();
+    if (expA !== expB) return expA - expB;
+
+    // 同じ期限なら送付日が古い順
+    return new Date(a.sentDate).getTime() - new Date(b.sentDate).getTime();
+  });
+}
 
 /**
  * デモデータをAPI形式にフィルタリング
@@ -51,6 +75,9 @@ function filterDemoCareItems(params: GetCareItemsParams): { items: CareItem[]; t
     items = items.filter(item => item.sentDate <= params.endDate!);
   }
 
+  // FIFOソート適用
+  items = sortByExpirationFirst(items);
+
   const total = items.length;
 
   // ページネーション
@@ -79,7 +106,11 @@ export function useCareItems(params: GetCareItemsParams = {}) {
       if (!response.success || !response.data) {
         throw new Error(response.error?.message || 'Failed to fetch care items');
       }
-      return response.data;
+      // FIFOソート適用（クライアント側でソート）
+      return {
+        ...response.data,
+        items: sortByExpirationFirst(response.data.items),
+      };
     },
   });
 }
@@ -182,6 +213,37 @@ export function useCareItemCounts(residentId?: string) {
   }
 
   return { counts, isLoading, error };
+}
+
+/**
+ * 同じ品物名のアイテム一覧を取得するフック（FIFOガイド用）
+ * docs/FIFO_DESIGN_SPEC.md セクション4.2-4.3に基づく
+ */
+export function useSameNameItems(residentId: string, itemName: string, excludeItemId?: string) {
+  const { data, isLoading, error } = useCareItems({
+    residentId,
+    status: ['pending', 'served'] as ItemStatus[],
+    limit: 100,
+  });
+
+  // 同じ品物名のアイテムをフィルタリング
+  const sameNameItems = data?.items?.filter((item) => {
+    if (item.itemName !== itemName) return false;
+    if (excludeItemId && item.id === excludeItemId) return false;
+    if ((item.currentQuantity ?? 0) <= 0) return false;
+    return true;
+  }) ?? [];
+
+  // 推奨アイテム（期限が最も近いもの）を特定
+  const recommendedItem = sameNameItems.length > 0 ? sameNameItems[0] : null;
+
+  return {
+    sameNameItems,
+    recommendedItem,
+    hasDuplicates: sameNameItems.length > 0,
+    isLoading,
+    error,
+  };
 }
 
 /**

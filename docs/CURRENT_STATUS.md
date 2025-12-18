@@ -27,6 +27,36 @@
 
 ## 最近の完了タスク
 
+### Phase 12.0: FIFO（先入れ先出し）対応実装 (2025-12-18)
+
+**設計書**: [FIFO_DESIGN_SPEC.md](./FIFO_DESIGN_SPEC.md)
+
+**概要**: 同じ品物が複数送付された場合に、賞味期限が近い順に表示し、FIFOを促すガイド機能を実装。
+
+**実装内容**:
+
+| ファイル | 内容 |
+|----------|------|
+| `frontend/src/hooks/useCareItems.ts` | FIFOソート（期限が近い順）実装 |
+| `frontend/src/components/family/FIFOWarning.tsx` | 間食提供時のFIFOガイド（新規） |
+| `frontend/src/components/family/SameItemAlert.tsx` | 品物詳細でのSameItemAlert（新規） |
+| `frontend/src/components/meal/SnackSection.tsx` | FIFOWarning統合 |
+| `frontend/src/pages/family/ItemDetail.tsx` | SameItemAlert統合、フィルタ条件修正 |
+| `frontend/src/data/demo/demoCareItems.ts` | FIFO用デモデータ追加（りんご・バナナの重複） |
+| `frontend/e2e/fifo.spec.ts` | FIFO E2Eテスト（新規・10件） |
+
+**機能**:
+
+| 機能 | 説明 |
+|------|------|
+| **FIFOソート** | 品物一覧を期限が近い順に表示（期限なしは末尾） |
+| **FIFOWarning** | 間食提供時、同一品物が複数ある場合に「推奨」マークで先に消費すべき品物を表示 |
+| **SameItemAlert** | 品物詳細画面で、より期限が近い同名品物がある場合に「先に消費推奨」アラート表示 |
+
+**E2Eテスト**: 117件全パス（FIFO 10件追加、うち2件は本番データ必要でスキップ）
+
+---
+
 ### ルーティング修正・E2Eテスト修正・ドキュメント整備 (2025-12-18)
 
 **コミット**: `7594fab`, `f1a0a10`
@@ -977,6 +1007,7 @@ Phase 8.0: 設計ドキュメント          ███████████�
 Phase 8.1: 品物管理基盤              ████████████████████ 100% (完了)
 Phase 8.2: タスク管理                ████████████████████ 100% (完了)
 Phase 8.3: 統計ダッシュボード        ████████████████████ 100% (完了)
+Phase 12.0: FIFO対応                ████████████████████ 100% (完了)
 Phase 8.4: Gemini AI連携            ████████████████████ 100% (完了)
 Phase 8.4.1: aiAnalyze 摂食傾向分析 ████████████████████ 100% (完了)
 Phase 8.5: プリセット統合            ████████████████████ 100% (完了)

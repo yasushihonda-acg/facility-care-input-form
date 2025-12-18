@@ -6,10 +6,12 @@
  */
 
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useMemo } from 'react';
 import { Layout } from '../../components/Layout';
 import { useCareItems, useDeleteCareItem } from '../../hooks/useCareItems';
 import { useDemoMode } from '../../hooks/useDemoMode';
 import { useConsumptionLogs } from '../../hooks/useConsumptionLogs';
+import { SameItemAlert } from '../../components/family/SameItemAlert';
 import {
   getCategoryIcon,
   getStatusLabel,
@@ -22,6 +24,7 @@ import {
 } from '../../types/careItem';
 import type { ConsumptionStatus } from '../../types/careItem';
 import { useState } from 'react';
+// useMemo is already imported at the top
 
 // デモ用の入居者ID（将来は認証から取得）
 const DEMO_RESIDENT_ID = 'resident-001';
@@ -82,6 +85,20 @@ export function ItemDetail() {
     limit: 10,
   });
   const consumptionLogs = logsData?.logs || [];
+
+  // 同じ品物名の他のアイテムを取得（FIFOガイド用）
+  // docs/FIFO_DESIGN_SPEC.md セクション4.3に基づく
+  const otherSameNameItems = useMemo(() => {
+    if (!item || !data?.items) return [];
+    return data.items.filter(
+      (i) =>
+        i.itemName === item.itemName &&
+        i.id !== item.id &&
+        (i.currentQuantity ?? 0) > 0 &&
+        // pending, in_progress, served のいずれかで在庫がある品物が対象
+        (i.status === 'pending' || i.status === 'in_progress' || i.status === 'served')
+    );
+  }, [item, data?.items]);
 
   // 削除処理
   // @see docs/DEMO_SHOWCASE_SPEC.md セクション11 - デモモードでの書き込み操作
@@ -235,6 +252,17 @@ export function ItemDetail() {
             </div>
           </div>
         </div>
+
+        {/* 同一品物アラート（FIFOガイド） */}
+        {/* docs/FIFO_DESIGN_SPEC.md セクション4.3に基づく */}
+        {otherSameNameItems.length > 0 && (
+          <div className="px-4 mb-4">
+            <SameItemAlert
+              currentItem={item}
+              otherItems={otherSameNameItems}
+            />
+          </div>
+        )}
 
         {/* スタッフへの申し送り */}
         {item.noteToStaff && (
