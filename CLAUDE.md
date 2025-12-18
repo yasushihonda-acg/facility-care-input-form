@@ -50,6 +50,18 @@ gh workflow run gh-pages.yml --repo yasushihonda-acg/facility-care-input-form
 gh run list --repo yasushihonda-acg/facility-care-input-form --workflow=gh-pages.yml --limit 1
 ```
 
+### アプリケーションURL
+
+**本番サイト**: https://facility-care-input-form.web.app
+
+| ページ | URL | 説明 |
+|--------|-----|------|
+| デモホーム | `/demo` | デモショーケース入り口 |
+| スタッフ用 | `/staff/input/meal` | 食事記録入力 |
+| 家族用 | `/family` | 家族ダッシュボード |
+| **管理者設定** | `/settings` または `/staff/input/meal?admin=true` | 設定モーダル表示 |
+| 統計 | `/stats` | 統計ダッシュボード |
+
 ### 主要ドキュメント
 
 #### 必読（再開時）

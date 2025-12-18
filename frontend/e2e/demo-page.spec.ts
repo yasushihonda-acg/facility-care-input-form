@@ -17,10 +17,9 @@ async function waitForSpaLoad(page: Page) {
   await page.waitForTimeout(2000);
 }
 
-// 共通のテスト設定：タイムアウトを延長
-test.setTimeout(60000);
-
 test.describe('デモホーム基本動作', () => {
+  // 共通のテスト設定：タイムアウトを延長
+  test.describe.configure({ timeout: 60000 });
   test('DEMO-001: デモホームにアクセスできる', async ({ page }) => {
     await page.goto('/demo', { waitUntil: 'networkidle' });
     await waitForSpaLoad(page);

@@ -91,6 +91,7 @@ function App() {
 
       {/* レガシーパス（後方互換） */}
       <Route path="/input/meal" element={<Navigate to="/staff/input/meal" replace />} />
+      <Route path="/settings" element={<Navigate to="/staff/input/meal?admin=true" replace />} />
       <Route path="/sheet/:sheetName" element={<SheetDetailPage />} />
 
       {/* ========== デモショーケース ========== */}
