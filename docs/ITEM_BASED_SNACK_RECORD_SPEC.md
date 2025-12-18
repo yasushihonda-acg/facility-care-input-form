@@ -154,11 +154,12 @@
     │
     ▼
 getCareItems API（既存）
-    │ status: ['pending', 'in_progress']
+    │ status: ['pending', 'in_progress']  ← 在庫ありのみ取得
     │ residentId: 選択中の入居者
     ▼
 品物一覧表示
     │ ソート: 提供予定日 → 期限 → 送付日
+    │ ※ 在庫なし（consumed）は表示されない
     ▼
 [提供記録] ボタン
     │
@@ -173,7 +174,55 @@ submitMealRecord API（既存・拡張）
     ├─► Sheet B 書き込み（間食フィールド）
     ├─► consumption_logs 作成
     └─► care_items.currentQuantity 更新
+            │
+            └─► currentQuantity = 0 の場合
+                └─► status を 'consumed' に自動更新
+                    └─► 次回から品物リストに表示されない
 ```
+
+### 2.4.1 在庫なし品物の自動除外
+
+「毎日」や「曜日指定」などの繰り返しスケジュールが設定されている品物でも、**在庫がなくなれば自動的に品物リストから除外**されます。
+
+#### ステータス遷移
+
+```
+品物登録時
+    │ status: 'pending'
+    │ currentQuantity: 初期数量
+    ▼
+初回提供時
+    │ status: 'in_progress'
+    │ currentQuantity: 残量
+    ▼
+在庫ゼロ時（自動）
+    │ status: 'consumed'
+    │ currentQuantity: 0
+    ▼
+品物リストから除外
+    └─► getCareItems で status: ['pending', 'in_progress'] のみ取得するため
+```
+
+#### フィルタ条件
+
+| ステータス | 意味 | 品物リスト表示 |
+|------------|------|---------------|
+| `pending` | 未提供（登録済み、まだ提供していない） | ✅ 表示 |
+| `in_progress` | 提供中（一部消費、残量あり） | ✅ 表示 |
+| `consumed` | 消費完了（残量ゼロ） | ❌ 非表示 |
+| `expired` | 期限切れ | ❌ 非表示 |
+| `discarded` | 廃棄 | ❌ 非表示 |
+
+#### スケジュールとの関係
+
+| スケジュール | 在庫あり | 在庫なし |
+|-------------|---------|---------|
+| 特定の日（once） | 表示 | 非表示 |
+| 毎日（daily） | 表示 | 非表示 |
+| 曜日指定（weekly） | 表示 | 非表示 |
+| 複数日指定（specific_dates） | 表示 | 非表示 |
+
+**結論**: スケジュール設定に関わらず、在庫がゼロになれば品物リストに表示されなくなります。
 
 ### 2.5 API設計
 
