@@ -102,11 +102,12 @@ facility-care-input-form/
 | DELETE | `/deleteTask` | タスク削除 |
 | SCHED | `/generateDailyTasks` | タスク自動生成（毎日6時） |
 
-### 統計・AI (Phase 8.3-8.4)
+### 統計・AI (Phase 8.3-8.4.1)
 | メソッド | パス | 説明 |
 |----------|------|------|
 | GET | `/getStats` | 統計データ取得 |
 | POST | `/aiSuggest` | AI品物入力補助（Gemini） |
+| POST | `/aiAnalyze` | AI摂食傾向分析（Gemini） |
 
 ### プリセット (Phase 8.6-8.7)
 | メソッド | パス | 説明 |
