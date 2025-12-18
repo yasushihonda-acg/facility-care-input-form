@@ -207,12 +207,13 @@ Content-Type: application/json
 
 | フィールド | 型 | 必須 | 説明 |
 |------------|-----|------|------|
+| `recordMode` | enum | No | `full`（デフォルト）/ `snack_only`（下記参照） |
 | `staffName` | string | Yes | 入力者名 |
-| `facility` | string | Yes | 施設名 |
-| `residentName` | string | Yes | 利用者名 |
-| `dayServiceUsage` | enum | Yes | `利用中` / `利用中ではない` |
-| `mealTime` | enum | Yes | `朝` / `昼` / `夜` |
-| `isImportant` | enum | Yes | `重要` / `重要ではない` |
+| `facility` | string | Conditional | 施設名（recordMode='full'の場合必須） |
+| `residentName` | string | Conditional | 利用者名（recordMode='full'の場合必須） |
+| `dayServiceUsage` | enum | Conditional | `利用中` / `利用中ではない`（recordMode='full'の場合必須） |
+| `mealTime` | enum | Conditional | `朝` / `昼` / `夜`（recordMode='full'の場合必須） |
+| `isImportant` | enum | Conditional | `重要` / `重要ではない`（recordMode='full'の場合必須） |
 | `dayServiceName` | string | Conditional | デイサービス名（dayServiceUsage='利用中'の場合必須） |
 | `mainDishRatio` | string | No | 主食摂取量（0〜10割） |
 | `sideDishRatio` | string | No | 副食摂取量（0〜10割） |
@@ -222,6 +223,31 @@ Content-Type: application/json
 | `snackRecords` | SnackRecord[] | No | 間食詳細記録（下記参照） |
 | `residentId` | string | No | 入居者ID（品物連携用） |
 | `note` | string | No | 特記事項 |
+
+#### recordMode パラメータ（Phase 13.0）
+
+| モード | 用途 | 必須フィールド | 説明 |
+|--------|------|---------------|------|
+| `full` | 通常の食事記録（デフォルト） | staffName, facility, residentName, dayServiceUsage, mealTime, isImportant | 全フィールドのバリデーションを実行 |
+| `snack_only` | 品物から記録タブ用 | staffName | 間食のみ記録。主食・副食等のバリデーションをスキップ |
+
+**snack_only モード使用例**:
+```json
+{
+  "recordMode": "snack_only",
+  "staffName": "田中花子",
+  "snackRecords": [{
+    "itemId": "item123",
+    "itemName": "羊羹（とらや）",
+    "servedQuantity": 1,
+    "unit": "切れ",
+    "consumptionStatus": "full"
+  }],
+  "residentId": "resident456"
+}
+```
+
+> **詳細**: [ITEM_BASED_SNACK_RECORD_SPEC.md](./ITEM_BASED_SNACK_RECORD_SPEC.md) を参照
 
 #### SnackRecord 型（間食記録連携）
 
@@ -2205,6 +2231,7 @@ curl -X POST \
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
+| 2025-12-19 | 1.12.0 | Phase 13.0: submitMealRecord recordModeパラメータ追加（snack_only対応） |
 | 2025-12-18 | 1.11.0 | Phase 8.4.1: AI API詳細ドキュメント追加（aiSuggest, aiAnalyze） |
 | 2025-12-17 | 1.10.1 | Firestore undefined エラー修正（ignoreUndefinedProperties設定追加） |
 | 2025-12-17 | 1.10.0 | Phase 9.3: 在庫・食品統計API（getInventorySummary, getFoodStats）追加 |
