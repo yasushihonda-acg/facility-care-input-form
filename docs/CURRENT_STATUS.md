@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月19日 (Phase 13.0.1-13.0.3 品物起点の間食記録UI実装完了)
+> **最終更新**: 2025年12月19日 (Phase 13.0 品物起点の間食記録 - 全サブフェーズ完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -31,13 +31,13 @@
 
 | Phase | 内容 | 状態 |
 |-------|------|------|
-| **Phase 13.0** | 品物から記録タブ（スタッフ用） | 🚧 実装中 |
+| **Phase 13.0** | 品物から記録タブ（スタッフ用） | ✅ 完了 |
 | Phase 13.0.1 | タブUI・切替機能 | ✅ 完了 |
 | Phase 13.0.2 | 品物リスト（ソート・グループ化） | ✅ 完了 |
 | Phase 13.0.3 | 記録入力モーダル | ✅ 完了 |
-| Phase 13.0.4 | API連携・Sheet B書き込み | ⏳ 次のタスク |
-| Phase 13.0.5 | E2Eテスト | ⏳ 待機中 |
-| **Phase 13.1** | スケジュール拡張（家族用） | 📝 設計完了・実装待ち |
+| Phase 13.0.4 | API連携・Sheet B書き込み | ✅ 完了 |
+| Phase 13.0.5 | E2Eテスト | ✅ 完了 |
+| **Phase 13.1** | スケジュール拡張（家族用） | 📝 設計完了・次のタスク |
 | Phase 13.1.1 | 型定義・ユーティリティ | ⏳ 待機中 |
 | Phase 13.1.2 | スケジュール入力UI | ⏳ 待機中 |
 | Phase 13.1.3 | API・Firestore対応 | ⏳ 待機中 |
@@ -62,11 +62,45 @@
 | weekly | 曜日指定 | `月・水・金 おやつ時` |
 | specific_dates | 複数日指定 | `12/20, 12/22, 12/25 おやつ時` |
 
-**次のステップ**: Phase 13.0.4 API連携・Sheet B書き込み
+**次のステップ**: Phase 13.1 スケジュール拡張（家族用）
 
 ---
 
 ## 最近の完了タスク
+
+### Phase 13.0.4-13.0.5: API連携・Sheet B書き込み・E2Eテスト (2025-12-19)
+
+**設計書**: [ITEM_BASED_SNACK_RECORD_SPEC.md](./ITEM_BASED_SNACK_RECORD_SPEC.md) セクション2.5
+
+**概要**: SnackRecordModalからsubmitMealRecord APIを呼び出し、Sheet Bに間食記録を書き込む機能を実装。E2Eテストで本番環境での動作を確認。
+
+**実装内容**:
+
+| ファイル | 内容 |
+|----------|------|
+| `functions/src/types/index.ts` | `SubmitMealRecordRequest`に`recordMode`追加 |
+| `functions/src/functions/submitMealRecord.ts` | `snack_only`モード対応バリデーション |
+| `functions/src/services/sheetsService.ts` | オプショナルフィールドのデフォルト値対応 |
+| `frontend/src/types/index.ts` | フロントエンド型定義同期 |
+| `frontend/src/components/meal/SnackRecordModal.tsx` | submitMealRecord API呼び出し追加 |
+| `frontend/e2e/item-based-snack-record.spec.ts` | Phase 13.0.3-13.0.4 E2Eテスト追加（13件） |
+
+**recordMode設計**:
+
+| モード | 説明 | 必須フィールド |
+|--------|------|----------------|
+| `full` | 通常の食事記録（デフォルト） | 全フィールド |
+| `snack_only` | 品物から記録タブ用（間食のみ） | `staffName`, `snackRecords` |
+
+**API呼び出しフロー**:
+1. SnackRecordModal → `recordConsumptionLog` API（consumption_log記録）
+2. SnackRecordModal → `submitMealRecord` API（Sheet B書き込み、`recordMode: 'snack_only'`）
+
+**E2Eテスト**: 13件全パス（本番環境 https://facility-care-input-form.web.app で確認）
+
+**CI/CD**: GitHub Actions経由でFunctions・Hosting両方デプロイ完了
+
+---
 
 ### Phase 13.0.1-13.0.3: 品物起点の間食記録UI実装 (2025-12-19)
 
