@@ -230,6 +230,7 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     storageMethod: 'room_temp',
     servingMethod: 'cut' as ServingMethod,
     servingMethodDetail: '小さく切って提供',
+    noteToStaff: '1日1切れまで',
     createdAt: getDateTimeString(0),
     updatedAt: getDateTimeString(0),
   },

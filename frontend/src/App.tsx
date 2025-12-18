@@ -109,6 +109,9 @@ function App() {
       <Route path="/demo/family/presets" element={<PresetManagement />} />
       <Route path="/demo/family/settings/resident" element={<ResidentSettings />} />
 
+      {/* デモ: スタッフ食事記録入力（SnackSection E2Eテスト用） */}
+      <Route path="/demo/staff/input/meal" element={<MealInputPage />} />
+
       {/* デモ: スタッフビュー（無効化: 将来 /demo/staff-app として復活予定）
       <Route path="/demo/staff" element={<StaffHome />} />
       <Route path="/demo/staff/family-messages" element={<FamilyMessages />} />
