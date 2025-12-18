@@ -14,7 +14,8 @@ import { submitMealRecord } from '../api';
 import { Layout } from '../components/Layout';
 import { useMealFormSettings } from '../hooks/useMealFormSettings';
 import { MealSettingsModal } from '../components/MealSettingsModal';
-import { SnackSection } from '../components/meal';
+import { SnackSection, MealInputTabs, ItemBasedSnackRecord } from '../components/meal';
+import type { MealInputTabType } from '../components/meal';
 
 export function MealInputPage() {
   const [searchParams] = useSearchParams();
@@ -28,6 +29,8 @@ export function MealInputPage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   // 間食記録連携用 (Phase 9.0)
   const [snackRecords, setSnackRecords] = useState<SnackRecord[]>([]);
+  // Phase 13.0: タブ切替
+  const [activeTab, setActiveTab] = useState<MealInputTabType>('meal');
 
   // 設定が読み込まれたら初期値を適用
   useEffect(() => {
@@ -249,6 +252,9 @@ export function MealInputPage() {
         </div>
       )}
 
+      {/* Phase 13.0: タブ切替 */}
+      <MealInputTabs activeTab={activeTab} onTabChange={setActiveTab} />
+
       {/* ローディング */}
       {isSettingsLoading && (
         <div className="p-4 text-center text-gray-500">
@@ -256,8 +262,19 @@ export function MealInputPage() {
         </div>
       )}
 
-      {/* フォーム */}
-      {!isSettingsLoading && (
+      {/* Phase 13.0: 品物から記録タブ */}
+      {!isSettingsLoading && activeTab === 'item_based' && (
+        <ItemBasedSnackRecord
+          residentId="resident-001"
+          onRecordComplete={() => {
+            setShowSuccess(true);
+            setTimeout(() => setShowSuccess(false), 3000);
+          }}
+        />
+      )}
+
+      {/* 食事タブ: フォーム */}
+      {!isSettingsLoading && activeTab === 'meal' && (
         <form onSubmit={handleSubmit} className="p-4 space-y-6 max-w-lg mx-auto">
           {/* 入力者 */}
           <div>
