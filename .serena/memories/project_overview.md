@@ -167,6 +167,12 @@ facility-care-input-form/
 3. 見つからなければGeminiで生成して返却（source: "ai"）
 4. `saveToFoodMaster=true`の場合、AI生成結果をFoodMasterに自動保存
 
+### Phase 11.1: FoodMaster自動蓄積有効化 (2025-12-18)
+本番モードでAI生成結果を自動でFoodMasterに保存する機能を有効化。
+- `useAISuggest.ts`でデモモード判定を追加
+- `saveToFoodMaster: !isDemoMode`を渡すことで本番のみ自動蓄積
+- 効果: APIコスト削減、応答速度向上（~2s → ~100ms）、施設固有データ構築
+
 **デモデータ**: 15品目（バナナ、みかん、りんご、キウイ、羊羹、黒豆、らっきょう、カステラ、緑茶、りんごジュース、ヨーグルト、チーズ、エンシュア、おにぎり、黒砂糖）
 
 ## デモ機能

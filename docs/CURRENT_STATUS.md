@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月18日 (Phase 11: FoodMaster食品マスタ完了)
+> **最終更新**: 2025年12月18日 (Phase 11.1: FoodMaster自動蓄積有効化完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -21,15 +21,30 @@
 
 ## 現在のタスク
 
-### Phase 11.1: FoodMaster自動蓄積の有効化（推奨）
+現在、推奨タスクはありません。次のタスクは「次のタスク（将来）」セクションを参照してください。
+
+---
+
+## 最近の完了タスク
+
+### Phase 11.1: FoodMaster自動蓄積有効化 (2025-12-18)
 
 **設計書**: [AI_INTEGRATION_SPEC.md](./AI_INTEGRATION_SPEC.md) セクション3.1、[INVENTORY_CONSUMPTION_SPEC.md](./INVENTORY_CONSUMPTION_SPEC.md) セクション2.2
 
-**背景**: Phase 11でFoodMaster基盤を実装済み。現状はFoodMaster検索は動作するが、AI生成結果の自動保存（学習）は未有効化。
+**概要**: AI提案（aiSuggest）で生成された結果を自動的にFoodMasterに蓄積し、「学習するシステム」を実現。
 
-**目的**: AI提案（aiSuggest）で生成された結果を自動的にFoodMasterに蓄積し、「学習するシステム」を実現する。
+**実装内容**:
 
-**期待される効果**:
+| ファイル | 変更内容 |
+|----------|----------|
+| `frontend/src/types/careItem.ts` | `AISuggestRequest`に`saveToFoodMaster?: boolean`追加 |
+| `frontend/src/hooks/useAISuggest.ts` | デモモード判定追加、`saveToFoodMaster: !isDemoMode`を渡す |
+
+**動作**:
+- **本番モード**: AI生成結果を自動でFoodMasterに保存（次回同じ品物はキャッシュヒット）
+- **デモモード**: FoodMasterへの保存をスキップ（本番データ汚染防止）
+
+**効果**:
 
 | 効果 | 説明 |
 |------|------|
@@ -37,34 +52,15 @@
 | **応答速度向上** | Firestoreキャッシュ: ~100ms vs Gemini API: ~2s |
 | **施設固有データ構築** | 利用パターンに特化した食品マスタが自動構築 |
 
-**実装タスク**:
-
-| # | タスク | ファイル | 内容 |
-|---|--------|----------|------|
-| 1 | フロントエンド変更 | `frontend/src/hooks/useAISuggest.ts` | `saveToFoodMaster: true` を追加 |
-| 2 | デモモード対応 | `frontend/src/hooks/useAISuggest.ts` | デモモードでは `saveToFoodMaster: false` |
-| 3 | E2Eテスト | - | 既存テストで回帰確認 |
-
-**実装コード（参考）**:
-
-```typescript
-// useAISuggest.ts 変更箇所
-const response = await aiSuggest({
-  itemName,
-  category,
-  saveToFoodMaster: !isDemoMode,  // 本番モードのみ自動蓄積
-});
-```
+**E2Eテスト**: 109件全パス（回帰なし）
 
 ---
-
-## 最近の完了タスク
 
 ### Phase 11: FoodMaster食品マスタ実装 (2025-12-18)
 
 **設計書**: [INVENTORY_CONSUMPTION_SPEC.md](./INVENTORY_CONSUMPTION_SPEC.md) セクション2.2
 
-**概要**: 食品の正規化情報と統計を管理する食品マスタ機能。AI提案のキャッシュとして機能し、よく登録される食品の情報を保持。**自動蓄積有効化は Phase 11.1 で対応予定。**
+**概要**: 食品の正規化情報と統計を管理する食品マスタ機能。AI提案のキャッシュとして機能し、よく登録される食品の情報を保持。**✅ 自動蓄積は Phase 11.1 で有効化完了。**
 
 **実装ファイル（バックエンド）**:
 

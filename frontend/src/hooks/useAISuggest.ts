@@ -5,6 +5,7 @@
 
 import { useState, useCallback, useRef } from 'react';
 import { aiSuggest } from '../api';
+import { useDemoMode } from './useDemoMode';
 import type {
   AISuggestResponse,
   ItemCategory,
@@ -63,6 +64,9 @@ export function useAISuggest(options: UseAISuggestOptions = {}): UseAISuggestRet
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
 
+  // デモモード判定（Phase 11.1: 本番モードのみFoodMasterに自動保存）
+  const isDemoMode = useDemoMode();
+
   // デバウンス用タイマー
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // 最後のリクエストID（古いリクエストの結果を無視するため）
@@ -91,7 +95,12 @@ export function useAISuggest(options: UseAISuggestOptions = {}): UseAISuggestRet
       setWarning(null);
 
       try {
-        const response = await aiSuggest({ itemName, category });
+        // Phase 11.1: 本番モードのみFoodMasterに自動保存
+        const response = await aiSuggest({
+          itemName,
+          category,
+          saveToFoodMaster: !isDemoMode,
+        });
 
         // 古いリクエストの結果は無視
         if (requestId !== lastRequestIdRef.current) {
@@ -124,7 +133,7 @@ export function useAISuggest(options: UseAISuggestOptions = {}): UseAISuggestRet
         }
       }
     }, debounceMs);
-  }, [minLength, debounceMs]);
+  }, [minLength, debounceMs, isDemoMode]);
 
   const clear = useCallback(() => {
     // タイマーをクリア

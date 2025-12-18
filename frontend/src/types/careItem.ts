@@ -362,6 +362,8 @@ export function formatDate(dateStr: string): string {
 export interface AISuggestRequest {
   itemName: string;
   category?: ItemCategory;
+  /** AI生成結果をFoodMasterに自動保存するか（本番モードのみtrue推奨） */
+  saveToFoodMaster?: boolean;
 }
 
 /** AI品物提案レスポンス */
