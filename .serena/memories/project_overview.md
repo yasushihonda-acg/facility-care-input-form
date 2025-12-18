@@ -229,6 +229,25 @@ facility-care-input-form/
 
 **設計書**: `docs/FIFO_DESIGN_SPEC.md`
 
+### 手動登録時プリセット保存提案 (Phase 12.1)
+AI提案以外で品物を手動登録した際にも、プリセット保存を提案する機能。
+
+**フロー**:
+1. 品物情報を入力して「登録」ボタン押下
+2. 登録完了後、ダイアログでプリセット保存を提案
+3. ユーザーが「保存して完了」を選択すると、入力内容をプリセットとして保存
+4. 「今回だけ」を選択すると、プリセット保存せずに完了
+
+**UIコンポーネント**:
+- `SaveManualPresetDialog.tsx`: 手動登録時のプリセット保存ダイアログ
+- AI提案時の`SaveAISuggestionDialog.tsx`と同じトンマナ（琥珀色背景、📌アイコン）
+
+**実装ファイル**:
+- `frontend/src/components/family/SaveManualPresetDialog.tsx` (新規)
+- `frontend/src/pages/family/ItemForm.tsx` (ダイアログ表示ロジック追加)
+
+**設計書**: `docs/PRESET_MANAGEMENT_SPEC.md` セクション5.4, 9
+
 ### E2Eテスト（117件）
 | ファイル | 件数 | 内容 |
 |----------|------|------|

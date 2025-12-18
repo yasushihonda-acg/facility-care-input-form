@@ -1,6 +1,6 @@
 # 引き継ぎドキュメント
 
-> **最終更新**: 2025年12月18日（Phase 12.0: FIFO対応完了）
+> **最終更新**: 2025年12月18日（Phase 12.1: 手動登録時プリセット保存提案）
 >
 > 本ドキュメントは、開発を引き継ぐ際に必要な情報をまとめたものです。
 
@@ -86,6 +86,7 @@ cd frontend && npm install && npm run dev
 | FoodMaster食品マスタ | AI提案キャッシュ・正規化情報管理 | ✅ 完了 |
 | FoodMaster自動蓄積 | 本番モードでAI結果を自動保存（学習するシステム） | ✅ 完了 |
 | FIFO対応 | 品物を期限順表示、同一品物アラート、先消費推奨ガイド | ✅ 完了 |
+| 手動登録時プリセット保存提案 | AI提案以外の手動登録時にもプリセット保存を提案 | ✅ 完了 |
 
 ---
 
@@ -171,7 +172,8 @@ facility-care-input-form/
 │   │   │       ├── AISuggestion.tsx         # AI品物提案カード
 │   │   │       ├── AIAnalysis.tsx           # AI摂食傾向分析 ✅ Phase 8.4.1
 │   │   │       ├── PresetSuggestion.tsx     # プリセット候補
-│   │   │       └── SaveAISuggestionDialog.tsx # AI保存ダイアログ
+│   │   │       ├── SaveAISuggestionDialog.tsx   # AI保存ダイアログ
+│   │   │       └── SaveManualPresetDialog.tsx  # 手動登録保存ダイアログ
 │   │   ├── hooks/         # カスタムフック
 │   │   │   ├── usePresets.ts   # プリセットCRUD
 │   │   │   ├── useStats.ts     # 統計データ
@@ -421,13 +423,14 @@ BASE_URL=https://facility-care-input-form.web.app npx playwright test
 - `frontend/playwright.config.ts` - Playwright設定
 - デフォルトbaseURL: `http://localhost:4173`（環境変数で上書き可能）
 
-**現在のテスト**: 全109件
+**現在のテスト**: 全117件
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |
 | `family-user-scenario.spec.ts` | 34件 | 家族シナリオ・パリティ・本番準備 |
 | `family-page.spec.ts` | 21件 | 家族ページ（品物詳細・消費ログ等） |
 | `snack-record.spec.ts` | 11件 | 間食記録連携（品物リスト・サジェスト） |
+| `fifo.spec.ts` | 8件 | FIFO機能（期限順ソート・推奨表示） |
 
 **パリティテスト**: デモと本番で同じUIが表示されることを検証
 - デモツアー完了 = 本番利用スキル習得
@@ -673,6 +676,7 @@ docs/CURRENT_STATUS.md を読んで、次のタスクから再開してくださ
 
 | 日付 | 内容 |
 |------|------|
+| 2025-12-18 | Phase 12.1: 手動登録時プリセット保存提案、E2Eテスト117件 |
 | 2025-12-18 | Phase 12.0: FIFO対応完了、ドキュメント整合性チェック実施 |
 | 2025-12-18 | Phase 8.4.1: AI摂食傾向分析（aiAnalyze API + StatsDashboard統合） |
 | 2025-12-18 | 間食記録連携機能 全6Phase完了、E2Eテスト109件に拡張 |
