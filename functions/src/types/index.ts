@@ -1479,12 +1479,12 @@ export interface ConsumptionTrendData {
 
 /** 食品マスタ統計データ */
 export interface FoodMasterStats {
-  totalServed: number;         // 累計提供回数
-  totalConsumed: number;       // 累計消費量
-  avgConsumptionRate: number;  // 平均摂食率（0-100）
-  preferenceScore: number;     // 好み度スコア（0-100）
-  wasteRate: number;           // 廃棄率（0-100）
-  lastUpdated?: string;        // ISO8601
+  totalServed: number; // 累計提供回数
+  totalConsumed: number; // 累計消費量
+  avgConsumptionRate: number; // 平均摂食率（0-100）
+  preferenceScore: number; // 好み度スコア（0-100）
+  wasteRate: number; // 廃棄率（0-100）
+  lastUpdated?: string; // ISO8601
 }
 
 /**
@@ -1497,28 +1497,28 @@ export interface FoodMaster {
   id: string;
 
   // === 基本情報 ===
-  name: string;                        // 正規化された食品名（例: "バナナ"）
-  aliases: string[];                   // 別名（"ばなな", "banana", "バナナ（フィリピン産）"）
-  category: ItemCategory;              // カテゴリ
+  name: string; // 正規化された食品名（例: "バナナ"）
+  aliases: string[]; // 別名（"ばなな", "banana", "バナナ（フィリピン産）"）
+  category: ItemCategory; // カテゴリ
 
   // === デフォルト値（AI提案のベース）===
-  defaultUnit: string;                 // デフォルト単位（房、個、本、袋）
-  defaultExpirationDays: number;       // 平均賞味期限（日）
+  defaultUnit: string; // デフォルト単位（房、個、本、袋）
+  defaultExpirationDays: number; // 平均賞味期限（日）
   defaultStorageMethod: StorageMethod; // 推奨保存方法
   defaultServingMethods: ServingMethod[]; // 推奨提供方法
 
   // === 注意事項 ===
-  careNotes?: string;                  // ケア時の注意点（誤嚥リスク等）
-  allergyInfo?: string;                // アレルギー情報
+  careNotes?: string; // ケア時の注意点（誤嚥リスク等）
+  allergyInfo?: string; // アレルギー情報
 
   // === 統計データ（定期バッチで更新）===
   stats: FoodMasterStats;
 
   // === メタ情報 ===
-  isActive: boolean;                   // 有効フラグ
-  source: "manual" | "ai";             // 登録ソース（手動 or AI自動生成）
-  createdAt: string;                   // ISO8601
-  updatedAt: string;                   // ISO8601
+  isActive: boolean; // 有効フラグ
+  source: "manual" | "ai"; // 登録ソース（手動 or AI自動生成）
+  createdAt: string; // ISO8601
+  updatedAt: string; // ISO8601
 }
 
 /** FoodMaster作成入力 */
@@ -1551,9 +1551,9 @@ export interface FoodMasterUpdateInput {
 
 /** FoodMaster検索リクエスト */
 export interface SearchFoodMasterRequest {
-  query: string;              // 検索クエリ（名前・別名でマッチ）
-  category?: ItemCategory;    // カテゴリ絞り込み
-  limit?: number;             // 結果上限
+  query: string; // 検索クエリ（名前・別名でマッチ）
+  category?: ItemCategory; // カテゴリ絞り込み
+  limit?: number; // 結果上限
 }
 
 /** FoodMaster一覧取得リクエスト */
