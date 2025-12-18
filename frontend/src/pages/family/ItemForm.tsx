@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import { AISuggestion } from '../../components/family/AISuggestion';
 import { SaveAISuggestionDialog } from '../../components/family/SaveAISuggestionDialog';
+import { SaveManualPresetDialog } from '../../components/family/SaveManualPresetDialog';
 import { useSubmitCareItem } from '../../hooks/useCareItems';
 import { useDemoMode } from '../../hooks/useDemoMode';
 import { useAISuggest } from '../../hooks/useAISuggest';
@@ -56,6 +57,10 @@ export function ItemForm() {
   // AI提案保存ダイアログ用state
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [pendingAISuggestion, setPendingAISuggestion] = useState<AISuggestResponse | null>(null);
+
+  // 手動登録後のプリセット保存ダイアログ用state
+  const [showManualPresetDialog, setShowManualPresetDialog] = useState(false);
+  const [registeredFormData, setRegisteredFormData] = useState<CareItemInput | null>(null);
 
   // AI提案フック（ボタン押下で発動）
   // @see docs/ITEM_MANAGEMENT_SPEC.md - 手入力 + AI提案フロー
@@ -185,10 +190,11 @@ export function ItemForm() {
 
     if (!validate()) return;
 
-    // デモモードの場合: APIを呼ばず、成功メッセージを表示してデモページにリダイレクト
+    // デモモードの場合: APIを呼ばず、プリセット保存ダイアログを表示
     if (isDemo) {
-      alert('登録しました（デモモード - 実際には保存されません）');
-      navigate('/demo/family/items');
+      // デモでも同じUXを提供（プリセット保存は実際には行われない）
+      setRegisteredFormData({ ...formData });
+      setShowManualPresetDialog(true);
       return;
     }
 
@@ -201,8 +207,9 @@ export function ItemForm() {
         item: formData,
       });
 
-      // 成功時は一覧に戻る
-      navigate('/family/items');
+      // 成功時はプリセット保存ダイアログを表示
+      setRegisteredFormData({ ...formData });
+      setShowManualPresetDialog(true);
     } catch (error) {
       console.error('Submit error:', error);
       alert('登録に失敗しました: ' + (error instanceof Error ? error.message : 'Unknown error'));
@@ -210,6 +217,32 @@ export function ItemForm() {
       setIsSubmitting(false);
     }
   };
+
+  // 手動登録後のダイアログ: 「今回だけ」を選択
+  const handleManualPresetSkip = useCallback(() => {
+    setShowManualPresetDialog(false);
+    setRegisteredFormData(null);
+    // デモモードか本番かで遷移先を分ける
+    if (isDemo) {
+      alert('登録しました（デモモード - 実際には保存されません）');
+      navigate('/demo/family/items');
+    } else {
+      navigate('/family/items');
+    }
+  }, [isDemo, navigate]);
+
+  // 手動登録後のダイアログ: 「保存して完了」後
+  const handleManualPresetSaved = useCallback(() => {
+    setShowManualPresetDialog(false);
+    setRegisteredFormData(null);
+    // デモモードか本番かで遷移先を分ける
+    if (isDemo) {
+      alert('登録しました（デモモード - プリセット保存も実際には行われません）');
+      navigate('/demo/family/items');
+    } else {
+      navigate('/family/items');
+    }
+  }, [isDemo, navigate]);
 
   return (
     <Layout title="品物を登録" showBackButton>
@@ -506,6 +539,18 @@ export function ItemForm() {
           itemName={formData.itemName}
           category={formData.category}
           aiSuggestion={pendingAISuggestion}
+        />
+      )}
+
+      {/* 手動登録後のプリセット保存ダイアログ */}
+      {registeredFormData && (
+        <SaveManualPresetDialog
+          isOpen={showManualPresetDialog}
+          onClose={handleManualPresetSkip}
+          onSaved={handleManualPresetSaved}
+          residentId={DEMO_RESIDENT_ID}
+          userId={DEMO_USER_ID}
+          formData={registeredFormData}
         />
       )}
     </Layout>
