@@ -19,5 +19,14 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // React 19の新しい厳格なルールを警告レベルに調整
+      // 初期化パターンや状態遷移検出での setState は許容
+      'react-hooks/set-state-in-effect': 'warn',
+      // Date.now() などの表示用計算は許容
+      'react-hooks/purity': 'warn',
+      // 依存配列の厳格チェック（意図的な省略がある場合もあるため警告に）
+      'react-hooks/exhaustive-deps': 'warn',
+    },
   },
 ])

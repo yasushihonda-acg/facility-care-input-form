@@ -47,7 +47,7 @@ export function ConsumptionRecordModal({
   // 提供数量の上限
   const maxServeQuantity = currentQuantity;
 
-  // モーダルが開いた時にフォームをリセット
+  // モーダルが開いた時にフォームをリセット（モーダル初期化パターン：isOpenがtrueになった時のみ発火）
   useEffect(() => {
     if (isOpen) {
       setFormData({
@@ -65,7 +65,7 @@ export function ConsumptionRecordModal({
     }
   }, [isOpen, staffName, maxServeQuantity]);
 
-  // 消費数量が変わったら摂食状況を自動更新
+  // 消費数量が変わったら摂食状況を自動更新（派生状態の自動計算パターン）
   useEffect(() => {
     if (formData.servedQuantity > 0) {
       const rate = calculateConsumptionRate(formData.consumedQuantity, formData.servedQuantity);

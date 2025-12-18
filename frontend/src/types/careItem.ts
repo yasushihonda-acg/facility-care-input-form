@@ -589,9 +589,8 @@ export interface DeletePresetRequest {
   presetId: string;
 }
 
-export interface DeletePresetResponse {
-  // 削除成功時は空（APIはsuccess:trueのみ返す）
-}
+// 削除成功時は空（APIはsuccess:trueのみ返す）
+export type DeletePresetResponse = Record<string, never>;
 
 // === AI自動ストック (Phase 8.7) ===
 
@@ -725,6 +724,5 @@ export interface DeleteProhibitionRequest {
   prohibitionId: string;
 }
 
-export interface DeleteProhibitionResponse {
-  // 削除成功時は空
-}
+// 削除成功時は空
+export type DeleteProhibitionResponse = Record<string, never>;

@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月18日 (snackフィールド連結ロジック修正)
+> **最終更新**: 2025年12月18日 (コード品質改善・Lintエラー修正)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -58,6 +58,40 @@
 ---
 
 ## 最近の完了タスク
+
+### コード品質改善・Lintエラー修正 (2025-12-18)
+
+**概要**: React 19対応のESLintルール厳格化に伴う修正とテスト修正
+
+**修正内容**:
+
+| カテゴリ | 修正内容 |
+|----------|----------|
+| **ESLint設定** | React 19新ルール（set-state-in-effect, purity）を警告レベルに調整 |
+| **型定義** | 空interfaceをRecord<string, never>に変更 |
+| **case block** | DataTable.tsxのcase内変数宣言をブロックスコープで囲む |
+| **ナビゲーション** | ItemDetail.tsxでwindow.location.hrefをuseNavigateに置換 |
+| **E2Eテスト** | 「タスク管理」→「タスク」のセレクタ修正 |
+
+**修正ファイル（11ファイル）**:
+- `frontend/eslint.config.js` - ルールレベル調整
+- `frontend/src/types/careItem.ts` - 空interface修正
+- `frontend/src/components/DataTable.tsx` - case block修正
+- `frontend/src/components/Header.tsx` - コメント整理
+- `frontend/src/components/MealSettingsModal.tsx` - コメント整理
+- `frontend/src/components/staff/ConsumptionRecordModal.tsx` - コメント整理
+- `frontend/src/components/meal/SnackSection.tsx` - useMemoで参照安定化
+- `frontend/src/pages/HomePage.tsx` - コメント整理
+- `frontend/src/pages/ViewPage.tsx` - コメント整理
+- `frontend/src/pages/family/ItemDetail.tsx` - navigate使用に変更
+- `frontend/e2e/family-page.spec.ts` - セレクタ修正
+
+**結果**:
+- Lintエラー: 13件 → 0件（警告8件は意図的なパターン）
+- E2Eテスト: 109件全パス
+- 本番サイト動作確認: OK
+
+---
 
 ### snackフィールド連結ロジック修正 (2025-12-18)
 

@@ -52,8 +52,9 @@ test.describe('【デモ】家族ユーザーシナリオ（6ステップ）', (
       // プリセット関連のUIを確認（いつもの指示セクション）
       // プリセットグリッドまたはプリセット選択UIが存在
       const presetSection = page.locator('text=いつもの指示');
-      // プリセットセクションが存在するか、または直接プリセットボタンがある
+      // プリセットセクションが存在するか確認（結果は情報ログとして出力）
       const hasPresets = await presetSection.isVisible().catch(() => false);
+      console.log('Presets section visible:', hasPresets);
 
       // フォームは確実に存在
       await expect(page.locator('form')).toBeVisible();

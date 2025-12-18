@@ -17,7 +17,7 @@ export function ViewPage() {
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
 
-  // 最初のシートを選択
+  // 最初のシートを選択（初期値設定パターン：未選択時のみ発火）
   useEffect(() => {
     if (sheets.length > 0 && !selectedSheet) {
       setSelectedSheet(sheets[0].sheetName);
@@ -45,7 +45,7 @@ export function ViewPage() {
     return Array.from(years).sort((a, b) => b - a);
   }, [records]);
 
-  // 選択年が利用可能年にない場合、最新年に変更
+  // 選択年が利用可能年にない場合、最新年に変更（無効な選択の補正パターン）
   useEffect(() => {
     if (availableYears.length > 0 && !availableYears.includes(selectedYear)) {
       setSelectedYear(availableYears[0]);

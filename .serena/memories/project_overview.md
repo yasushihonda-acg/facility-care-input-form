@@ -139,6 +139,12 @@ facility-care-input-form/
 - 関連コンポーネント: `SnackSection`, `FamilyItemList`, `SnackRecordCard`
 - 設計書: `docs/SNACK_RECORD_INTEGRATION_SPEC.md`
 
+**Sheet B書き込みルール（snackフィールド）**:
+- `snackRecords[]` のみ: `黒豆 1g（完食）、らっきょう 0.7瓶（ほぼ完食）`
+- `snack`（自由記入）のみ: そのまま保存
+- 両方入力: `{snackRecordsから生成}。{snack自由記入}` の形式で連結
+- 注意: `snackRecords[].noteToFamily` はSheet Bには反映されない（Firestoreのみ）
+
 ### 統計拡張 (Phase 9.3)
 | メソッド | パス | 説明 |
 |----------|------|------|
@@ -186,6 +192,23 @@ facility-care-input-form/
 - **実行**: `cd frontend && npx playwright test`
 
 ## 重要な設定
+
+### Firestoreインデックス（トラブルシューティング）
+複合クエリ（複数フィールドでの絞り込み+ソート）を使用する場合、Firestoreは事前にインデックスを作成する必要がある。
+
+**getCareItems API**で以下のエラーが発生した場合:
+```
+9 FAILED_PRECONDITION: The query requires an index
+```
+
+解決方法:
+1. エラーメッセージ内のURLからFirestoreコンソールでインデックスを作成
+2. または `firestore.indexes.json` に追加して `gcloud firestore indexes create` でデプロイ
+
+現在定義済みのインデックス:
+- `care_items`: residentId + status + sentDate(DESC) + createdAt(DESC)
+
+詳細: `docs/HANDOVER.md` セクション8.1.1
 
 ### Firestore undefined 対策
 `functions/src/index.ts` で以下の設定によりオプショナルフィールドのundefinedエラーを防止:

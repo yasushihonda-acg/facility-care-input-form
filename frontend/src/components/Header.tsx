@@ -12,7 +12,7 @@ export function Header({ title, showBack, onBack }: HeaderProps) {
   const [showToast, setShowToast] = useState(false);
   const prevSyncingRef = useRef(isSyncing);
 
-  // 更新完了時のトースト表示
+  // 更新完了時のトースト表示（状態遷移検出パターン：isSyncing true→false時のみ発火）
   useEffect(() => {
     // isSyncing が true → false に変わった時のみトースト表示
     if (prevSyncingRef.current && !isSyncing) {

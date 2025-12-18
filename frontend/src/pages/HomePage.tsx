@@ -111,6 +111,7 @@ export function HomePage() {
     return icons[sheetName] || '📋';
   };
 
+  // 次の同期までの残り分数を計算（表示用の計算のみ、副作用なし）
   const getNextSyncMinutes = () => {
     if (!lastSyncedAt) return 15;
     const elapsed = Date.now() - lastSyncedAt.getTime();

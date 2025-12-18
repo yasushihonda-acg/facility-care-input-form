@@ -5,7 +5,7 @@
  * @see docs/INVENTORY_CONSUMPTION_SPEC.md
  */
 
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import { useCareItems, useDeleteCareItem } from '../../hooks/useCareItems';
 import { useDemoMode } from '../../hooks/useDemoMode';
@@ -63,6 +63,7 @@ function getLogBorderColor(rate: number): string {
 
 export function ItemDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const isDemo = useDemoMode();
   const pathPrefix = isDemo ? '/demo' : '';
@@ -90,14 +91,14 @@ export function ItemDetail() {
     // デモモードの場合: APIを呼ばず、成功メッセージを表示してデモページにリダイレクト
     if (isDemo) {
       alert('削除しました（デモモード - 実際には削除されません）');
-      window.location.href = '/demo/family/items';
+      navigate('/demo/family/items');
       return;
     }
 
     // 本番モードの場合: 通常通りAPI呼び出し
     try {
       await deleteItem.mutateAsync(item.id);
-      window.location.href = '/family/items';
+      navigate('/family/items');
     } catch (error) {
       console.error('Delete failed:', error);
       alert('削除に失敗しました');

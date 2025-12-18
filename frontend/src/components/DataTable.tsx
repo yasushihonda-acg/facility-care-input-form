@@ -62,12 +62,13 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
       let comparison = 0;
 
       switch (sortType) {
-        case 'number':
+        case 'number': {
           // 数値ソート（空文字は0扱い）
           const numA = parseFloat(valueA) || 0;
           const numB = parseFloat(valueB) || 0;
           comparison = numA - numB;
           break;
+        }
         case 'date':
           // 日付ソート（文字列比較でOK: YYYY/MM/DD HH:MM:SS形式）
           comparison = valueA.localeCompare(valueB, 'ja');

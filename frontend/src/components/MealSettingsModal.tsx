@@ -81,6 +81,7 @@ export function MealSettingsModal({
   }, [resetAllStates, onClose]);
 
   // モーダルが開いた時に設定を同期（propsの値で初期化）
+  // resetAllStatesは安定した関数、settingsは外部依存
   useEffect(() => {
     if (isOpen) {
       resetAllStates();

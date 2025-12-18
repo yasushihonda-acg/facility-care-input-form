@@ -40,7 +40,8 @@ export function SnackSection({
     limit: 50,
   });
 
-  const items = data?.items ?? [];
+  // useMemoでラップして参照安定性を確保
+  const items = useMemo(() => data?.items ?? [], [data?.items]);
 
   // 選択済みアイテムIDリスト
   const selectedItemIds = useMemo(
