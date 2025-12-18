@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月18日 (コード品質改善・Lintエラー修正)
+> **最終更新**: 2025年12月18日 (aiAnalyze API実装完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -58,6 +58,55 @@
 ---
 
 ## 最近の完了タスク
+
+### aiAnalyze API実装完了 - 摂食傾向分析 (2025-12-18)
+
+**設計書**: [AI_INTEGRATION_SPEC.md](./AI_INTEGRATION_SPEC.md) セクション3.2
+
+**概要**: Gemini 2.5 Flash を使用した摂食傾向分析機能。消費ログや食事記録を分析し、発見事項と改善提案を生成。
+
+**実装ファイル（バックエンド）**:
+
+| ファイル | 内容 |
+|----------|------|
+| `functions/src/types/index.ts` | AIAnalyze型定義（AIAnalyzeRequest, AIAnalyzeResponse, AIFinding, AISuggestion等） |
+| `functions/src/prompts/analysisPrompts.ts` | 分析プロンプトテンプレート（新規） |
+| `functions/src/functions/aiAnalyze.ts` | aiAnalyze API実装（新規） |
+| `functions/src/index.ts` | エクスポート追加 |
+
+**実装ファイル（フロントエンド）**:
+
+| ファイル | 内容 |
+|----------|------|
+| `frontend/src/types/careItem.ts` | AIAnalyze型定義、表示設定（FINDING_TYPE_CONFIG, SUGGESTION_PRIORITY_CONFIG） |
+| `frontend/src/api/index.ts` | aiAnalyze API呼び出し関数 |
+| `frontend/src/components/family/AIAnalysis.tsx` | AI分析UIコンポーネント（新規） |
+| `frontend/src/pages/shared/StatsDashboard.tsx` | AIAnalysisを摂食傾向タブに統合 |
+
+**API仕様**:
+- **エンドポイント**: `POST /aiAnalyze`
+- **入力**: residentId, analysisType, period, data（消費ログ/食事記録）
+- **出力**: summary（サマリ）, findings（発見事項）, suggestions（改善提案）
+
+**発見事項タイプ（FindingType）**:
+- `positive`: 良い傾向（📈 緑）
+- `negative`: 注意が必要（📉 赤）
+- `neutral`: 情報（📊 グレー）
+
+**改善提案優先度（SuggestionPriority）**:
+- `high`: 優先度高（🔴 赤）
+- `medium`: 優先度中（🟡 黄）
+- `low`: 優先度低（🟢 緑）
+
+**UI機能**:
+- 「分析を開始」ボタンでAI分析をオンデマンド実行
+- サマリ・発見事項・改善提案をカード形式で表示
+- 発見事項には指標（現在値・前回値・変化率）を表示
+- 改善提案には関連品目を表示
+
+**E2Eテスト**: 109件全パス
+
+---
 
 ### コード品質改善・Lintエラー修正 (2025-12-18)
 
@@ -598,7 +647,6 @@ await mutation.mutateAsync(data);
 | 機能 | 説明 | 優先度 |
 |------|------|--------|
 | FoodMaster 食品マスタ | AI提案との連携、食品別統計 | 中 |
-| 摂食傾向分析API（aiAnalyze） | Gemini連携 | 中 |
 | 週次レポート生成（aiReport） | Gemini連携 | 中 |
 | ケア指示のFirestore保存 | モックデータ → Firestore永続化 | 中 |
 | 写真エビデンス表示 | Google Drive画像を家族ビューで表示 | 中 |
@@ -809,6 +857,7 @@ Phase 8.1: 品物管理基盤              ████████████�
 Phase 8.2: タスク管理                ████████████████████ 100% (完了)
 Phase 8.3: 統計ダッシュボード        ████████████████████ 100% (完了)
 Phase 8.4: Gemini AI連携            ████████████████████ 100% (完了)
+Phase 8.4.1: aiAnalyze 摂食傾向分析 ████████████████████ 100% (完了)
 Phase 8.5: プリセット統合            ████████████████████ 100% (完了)
 Phase 8.6: プリセット管理基盤        ████████████████████ 100% (完了)
 Phase 8.7: AI自動ストック            ████████████████████ 100% (完了)
@@ -846,6 +895,7 @@ Phase 9.3: 統計ダッシュボード拡張    ██████████�
 | GET | `/getMealFormSettings` | フォーム初期値設定を取得 |
 | GET | `/getStats` | 統計データ取得 |
 | POST | `/aiSuggest` | AI品物入力補助 |
+| POST | `/aiAnalyze` | AI摂食傾向分析 |
 | GET/POST | `/presets/*` | プリセットCRUD |
 | GET/POST/PUT/DELETE | `/prohibitions/*` | 禁止ルールCRUD |
 | Scheduler | `/generateDailyTasks` | タスク自動生成（毎日6時） |

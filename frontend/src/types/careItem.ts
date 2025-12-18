@@ -391,6 +391,92 @@ export const SERVING_METHOD_LABELS: Record<ServingMethod, string> = {
 };
 
 // =============================================================================
+// AI分析 (Phase 8.4 - aiAnalyze)
+// @see docs/AI_INTEGRATION_SPEC.md セクション3.2
+// =============================================================================
+
+/** 分析タイプ */
+export type AIAnalysisType = 'consumption' | 'prediction' | 'care_suggestion';
+
+/** 分析用摂食レコード（入力用簡略化形式） */
+export interface AIConsumptionRecord {
+  date: string;
+  itemName: string;
+  category: string;
+  rate: number;
+}
+
+/** 分析用食事レコード（入力用簡略化形式） */
+export interface AIMealRecord {
+  date: string;
+  mealTime: string;
+  mainDishRate: number;
+  sideDishRate: number;
+}
+
+/** AI分析リクエスト */
+export interface AIAnalyzeRequest {
+  residentId: string;
+  analysisType: AIAnalysisType;
+  period: {
+    startDate: string;
+    endDate: string;
+  };
+  data?: {
+    consumptionRecords?: AIConsumptionRecord[];
+    mealRecords?: AIMealRecord[];
+  };
+}
+
+/** 発見事項タイプ */
+export type FindingType = 'positive' | 'negative' | 'neutral';
+
+/** 発見事項 */
+export interface AIFinding {
+  type: FindingType;
+  title: string;
+  description: string;
+  metric?: {
+    current: number;
+    previous?: number;
+    change?: number;
+  };
+}
+
+/** 改善提案優先度 */
+export type SuggestionPriority = 'high' | 'medium' | 'low';
+
+/** 改善提案 */
+export interface AISuggestion {
+  priority: SuggestionPriority;
+  title: string;
+  description: string;
+  relatedItemName?: string;
+}
+
+/** AI分析レスポンス */
+export interface AIAnalyzeResponse {
+  analysisType: AIAnalysisType;
+  summary: string;
+  findings: AIFinding[];
+  suggestions: AISuggestion[];
+}
+
+/** 発見事項タイプのラベル・色 */
+export const FINDING_TYPE_CONFIG: Record<FindingType, { label: string; icon: string; color: string; bgColor: string }> = {
+  positive: { label: '良い傾向', icon: '📈', color: 'text-green-700', bgColor: 'bg-green-50' },
+  negative: { label: '注意が必要', icon: '📉', color: 'text-red-700', bgColor: 'bg-red-50' },
+  neutral: { label: '情報', icon: '📊', color: 'text-gray-700', bgColor: 'bg-gray-50' },
+};
+
+/** 提案優先度のラベル・色 */
+export const SUGGESTION_PRIORITY_CONFIG: Record<SuggestionPriority, { label: string; icon: string; color: string; bgColor: string }> = {
+  high: { label: '優先度：高', icon: '🔴', color: 'text-red-700', bgColor: 'bg-red-50' },
+  medium: { label: '優先度：中', icon: '🟡', color: 'text-yellow-700', bgColor: 'bg-yellow-50' },
+  low: { label: '優先度：低', icon: '🟢', color: 'text-green-700', bgColor: 'bg-green-50' },
+};
+
+// =============================================================================
 // プリセット統合 (Phase 8.5)
 // =============================================================================
 

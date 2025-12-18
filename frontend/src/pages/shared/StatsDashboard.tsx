@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 import { Layout } from '../../components/Layout';
 import { useStats } from '../../hooks/useStats';
 import { getFoodStats } from '../../api';
+import { AIAnalysis } from '../../components/family/AIAnalysis';
 import type {
   ItemStatsData,
   Alert,
@@ -19,6 +20,7 @@ import type {
 } from '../../types/stats';
 import { ALERT_SEVERITY_COLORS, ALERT_SEVERITY_LABELS, ALERT_TYPE_LABELS } from '../../types/stats';
 import { getCategoryLabel } from '../../types/careItem';
+import type { AIConsumptionRecord } from '../../types/careItem';
 
 // デモ用の入居者ID（将来は認証から取得）
 const DEMO_RESIDENT_ID = 'resident-001';
@@ -470,11 +472,31 @@ interface ConsumptionStatsTabProps {
 }
 
 function ConsumptionStatsTab({ data }: ConsumptionStatsTabProps) {
+  // 食品統計からAI分析用のデータを作成
+  const consumptionData: AIConsumptionRecord[] = [];
+  if (data) {
+    // mostPreferred と leastPreferred から消費データを構築
+    const today = new Date().toISOString().split('T')[0];
+    [...(data.mostPreferred || []), ...(data.leastPreferred || [])].forEach(item => {
+      consumptionData.push({
+        date: today,
+        itemName: item.foodName,
+        category: 'other', // カテゴリ情報は別途取得が必要
+        rate: item.avgConsumptionRate,
+      });
+    });
+  }
+
   if (!data) {
     return (
-      <div className="bg-white rounded-lg shadow-card p-6 text-center text-gray-500">
-        <p>摂食データがありません</p>
-        <p className="text-sm text-gray-400 mt-1">品物の提供記録を入力すると、ここに傾向が表示されます</p>
+      <div className="space-y-4">
+        {/* AI分析パネル（データがなくても表示） */}
+        <AIAnalysis residentId={DEMO_RESIDENT_ID} />
+
+        <div className="bg-white rounded-lg shadow-card p-6 text-center text-gray-500">
+          <p>摂食データがありません</p>
+          <p className="text-sm text-gray-400 mt-1">品物の提供記録を入力すると、ここに傾向が表示されます</p>
+        </div>
       </div>
     );
   }
@@ -486,16 +508,27 @@ function ConsumptionStatsTab({ data }: ConsumptionStatsTabProps) {
 
   if (!hasData) {
     return (
-      <div className="bg-white rounded-lg shadow-card p-6 text-center text-gray-500">
-        <p className="text-4xl mb-2">📊</p>
-        <p>摂食データがありません</p>
-        <p className="text-sm text-gray-400 mt-1">品物の提供記録を入力すると、ここに傾向が表示されます</p>
+      <div className="space-y-4">
+        {/* AI分析パネル */}
+        <AIAnalysis residentId={DEMO_RESIDENT_ID} />
+
+        <div className="bg-white rounded-lg shadow-card p-6 text-center text-gray-500">
+          <p className="text-4xl mb-2">📊</p>
+          <p>摂食データがありません</p>
+          <p className="text-sm text-gray-400 mt-1">品物の提供記録を入力すると、ここに傾向が表示されます</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
+      {/* AI分析パネル */}
+      <AIAnalysis
+        residentId={DEMO_RESIDENT_ID}
+        consumptionData={consumptionData.length > 0 ? consumptionData : undefined}
+      />
+
       {/* よく食べる品目 */}
       {mostPreferred.length > 0 && (
         <div className="bg-white rounded-lg shadow-card p-4">

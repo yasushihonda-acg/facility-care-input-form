@@ -422,9 +422,11 @@ export async function getStats(
 import type {
   AISuggestRequest,
   AISuggestResponse,
+  AIAnalyzeRequest,
+  AIAnalyzeResponse,
 } from '../types/careItem';
 
-export type { AISuggestRequest, AISuggestResponse };
+export type { AISuggestRequest, AISuggestResponse, AIAnalyzeRequest, AIAnalyzeResponse };
 
 /**
  * AI品物入力補助
@@ -442,6 +444,27 @@ export async function aiSuggest(
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.error?.message || `AI suggest failed: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * AI摂食傾向分析
+ * 摂食データから傾向・異常を分析し、改善提案を返却
+ */
+export async function aiAnalyze(
+  params: AIAnalyzeRequest
+): Promise<ApiResponse<AIAnalyzeResponse>> {
+  const response = await fetch(`${API_BASE}/aiAnalyze`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `AI analyze failed: ${response.statusText}`);
   }
 
   return response.json();

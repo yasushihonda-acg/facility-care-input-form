@@ -959,6 +959,96 @@ export const DEFAULT_AI_SUGGESTION: AISuggestResponse = {
 };
 
 // =============================================================================
+// AI分析 Types (Phase 8.4 - aiAnalyze)
+// docs/AI_INTEGRATION_SPEC.md セクション3.2 に基づく型定義
+// =============================================================================
+
+/** 分析タイプ */
+export type AIAnalysisType = "consumption" | "prediction" | "care_suggestion";
+
+/** 分析用摂食レコード（入力用簡略化形式） */
+export interface AIConsumptionRecord {
+  date: string;
+  itemName: string;
+  category: string;
+  rate: number;
+}
+
+/** 分析用食事レコード（入力用簡略化形式） */
+export interface AIMealRecord {
+  date: string;
+  mealTime: string;
+  mainDishRate: number;
+  sideDishRate: number;
+}
+
+/** AI分析リクエスト */
+export interface AIAnalyzeRequest {
+  residentId: string;
+  analysisType: AIAnalysisType;
+  period: {
+    startDate: string;
+    endDate: string;
+  };
+  data?: {
+    consumptionRecords?: AIConsumptionRecord[];
+    mealRecords?: AIMealRecord[];
+    itemRecords?: CareItem[];
+  };
+}
+
+/** 発見事項タイプ */
+export type FindingType = "positive" | "negative" | "neutral";
+
+/** 発見事項 */
+export interface AIFinding {
+  type: FindingType;
+  title: string;
+  description: string;
+  metric?: {
+    current: number;
+    previous?: number;
+    change?: number;
+  };
+}
+
+/** 改善提案優先度 */
+export type SuggestionPriority = "high" | "medium" | "low";
+
+/** 改善提案 */
+export interface AISuggestion {
+  priority: SuggestionPriority;
+  title: string;
+  description: string;
+  relatedItemName?: string;
+}
+
+/** AI分析結果データ */
+export interface AIAnalysisData {
+  analysisType: AIAnalysisType;
+  summary: string;
+  findings: AIFinding[];
+  suggestions: AISuggestion[];
+  alerts?: Alert[];
+}
+
+/** AI分析レスポンス */
+export interface AIAnalyzeResponse {
+  analysisType: AIAnalysisType;
+  summary: string;
+  findings: AIFinding[];
+  suggestions: AISuggestion[];
+}
+
+/** AI分析のデフォルト値（フォールバック用） */
+export const DEFAULT_AI_ANALYSIS: AIAnalyzeResponse = {
+  analysisType: "consumption",
+  summary: "データが不足しているため、詳細な分析ができませんでした。",
+  findings: [],
+  suggestions: [],
+};
+
+// =============================================================================
 // プリセット統合 Types (Phase 8.5)
 // docs/AI_INTEGRATION_SPEC.md セクション9 に基づく型定義
 // =============================================================================

@@ -110,6 +110,7 @@ export {getStats} from "./functions/getStats";
 // =============================================================================
 
 export {aiSuggest} from "./functions/aiSuggest";
+export {aiAnalyze} from "./functions/aiAnalyze";
 
 // =============================================================================
 // プリセット統合（Phase 8.5）
