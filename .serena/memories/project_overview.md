@@ -248,7 +248,53 @@ AI提案以外で品物を手動登録した際にも、プリセット保存を
 
 **設計書**: `docs/PRESET_MANAGEMENT_SPEC.md` セクション5.4, 9
 
-### E2Eテスト（117件）
+### Phase 13.0: 品物起点の間食記録 (2025-12-19)
+品物詳細画面から直接間食記録を作成する機能。
+
+**主な機能**:
+- 品物詳細画面に「間食記録を作成」ボタン追加
+- SnackRecordForm: 提供量・摂食状況・メモ入力
+- submitCareRecord API: Sheet B「間食」列に書き込み
+- 記録後に品物タイムラインへ自動反映
+
+**実装ファイル**:
+- `frontend/src/components/family/SnackRecordForm.tsx` (新規)
+- `frontend/src/pages/family/ItemDetail.tsx` (ボタン追加)
+- `functions/src/functions/submitCareRecord.ts` (間食記録対応)
+
+**E2Eテスト**: `item-based-snack.spec.ts` (13件)
+**設計書**: `docs/ITEM_BASED_SNACK_RECORD_SPEC.md` セクション3.1-3.3
+
+### Phase 13.1: スケジュール拡張機能 (2025-12-19)
+従来のplannedServeDateから柔軟なスケジュール設定を可能にする拡張。
+
+**スケジュールタイプ**:
+- `once`: 単発（従来互換）
+- `daily`: 毎日
+- `weekly`: 曜日指定（複数選択可）
+- `specific_dates`: 複数日指定
+
+**タイムスロット**:
+- `breakfast`: 朝食時
+- `lunch`: 昼食時
+- `dinner`: 夕食時
+- `snack`: おやつ時（デフォルト）
+- `anytime`: いつでも
+
+**UIコンポーネント**:
+- `ServingScheduleInput.tsx`: スケジュールタイプ選択・入力
+- `WeekdaySelector.tsx`: 曜日選択トグルボタン
+- `MultipleDatePicker.tsx`: 複数日選択UI
+
+**ユーティリティ** (`scheduleUtils.ts`):
+- `isScheduledForToday()`: 今日が提供予定日か判定
+- `formatScheduleDisplay()`: スケジュール表示文字列生成
+- `scheduleToPlannedDate()`: 後方互換変換
+
+**E2Eテスト**: `schedule-extension.spec.ts` (7件)
+**設計書**: `docs/ITEM_BASED_SNACK_RECORD_SPEC.md` セクション3.4-3.5
+
+### E2Eテスト（137件）
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |
@@ -256,6 +302,8 @@ AI提案以外で品物を手動登録した際にも、プリセット保存を
 | `family-page.spec.ts` | 21件 | 品物詳細・消費ログ・指示対応 |
 | `snack-record.spec.ts` | 11件 | 間食記録連携・AIサジェスト |
 | `fifo.spec.ts` | 8件 | FIFO機能（期限順ソート・同一品物警告） |
+| `item-based-snack.spec.ts` | 13件 | Phase 13.0 品物起点の間食記録 |
+| `schedule-extension.spec.ts` | 7件 | Phase 13.1 スケジュール拡張機能 |
 
 - **パリティテスト**: デモと本番で同じUIが表示されることを検証
 - **実行**: `cd frontend && npx playwright test`
