@@ -106,6 +106,7 @@ gh run list --repo yasushihonda-acg/facility-care-input-form --workflow=gh-pages
 | `docs/API_TEST_PLAN.md` | APIテスト計画・Firestore修正記録 |
 | `docs/FIX_DEMO_NAVIGATION.md` | デモナビゲーション修正記録 |
 | `docs/FIFO_DESIGN_SPEC.md` | FIFO（先入れ先出し）対応設計（Phase 12.0） |
+| `docs/ITEM_BASED_SNACK_RECORD_SPEC.md` | 品物起点の間食記録・スケジュール拡張（Phase 13） |
 
 #### データ構造
 | ファイル | 用途 |
