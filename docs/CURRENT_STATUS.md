@@ -21,7 +21,40 @@
 
 ## 現在のタスク
 
-現在、アクティブなタスクはありません。将来のタスクは末尾の「次のタスク（将来）」セクションを参照してください。
+### Phase 11.1: FoodMaster自動蓄積の有効化（推奨）
+
+**設計書**: [AI_INTEGRATION_SPEC.md](./AI_INTEGRATION_SPEC.md) セクション3.1、[INVENTORY_CONSUMPTION_SPEC.md](./INVENTORY_CONSUMPTION_SPEC.md) セクション2.2
+
+**背景**: Phase 11でFoodMaster基盤を実装済み。現状はFoodMaster検索は動作するが、AI生成結果の自動保存（学習）は未有効化。
+
+**目的**: AI提案（aiSuggest）で生成された結果を自動的にFoodMasterに蓄積し、「学習するシステム」を実現する。
+
+**期待される効果**:
+
+| 効果 | 説明 |
+|------|------|
+| **APIコスト削減** | 同じ品物は2回目以降Gemini APIを呼ばない |
+| **応答速度向上** | Firestoreキャッシュ: ~100ms vs Gemini API: ~2s |
+| **施設固有データ構築** | 利用パターンに特化した食品マスタが自動構築 |
+
+**実装タスク**:
+
+| # | タスク | ファイル | 内容 |
+|---|--------|----------|------|
+| 1 | フロントエンド変更 | `frontend/src/hooks/useAISuggest.ts` | `saveToFoodMaster: true` を追加 |
+| 2 | デモモード対応 | `frontend/src/hooks/useAISuggest.ts` | デモモードでは `saveToFoodMaster: false` |
+| 3 | E2Eテスト | - | 既存テストで回帰確認 |
+
+**実装コード（参考）**:
+
+```typescript
+// useAISuggest.ts 変更箇所
+const response = await aiSuggest({
+  itemName,
+  category,
+  saveToFoodMaster: !isDemoMode,  // 本番モードのみ自動蓄積
+});
+```
 
 ---
 
@@ -31,7 +64,7 @@
 
 **設計書**: [INVENTORY_CONSUMPTION_SPEC.md](./INVENTORY_CONSUMPTION_SPEC.md) セクション2.2
 
-**概要**: 食品の正規化情報と統計を管理する食品マスタ機能。AI提案のキャッシュとして機能し、よく登録される食品の情報を保持。
+**概要**: 食品の正規化情報と統計を管理する食品マスタ機能。AI提案のキャッシュとして機能し、よく登録される食品の情報を保持。**自動蓄積有効化は Phase 11.1 で対応予定。**
 
 **実装ファイル（バックエンド）**:
 

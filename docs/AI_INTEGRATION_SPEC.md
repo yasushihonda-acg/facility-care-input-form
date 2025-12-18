@@ -16,6 +16,7 @@
 | AI提案UI統合 | 8.4 | ✅ 実装完了 | セクション8 |
 | プリセット統合 | 8.5 | ✅ 実装完了 | セクション9 |
 | AI自動ストック | 8.7 | ✅ 実装完了 | セクション10 |
+| **FoodMaster連携** | 11 | ✅ API実装完了 | セクション3.1、**自動蓄積有効化は推奨タスク** |
 
 ---
 
@@ -127,8 +128,10 @@ POST /aiSuggest
 **リクエスト**:
 ```typescript
 interface AISuggestRequest {
-  itemName: string;
-  category?: ItemCategory;
+  itemName: string;                  // 品物名（必須）
+  category?: ItemCategory;           // カテゴリ（任意）
+  saveToFoodMaster?: boolean;        // AI生成結果をFoodMasterに保存（推奨: true）
+  skipFoodMasterSearch?: boolean;    // FoodMaster検索をスキップ（デバッグ用）
 }
 ```
 
@@ -142,9 +145,40 @@ interface AISuggestResponse {
     servingMethods: ServingMethod[]; // 提供方法候補
     notes?: string;                // 補足情報
   };
+  source?: 'food_master' | 'ai' | 'default';  // データソース
+  foodMasterId?: string;           // FoodMasterから取得した場合のID
+  savedFoodMasterId?: string;      // 新規保存した場合のID
   error?: string;
 }
 ```
+
+#### FoodMaster連携（Phase 11）
+
+aiSuggestはFoodMasterと連携し、**学習するキャッシュ**として機能します。
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    aiSuggest 処理フロー                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1. FoodMaster検索（skipFoodMasterSearch=false の場合）          │
+│     - 名前・別名で完全一致 → 部分一致の順でマッチング            │
+│     - ヒット時: source="food_master" で即座に返却               │
+│                                                                 │
+│  2. Gemini API 生成（FoodMasterにない場合）                      │
+│     - AI が賞味期限・保存方法・提供方法を提案                    │
+│     - source="ai" で返却                                        │
+│                                                                 │
+│  3. FoodMaster 自動保存（saveToFoodMaster=true の場合）          │
+│     - AI生成結果を FoodMaster に自動登録                         │
+│     - 次回同じ品物は Step 1 でキャッシュヒット                   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**推奨設定**: `saveToFoodMaster: true` を指定することで、システムが自動的に学習し、APIコスト削減・応答速度向上が実現します。
+
+詳細: [INVENTORY_CONSUMPTION_SPEC.md セクション2.2](./INVENTORY_CONSUMPTION_SPEC.md#22-foodmaster食品マスタ)
 
 #### プロンプトテンプレート
 
