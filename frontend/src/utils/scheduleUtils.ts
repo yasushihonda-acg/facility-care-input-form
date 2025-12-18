@@ -114,7 +114,7 @@ export function getNextScheduledDate(schedule: ServingSchedule | undefined): Dat
         }
         break;
 
-      case 'specific_dates':
+      case 'specific_dates': {
         if (schedule.dates?.includes(checkDateStr)) {
           return checkDate;
         }
@@ -126,6 +126,7 @@ export function getNextScheduledDate(schedule: ServingSchedule | undefined): Dat
           return new Date(futureDates[0]);
         }
         return null;
+      }
     }
   }
 
