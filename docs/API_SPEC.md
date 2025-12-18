@@ -93,6 +93,13 @@ https://asia-northeast1-facility-care-input-form.cloudfunctions.net
 | PUT | `/updatePreset` | プリセットを更新 | Phase 8.6 | ✅ |
 | DELETE | `/deletePreset` | プリセットを削除 | Phase 8.6 | ✅ |
 | POST | `/saveAISuggestionAsPreset` | AI提案をプリセット保存 | Phase 8.7 | ✅ |
+| POST | `/aiSuggest` | AI品物入力補助 | Phase 8.4 | ✅ |
+| POST | `/aiAnalyze` | AI摂食傾向分析 | Phase 8.4.1 | ✅ |
+| GET | `/getStats` | 統計データを取得 | Phase 8.3 | ✅ |
+| GET | `/getInventorySummary` | 在庫サマリーを取得 | Phase 9.3 | ✅ |
+| GET | `/getFoodStats` | 食品傾向統計を取得 | Phase 9.3 | ✅ |
+| POST | `/recordConsumptionLog` | 消費ログを記録 | Phase 9.2 | ✅ |
+| GET | `/getConsumptionLogs` | 消費ログ一覧を取得 | Phase 9.2 | ✅ |
 | GET | `/getProhibitions` | 禁止ルール一覧を取得 | Phase 9.x | ✅ |
 | POST | `/createProhibition` | 禁止ルールを作成 | Phase 9.x | ✅ |
 | PUT | `/updateProhibition` | 禁止ルールを更新 | Phase 9.x | ✅ |
@@ -1993,6 +2000,149 @@ export interface DeleteProhibitionRequest {
 
 ---
 
+### 4.32 POST /aiSuggest (Phase 8.4)
+
+AI品物入力補助。テキスト入力から品物の名前・カテゴリ・数量・単位を推論します。
+
+> **詳細設計**: [AI_INTEGRATION_SPEC.md](./AI_INTEGRATION_SPEC.md) セクション3.1 を参照
+
+**エンドポイント**: `POST /aiSuggest`
+
+**リクエストボディ**:
+
+| パラメータ | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `text` | string | Yes | 入力テキスト（例: "バナナ3本"） |
+| `context` | object | No | コンテキスト情報 |
+| `context.residentId` | string | No | 入居者ID |
+| `context.recentItems` | string[] | No | 最近の品物名リスト |
+
+**成功レスポンス (200)**:
+```json
+{
+  "success": true,
+  "data": {
+    "suggestions": [
+      {
+        "itemName": "バナナ",
+        "category": "fruit",
+        "quantity": 3,
+        "unit": "本",
+        "confidence": 0.95
+      }
+    ],
+    "rawInput": "バナナ3本"
+  },
+  "timestamp": "2025-12-18T12:00:00.000Z"
+}
+```
+
+**エラーレスポンス (400)**:
+```json
+{
+  "success": false,
+  "error": "テキストが空です"
+}
+```
+
+---
+
+### 4.33 POST /aiAnalyze (Phase 8.4.1)
+
+AI摂食傾向分析。入居者の食品消費データを分析し、傾向・発見事項・改善提案を生成します。
+
+> **詳細設計**: [AI_INTEGRATION_SPEC.md](./AI_INTEGRATION_SPEC.md) セクション3.2 を参照
+
+**エンドポイント**: `POST /aiAnalyze`
+
+**リクエストボディ**:
+
+| パラメータ | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `residentId` | string | Yes | 入居者ID |
+| `analysisType` | string | Yes | 分析タイプ（現在は `"consumption"` のみ） |
+| `period` | object | Yes | 分析期間 |
+| `period.startDate` | string | Yes | 開始日（YYYY-MM-DD） |
+| `period.endDate` | string | Yes | 終了日（YYYY-MM-DD） |
+| `data` | object | No | オプショナルデータ |
+| `data.consumptionRecords` | array | No | 消費記録配列 |
+
+**成功レスポンス (200)**:
+```json
+{
+  "success": true,
+  "data": {
+    "summary": "過去30日間の摂食傾向を分析しました。全体的に果物類の摂取率が高く、特にバナナとリンゴを好んで召し上がっています。",
+    "findings": [
+      {
+        "type": "positive",
+        "title": "果物類の摂取率向上",
+        "description": "前月比で15%向上しています",
+        "metric": {
+          "current": 85,
+          "previous": 70,
+          "change": 15
+        }
+      },
+      {
+        "type": "warning",
+        "title": "乳製品の摂取率低下",
+        "description": "ヨーグルトの残量が増加傾向です",
+        "metric": {
+          "current": 45,
+          "previous": 60,
+          "change": -15
+        }
+      }
+    ],
+    "suggestions": [
+      {
+        "priority": "high",
+        "title": "乳製品の見直し",
+        "description": "ヨーグルトの種類を変更してみることをお勧めします",
+        "relatedItemName": "ヨーグルト"
+      },
+      {
+        "priority": "medium",
+        "title": "果物の継続提供",
+        "description": "バナナ・リンゴは引き続き好まれています"
+      }
+    ],
+    "analyzedAt": "2025-12-18T12:00:00.000Z"
+  },
+  "timestamp": "2025-12-18T12:00:00.000Z"
+}
+```
+
+**発見事項タイプ (findings.type)**:
+| 値 | 説明 | アイコン |
+|-----|------|---------|
+| `positive` | 良好な傾向 | ✅ |
+| `warning` | 注意が必要 | ⚠️ |
+| `info` | 情報提供 | ℹ️ |
+
+**提案優先度 (suggestions.priority)**:
+| 値 | 説明 | アイコン |
+|-----|------|---------|
+| `high` | 高優先度 | 🔴 |
+| `medium` | 中優先度 | 🟡 |
+| `low` | 低優先度 | 🟢 |
+
+**エラーレスポンス (400)**:
+```json
+{
+  "success": false,
+  "error": "residentIdは必須です"
+}
+```
+
+**注意事項**:
+- Gemini 2.5 Flash (Vertex AI) を使用
+- 分析結果は入居者の食品消費履歴に基づいて生成
+- データ不足時は警告付きで概要のみ返却
+
+---
+
 ## 6. cURLサンプル
 
 ### 6.1 ヘルスチェック
@@ -2055,6 +2205,7 @@ curl -X POST \
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
+| 2025-12-18 | 1.11.0 | Phase 8.4.1: AI API詳細ドキュメント追加（aiSuggest, aiAnalyze） |
 | 2025-12-17 | 1.10.1 | Firestore undefined エラー修正（ignoreUndefinedProperties設定追加） |
 | 2025-12-17 | 1.10.0 | Phase 9.3: 在庫・食品統計API（getInventorySummary, getFoodStats）追加 |
 | 2025-12-17 | 1.9.0 | Phase 9.x: 禁止ルールAPI（getProhibitions, createProhibition, updateProhibition, deleteProhibition）追加 |

@@ -1,6 +1,6 @@
 # 引き継ぎドキュメント
 
-> **最終更新**: 2025年12月18日（Firestoreインデックス修正・snackフィールド連結ロジック修正）
+> **最終更新**: 2025年12月18日（Phase 8.4.1: AI摂食傾向分析完了）
 >
 > 本ドキュメントは、開発を引き継ぐ際に必要な情報をまとめたものです。
 
@@ -71,7 +71,8 @@ cd frontend && npm install && npm run dev
 | 品物管理 | 家族からの差し入れ品物の登録・追跡 | ✅ 完了 |
 | タスク管理 | 賞味期限警告・リマインダー等のタスク管理 | ✅ 完了 |
 | 統計ダッシュボード | 品物状況・アラートの可視化 | ✅ 完了 |
-| AI提案 | Gemini APIによる賞味期限・提供方法の自動提案 | ✅ 完了 |
+| AI品物提案 | Gemini APIによる賞味期限・提供方法の自動提案 | ✅ 完了 |
+| AI摂食傾向分析 | Gemini APIによる摂食傾向分析・改善提案 | ✅ 完了 |
 | プリセット管理 | 「いつもの指示」のCRUD管理・AI自動ストック | ✅ 完了 |
 | 消費記録連携 | 提供・摂食記録API、タイムライン表示 | ✅ 完了 |
 | 禁止ルール機能 | 提供禁止品目の設定・警告表示 | ✅ 完了 |
@@ -164,7 +165,8 @@ facility-care-input-form/
 │   │   │   ├── demo/
 │   │   │   │   └── DemoHeaderButton.tsx   # ツアーTOPに戻るボタン
 │   │   │   └── family/
-│   │   │       ├── AISuggestion.tsx         # AI提案カード
+│   │   │       ├── AISuggestion.tsx         # AI品物提案カード
+│   │   │       ├── AIAnalysis.tsx           # AI摂食傾向分析 ✅ Phase 8.4.1
 │   │   │       ├── PresetSuggestion.tsx     # プリセット候補
 │   │   │       └── SaveAISuggestionDialog.tsx # AI保存ダイアログ
 │   │   ├── hooks/         # カスタムフック
@@ -185,7 +187,8 @@ facility-care-input-form/
 │   │   │   ├── tasks.ts      # タスクCRUD
 │   │   │   ├── presets.ts    # プリセットCRUD + AI保存
 │   │   │   ├── getStats.ts   # 統計データ
-│   │   │   └── aiSuggest.ts  # AI提案
+│   │   │   ├── aiSuggest.ts  # AI品物提案
+│   │   │   └── aiAnalyze.ts  # AI摂食傾向分析 ✅ Phase 8.4.1
 │   │   └── services/      # サービス層
 │   └── package.json
 ├── docs/                  # ドキュメント
@@ -232,7 +235,8 @@ facility-care-input-form/
 | Phase 8.2 | タスク管理 | 2025-12-16 |
 | Phase 8.2.1 | タスク自動生成（Cloud Scheduler） | 2025-12-16 |
 | Phase 8.3 | 統計ダッシュボード | 2025-12-16 |
-| Phase 8.4 | AI提案UI統合 | 2025-12-16 |
+| Phase 8.4 | AI品物提案UI統合 | 2025-12-16 |
+| Phase 8.4.1 | AI摂食傾向分析 | 2025-12-18 |
 | Phase 8.5 | プリセット提案統合 | 2025-12-16 |
 | Phase 8.6 | プリセット管理CRUD | 2025-12-16 |
 | Phase 8.7 | AI自動ストック | 2025-12-16 |
@@ -633,6 +637,7 @@ docs/CURRENT_STATUS.md を読んで、次のタスクから再開してくださ
 
 | 日付 | 内容 |
 |------|------|
+| 2025-12-18 | Phase 8.4.1: AI摂食傾向分析（aiAnalyze API + StatsDashboard統合） |
 | 2025-12-18 | 間食記録連携機能 全6Phase完了、E2Eテスト109件に拡張 |
 | 2025-12-18 | E2Eパリティテスト追加、全77件に拡張、「デモ=本番」検証完了 |
 | 2025-12-17 | 家族向けデモ特化リデザイン完了、E2Eテスト43件 |
