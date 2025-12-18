@@ -107,9 +107,9 @@
 
 ## API実装メモ
 
-### submitCareRecord エンドポイント
+### submitMealRecord エンドポイント
 
-`POST /submitCareRecord` でSheet Bに書き込む際のマッピング:
+`POST /submitMealRecord` でSheet Bに書き込む際のマッピング:
 
 ```typescript
 // フロントエンドからの入力 → Sheet Bカラム
@@ -120,16 +120,33 @@
   mainDishRatio: string,    // → 主食の摂取量は何割ですか？
   sideDishRatio: string,    // → 副食の摂取量は何割ですか？
   injectionAmount: number,  // → 注入量は何ccですか？
-  snack: string,            // → 間食は何を食べましたか？
+  snack: string,            // → 間食は何を食べましたか？（※下記参照）
   note: string,             // → 特記事項
   isImportant: boolean,     // → 重要特記事項集計表に反映させますか？
   facility: string,         // → 施設
   dayServiceUsage: string,  // → デイ利用有無
   injectionType: string,    // → 注入の種類
   dayServiceName: string,   // → どこのデイサービスですか？
+  snackRecords?: SnackRecord[], // → snackフィールドに自動連結（間食記録連携）
 }
 // タイムスタンプ、投稿ID は自動生成
 ```
+
+### snack フィールド書き込みルール（間食記録連携）
+
+`snackRecords[]` がある場合、自動的に `snack` フィールドに連結されます。
+
+| 入力パターン | Sheet B「間食は何を食べましたか？」に書き込まれる内容 |
+|-------------|------------------------------------------------|
+| `snackRecords[]` のみ | `黒豆 1g（完食）、らっきょう 0.7瓶（ほぼ完食）` |
+| `snack`（自由記入）のみ | `施設のおやつも少々` |
+| **両方入力** | `黒豆 1g（完食）、らっきょう 0.7瓶（ほぼ完食）。施設のおやつも少々` |
+
+**連結形式**: `{snackRecordsから自動生成}。{snack自由記入}`
+
+**注意**: `snackRecords[].noteToFamily`（家族へのメモ）はSheet Bには反映されません（Firestoreの消費ログにのみ保存）。
+
+詳細は [SNACK_RECORD_INTEGRATION_SPEC.md](./SNACK_RECORD_INTEGRATION_SPEC.md) セクション2.2 参照。
 
 ---
 
@@ -139,8 +156,9 @@
 |------|------|------|
 | サービスアカウント共有 | ✅ 完了 | 2025-12-14 |
 | API接続確認 | ✅ 完了 | 読み取り・書き込み可能 |
-| バックエンド実装 | 🔄 要修正 | ドキュメントに合わせて修正が必要 |
+| バックエンド実装 | ✅ 完了 | 間食記録連携含む |
 | フロントエンドUI | ✅ 完了 | `/input/meal` で実装済み |
+| 間食記録連携 | ✅ 完了 | snackRecords → snack連結ロジック |
 
 ---
 
@@ -148,6 +166,7 @@
 
 | 日付 | 内容 |
 |------|------|
+| 2025-12-18 | snackフィールド書き込みルール追加（間食記録連携） |
 | 2025-12-14 | フロントエンドUI vs Sheet Bカラム対照表を追加 |
 | 2025-12-14 | サービスアカウント共有完了、API接続確認済み |
 | 2025-12-14 | 初版作成（シート構造分析） |

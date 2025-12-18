@@ -1,6 +1,6 @@
 # 引き継ぎドキュメント
 
-> **最終更新**: 2025年12月18日（間食記録連携機能 全Phase完了・E2Eテスト109件）
+> **最終更新**: 2025年12月18日（Firestoreインデックス修正・snackフィールド連結ロジック修正）
 >
 > 本ドキュメントは、開発を引き継ぐ際に必要な情報をまとめたものです。
 
@@ -435,9 +435,36 @@ BASE_URL=https://facility-care-input-form.web.app npx playwright test
 |------|--------|
 | APIがCORSエラー | Cloud Functionsの `setCors` 関数を確認 |
 | Firestoreアクセス拒否 | `firestore.rules` のルールを確認（Dev Mode: `allow read, write: if true;`） |
+| Firestore 500エラー（インデックス不足） | 下記「Firestoreインデックス」セクション参照 |
 | スプレッドシート権限エラー | サービスアカウントに共有設定を確認 |
 | GitHub Actions失敗 | `GCP_SA_KEY` シークレットの設定を確認 |
 | Driveフォルダ404エラー | 下記「Cloud Functions サービスアカウント」を参照 |
+
+### 8.1.1 Firestoreインデックスエラー
+
+**症状**: APIが500エラーを返し、ログに `FAILED_PRECONDITION: The query requires an index` が表示される
+
+**原因**: 複合クエリに必要なインデックスが不足
+
+**解決方法**:
+
+```bash
+# 1. Cloud Functionsのログでエラーを確認
+gcloud functions logs read <関数名> --region=asia-northeast1 --limit=10
+
+# 2. エラーメッセージ内のURLをクリックしてインデックスを自動作成
+#    または、gcloudでインデックスを手動作成
+gcloud firestore indexes composite create \
+  --collection-group=<コレクション名> \
+  --field-config=field-path=<フィールド1>,order=ascending \
+  --field-config=field-path=<フィールド2>,order=descending \
+  --project=facility-care-input-form
+
+# 3. インデックス状態を確認（READYになるまで数分待つ）
+gcloud firestore indexes composite list --project=facility-care-input-form
+```
+
+**既存インデックス**: `firestore.indexes.json` を参照
 
 ### 8.2 Cloud Functions サービスアカウント（重要）
 

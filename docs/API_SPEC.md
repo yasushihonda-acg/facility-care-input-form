@@ -211,8 +211,36 @@ Content-Type: application/json
 | `sideDishRatio` | string | No | 副食摂取量（0〜10割） |
 | `injectionType` | string | No | 注入の種類 |
 | `injectionAmount` | string | No | 注入量（cc） |
-| `snack` | string | No | 間食内容 |
+| `snack` | string | No | 間食内容（自由記入） |
+| `snackRecords` | SnackRecord[] | No | 間食詳細記録（下記参照） |
+| `residentId` | string | No | 入居者ID（品物連携用） |
 | `note` | string | No | 特記事項 |
+
+#### SnackRecord 型（間食記録連携）
+
+```typescript
+interface SnackRecord {
+  itemId?: string;           // care_items のID
+  itemName: string;          // 品物名
+  servedQuantity: number;    // 提供数
+  unit?: string;             // 単位（個、切れ等）
+  consumptionStatus: 'full' | 'most' | 'half' | 'little' | 'none';
+  followedInstruction?: boolean;  // 家族指示対応
+  noteToFamily?: string;     // 家族へのメモ（※Sheet Bには反映されない）
+}
+```
+
+#### snack フィールド連結ロジック
+
+`snackRecords[]` がある場合、自動的に `snack` フィールドに連結されます。
+
+| 入力パターン | Sheet B「間食は何を食べましたか？」に書き込まれる内容 |
+|-------------|------------------------------------------------|
+| `snackRecords[]` のみ | `黒豆 1g（完食）、らっきょう 0.7瓶（ほぼ完食）` |
+| `snack`（自由記入）のみ | `施設のおやつも少々` |
+| **両方入力** | `黒豆 1g（完食）、らっきょう 0.7瓶（ほぼ完食）。施設のおやつも少々` |
+
+> **詳細**: [SNACK_RECORD_INTEGRATION_SPEC.md](./SNACK_RECORD_INTEGRATION_SPEC.md) を参照
 
 #### レスポンス
 
