@@ -150,13 +150,15 @@ async function submitMealRecordHandler(
 
     const mealRecord = validation.data;
 
-    // snackRecords がある場合は snack テキストを自動生成（後方互換性）
+    // snackRecords がある場合は snack テキストを自動生成し、既存テキストと連結
     if (mealRecord.snackRecords && mealRecord.snackRecords.length > 0) {
       const generatedSnackText = generateSnackTextFromRecords(
         mealRecord.snackRecords
       );
-      // 既存の snack テキストがなければ自動生成テキストを使用
-      if (!mealRecord.snack) {
+      if (mealRecord.snack) {
+        // 両方ある場合は連結（提供記録 + 補足）
+        mealRecord.snack = `${generatedSnackText}。${mealRecord.snack}`;
+      } else {
         mealRecord.snack = generatedSnackText;
       }
     }
