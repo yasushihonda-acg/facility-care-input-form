@@ -1071,8 +1071,9 @@ Phase 9.x: 禁止ルール機能      ██████████████
 Phase 9.3: 統計拡張            ████████████████████ 100% (完了)
 デモショーケース実装           ████████████████████ 100% (完了)
 家族向けデモ特化リデザイン      ████████████████████ 100% (完了)
+Phase 10: 間食記録連携         ████████████████████ 100% (完了)
                                ─────────────────────
-                               合計: 135+ tasks
+                               合計: 145+ tasks
 ```
 
 | Phase | タスク数 | 主な成果物 | 状態 |
@@ -1115,6 +1116,7 @@ Phase 9.3: 統計拡張            ███████████████
 | Phase 9.3 | 4 | 統計ダッシュボード拡張（在庫サマリー・食品傾向） | ✅ 完了 |
 | Demo | 4 | デモショーケース実装（シードデータ・専用ページ・フック対応） | ✅ 完了 |
 | Demo | 4 | 家族向けデモ特化リデザイン（スタッフ分離・ストーリー追加） | ✅ 完了 |
+| Phase 10 | 10 | 間食記録連携（スタッフ食事入力×家族品物管理） | ✅ 完了 |
 
 ---
 
@@ -1730,6 +1732,51 @@ interface Task {
 - `frontend/src/hooks/useTasks.ts` - デモモード対応済み
 - `frontend/src/hooks/useConsumptionLogs.ts` - デモモード対応済み
 - `frontend/src/App.tsx` - デモルート追加済み（スタッフ無効化）
+
+---
+
+## Phase 10: 間食記録連携 ✅ 完了
+
+**完了日**: 2025-12-18
+
+**目的**: スタッフの食事記録入力（間食セクション）と家族の品物管理を連携させ、「家族が送った品物がどのように提供・摂食されたか」を詳細に追跡可能にする。
+
+> **詳細設計**: [SNACK_RECORD_INTEGRATION_SPEC.md](./SNACK_RECORD_INTEGRATION_SPEC.md) を参照
+
+### Phase分割（6段階）
+
+| Phase | 内容 | 状態 |
+|-------|------|------|
+| Phase 1 | API拡張（submitMealRecord + 消費ログ連携） | ✅ 完了 |
+| Phase 2 | フロントエンド - 品物リスト表示 | ✅ 完了 |
+| Phase 3 | フロントエンド - 提供記録入力UI | ✅ 完了 |
+| Phase 4 | 家族ページ連携（消費ログ表示・指示対応確認） | ✅ 完了 |
+| Phase 5 | AIサジェスト統合（推奨提供数・期限警告） | ✅ 完了 |
+| Phase 6 | E2Eテスト（11件追加） | ✅ 完了 |
+
+### 実装ファイル
+
+**バックエンド**:
+- `functions/src/types/index.ts` - SnackRecord型、ConsumptionLog拡張
+- `functions/src/services/consumptionLogService.ts` - 消費ログ連携サービス
+- `functions/src/functions/submitMealRecord.ts` - API拡張
+
+**フロントエンド**:
+- `frontend/src/components/meal/` - 間食セクションコンポーネント群
+  - `FamilyItemCard.tsx` - 品物カード（在庫・期限・指示表示）
+  - `FamilyItemList.tsx` - 品物リスト
+  - `SnackRecordCard.tsx` - 提供記録入力カード（サジェスト表示付き）
+  - `SnackSection.tsx` - 間食セクション統合コンポーネント
+- `frontend/src/utils/snackSuggestion.ts` - サジェスト計算ユーティリティ
+- `frontend/src/hooks/useSnackSuggestion.ts` - サジェストフック（摂食傾向連携）
+- `frontend/e2e/snack-record.spec.ts` - E2Eテスト（11件）
+
+### テスト結果
+
+| テスト種別 | 件数 | 結果 |
+|------------|------|------|
+| ユニットテスト（snackSuggestion） | 16件 | ✅ 全通過 |
+| E2Eテスト（snack-record） | 11件 | ✅ 全通過 |
 
 ---
 
