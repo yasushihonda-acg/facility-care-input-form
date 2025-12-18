@@ -4,26 +4,42 @@
  *
  * Phase 13.0.2で品物リスト表示を実装
  * Phase 13.0.3で記録入力モーダルを実装
+ * Phase 13.1で構造化スケジュール対応
  */
 
 import { useMemo, useState } from 'react';
 import { useCareItems } from '../../hooks/useCareItems';
 import type { CareItem, ItemStatus } from '../../types/careItem';
 import { SnackRecordModal } from './SnackRecordModal';
+import {
+  isScheduledForToday as checkScheduledForToday,
+  isScheduledForTomorrow as checkScheduledForTomorrow,
+  formatScheduleShort,
+} from '../../utils/scheduleUtils';
 
 interface ItemBasedSnackRecordProps {
   residentId: string;
   onRecordComplete?: () => void;
 }
 
-// ソート優先度の判定ユーティリティ
+// ソート優先度の判定ユーティリティ（Phase 13.1: servingSchedule対応）
 function isScheduledForToday(item: CareItem): boolean {
+  // 新しい構造化スケジュールを優先
+  if (item.servingSchedule) {
+    return checkScheduledForToday(item.servingSchedule);
+  }
+  // 後方互換: plannedServeDate のみの場合
   if (!item.plannedServeDate) return false;
   const today = new Date().toISOString().split('T')[0];
   return item.plannedServeDate === today;
 }
 
 function isScheduledForTomorrow(item: CareItem): boolean {
+  // 新しい構造化スケジュールを優先
+  if (item.servingSchedule) {
+    return checkScheduledForTomorrow(item.servingSchedule);
+  }
+  // 後方互換: plannedServeDate のみの場合
   if (!item.plannedServeDate) return false;
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -266,14 +282,27 @@ function ItemCard({ item, highlight, onRecordClick }: ItemCardProps) {
               )}
             </div>
 
-            {item.plannedServeDate && (
+            {/* スケジュール表示（Phase 13.1: 構造化スケジュール対応） */}
+            {(item.servingSchedule || item.plannedServeDate) && (
               <div className="flex items-center gap-1 text-blue-600">
-                <span>📅</span>
-                <span>
-                  {new Date(item.plannedServeDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}
-                  {isScheduledForToday(item) && ' (今日)'}
-                  {isScheduledForTomorrow(item) && ' (明日)'}
-                </span>
+                {item.servingSchedule ? (
+                  // 新しい構造化スケジュール
+                  <span>
+                    {formatScheduleShort(item.servingSchedule)}
+                    {isScheduledForToday(item) && <span className="ml-1 text-amber-600 font-medium">← 今日</span>}
+                    {isScheduledForTomorrow(item) && <span className="ml-1 text-gray-500">(明日)</span>}
+                  </span>
+                ) : item.plannedServeDate ? (
+                  // 後方互換: 旧形式の単一日付
+                  <>
+                    <span>📅</span>
+                    <span>
+                      {new Date(item.plannedServeDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}
+                      {isScheduledForToday(item) && ' (今日)'}
+                      {isScheduledForTomorrow(item) && ' (明日)'}
+                    </span>
+                  </>
+                ) : null}
               </div>
             )}
 

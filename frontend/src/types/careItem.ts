@@ -122,8 +122,9 @@ export interface CareItem {
   // 提供希望（家族が入力）
   servingMethod: ServingMethod;
   servingMethodDetail?: string;
-  preferredServingSchedule?: string; // 提供希望スケジュール（新規）
-  plannedServeDate?: string;     // YYYY-MM-DD
+  preferredServingSchedule?: string; // 提供希望スケジュール（テキスト・後方互換）
+  plannedServeDate?: string;     // YYYY-MM-DD（後方互換）
+  servingSchedule?: ServingSchedule; // 構造化スケジュール（Phase 13.1）
   noteToStaff?: string;
 
   // 提供記録（スタッフが入力）- 旧: 互換性のため残す
@@ -169,6 +170,7 @@ export interface CareItemInput {
   servingMethod: ServingMethod;
   servingMethodDetail?: string;
   plannedServeDate?: string;
+  servingSchedule?: ServingSchedule; // 構造化スケジュール（Phase 13.1）
   noteToStaff?: string;
 }
 
@@ -956,4 +958,58 @@ export interface SearchFoodMasterResponse {
     servingMethods: ServingMethod[];
     notes?: string;
   };
+}
+
+// =============================================================================
+// スケジュール拡張 (Phase 13.1)
+// @see docs/ITEM_BASED_SNACK_RECORD_SPEC.md セクション3
+// =============================================================================
+
+/** 提供タイミング */
+export type ServingTimeSlot = 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'anytime';
+
+/** 提供タイミングのラベル */
+export const SERVING_TIME_SLOT_LABELS: Record<ServingTimeSlot, string> = {
+  breakfast: '朝食時',
+  lunch: '昼食時',
+  dinner: '夕食時',
+  snack: 'おやつ時',
+  anytime: 'いつでも',
+};
+
+/** 曜日ラベル（日曜始まり） */
+export const WEEKDAY_LABELS = ['日', '月', '火', '水', '木', '金', '土'];
+
+/** スケジュールタイプ */
+export type ScheduleType = 'once' | 'daily' | 'weekly' | 'specific_dates';
+
+/** スケジュールタイプのラベル */
+export const SCHEDULE_TYPE_LABELS: Record<ScheduleType, string> = {
+  once: '特定の日',
+  daily: '毎日',
+  weekly: '曜日指定',
+  specific_dates: '複数日指定',
+};
+
+/**
+ * 提供スケジュール
+ * @see docs/ITEM_BASED_SNACK_RECORD_SPEC.md セクション3.2
+ */
+export interface ServingSchedule {
+  type: ScheduleType;
+
+  /** type = 'once' の場合: 特定の日付 (YYYY-MM-DD) */
+  date?: string;
+
+  /** type = 'weekly' の場合: 曜日リスト (0=日, 1=月, 2=火, 3=水, 4=木, 5=金, 6=土) */
+  weekdays?: number[];
+
+  /** type = 'specific_dates' の場合: 複数日付リスト (YYYY-MM-DD[]) */
+  dates?: string[];
+
+  /** 共通: 提供タイミング */
+  timeSlot?: ServingTimeSlot;
+
+  /** 共通: 補足（自由記述） */
+  note?: string;
 }

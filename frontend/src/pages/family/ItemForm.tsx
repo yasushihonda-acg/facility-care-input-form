@@ -10,6 +10,7 @@ import { Layout } from '../../components/Layout';
 import { AISuggestion } from '../../components/family/AISuggestion';
 import { SaveAISuggestionDialog } from '../../components/family/SaveAISuggestionDialog';
 import { SaveManualPresetDialog } from '../../components/family/SaveManualPresetDialog';
+import { ServingScheduleInput } from '../../components/family/ServingScheduleInput';
 import { useSubmitCareItem } from '../../hooks/useCareItems';
 import { useDemoMode } from '../../hooks/useDemoMode';
 import { useAISuggest } from '../../hooks/useAISuggest';
@@ -24,8 +25,10 @@ import type {
   ItemCategory,
   StorageMethod,
   ServingMethod,
+  ServingSchedule,
   AISuggestResponse,
 } from '../../types/careItem';
+import { scheduleToPlannedDate } from '../../utils/scheduleUtils';
 import { DEMO_PRESETS } from '../../data/demoFamilyData';
 import type { CarePreset } from '../../types/family';
 
@@ -479,21 +482,24 @@ export function ItemForm() {
             </div>
           )}
 
-          {/* 提供予定日 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              提供予定日
-            </label>
-            <input
-              type="date"
-              value={formData.plannedServeDate || ''}
-              onChange={(e) => updateField('plannedServeDate', e.target.value || undefined)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
-            />
-            <p className="mt-1 text-xs text-gray-500">
-              指定日にスタッフへリマインダーが届きます
-            </p>
-          </div>
+          {/* 提供スケジュール（Phase 13.1） */}
+          <ServingScheduleInput
+            value={formData.servingSchedule}
+            onChange={(schedule: ServingSchedule | undefined) => {
+              // servingScheduleを更新
+              updateField('servingSchedule', schedule);
+              // 後方互換: once タイプの場合は plannedServeDate も更新
+              const plannedDate = scheduleToPlannedDate(schedule);
+              if (plannedDate !== formData.plannedServeDate) {
+                setFormData((prev) => ({
+                  ...prev,
+                  servingSchedule: schedule,
+                  plannedServeDate: plannedDate,
+                }));
+              }
+            }}
+            disabled={isSubmitting}
+          />
 
           {/* スタッフへの申し送り */}
           <div>

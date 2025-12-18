@@ -471,8 +471,9 @@ export interface CareItem {
   // 提供希望（家族が入力）
   servingMethod: ServingMethod;
   servingMethodDetail?: string;
-  preferredServingSchedule?: string; // 提供希望スケジュール
-  plannedServeDate?: string; // YYYY-MM-DD
+  preferredServingSchedule?: string; // 提供希望スケジュール（テキスト・後方互換）
+  plannedServeDate?: string; // YYYY-MM-DD（後方互換）
+  servingSchedule?: ServingSchedule; // 構造化スケジュール（Phase 13.1）
   noteToStaff?: string;
 
   // 提供記録（スタッフが入力）- 旧: 互換性のため残す
@@ -511,6 +512,7 @@ export interface CareItemInput {
   servingMethod: ServingMethod;
   servingMethodDetail?: string;
   plannedServeDate?: string;
+  servingSchedule?: ServingSchedule; // 構造化スケジュール（Phase 13.1）
   noteToStaff?: string;
 }
 
@@ -1575,4 +1577,43 @@ export interface GetFoodMastersResponse {
   items: FoodMaster[];
   total: number;
   hasMore: boolean;
+}
+
+// =============================================================================
+// スケジュール拡張 Types (Phase 13.1)
+// docs/ITEM_BASED_SNACK_RECORD_SPEC.md セクション3 に基づく型定義
+// =============================================================================
+
+/** 提供タイミング */
+export type ServingTimeSlot =
+  | "breakfast"
+  | "lunch"
+  | "dinner"
+  | "snack"
+  | "anytime";
+
+/** スケジュールタイプ */
+export type ScheduleType = "once" | "daily" | "weekly" | "specific_dates";
+
+/**
+ * 提供スケジュール
+ * @see docs/ITEM_BASED_SNACK_RECORD_SPEC.md セクション3.2
+ */
+export interface ServingSchedule {
+  type: ScheduleType;
+
+  /** type = 'once' の場合: 特定の日付 (YYYY-MM-DD) */
+  date?: string;
+
+  /** type = 'weekly' の場合: 曜日リスト (0=日, 1=月, 2=火, 3=水, 4=木, 5=金, 6=土) */
+  weekdays?: number[];
+
+  /** type = 'specific_dates' の場合: 複数日付リスト (YYYY-MM-DD[]) */
+  dates?: string[];
+
+  /** 共通: 提供タイミング */
+  timeSlot?: ServingTimeSlot;
+
+  /** 共通: 補足（自由記述） */
+  note?: string;
 }
