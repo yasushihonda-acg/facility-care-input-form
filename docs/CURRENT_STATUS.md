@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月18日 (間食記録連携 Phase 5 実装完了)
+> **最終更新**: 2025年12月18日 (間食記録連携 Phase 6 E2Eテスト完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -21,7 +21,7 @@
 
 ## 現在のタスク
 
-### 間食記録連携機能 Phase 6: E2Eテスト
+### 間食記録連携機能 - 全Phase完了 ✅
 
 **設計書**: [SNACK_RECORD_INTEGRATION_SPEC.md](./SNACK_RECORD_INTEGRATION_SPEC.md)
 
@@ -31,9 +31,9 @@
 - [x] Phase 3: フロントエンド - 提供記録入力UI 完了
 - [x] Phase 4: 家族ページ連携 完了
 - [x] Phase 5: AIサジェスト統合 完了
-- [ ] Phase 6: E2Eテスト（次のタスク）
+- [x] Phase 6: E2Eテスト 完了
 
-**Phase 1-5 実装ファイル**:
+**Phase 1-6 実装ファイル**:
 - `functions/src/types/index.ts` - SnackRecord型、ConsumptionLog拡張
 - `functions/src/services/consumptionLogService.ts` - 消費ログ連携サービス
 - `functions/src/functions/submitMealRecord.ts` - API拡張
@@ -51,10 +51,43 @@
 - `frontend/src/pages/family/ItemDetail.tsx` - 消費ログ表示・指示対応確認
 - `frontend/src/data/demo/demoConsumptionLogs.ts` - デモデータ修正
 - `frontend/e2e/family-page.spec.ts` - 品物詳細E2Eテスト追加
+- `frontend/e2e/snack-record.spec.ts` - 間食記録連携E2Eテスト（11件）
+- `frontend/src/App.tsx` - `/demo/staff/input/meal` ルート追加
+- `frontend/src/data/demo/demoCareItems.ts` - noteToStaff追加（羊羹）
 
 ---
 
 ## 最近の完了タスク
+
+### 間食記録連携 Phase 6 E2Eテスト完了 (2025-12-18)
+
+**設計書**: [SNACK_RECORD_INTEGRATION_SPEC.md](./SNACK_RECORD_INTEGRATION_SPEC.md)
+
+**Phase 6 - E2Eテスト**:
+
+| ファイル | 内容 |
+|----------|------|
+| `snack-record.spec.ts` | 間食記録連携E2Eテスト（11件） |
+| `App.tsx` | `/demo/staff/input/meal` ルート追加 |
+| `demoCareItems.ts` | 羊羹にnoteToStaff追加（テスト用） |
+
+**テストケース（11件）**:
+- SNACK-001〜003: 品物リスト表示（間食セクション、在庫あり品物、家族指示）
+- SNACK-010〜014: 提供記録入力UI（カード表示、サジェスト量、摂食状況選択、削除、メモ入力）
+- SNACK-020〜021: サジェスト表示（サジェスト理由、在庫残量）
+- SNACK-030: 自由テキスト入力（従来互換）
+
+**テスト結果**:
+- snack-record: 11/11 パス
+- demo-page: 43/43 パス
+- family-page: 20/21 パス（1件は既存の失敗）
+- family-user-scenario: 34/34 パス
+
+**間食記録連携機能 全Phase完了**:
+スタッフの食事記録入力（間食セクション）と家族の品物管理が完全に連携。
+家族が送った品物がどのように提供・摂食されたかを詳細に追跡可能になりました。
+
+---
 
 ### 間食記録連携 Phase 5 実装完了 (2025-12-18)
 
