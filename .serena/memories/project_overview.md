@@ -173,6 +173,18 @@ facility-care-input-form/
 - `saveToFoodMaster: !isDemoMode`を渡すことで本番のみ自動蓄積
 - 効果: APIコスト削減、応答速度向上（~2s → ~100ms）、施設固有データ構築
 
+**これは「AIマスター自動登録」または「学習するシステム」と呼ばれる機能です:**
+1. 家族が品物を登録 → aiSuggestで賞味期限・保存方法等を自動提案
+2. 本番モードの場合、AI生成結果をFoodMasterに自動保存
+3. 次回同じ品物が登録されると、FoodMasterからキャッシュヒット（Gemini API不要）
+4. 使えば使うほど賢くなり、応答が速くなるシステム
+
+### 直近の修正 (2025-12-18)
+- `/settings`ルーティング: 白画面エラー解消（リダイレクト追加）
+- GitHub Pages管理者リンク: `/input/meal?admin=true` → `/staff/input/meal?admin=true`
+- E2Eテスト: Playwright構文エラー修正（`test.setTimeout` → `test.describe.configure`）
+- CLAUDE.md: アプリケーションURLセクション追加（管理者画面URL明記）
+
 **デモデータ**: 15品目（バナナ、みかん、りんご、キウイ、羊羹、黒豆、らっきょう、カステラ、緑茶、りんごジュース、ヨーグルト、チーズ、エンシュア、おにぎり、黒砂糖）
 
 ## デモ機能

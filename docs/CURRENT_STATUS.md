@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月18日 (Phase 11.1: FoodMaster自動蓄積有効化完了)
+> **最終更新**: 2025年12月18日 (ルーティング修正・E2Eテスト修正・ドキュメント整備完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -26,6 +26,39 @@
 ---
 
 ## 最近の完了タスク
+
+### ルーティング修正・E2Eテスト修正・ドキュメント整備 (2025-12-18)
+
+**コミット**: `7594fab`, `f1a0a10`
+
+**概要**: `/settings`ルーティング問題の修正、GitHub Pages管理者リンク修正、E2Eテスト構文修正、ドキュメント整備を実施。
+
+**修正内容**:
+
+| 項目 | 修正内容 |
+|------|----------|
+| `/settings`ルーティング | `App.tsx`に`/settings` → `/staff/input/meal?admin=true`リダイレクト追加、白画面「No routes matched」エラー解消 |
+| GitHub Pages管理者リンク | 古いURL `/input/meal?admin=true` → 正しいURL `/staff/input/meal?admin=true` に更新（2箇所） |
+| E2Eテスト修正 | `demo-page.spec.ts`の`test.setTimeout()`を`test.describe.configure()`に修正、Playwright構文エラー解消 |
+| CLAUDE.md更新 | アプリケーションURLセクション追加（管理者画面URL明記） |
+
+**修正ファイル**:
+
+| ファイル | 変更内容 |
+|----------|----------|
+| `frontend/src/App.tsx` | `/settings`リダイレクトルート追加 |
+| `frontend/e2e/demo-page.spec.ts` | タイムアウト設定構文修正 |
+| `gh-pages/index.html` | 管理者リンクURL修正（2箇所） |
+| `CLAUDE.md` | アプリケーションURLセクション追加 |
+
+**テスト・デプロイ結果**:
+
+| 項目 | 結果 |
+|------|------|
+| E2Eテスト | 109件全パス ✅ |
+| CI/CD | 3ワークフロー全て成功 ✅（CI、Firebase Hosting、GitHub Pages） |
+
+---
 
 ### Phase 11.1: FoodMaster自動蓄積有効化 (2025-12-18)
 
