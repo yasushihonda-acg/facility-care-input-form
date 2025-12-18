@@ -11,6 +11,7 @@ import type { SnackRecord } from '../../types/mealForm';
 import { useCareItems } from '../../hooks/useCareItems';
 import { FamilyItemList } from './FamilyItemList';
 import { SnackRecordCard } from './SnackRecordCard';
+import { extractSuggestedQuantity } from '../../utils/snackSuggestion';
 
 interface SnackSectionProps {
   /** 入居者ID（品物フィルタリング用） */
@@ -47,7 +48,16 @@ export function SnackSection({
     [snackRecords]
   );
 
-  // itemIdから家族指示を取得するマップ
+  // itemIdからCareItemを取得するマップ
+  const itemMap = useMemo(() => {
+    const map = new Map<string, CareItem>();
+    items.forEach((item) => {
+      map.set(item.id, item);
+    });
+    return map;
+  }, [items]);
+
+  // itemIdから家族指示を取得するマップ（後方互換）
   const itemInstructionMap = useMemo(() => {
     const map = new Map<string, string>();
     items.forEach((item) => {
@@ -70,11 +80,12 @@ export function SnackSection({
       newRecords.splice(existingIndex, 1);
       onSnackRecordsChange(newRecords);
     } else {
-      // 新規選択 → 追加（デフォルト値で）
+      // 新規選択 → 追加（サジェスト量で初期化）
+      const suggestion = extractSuggestedQuantity(item);
       const newRecord: SnackRecord = {
         itemId: item.id,
         itemName: item.itemName,
-        servedQuantity: 1,
+        servedQuantity: suggestion.quantity,
         unit: item.unit,
         consumptionStatus: 'full', // デフォルト: 完食
         followedInstruction: !!item.noteToStaff, // 指示がある場合はデフォルトでチェック
@@ -145,6 +156,7 @@ export function SnackSection({
               key={record.itemId || index}
               record={record}
               index={index}
+              item={record.itemId ? itemMap.get(record.itemId) : undefined}
               familyInstruction={record.itemId ? itemInstructionMap.get(record.itemId) : undefined}
               onChange={handleRecordChange}
               onRemove={handleRecordRemove}

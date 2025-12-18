@@ -6,11 +6,13 @@
  */
 
 import type { SnackRecord } from '../../types/mealForm';
-import type { ConsumptionStatus } from '../../types/careItem';
+import type { CareItem, ConsumptionStatus } from '../../types/careItem';
+import { extractSuggestedQuantity, getExpirationWarning } from '../../utils/snackSuggestion';
 
 interface SnackRecordCardProps {
   record: SnackRecord;
   index: number;
+  item?: CareItem; // 品物情報（サジェスト用）
   familyInstruction?: string; // 家族からの指示（noteToStaff）
   onChange: (index: number, updates: Partial<SnackRecord>) => void;
   onRemove: (index: number) => void;
@@ -32,10 +34,20 @@ const CONSUMPTION_STATUS_OPTIONS: {
 export function SnackRecordCard({
   record,
   index,
+  item,
   familyInstruction,
   onChange,
   onRemove,
 }: SnackRecordCardProps) {
+  // サジェスト情報を計算
+  const suggestion = item ? extractSuggestedQuantity(item) : null;
+  const expirationWarning = item ? getExpirationWarning(item.expirationDate) : null;
+
+  // 在庫残量を計算
+  const currentStock = item
+    ? (item.currentQuantity ?? item.remainingQuantity ?? item.quantity)
+    : undefined;
+
   const handleQuantityChange = (value: string) => {
     const qty = parseFloat(value);
     if (!isNaN(qty) && qty >= 0) {
@@ -75,20 +87,46 @@ export function SnackRecordCard({
         </button>
       </div>
 
-      {/* 提供数入力 */}
-      <div className="flex items-center gap-3">
-        <label className="text-sm text-gray-600 whitespace-nowrap">提供数:</label>
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            min="0"
-            step="0.5"
-            value={record.servedQuantity}
-            onChange={(e) => handleQuantityChange(e.target.value)}
-            className="w-20 px-2 py-1 border border-gray-300 rounded text-center focus:ring-2 focus:ring-primary focus:border-primary"
-          />
-          <span className="text-sm text-gray-600">{record.unit || '個'}</span>
+      {/* 期限警告 */}
+      {expirationWarning && expirationWarning.type !== 'ok' && (
+        <div className={`p-2 rounded-lg text-sm ${
+          expirationWarning.type === 'expired'
+            ? 'bg-red-50 text-red-700 border border-red-200'
+            : 'bg-orange-50 text-orange-700 border border-orange-200'
+        }`}>
+          {expirationWarning.type === 'expired' ? '⚠️ ' : '⏰ '}
+          {expirationWarning.message}
         </div>
+      )}
+
+      {/* 提供数入力 */}
+      <div className="space-y-1">
+        <div className="flex items-center gap-3">
+          <label className="text-sm text-gray-600 whitespace-nowrap">提供数:</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min="0"
+              step="0.5"
+              value={record.servedQuantity}
+              onChange={(e) => handleQuantityChange(e.target.value)}
+              className="w-20 px-2 py-1 border border-gray-300 rounded text-center focus:ring-2 focus:ring-primary focus:border-primary"
+            />
+            <span className="text-sm text-gray-600">{record.unit || '個'}</span>
+            {currentStock !== undefined && (
+              <span className="text-xs text-gray-400">
+                (残り {currentStock}{record.unit || '個'})
+              </span>
+            )}
+          </div>
+        </div>
+        {/* サジェスト理由表示 */}
+        {suggestion && suggestion.source !== 'default' && (
+          <p className="text-xs text-purple-600 ml-12">
+            💡 {suggestion.source === 'instruction' ? '指示より: ' : '在庫より: '}
+            {suggestion.reason}
+          </p>
+        )}
       </div>
 
       {/* 摂食状況選択 */}
