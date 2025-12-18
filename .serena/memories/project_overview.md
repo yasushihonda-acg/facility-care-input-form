@@ -131,6 +131,14 @@ facility-care-input-form/
 | POST | `/recordConsumptionLog` | 消費ログ記録 |
 | GET | `/getConsumptionLogs` | 消費ログ一覧取得 |
 
+### 間食記録連携 (Phase 10)
+スタッフ食事入力と家族品物管理の連携機能。
+- 食事記録入力時に家族が送った品物リストを表示
+- AIサジェスト（推奨提供数・期限警告）
+- 消費ログ自動記録
+- 関連コンポーネント: `SnackSection`, `FamilyItemList`, `SnackRecordCard`
+- 設計書: `docs/SNACK_RECORD_INTEGRATION_SPEC.md`
+
 ### 統計拡張 (Phase 9.3)
 | メソッド | パス | 説明 |
 |----------|------|------|
@@ -166,11 +174,13 @@ facility-care-input-form/
 - 設計書: `docs/DEMO_SHOWCASE_SPEC.md` セクション11
 - 品質チェック: `docs/QUALITY_CHECK_DEMO_WRITE_OPS.md`
 
-### E2Eテスト（77件）
+### E2Eテスト（109件）
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |
 | `family-user-scenario.spec.ts` | 34件 | 家族シナリオ・パリティ・本番準備 |
+| `family-page.spec.ts` | 21件 | 品物詳細・消費ログ・指示対応 |
+| `snack-record.spec.ts` | 11件 | 間食記録連携・AIサジェスト |
 
 - **パリティテスト**: デモと本番で同じUIが表示されることを検証
 - **実行**: `cd frontend && npx playwright test`

@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月18日 (間食記録連携 Phase 6 E2Eテスト完了)
+> **最終更新**: 2025年12月18日 (Firestoreインデックス修正・getCareItems 500エラー解消)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -58,6 +58,36 @@
 ---
 
 ## 最近の完了タスク
+
+### Firestoreインデックス修正・getCareItems 500エラー解消 (2025-12-18)
+
+**問題**: スタッフ用ページの記録入力ビューで `getCareItems` APIが500エラーを返していた
+
+**原因**: Firestoreの複合インデックス不足
+- クエリ: `residentId` + `status` (in) + `sentDate` (desc) + `createdAt` (desc)
+- 既存インデックス: `residentId` + `sentDate` + `createdAt` のみ（statusなし）
+
+**修正内容**:
+
+| ファイル | 修正内容 |
+|----------|----------|
+| `firestore.indexes.json` | `residentId` + `status` + `sentDate` + `createdAt` インデックス追加 |
+| `frontend/index.html` | `mobile-web-app-capable` meta tag追加（PWA警告対応） |
+
+**インデックス作成コマンド**:
+```bash
+gcloud firestore indexes composite create \
+  --collection-group=care_items \
+  --field-config=field-path=residentId,order=ascending \
+  --field-config=field-path=status,order=ascending \
+  --field-config=field-path=sentDate,order=descending \
+  --field-config=field-path=createdAt,order=descending \
+  --project=facility-care-input-form
+```
+
+**結果**: API正常動作確認済み（`{"success":true,"data":{"items":[],"total":0,"hasMore":false}}`）
+
+---
 
 ### 間食記録連携 Phase 6 E2Eテスト完了 (2025-12-18)
 
