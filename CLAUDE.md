@@ -118,11 +118,11 @@ gh run list --repo yasushihonda-acg/facility-care-input-form --workflow=gh-pages
 | ファイル | 用途 |
 |----------|------|
 | `docs/DEMO_PWA_SPEC.md` | デモ版PWA仕様 |
-| `docs/DEMO_SHOWCASE_SPEC.md` | デモショーケース設計（シードデータ・専用ページ） |
 | `docs/DESIGN_GUIDELINES.md` | デザインガイドライン |
 | `docs/SYNC_STRATEGY.md` | 同期戦略設計 |
 | `docs/SYNC_CONCURRENCY.md` | 同期競合防止設計 |
 | `docs/SETUP.md` | 環境セットアップガイド |
+| `docs/QUALITY_CHECK_DEMO_WRITE_OPS.md` | デモ書き込み操作品質チェック |
 
 ---
 
