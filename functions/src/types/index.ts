@@ -50,13 +50,19 @@ export interface SnackRecord {
 }
 
 export interface SubmitMealRecordRequest {
-  // 必須フィールド
+  // === Phase 13.0.4: 記録モード ===
+  // 'full': 通常の食事記録（デフォルト）
+  // 'snack_only': 品物から記録タブ用（間食のみ記録）
+  // docs/ITEM_BASED_SNACK_RECORD_SPEC.md セクション2.5
+  recordMode?: "full" | "snack_only";
+
+  // 必須フィールド（recordMode='snack_only'の場合はstaffNameのみ必須）
   staffName: string; // 入力者（あなた）は？
-  facility: string; // 利用者様のお住まいの施設は？
-  residentName: string; // 利用者名は？
-  dayServiceUsage: "利用中" | "利用中ではない"; // デイサービスの利用中ですか？
-  mealTime: "朝" | "昼" | "夜"; // 食事はいつのことですか？
-  isImportant: "重要" | "重要ではない"; // 重要特記事項集計表に反映させますか？
+  facility?: string; // 利用者様のお住まいの施設は？
+  residentName?: string; // 利用者名は？
+  dayServiceUsage?: "利用中" | "利用中ではない"; // デイサービスの利用中ですか？
+  mealTime?: "朝" | "昼" | "夜"; // 食事はいつのことですか？
+  isImportant?: "重要" | "重要ではない"; // 重要特記事項集計表に反映させますか？
 
   // 条件付き必須フィールド（dayServiceUsage='利用中'の場合必須）
   dayServiceName?: string; // どこのデイサービスですか？

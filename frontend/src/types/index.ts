@@ -59,20 +59,38 @@ export interface SyncState {
 }
 
 // submitMealRecord request
+// Phase 13.0.4: recordMode追加でsnack_only対応
+import type { SnackRecord } from './mealForm';
+export type { SnackRecord } from './mealForm';
+
 export interface SubmitMealRecordRequest {
+  // === Phase 13.0.4: 記録モード ===
+  // 'full': 通常の食事記録（デフォルト）
+  // 'snack_only': 品物から記録タブ用（間食のみ記録）
+  recordMode?: 'full' | 'snack_only';
+
+  // 必須フィールド（recordMode='snack_only'の場合はstaffNameのみ必須）
   staffName: string;
-  facility: string;
-  residentName: string;
-  dayServiceUsage: '利用中' | '利用中ではない';
-  mealTime: '朝' | '昼' | '夜';
-  isImportant: '重要' | '重要ではない';
+  facility?: string;
+  residentName?: string;
+  dayServiceUsage?: '利用中' | '利用中ではない';
+  mealTime?: '朝' | '昼' | '夜';
+  isImportant?: '重要' | '重要ではない';
+
+  // 条件付き必須フィールド
   dayServiceName?: string;
+
+  // 任意フィールド
   mainDishRatio?: string;
   sideDishRatio?: string;
   injectionType?: string;
   injectionAmount?: string;
   snack?: string;
   note?: string;
+
+  // === 間食記録連携用（オプショナル）===
+  snackRecords?: SnackRecord[];
+  residentId?: string;
 }
 
 // submitMealRecord response

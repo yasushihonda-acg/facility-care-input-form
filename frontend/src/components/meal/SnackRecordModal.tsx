@@ -12,6 +12,8 @@ import type { MealTime, RecordConsumptionLogRequest, ConsumptionStatus } from '.
 import { determineConsumptionStatus, calculateConsumptionRate } from '../../types/consumptionLog';
 import { CONSUMPTION_STATUSES } from '../../types/careItem';
 import { useRecordConsumptionLog } from '../../hooks/useConsumptionLogs';
+import { submitMealRecord } from '../../api';
+import type { SnackRecord } from '../../types/mealForm';
 
 // 摂食状況の絵文字マッピング
 const CONSUMPTION_EMOJIS: Record<ConsumptionStatus, string> = {
@@ -126,7 +128,7 @@ export function SnackRecordModal({
     }
 
     // Phase 13.0.3: consumption_log への記録
-    const request: RecordConsumptionLogRequest = {
+    const consumptionRequest: RecordConsumptionLogRequest = {
       itemId: item.id,
       servedDate: formData.servedDate,
       servedTime: formData.servedTime || undefined,
@@ -140,9 +142,32 @@ export function SnackRecordModal({
       recordedBy: formData.servedBy,
     };
 
+    // Phase 13.0.4: Sheet B 連携用 SnackRecord
+    const snackRecord: SnackRecord = {
+      itemId: item.id,
+      itemName: item.itemName,
+      servedQuantity: formData.servedQuantity,
+      unit: item.unit,
+      consumptionStatus: formData.consumptionStatus,
+      consumptionRate: calculateConsumptionRate(formData.consumedQuantity, formData.servedQuantity),
+      followedInstruction: formData.followedFamilyInstructions,
+      instructionNote: item.noteToStaff || undefined,
+      note: formData.consumptionNote || undefined,
+      noteToFamily: formData.noteToFamily || undefined,
+    };
+
     try {
-      await recordMutation.mutateAsync(request);
-      // TODO Phase 13.0.4: Sheet B への書き込み（submitMealRecord API）
+      // 1. consumption_log に記録
+      await recordMutation.mutateAsync(consumptionRequest);
+
+      // 2. Phase 13.0.4: Sheet B に記録（snack_onlyモード）
+      await submitMealRecord({
+        recordMode: 'snack_only',
+        staffName: formData.servedBy,
+        snackRecords: [snackRecord],
+        residentId: item.residentId,
+      });
+
       onSuccess?.();
       onClose();
     } catch (err) {

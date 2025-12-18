@@ -34,6 +34,8 @@ interface SubmitMealRecordResponse {
 /**
  * リクエストのバリデーション
  * docs/MEAL_INPUT_FORM_SPEC.md に基づく
+ * Phase 13.0.4: recordMode='snack_only' 対応
+ * docs/ITEM_BASED_SNACK_RECORD_SPEC.md セクション2.5
  */
 function validateRequest(
   body: unknown
@@ -43,12 +45,36 @@ function validateRequest(
   }
 
   const req = body as Record<string, unknown>;
+  const recordMode = (req.recordMode as string) || "full";
 
-  // 必須フィールドのチェック
+  // staffNameは常に必須
   if (!req.staffName || typeof req.staffName !== "string") {
     return {valid: false, error: "staffName is required"};
   }
 
+  // snack_onlyモードの場合: snackRecordsが必須、他の必須フィールドはスキップ
+  if (recordMode === "snack_only") {
+    if (!req.snackRecords || !Array.isArray(req.snackRecords) ||
+        req.snackRecords.length === 0) {
+      return {valid: false, error: "snackRecords is required for snack_only mode"};
+    }
+
+    return {
+      valid: true,
+      data: {
+        recordMode: "snack_only",
+        staffName: req.staffName as string,
+        facility: req.facility as string | undefined,
+        residentName: req.residentName as string | undefined,
+        snack: req.snack as string | undefined,
+        note: req.note as string | undefined,
+        snackRecords: req.snackRecords as SnackRecord[],
+        residentId: req.residentId as string | undefined,
+      },
+    };
+  }
+
+  // fullモード: 従来通りの必須バリデーション
   if (!req.facility || typeof req.facility !== "string") {
     return {valid: false, error: "facility is required"};
   }
@@ -80,6 +106,7 @@ function validateRequest(
   return {
     valid: true,
     data: {
+      recordMode: "full",
       staffName: req.staffName as string,
       facility: req.facility as string,
       residentName: req.residentName as string,
@@ -163,11 +190,14 @@ async function submitMealRecordHandler(
       }
     }
 
+    const isSnackOnlyMode = mealRecord.recordMode === "snack_only";
+
     functions.logger.info("submitMealRecord started", {
       staffName: mealRecord.staffName,
       residentName: mealRecord.residentName,
       facility: mealRecord.facility,
       mealTime: mealRecord.mealTime,
+      recordMode: mealRecord.recordMode || "full",
       hasSnackRecords: !!mealRecord.snackRecords?.length,
     });
 
@@ -175,45 +205,48 @@ async function submitMealRecordHandler(
     const {sheetRow, postId} = await appendMealRecordToSheetB(mealRecord);
 
     // Google Chat Webhook通知（非同期・エラーでも処理続行）
-    try {
-      // Firestoreから設定を取得
-      const db = getFirestore();
-      const settingsDoc = await db.collection("settings").doc("mealFormDefaults").get();
-      const settings = settingsDoc.exists ?
-        (settingsDoc.data() as MealFormSettings) :
-        null;
+    // snack_onlyモードの場合はWebhook通知をスキップ
+    if (!isSnackOnlyMode) {
+      try {
+        // Firestoreから設定を取得
+        const db = getFirestore();
+        const settingsDoc = await db.collection("settings").doc("mealFormDefaults").get();
+        const settings = settingsDoc.exists ?
+          (settingsDoc.data() as MealFormSettings) :
+          null;
 
-      if (settings && (settings.webhookUrl || settings.importantWebhookUrl)) {
-        // Webhook送信用データを作成
-        const chatRecord: MealRecordForChat = {
-          facility: mealRecord.facility,
-          residentName: mealRecord.residentName,
-          staffName: mealRecord.staffName,
-          mealTime: mealRecord.mealTime,
-          mainDishRatio: mealRecord.mainDishRatio,
-          sideDishRatio: mealRecord.sideDishRatio,
-          injectionType: mealRecord.injectionType,
-          injectionAmount: mealRecord.injectionAmount,
-          note: mealRecord.note,
-          postId: postId,
-        };
+        if (settings && (settings.webhookUrl || settings.importantWebhookUrl)) {
+          // Webhook送信用データを作成
+          const chatRecord: MealRecordForChat = {
+            facility: mealRecord.facility || "",
+            residentName: mealRecord.residentName || "",
+            staffName: mealRecord.staffName,
+            mealTime: mealRecord.mealTime || "朝",
+            mainDishRatio: mealRecord.mainDishRatio,
+            sideDishRatio: mealRecord.sideDishRatio,
+            injectionType: mealRecord.injectionType,
+            injectionAmount: mealRecord.injectionAmount,
+            note: mealRecord.note,
+            postId: postId,
+          };
 
-        // 重要フラグの判定
-        const isImportant = mealRecord.isImportant === "重要";
+          // 重要フラグの判定
+          const isImportant = mealRecord.isImportant === "重要";
 
-        // Webhook送信（非同期で実行、結果を待たない）
-        notifyMealRecord(
-          chatRecord,
-          settings.webhookUrl,
-          settings.importantWebhookUrl,
-          isImportant
-        ).catch((webhookError) => {
-          functions.logger.warn("Webhook notification failed:", webhookError);
-        });
+          // Webhook送信（非同期で実行、結果を待たない）
+          notifyMealRecord(
+            chatRecord,
+            settings.webhookUrl,
+            settings.importantWebhookUrl,
+            isImportant
+          ).catch((webhookError) => {
+            functions.logger.warn("Webhook notification failed:", webhookError);
+          });
+        }
+      } catch (webhookError) {
+        // Webhookエラーは記録成功には影響させない
+        functions.logger.warn("Webhook setup failed:", webhookError);
       }
-    } catch (webhookError) {
-      // Webhookエラーは記録成功には影響させない
-      functions.logger.warn("Webhook setup failed:", webhookError);
     }
 
     // 間食記録から消費ログを作成（非同期・エラーでも処理続行）

@@ -159,21 +159,24 @@ function buildMealRecordRow(request: SubmitMealRecordRequest): MealRecordRow {
   const postId = generatePostId();
 
   // 重要フラグの変換（"重要" → "はい", "重要ではない" → "いいえ"）
+  // snack_onlyモードでは isImportant が undefined の場合がある
   const isImportantValue = request.isImportant === "重要" ? "はい" : "いいえ";
 
+  // Phase 13.0.4: snack_onlyモード対応
+  // snack_onlyモードでは facility, residentName, mealTime, dayServiceUsage が undefined の場合がある
   const row: MealRecordRow = {
     timestamp: timestamp, // A列
     staffName: request.staffName, // B列
-    residentName: request.residentName, // C列
-    mealTime: request.mealTime, // D列
+    residentName: request.residentName || "", // C列
+    mealTime: request.mealTime || "", // D列
     mainDishRatio: request.mainDishRatio || "", // E列
     sideDishRatio: request.sideDishRatio || "", // F列
     injectionAmount: request.injectionAmount || "", // G列
     snack: request.snack || "", // H列
     specialNotes: request.note || "", // I列
     isImportant: isImportantValue, // J列
-    facility: request.facility, // K列
-    dayServiceUsage: request.dayServiceUsage, // L列
+    facility: request.facility || "", // K列
+    dayServiceUsage: request.dayServiceUsage || "", // L列
     injectionType: request.injectionType || "", // M列
     postId: postId, // N列
     dayServiceName: request.dayServiceName || "", // O列
