@@ -216,13 +216,27 @@ facility-care-input-form/
 - 設計書: `docs/DEMO_SHOWCASE_SPEC.md` セクション11
 - 品質チェック: `docs/QUALITY_CHECK_DEMO_WRITE_OPS.md`
 
-### E2Eテスト（109件）
+### FIFO対応 (Phase 12.0)
+同じ品物が複数回送られた場合（つぎたしケース）の賞味期限混同を防ぐ機能。
+
+**表示順序**: 賞味期限が近い順 → 送付日が古い順（期限なしは末尾）
+
+**UIコンポーネント**:
+- `FIFOWarning.tsx`: 間食提供時に同一品物の推奨表示
+- `SameItemAlert.tsx`: 品物詳細で先消費推奨アラート
+
+**設計方針**: 「裏で自然に動く」- デモで強調せず、あって当たり前の機能として動作
+
+**設計書**: `docs/FIFO_DESIGN_SPEC.md`
+
+### E2Eテスト（117件）
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |
 | `family-user-scenario.spec.ts` | 34件 | 家族シナリオ・パリティ・本番準備 |
 | `family-page.spec.ts` | 21件 | 品物詳細・消費ログ・指示対応 |
 | `snack-record.spec.ts` | 11件 | 間食記録連携・AIサジェスト |
+| `fifo.spec.ts` | 8件 | FIFO機能（期限順ソート・同一品物警告） |
 
 - **パリティテスト**: デモと本番で同じUIが表示されることを検証
 - **実行**: `cd frontend && npx playwright test`
