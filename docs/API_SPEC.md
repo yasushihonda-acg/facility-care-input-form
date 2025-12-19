@@ -76,9 +76,9 @@ https://asia-northeast1-facility-care-input-form.cloudfunctions.net
 | POST | `/submitMealRecord` | 食事記録を入力 | Flow B | ✅ |
 | GET | `/getMealFormSettings` | 食事フォーム設定を取得 | - | ✅ |
 | POST | `/updateMealFormSettings` | 食事フォーム設定を更新 | - | ✅ |
-| POST | `/uploadCareImage` | 画像をアップロード | 画像連携 | ✅ |
+| POST | `/uploadCareImage` | 画像をFirebase Storageにアップロード | Phase 17 | ✅ |
+| GET | `/getCarePhotos` | 写真メタデータを取得 | Phase 17 | ✅ |
 | POST | `/testWebhook` | Webhook URLの動作確認 | 管理テスト | ✅ |
-| POST | `/testDriveAccess` | DriveフォルダIDの権限確認 | 管理テスト | ✅ |
 | POST | `/createCareItem` | 品物を登録 | Phase 8.1 | ✅ |
 | GET | `/getCareItems` | 品物一覧を取得 | Phase 8.1 | ✅ |
 | PUT | `/updateCareItem` | 品物を更新 | Phase 8.1 | ✅ |
@@ -523,7 +523,9 @@ Content-Type: application/json
 
 ### 4.4 POST /uploadCareImage
 
-ケア記録に添付する画像をGoogle Driveにアップロードします。
+ケア記録に添付する画像をFirebase Storageにアップロードします。（Phase 17で移行）
+
+> **変更履歴**: Phase 17でGoogle DriveからFirebase Storageに移行。写真メタデータはFirestore `care_photos` コレクションに保存されます。
 
 #### リクエスト
 
@@ -534,10 +536,11 @@ Content-Type: multipart/form-data
 
 | フィールド | 型 | 必須 | 説明 |
 |------------|-----|------|------|
-| `image` | file | Yes | 画像ファイル（JPEG/PNG） |
+| `image` | file | Yes | 画像ファイル（JPEG/PNG/GIF/WebP） |
 | `staffId` | string | Yes | スタッフID |
 | `residentId` | string | Yes | 入居者ID |
-| `recordType` | string | No | 関連するレコード種別 |
+| `mealTime` | string | No | 食事時間（breakfast/lunch/dinner/snack）デフォルト: snack |
+| `staffName` | string | No | スタッフ名 |
 
 #### レスポンス
 
@@ -545,12 +548,58 @@ Content-Type: multipart/form-data
 {
   "success": true,
   "data": {
-    "fileId": "1abc123def456",
-    "fileName": "R001_20240115_160000.jpg",
-    "publicUrl": "https://drive.google.com/uc?id=1abc123def456",
-    "thumbnailUrl": "https://drive.google.com/thumbnail?id=1abc123def456"
+    "photoId": "abc123def456",
+    "fileName": "resident-001_20251219160000_x7k9m2.jpg",
+    "photoUrl": "https://firebasestorage.googleapis.com/v0/b/facility-care-input-form.appspot.com/o/care-photos%2F2025%2F12%2Fresident-001_20251219160000_x7k9m2.jpg?alt=media",
+    "storagePath": "care-photos/2025/12/resident-001_20251219160000_x7k9m2.jpg"
   },
-  "timestamp": "2024-01-15T16:00:05.000Z"
+  "timestamp": "2025-12-19T16:00:05.000Z"
+}
+```
+
+---
+
+### 4.4.1 GET /getCarePhotos
+
+入居者の写真メタデータをFirestore `care_photos` コレクションから取得します。（Phase 17で追加）
+
+#### リクエスト
+
+```http
+GET /getCarePhotos?residentId=resident-001&date=2025-12-19
+GET /getCarePhotos?residentId=resident-001&date=2025-12-19&mealTime=snack
+```
+
+| パラメータ | 型 | 必須 | 説明 |
+|------------|-----|------|------|
+| `residentId` | string | Yes | 入居者ID |
+| `date` | string | Yes | 日付（YYYY-MM-DD形式） |
+| `mealTime` | string | No | 食事時間でフィルタ（breakfast/lunch/dinner/snack） |
+
+#### レスポンス
+
+```json
+{
+  "success": true,
+  "data": {
+    "photos": [
+      {
+        "photoId": "abc123def456",
+        "residentId": "resident-001",
+        "date": "2025-12-19",
+        "mealTime": "snack",
+        "photoUrl": "https://firebasestorage.googleapis.com/v0/b/...",
+        "storagePath": "care-photos/2025/12/...",
+        "fileName": "resident-001_20251219160000_x7k9m2.jpg",
+        "mimeType": "image/jpeg",
+        "fileSize": 245678,
+        "staffId": "staff-001",
+        "staffName": "田中花子",
+        "uploadedAt": "2025-12-19T16:00:05.000Z"
+      }
+    ]
+  },
+  "timestamp": "2025-12-19T16:30:00.000Z"
 }
 ```
 
@@ -743,52 +792,11 @@ Webhook URLの動作確認テスト。管理者が設定保存前にURLの有効
 
 ---
 
-### 4.11 POST /testDriveAccess
+### 4.11 ~~POST /testDriveAccess~~ (削除済み)
 
-Google DriveフォルダIDのアクセス権限確認テスト。管理者が設定保存前にフォルダへのアクセス可否を確認するために使用。
-
-> **詳細設計**: [ADMIN_TEST_FEATURE_SPEC.md](./ADMIN_TEST_FEATURE_SPEC.md) を参照
-
-**エンドポイント**: `POST /testDriveAccess`
-
-**リクエスト**:
-```json
-{
-  "folderId": "1ABC123xyz..."
-}
-```
-
-| フィールド | 型 | 必須 | 説明 |
-|-----------|-----|------|------|
-| `folderId` | string | Yes | テスト対象のGoogle DriveフォルダID |
-
-**成功レスポンス (200)**:
-```json
-{
-  "success": true,
-  "message": "フォルダにアクセス可能",
-  "folderName": "ケア写真フォルダ",
-  "timestamp": "2024-01-15T12:00:00.000Z"
-}
-```
-
-**失敗レスポンス (400)**:
-```json
-{
-  "success": false,
-  "message": "フォルダにアクセスできません",
-  "error": "フォルダへのアクセス権限がありません",
-  "advice": "以下の手順でサービスアカウントを共有してください:\n\n1. Google Driveで対象フォルダを右クリック\n2. 「共有」を選択\n3. 「facility-care-sa@facility-care-input-form.iam.gserviceaccount.com」を追加\n4. 権限を「編集者」に設定\n5. 「送信」をクリック",
-  "timestamp": "2024-01-15T12:00:00.000Z"
-}
-```
-
-> **v1.1改善**: `advice` フィールドを追加。エラー種別に応じた親切なアドバイスを返却。
-
-**検証内容**:
-1. 指定IDのファイル/フォルダが存在するか
-2. サービスアカウントにアクセス権限があるか
-3. 対象がフォルダであるか（ファイルでないか）
+> ⚠️ **Phase 17で削除**: 写真保存先がGoogle DriveからFirebase Storageに移行されたため、このAPIは削除されました。
+>
+> 写真アップロードは `/uploadCareImage` を使用してください。Firebase Storageは同一プロジェクト内のため、権限テストは不要です。
 
 ---
 
@@ -2231,6 +2239,7 @@ curl -X POST \
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
+| 2025-12-19 | 1.13.0 | Phase 17: Firebase Storage移行（uploadCareImage更新、getCarePhotos追加、testDriveAccess削除） |
 | 2025-12-19 | 1.12.0 | Phase 13.0: submitMealRecord recordModeパラメータ追加（snack_only対応） |
 | 2025-12-18 | 1.11.0 | Phase 8.4.1: AI API詳細ドキュメント追加（aiSuggest, aiAnalyze） |
 | 2025-12-17 | 1.10.1 | Firestore undefined エラー修正（ignoreUndefinedProperties設定追加） |

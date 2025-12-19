@@ -1,6 +1,6 @@
 # 引き継ぎドキュメント
 
-> **最終更新**: 2025年12月19日（Phase 15.6: 摂食割合の数値入力・残り対応フィールド）
+> **最終更新**: 2025年12月19日（Phase 17: Firebase Storage 写真連携 - 完了）
 >
 > 本ドキュメントは、開発を引き継ぐ際に必要な情報をまとめたものです。
 
@@ -64,7 +64,7 @@ cd frontend && npm install && npm run dev
 | 記録閲覧 | スプレッドシートからのデータ同期・表示 | ✅ 完了 |
 | 食事入力フォーム | スタッフによる食事記録入力 | ✅ 完了 |
 | Google Chat通知 | 入力時にWebhookで自動通知 | ✅ 完了 |
-| 写真アップロード | Google Driveへの画像保存 | ✅ 完了 |
+| 写真アップロード | Firebase Storageへの画像保存 | ✅ 完了 |
 | 家族ビュー | 家族向けタイムライン・エビデンス表示 | ✅ 完了 |
 | 予実管理 | Plan（指示）とResult（実績）の対比 | ✅ 完了 |
 | 管理設定テスト | Webhook/Driveの事前テスト | ✅ 完了 |
@@ -280,13 +280,15 @@ facility-care-input-form/
 | Phase 14 | スタッフ用デモページ（DemoStaffHome・DemoStaffShowcase・E2Eテスト17件追加） | 2025-12-19 |
 | Phase 15 | スタッフ記録入力フォーム統一（タブ削除、StaffRecordDialog統一、E2Eテスト22件） | 2025-12-19 |
 | Phase 15.6 | 摂食割合の数値入力（0-10）・残り対応フィールド（破棄/保存/その他） | 2025-12-19 |
+| Phase 16 | 写真エビデンス表示（EvidenceMonitor実画像表示、デモ対応、E2E 5件） | 2025-12-19 |
+| Phase 17 | Firebase Storage写真連携（Drive→Storage移行、care_photos、Webhook連携、E2E検証） | 2025-12-19 |
 
 ### 4.2 将来のタスク
 
 | 機能 | 内容 | 優先度 |
 |------|------|--------|
 | ケア指示のFirestore保存 | モックデータ → Firestore永続化 | 中 |
-| 写真エビデンス表示 | Google Drive画像を家族ビューで表示 | 中 |
+| 週次レポート生成 | Gemini APIによる週次サマリー自動生成 | 中 |
 | CSVエクスポート | 表示中のデータをCSVでダウンロード | 低 |
 
 ### 4.3 Phase 5.8-5.10 管理設定関連機能（完了）
@@ -308,6 +310,67 @@ facility-care-input-form/
 - **問題**: モーダルでテストだけ実行→キャンセル→再度開くと前回の入力値が残る
 - **原因**: Reactコンポーネントは`isOpen=false`でも破棄されない
 - **解決**: `useEffect`で`isOpen`監視、開いた時に`resetAllStates()`実行
+
+### 4.4 Phase 16-17 写真連携機能（完了）
+
+**設計書**:
+- `docs/PHOTO_EVIDENCE_DISPLAY_SPEC.md` - 写真エビデンス表示設計
+- `docs/FIREBASE_STORAGE_MIGRATION_SPEC.md` - Firebase Storage移行仕様
+
+#### Phase 16: 写真エビデンス表示（2025-12-19）
+
+スタッフがアップロードした写真を家族向けエビデンス画面で表示する機能。
+
+| 項目 | 内容 |
+|------|------|
+| 対象 | EvidenceMonitor.tsx - プレースホルダーから実画像表示に変更 |
+| デモ対応 | demoFamilyData.ts に実画像URL（picsum.photos）追加 |
+| ルーティング | App.tsx に `/demo/family/evidence/:date` 追加 |
+| E2Eテスト | photo-evidence.spec.ts（5件） |
+
+#### Phase 17: Firebase Storage 写真連携（2025-12-19）
+
+写真保存先をGoogle DriveからFirebase Storageに移行。Firestoreで写真メタデータを管理。
+
+| サブフェーズ | 内容 | 状態 |
+|-------------|------|------|
+| 17.1 | Firebase Storage基盤準備（storage.rules） | ✅ 完了 |
+| 17.2 | バックエンド - Storage移行（storageService.ts） | ✅ 完了 |
+| 17.3 | バックエンド - 写真取得API（getCarePhotos） | ✅ 完了 |
+| 17.4 | バックエンド - Webhook連携・型拡張 | ✅ 完了 |
+| 17.5 | バックエンド - クリーンアップ（Drive関連削除） | ✅ 完了 |
+| 17.6 | フロントエンド実装（useCarePhotos等） | ✅ 完了 |
+| 17.7 | ドキュメント更新 | ✅ 完了 |
+| 17.8 | テスト・デプロイ・本番確認 | ✅ 完了 |
+
+**主な実装ファイル**:
+
+| 領域 | ファイル | 内容 |
+|------|----------|------|
+| Storage Rules | `storage.rules` | 読み取り公開設定 |
+| バックエンド | `functions/src/services/storageService.ts` | Storage操作サービス（新規） |
+| バックエンド | `functions/src/functions/getCarePhotos.ts` | 写真取得API（新規） |
+| バックエンド | `functions/src/functions/uploadCareImage.ts` | Drive→Storage移行 |
+| フロントエンド | `frontend/src/hooks/useCarePhotos.ts` | 写真取得フック（新規） |
+| フロントエンド | `frontend/src/components/MealSettingsModal.tsx` | Drive設定削除・簡素化 |
+
+**削除ファイル**:
+- `functions/src/services/driveService.ts`（Google Drive連携）
+- `functions/src/functions/testDriveAccess.ts`（Drive接続テスト）
+
+**Firestoreコレクション**: `care_photos`
+- 入居者・日付・食事時間で写真メタデータを管理
+- 複合インデックス: `residentId` + `date` + `uploadedAt(desc)`
+
+**データフロー**:
+```
+1. スタッフが写真を選択して送信
+2. uploadCareImage → Firebase Storage に保存
+3. Firestore care_photos コレクションにメタデータ保存
+4. submitMealRecord に photoUrl を渡す
+5. Google Chat Webhook に写真URLを含めて送信
+6. 家族画面で getCarePhotos から写真を取得して表示
+```
 
 ---
 
@@ -364,7 +427,7 @@ facility-care-input-form/
 | 名前 | `facility-care-sa` |
 | メール | `facility-care-sa@facility-care-input-form.iam.gserviceaccount.com` |
 | キーファイル | `keys/sa-key.json` (Git管理外) |
-| 用途 | Cloud Functions実行、CI/CD、スプレッドシート連携、Google Drive連携 |
+| 用途 | Cloud Functions実行、CI/CD、スプレッドシート連携、Firebase Storage連携 |
 
 **外部サービス共有設定**:
 
@@ -372,7 +435,7 @@ facility-care-input-form/
 |------|------|
 | Sheet A（記録の結果） | 閲覧者 |
 | Sheet B（実績入力先） | 編集者 |
-| Google Drive写真フォルダ | 編集者 |
+| Firebase Storage | 自動（同一プロジェクト内） |
 
 **注意**: GCPには他にも自動作成されるサービスアカウント（App Engine default, Compute Engine default, firebase-adminsdk）がありますが、これらは使用しません。詳細は `CLAUDE.md` を参照。
 
@@ -405,6 +468,7 @@ facility-care-input-form/
 | `care_items` | status + expirationDate | 賞味期限警告クエリ |
 | `care_items` | status + plannedServeDate | 提供リマインダークエリ |
 | `tasks` | relatedItemId + taskType + dueDate + status | 重複タスクチェック |
+| `care_photos` | residentId + date + uploadedAt(desc) | 写真取得クエリ（Phase 17） |
 
 ---
 
@@ -449,7 +513,7 @@ BASE_URL=https://facility-care-input-form.web.app npx playwright test
 - `frontend/playwright.config.ts` - Playwright設定
 - デフォルトbaseURL: `http://localhost:4173`（環境変数で上書き可能）
 
-**現在のテスト**: 全183件（3件スキップ）
+**現在のテスト**: 全188件（3件スキップ）
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |
@@ -462,6 +526,7 @@ BASE_URL=https://facility-care-input-form.web.app npx playwright test
 | `fifo.spec.ts` | 8件 | FIFO機能（期限順ソート・推奨表示） |
 | `schedule-extension.spec.ts` | 7件 | スケジュール拡張（Phase 13.1） |
 | `schedule-display.spec.ts` | 7件 | スケジュール表示強化（Phase 13.2） |
+| `photo-evidence.spec.ts` | 5件 | 写真エビデンス表示（Phase 16） |
 
 **パリティテスト**: デモと本番で同じUIが表示されることを検証
 - デモツアー完了 = 本番利用スキル習得
@@ -479,7 +544,7 @@ BASE_URL=https://facility-care-input-form.web.app npx playwright test
 | Firestore 500エラー（インデックス不足） | 下記「Firestoreインデックス」セクション参照 |
 | スプレッドシート権限エラー | サービスアカウントに共有設定を確認 |
 | GitHub Actions失敗 | `GCP_SA_KEY` シークレットの設定を確認 |
-| Driveフォルダ404エラー | 下記「Cloud Functions サービスアカウント」を参照 |
+| Storage写真表示されない | `storage.rules` の読み取り許可を確認 |
 
 ### 8.1.1 Firestoreインデックスエラー
 
@@ -518,7 +583,7 @@ gcloud firestore indexes composite list --project=facility-care-input-form
 
 ```bash
 # 現在のSAを確認
-gcloud functions describe testDriveAccess --region=asia-northeast1 | grep serviceAccountEmail
+gcloud functions describe uploadCareImage --region=asia-northeast1 | grep serviceAccountEmail
 
 # 第1世代関数のSA変更コマンド
 gcloud functions deploy <関数名> \
@@ -530,7 +595,7 @@ gcloud functions deploy <関数名> \
   --runtime=nodejs20
 ```
 
-**対象関数**: `testDriveAccess`, `uploadCareImage`, `submitMealRecord` など外部サービス連携する関数
+**対象関数**: `uploadCareImage`, `getCarePhotos`, `submitMealRecord` など外部サービス連携する関数
 
 ### 8.3 Firebase CLI 認証エラー
 

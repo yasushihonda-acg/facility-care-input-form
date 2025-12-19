@@ -1213,10 +1213,11 @@ await mutation.mutateAsync(data);
 
 | 機能 | 説明 | 優先度 |
 |------|------|--------|
-| 週次レポート生成（aiReport） | Gemini連携 | 中 |
+| 週次レポート生成（aiReport） | Gemini連携による週次サマリー自動生成 | 中 |
 | ケア指示のFirestore保存 | モックデータ → Firestore永続化 | 中 |
-| 写真エビデンス表示 | Google Drive画像を家族ビューで表示 | 中 |
 | CSVエクスポート | 表示中のデータをCSVでダウンロード | 低 |
+
+> **注**: 写真エビデンス表示機能は Phase 16/17 で実装完了済み（Firebase Storage連携）
 
 ---
 

@@ -112,6 +112,7 @@ gh run list --repo yasushihonda-acg/facility-care-input-form --workflow=gh-pages
 | `docs/DEMO_STAFF_SPEC.md` | スタッフ用デモページ設計（Phase 14） |
 | `docs/STAFF_RECORD_FORM_SPEC.md` | スタッフ記録入力フォーム設計（Phase 15） |
 | `docs/PHOTO_EVIDENCE_DISPLAY_SPEC.md` | 写真エビデンス表示機能設計（Phase 16） |
+| `docs/FIREBASE_STORAGE_MIGRATION_SPEC.md` | Firebase Storage 移行設計（Phase 17） |
 
 #### データ構造
 | ファイル | 用途 |
@@ -183,18 +184,18 @@ firebase use facility-care-input-form
 | 名前 | `facility-care-sa` |
 | メール | `facility-care-sa@facility-care-input-form.iam.gserviceaccount.com` |
 | キーファイル | `keys/sa-key.json` (Git管理外) |
-| 用途 | Cloud Functions実行、CI/CD、スプレッドシート連携、Google Drive連携 |
+| 用途 | Cloud Functions実行、CI/CD、スプレッドシート連携、Firebase Storage連携 |
 | 権限 | `roles/datastore.user`, `roles/cloudfunctions.invoker`, `roles/firebase.admin`, `roles/cloudfunctions.developer`, `roles/run.admin`, `roles/iam.serviceAccountUser` |
 
 ### 外部サービス共有設定
 
-スプレッドシートやGoogle Driveフォルダを共有する際は、必ず上記の統一SAを使用：
+スプレッドシートを共有する際は、必ず上記の統一SAを使用：
 
 | 対象 | 共有先SA | 権限 |
 |------|----------|------|
 | Sheet A（記録の結果） | `facility-care-sa@facility-care-input-form.iam.gserviceaccount.com` | 閲覧者 |
 | Sheet B（実績入力先） | `facility-care-sa@facility-care-input-form.iam.gserviceaccount.com` | 編集者 |
-| Google Drive写真フォルダ | `facility-care-sa@facility-care-input-form.iam.gserviceaccount.com` | 編集者 |
+| Firebase Storage | 同一プロジェクト内のため共有設定不要 | 自動 |
 
 ### GCP自動作成サービスアカウント（参考）
 

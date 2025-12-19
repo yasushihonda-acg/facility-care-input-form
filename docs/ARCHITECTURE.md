@@ -35,9 +35,9 @@
 | サービス | 用途 |
 |----------|------|
 | Cloud Run functions (2nd gen) | APIエンドポイント |
-| Cloud Firestore | 家族要望データ、同期データの保存 |
+| Cloud Firestore | 家族要望データ、同期データ、写真メタデータの保存 |
+| Firebase Storage | 写真ファイルの保存・公開URL生成（Phase 17） |
 | Google Sheets API | スプレッドシートの読み取り・書き込み |
-| Google Drive API | 画像ファイルの転送・公開URL生成 |
 
 ---
 
@@ -134,12 +134,12 @@ graph TD
         FUNC_SYNC[syncPlanData<br/>記録同期]
         FUNC_CARE[submitCareRecord<br/>実績入力]
         FUNC_REQ[submitFamilyRequest<br/>家族要望]
-        FUNC_IMG[syncImageToDrive<br/>画像連携]
+        FUNC_IMG[uploadCareImage<br/>画像連携]
     end
 
     subgraph "Data Layer"
         FS[(Cloud Firestore)]
-        DRIVE[(Google Drive)]
+        STORAGE[(Firebase Storage)]
     end
 
     subgraph "External Data Sources"
@@ -166,9 +166,9 @@ graph TD
     FUNC_REQ -->|"Write"| FS
 
     %% Image Flow
-    FUNC_IMG -->|"Upload"| DRIVE
-    DRIVE -->|"Public URL"| FUNC_IMG
-    FUNC_IMG -->|"URL記録"| SHEET_B
+    FUNC_IMG -->|"Upload"| STORAGE
+    STORAGE -->|"Public URL"| FUNC_IMG
+    FUNC_IMG -->|"メタデータ"| FS
 
     %% Styling
     classDef readonly fill:#e3f2fd,stroke:#1976d2
@@ -291,11 +291,12 @@ src/
 │   ├── syncPlanData.ts        # Flow A: 記録同期
 │   ├── submitCareRecord.ts    # Flow B: 実績入力
 │   ├── submitFamilyRequest.ts # Flow C: 家族要望
-│   └── syncImageToDrive.ts    # 画像連携
+│   ├── uploadCareImage.ts     # 画像アップロード
+│   └── getCarePhotos.ts       # 写真取得（Phase 17）
 ├── services/
 │   ├── sheetsService.ts       # Sheets API ラッパー
 │   ├── firestoreService.ts    # Firestore ラッパー
-│   └── driveService.ts        # Drive API ラッパー
+│   └── storageService.ts      # Firebase Storage ラッパー（Phase 17）
 └── types/
     └── index.ts               # 型定義
 
@@ -426,24 +427,37 @@ graph LR
 | Phase 5.0〜5.2 | 食事入力フォーム | ✅ 完了 |
 | Phase 5.3〜5.4 | 管理者初期値設定 | ✅ 完了 |
 | Phase 5.5 | Google Chat Webhook連携 | ✅ 完了 |
-| Phase 5.6 | 写真アップロードフォルダ設定 | ✅ 完了 |
-| Phase 5.7 | 設定モーダルUI改善 | ✅ 完了 |
+| Phase 5.6〜5.10 | 写真・設定モーダル・テスト機能 | ✅ 完了 |
 | Phase 6.0 | フッターナビゲーション | ✅ 完了 |
+| Phase 7.0 | 家族向け機能（Flow C拡張） | ✅ 完了 |
+| Phase 7.1 | 予実管理 | ✅ 完了 |
+| Phase 8.x | 品物・タスク・統計・AI連携 | ✅ 完了 |
+| Phase 9.x | 消費追跡・禁止ルール・統計拡張 | ✅ 完了 |
+| Phase 10-12 | 間食記録連携・FoodMaster・FIFO | ✅ 完了 |
+| Phase 13 | 品物起点の間食記録・スケジュール拡張 | ✅ 完了 |
+| Phase 14 | スタッフ用デモページ | ✅ 完了 |
+| Phase 15 | スタッフ記録入力フォーム統一 | ✅ 完了 |
+| Phase 16 | 写真エビデンス表示 | ✅ 完了 |
+| Phase 17 | Firebase Storage 写真連携 | ✅ 完了 |
 
-### 次のPhase: 家族向け機能
+### 将来の機能
 
-| Phase | 内容 | 状態 |
-|-------|------|------|
-| Phase 7.0 | 家族向け機能（Flow C拡張） | 📋 計画中 |
+| 機能 | 内容 | 状態 |
+|------|------|------|
+| 週次レポート | Gemini AI による週次サマリー自動生成 | 📋 計画中 |
+| ケア指示永続化 | モックデータ → Firestore永続化 | 📋 計画中 |
+| CSVエクスポート | 表示データのダウンロード | 📋 計画中 |
 
-> **詳細**: [FAMILY_UX_DESIGN.md](./FAMILY_UX_DESIGN.md) を参照
+> **詳細**: [FAMILY_UX_DESIGN.md](./FAMILY_UX_DESIGN.md)、[HANDOVER.md](./HANDOVER.md) を参照
 
-**実装予定**:
-| ビュー | 説明 | 優先度 |
-|--------|------|--------|
-| 家族ホーム（タイムライン） | 1日の食事状況を時系列表示 | 高 |
-| エビデンス・モニター | Plan/Result対比＋写真エビデンス | 高 |
-| ケア仕様ビルダー | 構造化されたケア指示作成 | 中 |
+**実装済みビュー**:
+| ビュー | 説明 | 状態 |
+|--------|------|------|
+| 家族ホーム（タイムライン） | 1日の食事状況を時系列表示 | ✅ 完了 |
+| エビデンス・モニター | Plan/Result対比＋写真エビデンス | ✅ 完了 |
+| ケア仕様ビルダー | 構造化されたケア指示作成 | ✅ 完了 |
+| 品物管理 | 差し入れ品物の登録・追跡・FIFO | ✅ 完了 |
+| 統計ダッシュボード | 在庫・摂食傾向・アラート | ✅ 完了 |
 
 ### その他オプション機能
 

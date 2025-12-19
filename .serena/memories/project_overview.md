@@ -79,11 +79,12 @@ facility-care-input-form/
 | POST | `/syncPlanData` | 記録データ同期 |
 | GET | `/getPlanData` | 記録データ取得 |
 | POST | `/submitMealRecord` | 食事記録入力 |
-| POST | `/uploadCareImage` | 画像アップロード |
+| POST | `/uploadCareImage` | 画像アップロード（Firebase Storage） |
+| GET | `/getCarePhotos` | 写真メタデータ取得 |
 | GET | `/getMealFormSettings` | 設定取得 |
 | POST | `/updateMealFormSettings` | 設定更新 |
 | POST | `/testWebhook` | Webhookテスト |
-| POST | `/testDriveAccess` | Driveアクセステスト |
+| ~~POST~~ | ~~`/testDriveAccess`~~ | ~~Driveアクセステスト~~ (Phase 17で削除) |
 
 ### 品物管理 (Phase 8.1)
 | メソッド | パス | 説明 |
@@ -330,7 +331,21 @@ AI提案以外で品物を手動登録した際にも、プリセット保存を
 **E2Eテスト**: STAFF-040〜STAFF-043（4件追加）
 **設計書**: `docs/STAFF_RECORD_FORM_SPEC.md` セクション9
 
-### Phase 16: 写真エビデンス表示 (2025-12-19)
+### Phase 16: 写真エビデンス表示 (2025-12-19 - 完了)
+
+### Phase 17: Firebase Storage 写真連携 (2025-12-19 - 完了)
+写真保存先をGoogle DriveからFirebase Storageに移行。
+
+**主な変更**:
+- `uploadCareImage`: Google Drive → Firebase Storage に移行
+- `getCarePhotos`: 新規API（Firestore care_photosから写真メタデータ取得）
+- `testDriveAccess`: 削除（Firebase Storageは同一プロジェクト内のため不要）
+- `driveService.ts`: 削除
+- `storageService.ts`: 新規（Firebase Storage操作）
+- Firestore `care_photos` コレクション追加
+
+**Firestoreインデックス（Phase 17）**:
+- `care_photos`: residentId + date + uploadedAt(desc)
 スタッフがアップロードした写真を家族向けエビデンス画面で表示する機能。
 
 **主な変更**:
