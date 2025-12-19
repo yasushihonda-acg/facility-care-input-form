@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月19日 (Phase 17 Firebase Storage 写真連携 - 実装中)
+> **最終更新**: 2025年12月19日 (Phase 17 Firebase Storage 写真連携 - 完了)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -21,7 +21,7 @@
 
 ## 現在のタスク
 
-### Phase 17: Firebase Storage 写真連携（実装中）
+### Phase 17: Firebase Storage 写真連携（完了）
 
 **設計書**: [FIREBASE_STORAGE_MIGRATION_SPEC.md](./FIREBASE_STORAGE_MIGRATION_SPEC.md)
 
@@ -39,8 +39,8 @@
 | Phase 17.4 | バックエンド - Webhook連携・型拡張 | ✅ 完了 |
 | Phase 17.5 | バックエンド - クリーンアップ | ✅ 完了 |
 | Phase 17.6 | フロントエンド実装 | ✅ 完了 |
-| Phase 17.7 | ドキュメント更新 | 🔄 進行中 |
-| Phase 17.8 | テスト・デプロイ・本番確認 | ⏳ 未着手 |
+| Phase 17.7 | ドキュメント更新 | ✅ 完了 |
+| Phase 17.8 | テスト・デプロイ・本番確認 | ✅ 完了 |
 
 **実装ファイル（バックエンド）**:
 
@@ -82,7 +82,12 @@
 6. 家族画面で getCarePhotos から写真を取得して表示
 ```
 
-**次のステップ**: Phase 17.8 テスト・デプロイ・本番確認
+**完了確認**:
+- ✅ CI通過（GitHub Actions）
+- ✅ Firebase Deploy成功
+- ✅ Firestore care_photos インデックス作成完了
+- ✅ getCarePhotos API動作確認
+- ✅ E2Eテスト 43件パス（本番環境）
 
 ---
 
