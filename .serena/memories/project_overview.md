@@ -342,6 +342,25 @@ AI提案以外で品物を手動登録した際にも、プリセット保存を
 - フッターにチャットタブ追加（未読バッジ付き）
 - 品物詳細画面からチャット開始ボタン
 
+### Phase 19: 記録のチャット連携 (2025-12-20 - 完了)
+スタッフが記録を入力した際にチャットスペースへ自動反映し、ホーム画面に通知を表示する機能。
+
+**Phase 19.1: 記録の自動反映**:
+- スタッフの間食記録入力時にチャットへ自動投稿
+- `createRecordNotification` 関数で記録内容を通知形式に変換
+
+**Phase 19.2: ホーム通知セクション**:
+- `NotificationSection` コンポーネント（家族/スタッフ共通）
+- 家族ホーム（FamilyDashboard）とスタッフホーム（StaffHome）に表示
+- 通知タイプ: `new_message`, `record_added`, `item_expiring`
+
+**実装ファイル**:
+- `frontend/src/components/shared/NotificationSection.tsx` (新規)
+- `frontend/src/pages/family/FamilyDashboard.tsx`
+- `frontend/src/pages/staff/StaffHome.tsx`
+
+**E2Eテスト**: `record-chat-integration.spec.ts` (8件追加)
+
 **バックエンドAPI**:
 | メソッド | パス | 説明 |
 |----------|------|------|
@@ -403,7 +422,7 @@ AI提案以外で品物を手動登録した際にも、プリセット保存を
 **E2Eテスト**: `photo-evidence.spec.ts` (5件)
 **設計書**: `docs/PHOTO_EVIDENCE_DISPLAY_SPEC.md`
 
-### E2Eテスト（196件、Phase 18で+8件）
+### E2Eテスト（212件、Phase 19で+16件）
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |
@@ -418,6 +437,7 @@ AI提案以外で品物を手動登録した際にも、プリセット保存を
 | `staff-record-form.spec.ts` | 22件 | Phase 15/15.6 スタッフ用記録入力フォーム（数値入力・残り対応） |
 | `photo-evidence.spec.ts` | 5件 | Phase 16 写真エビデンス表示 |
 | `chat-integration.spec.ts` | 8件 | Phase 18 チャット連携 |
+| `record-chat-integration.spec.ts` | 8件 | Phase 19 記録のチャット連携 |
 
 - **パリティテスト**: デモと本番で同じUIが表示されることを検証
 - **実行**: `cd frontend && npx playwright test`

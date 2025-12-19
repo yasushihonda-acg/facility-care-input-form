@@ -390,11 +390,11 @@
                     </div>
                 </div>
 
-                <!-- Phase 16-18 Features -->
+                <!-- Phase 16-19 Features -->
                 <div>
                     <h2 class="text-lg font-bold text-gray-700 mb-4 flex items-center gap-2">
                         <span class="w-8 h-8 bg-pink-500 text-white rounded-full flex items-center justify-center text-sm">5</span>
-                        Phase 16-18 新機能
+                        Phase 16-19 新機能
                         <span class="ml-2 bg-pink-100 text-pink-700 text-xs px-2 py-1 rounded-full">最新</span>
                     </h2>
                     <div class="grid md:grid-cols-3 gap-4">
@@ -415,6 +415,12 @@
                             <h3 class="font-semibold mb-1">チャット連携</h3>
                             <p class="text-gray-600 text-sm">品物起点でスタッフ・家族間のメッセージ機能。未読バッジ付きで通知。</p>
                             <span class="inline-block mt-2 bg-pink-100 text-pink-700 px-2 py-0.5 rounded text-xs">Phase 18 ✅完了</span>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-5 border-l-4 border-pink-500">
+                            <div class="text-2xl mb-2">🔔</div>
+                            <h3 class="font-semibold mb-1">記録のチャット連携</h3>
+                            <p class="text-gray-600 text-sm">スタッフ記録入力時の自動通知、ホーム画面への通知セクション表示。</p>
+                            <span class="inline-block mt-2 bg-pink-100 text-pink-700 px-2 py-0.5 rounded text-xs">Phase 19 ✅完了</span>
                         </div>
                     </div>
                 </div>
@@ -717,10 +723,20 @@ flowchart TB
                         </div>
                         <p class="text-sm text-gray-500 mt-1">Google Drive → Firebase Storage 移行、getCarePhotos API、Webhook写真対応</p>
                     </div>
+                    <div class="border-l-4 border-green-500 pl-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-semibold text-gray-800">Phase 18: チャット連携機能</span>
+                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-1">品物起点のスタッフ⇔家族チャット、フッター通知バッジ、E2Eテスト+8件</p>
+                    </div>
                     <div class="border-l-4 border-green-500 pl-4 bg-green-50 -mx-4 px-4 py-3 rounded-r-lg mt-6">
                         <div class="flex justify-between items-center mb-2">
                             <span class="font-semibold text-gray-800 flex items-center gap-2">
-                                Phase 18: チャット連携機能
+                                Phase 19: 記録のチャット連携
                                 <span class="bg-green-600 text-white text-xs px-2 py-0.5 rounded">最新</span>
                             </span>
                             <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
@@ -728,7 +744,7 @@ flowchart TB
                         <div class="w-full bg-gray-200 rounded-full h-2">
                             <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
                         </div>
-                        <p class="text-sm text-gray-600 mt-1">品物起点のスタッフ⇔家族チャット、フッター通知バッジ、E2Eテスト合計196件</p>
+                        <p class="text-sm text-gray-600 mt-1">記録入力時の自動通知、ホーム通知セクション、E2Eテスト合計212件</p>
                     </div>
                 </div>
             </div>
@@ -848,7 +864,7 @@ flowchart TB
                 © 2025 施設ケア入力フォーム プロジェクト
             </p>
             <p class="text-gray-500 text-sm mt-2">
-                最終更新: 2025年12月19日（Phase 15.6 摂食割合の数値入力・E2Eテスト183件）
+                最終更新: 2025年12月20日（Phase 19 記録のチャット連携・E2Eテスト212件）
             </p>
         </div>
     </footer>
