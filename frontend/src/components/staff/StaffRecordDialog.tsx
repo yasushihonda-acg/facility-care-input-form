@@ -6,23 +6,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { CareItem } from '../../types/careItem';
-import type { ConsumptionStatus } from '../../types/consumptionLog';
-import { CONSUMPTION_STATUSES, getCategoryIcon } from '../../types/careItem';
-import { determineConsumptionStatus, calculateConsumptionRate } from '../../types/consumptionLog';
+import type { RemainingHandling } from '../../types/consumptionLog';
+import { getCategoryIcon } from '../../types/careItem';
+import { determineConsumptionStatus, REMAINING_HANDLING_OPTIONS } from '../../types/consumptionLog';
 import { useRecordConsumptionLog } from '../../hooks/useConsumptionLogs';
 import { submitMealRecord } from '../../api';
 import { useMealFormSettings } from '../../hooks/useMealFormSettings';
 import { DAY_SERVICE_OPTIONS } from '../../types/mealForm';
 import type { SnackRecord } from '../../types/mealForm';
-
-// 摂食状況の絵文字マッピング
-const CONSUMPTION_EMOJIS: Record<ConsumptionStatus, string> = {
-  full: '😋',
-  most: '😊',
-  half: '😐',
-  little: '😕',
-  none: '😞',
-};
 
 interface StaffRecordDialogProps {
   isOpen: boolean;
@@ -54,11 +45,14 @@ export function StaffRecordDialog({
     dayServiceName: '',
     // 品物記録
     servedQuantity: 1,
-    consumptionStatus: 'full' as ConsumptionStatus,
-    consumedQuantity: 1,
+    // Phase 15.6: 数値入力（0-10）
+    consumptionRateInput: 10,  // 0-10の入力値
     consumptionNote: '',
     noteToFamily: '',
     followedFamilyInstructions: true,
+    // Phase 15.6: 残った分への対応
+    remainingHandling: '' as RemainingHandling | '',
+    remainingHandlingOther: '',
     // 共通項目（下部）
     snack: '',
     note: '',
@@ -78,11 +72,12 @@ export function StaffRecordDialog({
         dayServiceUsage: '利用中ではない',
         dayServiceName: '',
         servedQuantity: Math.min(suggestedQuantity, currentQuantity),
-        consumptionStatus: 'full',
-        consumedQuantity: Math.min(suggestedQuantity, currentQuantity),
+        consumptionRateInput: 10,  // Phase 15.6: デフォルト完食
         consumptionNote: '',
         noteToFamily: '',
         followedFamilyInstructions: true,
+        remainingHandling: '',
+        remainingHandlingOther: '',
         snack: '',
         note: '',
         isImportant: '重要ではない',
@@ -91,14 +86,16 @@ export function StaffRecordDialog({
     }
   }, [isOpen, item, currentQuantity]);
 
-  // 消費数量が変わったら摂食状況を自動更新
+  // Phase 15.6: 摂食割合が10になったら残り対応をリセット
   useEffect(() => {
-    if (formData.servedQuantity > 0) {
-      const rate = calculateConsumptionRate(formData.consumedQuantity, formData.servedQuantity);
-      const status = determineConsumptionStatus(rate);
-      setFormData(prev => ({ ...prev, consumptionStatus: status }));
+    if (formData.consumptionRateInput === 10) {
+      setFormData(prev => ({
+        ...prev,
+        remainingHandling: '',
+        remainingHandlingOther: '',
+      }));
     }
-  }, [formData.consumedQuantity, formData.servedQuantity]);
+  }, [formData.consumptionRateInput]);
 
   // バリデーション
   const validate = useCallback((): boolean => {
@@ -116,6 +113,14 @@ export function StaffRecordDialog({
     if (formData.servedQuantity > currentQuantity) {
       newErrors.servedQuantity = `提供数量が残量(${currentQuantity}${item.unit})を超えています`;
     }
+    // Phase 15.6: 残った分がある場合は対応を必須に
+    if (formData.consumptionRateInput < 10 && !formData.remainingHandling) {
+      newErrors.remainingHandling = '残った分への対応を選択してください。';
+    }
+    // Phase 15.6: その他を選択した場合は詳細を必須に
+    if (formData.remainingHandling === 'other' && !formData.remainingHandlingOther.trim()) {
+      newErrors.remainingHandlingOther = '対応の詳細を入力してください。';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -124,6 +129,11 @@ export function StaffRecordDialog({
   // 送信ハンドラ
   const handleSubmit = useCallback(async () => {
     if (!validate()) return;
+
+    // Phase 15.6: 0-10入力 → 0-100スケール変換
+    const consumptionRate = formData.consumptionRateInput * 10;
+    const consumedQuantity = (consumptionRate / 100) * formData.servedQuantity;
+    const consumptionStatus = determineConsumptionStatus(consumptionRate);
 
     try {
       // 1. consumption_log に記録
@@ -134,8 +144,8 @@ export function StaffRecordDialog({
         mealTime: 'snack',
         servedQuantity: formData.servedQuantity,
         servedBy: formData.staffName,
-        consumedQuantity: formData.consumedQuantity,
-        consumptionStatus: formData.consumptionStatus,
+        consumedQuantity: consumedQuantity,
+        consumptionStatus: consumptionStatus,
         consumptionNote: formData.consumptionNote || undefined,
         noteToFamily: formData.noteToFamily || undefined,
         recordedBy: formData.staffName,
@@ -147,12 +157,15 @@ export function StaffRecordDialog({
         itemName: item.itemName,
         servedQuantity: formData.servedQuantity,
         unit: item.unit,
-        consumptionStatus: formData.consumptionStatus,
-        consumptionRate: calculateConsumptionRate(formData.consumedQuantity, formData.servedQuantity),
+        consumptionStatus: consumptionStatus,
+        consumptionRate: consumptionRate,
         followedInstruction: formData.followedFamilyInstructions,
         instructionNote: item.noteToStaff || undefined,
         note: formData.consumptionNote || undefined,
         noteToFamily: formData.noteToFamily || undefined,
+        // Phase 15.6: 残り対応
+        ...(formData.remainingHandling && { remainingHandling: formData.remainingHandling as RemainingHandling }),
+        ...(formData.remainingHandlingOther && { remainingHandlingOther: formData.remainingHandlingOther }),
       };
 
       await submitMealRecord({
@@ -176,8 +189,9 @@ export function StaffRecordDialog({
     }
   }, [formData, item, settings, recordMutation, validate, onSuccess, onClose]);
 
-  // 記録後の残量を計算
-  const quantityAfter = currentQuantity - formData.consumedQuantity;
+  // 記録後の残量を計算（Phase 15.6: 0-10入力からの計算）
+  const consumedQuantity = (formData.consumptionRateInput / 10) * formData.servedQuantity;
+  const quantityAfter = currentQuantity - consumedQuantity;
 
   if (!isOpen) return null;
 
@@ -313,7 +327,6 @@ export function StaffRecordDialog({
                   setFormData(prev => ({
                     ...prev,
                     servedQuantity: value,
-                    consumedQuantity: Math.min(prev.consumedQuantity, value),
                   }));
                 }}
                 className={`w-24 border rounded-lg px-3 py-2 text-sm ${errors.servedQuantity ? 'border-red-500' : 'border-gray-300'}`}
@@ -325,40 +338,97 @@ export function StaffRecordDialog({
             )}
           </div>
 
-          {/* 摂食状況 */}
+          {/* Phase 15.6: 摂食した割合（0-10数値入力） */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">摂食状況</label>
-            <div className="flex flex-wrap gap-2">
-              {CONSUMPTION_STATUSES.map(status => (
-                <label
-                  key={status.value}
-                  className={`
-                    flex items-center gap-1 px-3 py-2 rounded-lg cursor-pointer text-sm transition-colors
-                    ${formData.consumptionStatus === status.value
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}
-                  `}
-                >
-                  <input
-                    type="radio"
-                    name="consumptionStatus"
-                    value={status.value}
-                    checked={formData.consumptionStatus === status.value}
-                    onChange={(e) => {
-                      setFormData(prev => ({
-                        ...prev,
-                        consumptionStatus: e.target.value as ConsumptionStatus,
-                        consumedQuantity: (status.rate / 100) * prev.servedQuantity,
-                      }));
-                    }}
-                    className="sr-only"
-                  />
-                  <span>{CONSUMPTION_EMOJIS[status.value]}</span>
-                  <span>{status.label}</span>
-                </label>
-              ))}
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              摂食した割合 <span className="text-red-500">*</span>
+            </label>
+            <div className="flex items-center gap-3">
+              <input
+                type="number"
+                min="0"
+                max="10"
+                step="1"
+                value={formData.consumptionRateInput}
+                onChange={(e) => {
+                  const value = Math.min(10, Math.max(0, parseInt(e.target.value) || 0));
+                  setFormData(prev => ({ ...prev, consumptionRateInput: value }));
+                }}
+                className="w-20 border border-gray-300 rounded-lg px-3 py-2 text-center text-lg font-semibold"
+              />
+              <span className="text-gray-600 font-medium">/ 10</span>
+              <span className="text-sm text-gray-500 ml-2">
+                （{formData.consumptionRateInput * 10}%）
+              </span>
+            </div>
+            {/* スライダー補助（視覚的なフィードバック） */}
+            <input
+              type="range"
+              min="0"
+              max="10"
+              step="1"
+              value={formData.consumptionRateInput}
+              onChange={(e) => setFormData(prev => ({ ...prev, consumptionRateInput: parseInt(e.target.value) }))}
+              className="w-full mt-2 accent-primary"
+            />
+            <div className="flex justify-between text-xs text-gray-400 mt-1">
+              <span>0（食べず）</span>
+              <span>5（半分）</span>
+              <span>10（完食）</span>
             </div>
           </div>
+
+          {/* Phase 15.6: 残った分への対応（摂食割合 < 10の場合のみ） */}
+          {formData.consumptionRateInput < 10 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                残った分への対応 <span className="text-red-500">*</span>
+              </label>
+              <div className="space-y-2">
+                {REMAINING_HANDLING_OPTIONS.map(option => (
+                  <label
+                    key={option.value}
+                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer border transition-colors ${
+                      formData.remainingHandling === option.value
+                        ? 'border-primary bg-primary/5'
+                        : 'border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="remainingHandling"
+                      value={option.value}
+                      checked={formData.remainingHandling === option.value}
+                      onChange={(e) => setFormData(prev => ({ ...prev, remainingHandling: e.target.value as RemainingHandling }))}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm">{option.label}</span>
+                  </label>
+                ))}
+              </div>
+              {errors.remainingHandling && (
+                <p className="mt-1 text-sm text-red-500">{errors.remainingHandling}</p>
+              )}
+
+              {/* その他の詳細入力 */}
+              {formData.remainingHandling === 'other' && (
+                <div className="mt-3">
+                  <input
+                    type="text"
+                    value={formData.remainingHandlingOther}
+                    onChange={(e) => setFormData(prev => ({ ...prev, remainingHandlingOther: e.target.value }))}
+                    placeholder="対応の詳細を入力"
+                    className={`w-full px-3 py-2 border rounded-lg text-sm ${
+                      errors.remainingHandlingOther ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                  {errors.remainingHandlingOther && (
+                    <p className="mt-1 text-sm text-red-500">{errors.remainingHandlingOther}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* メモ */}
           <div>

@@ -3,22 +3,27 @@
 // docs/SNACK_RECORD_INTEGRATION_SPEC.md 間食記録連携対応
 
 import type { ConsumptionStatus } from './careItem';
+import type { RemainingHandling } from './consumptionLog';
 
 /**
  * 間食詳細記録（品物管理連携用）
  * @see docs/SNACK_RECORD_INTEGRATION_SPEC.md
+ * @see docs/STAFF_RECORD_FORM_SPEC.md Phase 15.6
  */
 export interface SnackRecord {
   itemId?: string;               // care_items のID（紐づけ用）
   itemName: string;              // 品物名（表示・Sheet B用）
   servedQuantity: number;        // 提供数
   unit?: string;                 // 単位（個、切れ等）
-  consumptionStatus: ConsumptionStatus;  // full/most/half/little/none
-  consumptionRate?: number;      // 0-100（オプション、statusから自動計算可）
+  consumptionStatus: ConsumptionStatus;  // full/most/half/little/none（後方互換）
+  consumptionRate?: number;      // 0-100（Phase 15.6: 0-10入力×10で計算）
   followedInstruction?: boolean; // 家族指示に従ったか
   instructionNote?: string;      // 指示対応メモ
   note?: string;                 // スタッフメモ
   noteToFamily?: string;         // 家族への申し送り
+  // Phase 15.6: 残った分への対応
+  remainingHandling?: RemainingHandling;  // 残り対応（consumptionRate < 100の場合）
+  remainingHandlingOther?: string;        // その他の場合の詳細
 }
 
 export interface MealInputForm {

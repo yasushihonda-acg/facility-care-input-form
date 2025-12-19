@@ -13,6 +13,16 @@ export type { ConsumptionStatus } from './careItem';
 // 食事時間帯
 export type MealTime = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
+// 残った分への対応（Phase 15.6）
+export type RemainingHandling = 'discarded' | 'stored' | 'took_home' | 'other';
+
+export const REMAINING_HANDLING_OPTIONS: { value: RemainingHandling; label: string }[] = [
+  { value: 'discarded', label: '破棄した' },
+  { value: 'stored', label: '保存した' },
+  { value: 'took_home', label: '持ち帰り' },
+  { value: 'other', label: 'その他' },
+];
+
 export const MEAL_TIMES: { value: MealTime; label: string }[] = [
   { value: 'breakfast', label: '朝食' },
   { value: 'lunch', label: '昼食' },

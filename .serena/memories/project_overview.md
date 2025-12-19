@@ -296,7 +296,25 @@ AI提案以外で品物を手動登録した際にも、プリセット保存を
 **E2Eテスト**: `schedule-extension.spec.ts` (7件)
 **設計書**: `docs/ITEM_BASED_SNACK_RECORD_SPEC.md` セクション3.4-3.5
 
-### E2Eテスト（161件）
+### Phase 15: スタッフ用記録入力フォーム統一 (2025-12-19)
+スタッフ用記録入力フォームを簡素化・統一。食事タブを削除し「品物から記録」のみに。
+
+**主な変更**:
+- 食事タブ削除（主食/副食/注入の入力を除去）
+- 入力者名・デイサービス利用・間食補足・特記事項・重要特記事項・写真に統一
+- 施設名・利用者名は非表示（マスター設定から自動取得）
+- 家族連絡詳細からのダイアログも統一（StaffRecordDialog）
+
+**実装ファイル**:
+- `MealInputPage.tsx`: タブ削除、統一フォーム
+- `StaffRecordDialog.tsx`: 統一ダイアログコンポーネント（新規）
+- `FamilyMessageDetail.tsx`: StaffRecordDialog使用
+- `ItemBasedSnackRecord.tsx`: StaffRecordDialog使用
+
+**E2Eテスト**: `staff-record-form.spec.ts` (18件)
+**設計書**: `docs/STAFF_RECORD_FORM_SPEC.md`
+
+### E2Eテスト（155件、Phase 15で+18件）
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |
@@ -308,6 +326,7 @@ AI提案以外で品物を手動登録した際にも、プリセット保存を
 | `schedule-extension.spec.ts` | 7件 | Phase 13.1 スケジュール拡張機能 |
 | `schedule-display.spec.ts` | 7件 | Phase 13.2 スタッフ向けスケジュール表示 |
 | `demo-staff.spec.ts` | 17件 | Phase 14 スタッフ用デモページ |
+| `staff-record-form.spec.ts` | 18件 | Phase 15 スタッフ用記録入力フォーム統一 |
 
 - **パリティテスト**: デモと本番で同じUIが表示されることを検証
 - **実行**: `cd frontend && npx playwright test`
