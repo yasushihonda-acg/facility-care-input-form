@@ -1,6 +1,6 @@
 # 引き継ぎドキュメント
 
-> **最終更新**: 2025年12月19日（Phase 13.1: スケジュール拡張）
+> **最終更新**: 2025年12月19日（Phase 13.2: スタッフ向けスケジュール表示強化）
 >
 > 本ドキュメントは、開発を引き継ぐ際に必要な情報をまとめたものです。
 
@@ -89,6 +89,7 @@ cd frontend && npm install && npm run dev
 | 手動登録時プリセット保存提案 | AI提案以外の手動登録時にもプリセット保存を提案 | ✅ 完了 |
 | 品物起点の間食記録 | 「品物から記録」タブで直感的な間食記録（Phase 13.0） | ✅ 完了 |
 | スケジュール拡張 | 毎日・曜日指定・複数日のスケジュール設定（Phase 13.1） | ✅ 完了 |
+| スタッフ向けスケジュール表示 | 曜日バッジ・次回予定日・タイムスロット表示（Phase 13.2） | ✅ 完了 |
 
 ---
 
@@ -170,6 +171,9 @@ facility-care-input-form/
 │   │   ├── components/    # UIコンポーネント
 │   │   │   ├── demo/
 │   │   │   │   └── DemoHeaderButton.tsx   # ツアーTOPに戻るボタン
+│   │   │   ├── meal/
+│   │   │   │   ├── ScheduleDisplay.tsx       # スケジュール表示 ✅ Phase 13.2
+│   │   │   │   └── WeekdayBadges.tsx         # 曜日バッジ ✅ Phase 13.2
 │   │   │   └── family/
 │   │   │       ├── AISuggestion.tsx         # AI品物提案カード
 │   │   │       ├── AIAnalysis.tsx           # AI摂食傾向分析 ✅ Phase 8.4.1
@@ -188,7 +192,7 @@ facility-care-input-form/
 │   │   │   └── demo/           # デモ用シードデータ
 │   │   ├── types/         # 型定義
 │   │   ├── utils/         # ユーティリティ
-│   │   │   └── scheduleUtils.ts  # スケジュール判定・表示 ✅ Phase 13.1
+│   │   │   └── scheduleUtils.ts  # スケジュール判定・表示 ✅ Phase 13.1/13.2
 │   │   └── services/      # APIサービス
 │   └── package.json
 ├── functions/             # Cloud Functions
@@ -687,6 +691,7 @@ docs/CURRENT_STATUS.md を読んで、次のタスクから再開してくださ
 
 | 日付 | 内容 |
 |------|------|
+| 2025-12-19 | Phase 13.2: スタッフ向けスケジュール表示強化（ScheduleDisplay・WeekdayBadges・E2Eテスト7件追加）、E2Eテスト144件 |
 | 2025-12-19 | Phase 13.1: スケジュール拡張（曜日指定・複数日・ServingSchedule型・E2Eテスト7件追加）、E2Eテスト137件 |
 | 2025-12-19 | Phase 13.0: 品物起点の間食記録（タブUI・品物リスト・記録モーダル・API連携・E2Eテスト13件追加）、E2Eテスト130件 |
 | 2025-12-18 | Phase 12.1: 手動登録時プリセット保存提案、E2Eテスト117件 |
