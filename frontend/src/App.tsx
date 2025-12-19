@@ -25,6 +25,8 @@ import { ResidentSettings } from './pages/family/ResidentSettings';
 // デモショーケース
 import { DemoHome } from './pages/demo/DemoHome';
 import { DemoShowcase } from './pages/demo/DemoShowcase';
+import { DemoStaffHome } from './pages/demo/DemoStaffHome';
+import { DemoStaffShowcase } from './pages/demo/DemoStaffShowcase';
 
 // レガシー
 import { SheetDetailPage } from './pages/SheetDetailPage';
@@ -110,14 +112,18 @@ function App() {
       <Route path="/demo/family/presets" element={<PresetManagement />} />
       <Route path="/demo/family/settings/resident" element={<ResidentSettings />} />
 
-      {/* デモ: スタッフ食事記録入力（SnackSection E2Eテスト用） */}
+      {/* デモ: スタッフホーム */}
+      <Route path="/demo/staff" element={<DemoStaffHome />} />
+
+      {/* デモ: スタッフ用ガイドツアー */}
+      <Route path="/demo/staff/showcase" element={<DemoStaffShowcase />} />
+
+      {/* デモ: スタッフ食事記録入力 */}
       <Route path="/demo/staff/input/meal" element={<MealInputPage />} />
 
-      {/* デモ: スタッフビュー（無効化: 将来 /demo/staff-app として復活予定）
-      <Route path="/demo/staff" element={<StaffHome />} />
+      {/* デモ: スタッフ家族連絡 */}
       <Route path="/demo/staff/family-messages" element={<FamilyMessages />} />
       <Route path="/demo/staff/family-messages/:id" element={<FamilyMessageDetail />} />
-      */}
 
       {/* デモ: 統計ダッシュボード */}
       <Route path="/demo/stats" element={<StatsDashboard />} />

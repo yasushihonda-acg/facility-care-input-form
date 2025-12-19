@@ -28,6 +28,8 @@ export function FooterNav({ className = '' }: FooterNavProps) {
 
   // デモモード判定
   const isDemoMode = location.pathname.startsWith('/demo');
+  const isDemoStaffMode = location.pathname.startsWith('/demo/staff');
+  const isDemoFamilyMode = isDemoMode && !isDemoStaffMode;
 
   // パスからロールを判定（デモモードも含む）
   const isFamilyPath = location.pathname.startsWith('/family') ||
@@ -49,9 +51,10 @@ export function FooterNav({ className = '' }: FooterNavProps) {
   }, [isFamilyPath, isStaffPath]);
 
   // 表示するフッターを決定
-  // デモモードでは常に家族フッターを表示（設計書: DEMO_FAMILY_REDESIGN.md セクション4.3）
+  // デモ家族モードでは家族フッター、デモスタッフモードではスタッフフッターを表示
+  // @see docs/DEMO_STAFF_SPEC.md セクション3.4
   const savedRole = localStorage.getItem(USER_ROLE_KEY) || 'staff';
-  const showFamilyFooter = isDemoMode || isFamilyPath || (isSharedPath && savedRole === 'family');
+  const showFamilyFooter = isDemoFamilyMode || isFamilyPath || (isSharedPath && savedRole === 'family');
 
   // デモモード対応: リンク先を動的生成
   const paths = useMemo(() => ({

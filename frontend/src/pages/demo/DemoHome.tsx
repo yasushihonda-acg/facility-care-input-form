@@ -114,6 +114,24 @@ export function DemoHome() {
           </ul>
         </div>
 
+        {/* スタッフデモへのリンク */}
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <h3 className="flex items-center gap-2 font-medium text-green-800 mb-2">
+            <span>👨‍⚕️</span>
+            スタッフ向けデモ
+          </h3>
+          <p className="text-sm text-green-700 mb-3">
+            スタッフとして品物を確認・記録する体験もできます
+          </p>
+          <Link
+            to="/demo/staff"
+            className="inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-lg font-medium text-sm hover:bg-green-600 transition"
+          >
+            スタッフ用デモへ
+            <span className="ml-1">→</span>
+          </Link>
+        </div>
+
         {/* 本番モードへのリンク */}
         <div className="text-center pt-2">
           <Link
