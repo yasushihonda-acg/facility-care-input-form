@@ -294,7 +294,7 @@ AI提案以外で品物を手動登録した際にも、プリセット保存を
 **E2Eテスト**: `schedule-extension.spec.ts` (7件)
 **設計書**: `docs/ITEM_BASED_SNACK_RECORD_SPEC.md` セクション3.4-3.5
 
-### E2Eテスト（137件）
+### E2Eテスト（144件）
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |
@@ -304,6 +304,7 @@ AI提案以外で品物を手動登録した際にも、プリセット保存を
 | `fifo.spec.ts` | 8件 | FIFO機能（期限順ソート・同一品物警告） |
 | `item-based-snack.spec.ts` | 13件 | Phase 13.0 品物起点の間食記録 |
 | `schedule-extension.spec.ts` | 7件 | Phase 13.1 スケジュール拡張機能 |
+| `schedule-display.spec.ts` | 7件 | Phase 13.2 スタッフ向けスケジュール表示 |
 
 - **パリティテスト**: デモと本番で同じUIが表示されることを検証
 - **実行**: `cd frontend && npx playwright test`

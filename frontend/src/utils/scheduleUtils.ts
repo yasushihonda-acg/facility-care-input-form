@@ -336,3 +336,62 @@ export function createEmptySchedule(type: ServingSchedule['type'] = 'once'): Ser
     timeSlot: 'snack', // デフォルトはおやつ時
   };
 }
+
+// ===== Phase 13.2: スタッフ向けスケジュール表示強化 =====
+
+/**
+ * 次回の提供予定日を表示用文字列でフォーマット
+ * @returns "12/23（月）" 形式、または null
+ */
+export function getNextScheduledDateDisplay(schedule: ServingSchedule | undefined): string | null {
+  const nextDate = getNextScheduledDate(schedule);
+  if (!nextDate) return null;
+
+  const month = nextDate.getMonth() + 1;
+  const day = nextDate.getDate();
+  const weekday = WEEKDAY_LABELS[nextDate.getDay()];
+
+  return `${month}/${day}（${weekday}）`;
+}
+
+/**
+ * 今日がスケジュールに該当する場合のメッセージを取得
+ * @returns "今日は金曜日 ✓" 形式、または null
+ */
+export function getTodayScheduleMessage(schedule: ServingSchedule | undefined): string | null {
+  if (!schedule || !isScheduledForToday(schedule)) return null;
+
+  const today = new Date();
+  const weekday = WEEKDAY_LABELS[today.getDay()];
+
+  switch (schedule.type) {
+    case 'daily':
+      return '今日も提供予定 ✓';
+
+    case 'weekly':
+      return `今日は${weekday}曜日 ✓`;
+
+    case 'once':
+    case 'specific_dates':
+      return '今日が提供予定日 ✓';
+
+    default:
+      return null;
+  }
+}
+
+/**
+ * スケジュールの曜日配列を取得（weeklyタイプのみ）
+ */
+export function getScheduleWeekdays(schedule: ServingSchedule | undefined): number[] {
+  if (!schedule || schedule.type !== 'weekly') return [];
+  return schedule.weekdays ?? [];
+}
+
+/**
+ * タイムスロットのラベルを取得
+ */
+export function getTimeSlotLabel(schedule: ServingSchedule | undefined): string {
+  if (!schedule || !schedule.timeSlot) return '';
+  return SERVING_TIME_SLOT_LABELS[schedule.timeSlot];
+}

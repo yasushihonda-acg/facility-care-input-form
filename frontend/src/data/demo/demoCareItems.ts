@@ -5,7 +5,7 @@
  * 統計・在庫サマリーが見栄えするよう、様々なステータス・期限・カテゴリのデータを用意
  */
 
-import type { CareItem, ItemStatus, ItemCategory, ServingMethod } from '../../types/careItem';
+import type { CareItem, ItemStatus, ItemCategory, ServingMethod, ServingSchedule } from '../../types/careItem';
 
 // ===== 日付ヘルパー =====
 
@@ -210,6 +210,11 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
       avgConsumptionRate: 80,
     },
     consumptionRate: 80,
+    // Phase 13.2 テスト用: 毎日スケジュール
+    servingSchedule: {
+      type: 'daily',
+      timeSlot: 'snack',
+    } as ServingSchedule,
     createdAt: getDateTimeString(-2),
     updatedAt: getDateTimeString(0),
   },
@@ -231,6 +236,13 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     servingMethod: 'cut' as ServingMethod,
     servingMethodDetail: '小さく切って提供',
     noteToStaff: '1日1切れまで',
+    // Phase 13.2 テスト用: 曜日指定スケジュール
+    servingSchedule: {
+      type: 'weekly',
+      weekdays: [1, 3, 5], // 月・水・金
+      timeSlot: 'snack',
+      note: '15時のおやつに提供',
+    } as ServingSchedule,
     createdAt: getDateTimeString(0),
     updatedAt: getDateTimeString(0),
   },

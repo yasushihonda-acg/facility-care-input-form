@@ -14,8 +14,8 @@ import { SnackRecordModal } from './SnackRecordModal';
 import {
   isScheduledForToday as checkScheduledForToday,
   isScheduledForTomorrow as checkScheduledForTomorrow,
-  formatScheduleShort,
 } from '../../utils/scheduleUtils';
+import { ScheduleDisplay } from './ScheduleDisplay';
 
 interface ItemBasedSnackRecordProps {
   residentId: string;
@@ -282,29 +282,21 @@ function ItemCard({ item, highlight, onRecordClick }: ItemCardProps) {
               )}
             </div>
 
-            {/* スケジュール表示（Phase 13.1: 構造化スケジュール対応） */}
-            {(item.servingSchedule || item.plannedServeDate) && (
+            {/* スケジュール表示（Phase 13.2: 強化版） */}
+            {item.servingSchedule ? (
+              // 新しい構造化スケジュール（Phase 13.2: ScheduleDisplayコンポーネント使用）
+              <ScheduleDisplay schedule={item.servingSchedule} compact />
+            ) : item.plannedServeDate ? (
+              // 後方互換: 旧形式の単一日付
               <div className="flex items-center gap-1 text-blue-600">
-                {item.servingSchedule ? (
-                  // 新しい構造化スケジュール
-                  <span>
-                    {formatScheduleShort(item.servingSchedule)}
-                    {isScheduledForToday(item) && <span className="ml-1 text-amber-600 font-medium">← 今日</span>}
-                    {isScheduledForTomorrow(item) && <span className="ml-1 text-gray-500">(明日)</span>}
-                  </span>
-                ) : item.plannedServeDate ? (
-                  // 後方互換: 旧形式の単一日付
-                  <>
-                    <span>📅</span>
-                    <span>
-                      {new Date(item.plannedServeDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}
-                      {isScheduledForToday(item) && ' (今日)'}
-                      {isScheduledForTomorrow(item) && ' (明日)'}
-                    </span>
-                  </>
-                ) : null}
+                <span>📅</span>
+                <span>
+                  {new Date(item.plannedServeDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}
+                  {isScheduledForToday(item) && ' (今日)'}
+                  {isScheduledForTomorrow(item) && ' (明日)'}
+                </span>
               </div>
-            )}
+            ) : null}
 
             {item.noteToStaff && (
               <div className="flex items-start gap-1 text-gray-600 mt-2">

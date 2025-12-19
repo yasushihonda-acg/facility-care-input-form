@@ -42,9 +42,9 @@ test.describe('品物起点の間食記録（Phase 13.0）', () => {
       // タブがアクティブになる
       await expect(itemBasedTab).toHaveAttribute('aria-selected', 'true');
 
-      // 品物リストまたは空メッセージが表示される
-      const contentVisible = await page.locator('text=品物から間食記録').or(page.locator('text=在庫のある品物がありません')).isVisible();
-      expect(contentVisible).toBeTruthy();
+      // 品物リストまたは空メッセージが表示される（待機付き）
+      const contentLocator = page.locator('text=品物から間食記録').or(page.locator('text=在庫のある品物がありません'));
+      await expect(contentLocator.first()).toBeVisible({ timeout: 5000 });
     });
 
     test('タブ切替で表示内容が変わる', async ({ page }) => {
