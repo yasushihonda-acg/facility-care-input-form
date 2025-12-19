@@ -8,6 +8,7 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
+import { NotificationSection } from '../../components/shared/NotificationSection';
 import { TimelineItem } from '../../components/family/TimelineItem';
 import type { TimelineItem as TimelineItemType, MealTime, TimelineStatus } from '../../types/family';
 import {
@@ -159,6 +160,9 @@ export function FamilyDashboard() {
             </div>
           </Link>
         </div>
+
+        {/* 通知セクション (Phase 19.2) */}
+        <NotificationSection userType="family" maxItems={3} />
 
         {/* 日付セレクター */}
         <div className="bg-white rounded-lg shadow-card p-3 mb-4">

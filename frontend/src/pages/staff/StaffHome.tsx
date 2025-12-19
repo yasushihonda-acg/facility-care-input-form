@@ -6,6 +6,7 @@
 
 import { Link } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
+import { NotificationSection } from '../../components/shared/NotificationSection';
 import { useCareItems } from '../../hooks/useCareItems';
 import {
   getCategoryIcon,
@@ -106,6 +107,9 @@ export function StaffHome() {
             <p className="font-medium text-xs text-center">統計</p>
           </Link>
         </div>
+
+        {/* 通知セクション (Phase 19.2) */}
+        <NotificationSection userType="staff" maxItems={3} />
 
         {/* アラートセクション */}
         {expiringItems.length > 0 && (
