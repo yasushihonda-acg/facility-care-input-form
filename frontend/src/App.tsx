@@ -4,6 +4,8 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { ViewPage } from './pages/ViewPage';
 import { StatsDashboard } from './pages/shared/StatsDashboard';
 import { ItemTimeline } from './pages/shared/ItemTimeline';
+import { ChatListPage } from './pages/shared/ChatListPage';
+import { ItemChatPage } from './pages/shared/ItemChatPage';
 
 // スタッフ専用
 import { StaffHome } from './pages/staff/StaffHome';
@@ -60,6 +62,10 @@ function App() {
       {/* 家族連絡詳細（消費記録入力） */}
       <Route path="/staff/family-messages/:id" element={<FamilyMessageDetail />} />
 
+      {/* チャット一覧・詳細（Phase 18） */}
+      <Route path="/staff/chats" element={<ChatListPage userType="staff" />} />
+      <Route path="/staff/chat/:id" element={<ItemChatPage userType="staff" userName="スタッフ" />} />
+
       {/* スタッフ用統計（共有ページへリダイレクト） */}
       <Route path="/staff/stats" element={<Navigate to="/stats" replace />} />
 
@@ -88,6 +94,10 @@ function App() {
       {/* エビデンス確認 */}
       <Route path="/family/evidence/:date" element={<EvidenceMonitor />} />
 
+      {/* チャット一覧・詳細（Phase 18） */}
+      <Route path="/family/chats" element={<ChatListPage userType="family" />} />
+      <Route path="/family/chat/:id" element={<ItemChatPage userType="family" userName="家族" />} />
+
       {/* 家族用統計（共有ページへリダイレクト） */}
       <Route path="/family/stats" element={<Navigate to="/stats" replace />} />
 
@@ -112,6 +122,8 @@ function App() {
       <Route path="/demo/family/presets" element={<PresetManagement />} />
       <Route path="/demo/family/settings/resident" element={<ResidentSettings />} />
       <Route path="/demo/family/evidence/:date" element={<EvidenceMonitor />} />
+      <Route path="/demo/family/chats" element={<ChatListPage userType="family" />} />
+      <Route path="/demo/family/chat/:id" element={<ItemChatPage userType="family" userName="家族" />} />
 
       {/* デモ: スタッフホーム */}
       <Route path="/demo/staff" element={<DemoStaffHome />} />
@@ -125,6 +137,10 @@ function App() {
       {/* デモ: スタッフ家族連絡 */}
       <Route path="/demo/staff/family-messages" element={<FamilyMessages />} />
       <Route path="/demo/staff/family-messages/:id" element={<FamilyMessageDetail />} />
+
+      {/* デモ: スタッフチャット（Phase 18） */}
+      <Route path="/demo/staff/chats" element={<ChatListPage userType="staff" />} />
+      <Route path="/demo/staff/chat/:id" element={<ItemChatPage userType="staff" userName="スタッフ" />} />
 
       {/* デモ: 統計ダッシュボード */}
       <Route path="/demo/stats" element={<StatsDashboard />} />

@@ -234,6 +234,35 @@ export interface GetCareItemsParams {
   offset?: number;
 }
 
+/**
+ * 単一品物を取得（getCareItemsのitemIdフィルタを利用）
+ */
+export async function getCareItem(
+  itemId: string
+): Promise<ApiResponse<CareItem | null>> {
+  const response = await fetch(`${API_BASE}/getCareItems?itemId=${itemId}`);
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to get item: ${response.statusText}`);
+  }
+
+  const result = await response.json() as ApiResponse<GetCareItemsResponse>;
+  if (result.success && result.data && result.data.items.length > 0) {
+    return {
+      success: true,
+      data: result.data.items[0],
+      timestamp: result.timestamp,
+    };
+  }
+
+  return {
+    success: true,
+    data: null,
+    timestamp: new Date().toISOString(),
+  };
+}
+
 export async function getCareItems(
   params: GetCareItemsParams = {}
 ): Promise<ApiResponse<GetCareItemsResponse>> {
@@ -1029,6 +1058,141 @@ export async function deleteFoodMaster(
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.error?.message || `Failed to delete food master: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+// =============================================================================
+// チャット連携 API（Phase 18）
+// =============================================================================
+
+import type {
+  SendMessageRequest,
+  SendMessageResponse,
+  GetMessagesRequest,
+  GetMessagesResponse,
+  MarkAsReadRequest,
+  MarkAsReadResponse,
+  GetNotificationsRequest,
+  GetNotificationsResponse,
+  GetActiveChatItemsRequest,
+  GetActiveChatItemsResponse,
+} from '../types/chat';
+
+export type {
+  SendMessageRequest,
+  SendMessageResponse,
+  GetMessagesRequest,
+  GetMessagesResponse,
+  MarkAsReadRequest,
+  MarkAsReadResponse,
+  GetNotificationsRequest,
+  GetNotificationsResponse,
+  GetActiveChatItemsRequest,
+  GetActiveChatItemsResponse,
+};
+
+/**
+ * メッセージを送信
+ */
+export async function sendMessage(
+  params: SendMessageRequest
+): Promise<ApiResponse<SendMessageResponse>> {
+  const response = await fetch(`${API_BASE}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to send message: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * メッセージ一覧を取得
+ */
+export async function getMessages(
+  params: GetMessagesRequest
+): Promise<ApiResponse<GetMessagesResponse>> {
+  const url = new URL(`${API_BASE}/getMessages`);
+  url.searchParams.set('residentId', params.residentId);
+  url.searchParams.set('itemId', params.itemId);
+  if (params.limit) url.searchParams.set('limit', params.limit.toString());
+  if (params.before) url.searchParams.set('before', params.before);
+
+  const response = await fetch(url.toString());
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to get messages: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * メッセージを既読にする
+ */
+export async function markAsRead(
+  params: MarkAsReadRequest
+): Promise<ApiResponse<MarkAsReadResponse>> {
+  const response = await fetch(`${API_BASE}/markAsRead`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to mark as read: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 通知一覧を取得
+ */
+export async function getNotifications(
+  params: GetNotificationsRequest
+): Promise<ApiResponse<GetNotificationsResponse>> {
+  const url = new URL(`${API_BASE}/getNotifications`);
+  url.searchParams.set('residentId', params.residentId);
+  url.searchParams.set('targetType', params.targetType);
+  if (params.limit) url.searchParams.set('limit', params.limit.toString());
+  if (params.unreadOnly) url.searchParams.set('unreadOnly', 'true');
+
+  const response = await fetch(url.toString());
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to get notifications: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * アクティブなチャット一覧を取得
+ */
+export async function getActiveChatItems(
+  params: GetActiveChatItemsRequest
+): Promise<ApiResponse<GetActiveChatItemsResponse>> {
+  const url = new URL(`${API_BASE}/getActiveChatItems`);
+  url.searchParams.set('residentId', params.residentId);
+  url.searchParams.set('userType', params.userType);
+  if (params.limit) url.searchParams.set('limit', params.limit.toString());
+
+  const response = await fetch(url.toString());
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to get active chat items: ${response.statusText}`);
   }
 
   return response.json();
