@@ -244,6 +244,27 @@ export function FamilyMessageDetail() {
           </Link>
         </div>
 
+        {/* 家族とチャット（Phase 18） */}
+        <div className="px-4 mb-4">
+          <Link
+            to={`${pathPrefix}/staff/chat/${item.id}`}
+            className="block bg-white rounded-lg shadow-card p-4 hover:shadow-md transition border-2 border-green-100"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">💬</span>
+                <div>
+                  <p className="font-bold text-green-700">家族とチャット</p>
+                  <p className="text-sm text-gray-500">この品物について家族と連絡</p>
+                </div>
+              </div>
+              <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </Link>
+        </div>
+
         {/* 提供・摂食記録ボタン */}
         {item.status !== 'consumed' && (
           <div className="fixed bottom-20 left-0 right-0 px-4 pb-4 bg-gradient-to-t from-gray-50 to-transparent pt-6">

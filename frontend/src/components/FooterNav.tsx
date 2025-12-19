@@ -1,5 +1,7 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { getActiveChatItems } from '../api';
+import { DEMO_RESIDENT_ID } from '../hooks/useDemoMode';
 
 interface FooterNavProps {
   className?: string;
@@ -13,18 +15,22 @@ const DEMO_SHARED_PATHS = ['/demo/view', '/demo/stats', '/demo/items'];
  * フッターナビゲーション
  *
  * ロール別に異なるタブ構成を表示
- * - スタッフ用: [記録閲覧] [記録入力] [家族連絡] [統計]
- * - 家族用: [ホーム] [品物管理] [記録閲覧] [統計]
+ * - スタッフ用: [記録閲覧] [記録入力] [チャット] [家族連絡] [統計]
+ * - 家族用: [ホーム] [品物管理] [チャット] [記録閲覧] [統計]
  *
  * 共有ビュー（/view, /stats）にいる場合は、直前のロールを維持
  * デモモード（/demo/*）では、リンク先も /demo/* 内に留まる
+ * チャットタブは未読数バッジを表示（Phase 18）
  *
  * @see docs/VIEW_ARCHITECTURE_SPEC.md - セクション3「フッターナビゲーション設計」
  * @see docs/FOOTER_NAVIGATION_SPEC.md
  * @see docs/DEMO_SHOWCASE_SPEC.md - デモモード対応
+ * @see docs/CHAT_INTEGRATION_SPEC.md - チャット連携
  */
 export function FooterNav({ className = '' }: FooterNavProps) {
   const location = useLocation();
+  const [familyUnreadCount, setFamilyUnreadCount] = useState(0);
+  const [staffUnreadCount, setStaffUnreadCount] = useState(0);
 
   // デモモード判定
   const isDemoMode = location.pathname.startsWith('/demo');
@@ -60,12 +66,54 @@ export function FooterNav({ className = '' }: FooterNavProps) {
   const paths = useMemo(() => ({
     familyHome: isDemoMode ? '/demo/family' : '/family',
     familyItems: isDemoMode ? '/demo/family/items' : '/family/items',
+    familyChats: isDemoMode ? '/demo/family/chats' : '/family/chats',
     view: isDemoMode ? '/demo/view' : '/view',
     stats: isDemoMode ? '/demo/stats' : '/stats',
     staffInput: isDemoMode ? '/demo/staff/input/meal' : '/input/meal',
+    staffChats: isDemoMode ? '/demo/staff/chats' : '/staff/chats',
     staffFamilyMessages: isDemoMode ? '/demo/staff/family-messages' : '/staff/family-messages',
     staffStats: isDemoMode ? '/demo/staff/stats' : '/staff/stats',
   }), [isDemoMode]);
+
+  // 未読チャット数の取得
+  useEffect(() => {
+    const fetchUnreadCounts = async () => {
+      try {
+        // 家族の未読数
+        const familyResponse = await getActiveChatItems({
+          residentId: DEMO_RESIDENT_ID,
+          userType: 'family',
+        });
+        if (familyResponse.success && familyResponse.data) {
+          const totalUnread = familyResponse.data.items.reduce(
+            (sum, item) => sum + (item.unreadCountFamily || 0),
+            0
+          );
+          setFamilyUnreadCount(totalUnread);
+        }
+
+        // スタッフの未読数
+        const staffResponse = await getActiveChatItems({
+          residentId: DEMO_RESIDENT_ID,
+          userType: 'staff',
+        });
+        if (staffResponse.success && staffResponse.data) {
+          const totalUnread = staffResponse.data.items.reduce(
+            (sum, item) => sum + (item.unreadCountStaff || 0),
+            0
+          );
+          setStaffUnreadCount(totalUnread);
+        }
+      } catch (error) {
+        console.error('Failed to fetch unread counts:', error);
+      }
+    };
+
+    fetchUnreadCounts();
+    // 30秒ごとに更新
+    const interval = setInterval(fetchUnreadCounts, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // 家族用フッター
   if (showFamilyFooter) {
@@ -147,6 +195,52 @@ export function FooterNav({ className = '' }: FooterNavProps) {
                   </svg>
                   <span className={`text-xs font-bold ${isItemsActive ? 'text-white' : 'text-gray-600'}`}>
                     品物管理
+                  </span>
+                </>
+              );
+            }}
+          </NavLink>
+
+          {/* チャットタブ（Phase 18） */}
+          <NavLink
+            to={paths.familyChats}
+            className={({ isActive }) => `
+              flex-1 flex flex-col items-center justify-center gap-1 relative transition-all duration-200
+              ${isActive || location.pathname.includes('/family/chat')
+                ? 'bg-primary text-white'
+                : 'bg-white text-gray-500 hover:bg-gray-50'
+              }
+            `}
+          >
+            {({ isActive }) => {
+              const isChatsActive = isActive || location.pathname.includes('/family/chat');
+              return (
+                <>
+                  {isChatsActive && (
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-white/30" />
+                  )}
+                  <div className="relative">
+                    <svg
+                      className="w-6 h-6"
+                      fill={isChatsActive ? 'currentColor' : 'none'}
+                      stroke="currentColor"
+                      strokeWidth={isChatsActive ? 0 : 1.5}
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"
+                      />
+                    </svg>
+                    {familyUnreadCount > 0 && (
+                      <span className="absolute -top-2 -right-2 inline-flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-red-500 rounded-full">
+                        {familyUnreadCount > 9 ? '9+' : familyUnreadCount}
+                      </span>
+                    )}
+                  </div>
+                  <span className={`text-xs font-bold ${isChatsActive ? 'text-white' : 'text-gray-600'}`}>
+                    チャット
                   </span>
                 </>
               );
@@ -308,6 +402,52 @@ export function FooterNav({ className = '' }: FooterNavProps) {
               </span>
             </>
           )}
+        </NavLink>
+
+        {/* チャットタブ（Phase 18） */}
+        <NavLink
+          to={paths.staffChats}
+          className={({ isActive }) => `
+            flex-1 flex flex-col items-center justify-center gap-1 relative transition-all duration-200
+            ${isActive || location.pathname.includes('/staff/chat')
+              ? 'bg-primary text-white'
+              : 'bg-white text-gray-500 hover:bg-gray-50'
+            }
+          `}
+        >
+          {({ isActive }) => {
+            const isChatsActive = isActive || location.pathname.includes('/staff/chat');
+            return (
+              <>
+                {isChatsActive && (
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-white/30" />
+                )}
+                <div className="relative">
+                  <svg
+                    className="w-6 h-6"
+                    fill={isChatsActive ? 'currentColor' : 'none'}
+                    stroke="currentColor"
+                    strokeWidth={isChatsActive ? 0 : 1.5}
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"
+                    />
+                  </svg>
+                  {staffUnreadCount > 0 && (
+                    <span className="absolute -top-2 -right-2 inline-flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-red-500 rounded-full">
+                      {staffUnreadCount > 9 ? '9+' : staffUnreadCount}
+                    </span>
+                  )}
+                </div>
+                <span className={`text-xs font-bold ${isChatsActive ? 'text-white' : 'text-gray-600'}`}>
+                  チャット
+                </span>
+              </>
+            );
+          }}
         </NavLink>
 
         {/* 家族連絡タブ（スタッフ向け：閲覧用） */}
