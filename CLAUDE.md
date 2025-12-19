@@ -57,6 +57,8 @@ gh run list --repo yasushihonda-acg/facility-care-input-form --workflow=gh-pages
 | ページ | URL | 説明 |
 |--------|-----|------|
 | デモホーム | `/demo` | デモショーケース入り口 |
+| 家族デモ | `/demo/family` | 家族向けデモガイドツアー |
+| **スタッフデモ** | `/demo/staff` | スタッフ向けデモホーム（NEW） |
 | スタッフ用 | `/staff/input/meal` | 食事記録入力 |
 | 家族用 | `/family` | 家族ダッシュボード |
 | **管理者設定** | `/settings` または `/staff/input/meal?admin=true` | 設定モーダル表示 |
@@ -107,6 +109,7 @@ gh run list --repo yasushihonda-acg/facility-care-input-form --workflow=gh-pages
 | `docs/FIX_DEMO_NAVIGATION.md` | デモナビゲーション修正記録 |
 | `docs/FIFO_DESIGN_SPEC.md` | FIFO（先入れ先出し）対応設計（Phase 12.0） |
 | `docs/ITEM_BASED_SNACK_RECORD_SPEC.md` | 品物起点の間食記録・スケジュール拡張（Phase 13） |
+| `docs/DEMO_STAFF_SPEC.md` | スタッフ用デモページ設計（Phase 14） |
 
 #### データ構造
 | ファイル | 用途 |

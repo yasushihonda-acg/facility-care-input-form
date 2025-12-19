@@ -1,6 +1,6 @@
 # 引き継ぎドキュメント
 
-> **最終更新**: 2025年12月19日（Phase 13.2: スタッフ向けスケジュール表示強化）
+> **最終更新**: 2025年12月19日（Phase 14: スタッフ用デモページ）
 >
 > 本ドキュメントは、開発を引き継ぐ際に必要な情報をまとめたものです。
 
@@ -90,6 +90,7 @@ cd frontend && npm install && npm run dev
 | 品物起点の間食記録 | 「品物から記録」タブで直感的な間食記録（Phase 13.0） | ✅ 完了 |
 | スケジュール拡張 | 毎日・曜日指定・複数日のスケジュール設定（Phase 13.1） | ✅ 完了 |
 | スタッフ向けスケジュール表示 | 曜日バッジ・次回予定日・タイムスロット表示（Phase 13.2） | ✅ 完了 |
+| スタッフ用デモページ | スタッフ向けデモ体験（/demo/staff）、ガイドツアー（Phase 14） | ✅ 完了 |
 
 ---
 
@@ -158,8 +159,10 @@ facility-care-input-form/
 │   │   │   ├── shared/               # 共有ページ
 │   │   │   │   └── StatsDashboard.tsx # 統計ダッシュボード
 │   │   │   ├── demo/                 # デモ専用ページ
-│   │   │   │   ├── DemoHome.tsx      # デモホーム
-│   │   │   │   └── DemoShowcase.tsx  # ガイド付きツアー
+│   │   │   │   ├── DemoHome.tsx           # 家族デモホーム
+│   │   │   │   ├── DemoShowcase.tsx       # 家族ガイド付きツアー
+│   │   │   │   ├── DemoStaffHome.tsx      # スタッフデモホーム ✅ Phase 14
+│   │   │   │   └── DemoStaffShowcase.tsx  # スタッフガイド付きツアー ✅ Phase 14
 │   │   │   └── family/               # 家族向けページ
 │   │   │       ├── FamilyDashboard.tsx
 │   │   │       ├── EvidenceMonitor.tsx
@@ -227,7 +230,8 @@ facility-care-input-form/
 | ⭐ | `docs/API_SPEC.md` | API仕様書 |
 | ⭐ | `docs/PRESET_MANAGEMENT_SPEC.md` | プリセット管理機能設計（Phase 8.6/8.7） |
 | ⭐ | `docs/AI_INTEGRATION_SPEC.md` | AI連携設計（Phase 8.4/8.5/8.7） |
-| ⭐ | `docs/DEMO_SHOWCASE_SPEC.md` | デモショーケース設計 |
+| ⭐ | `docs/DEMO_SHOWCASE_SPEC.md` | デモショーケース設計（家族向け） |
+| ⭐ | `docs/DEMO_STAFF_SPEC.md` | スタッフ用デモ設計（Phase 14） |
 | ⭐ | `docs/DEMO_FAMILY_REDESIGN.md` | 家族向けデモ特化リデザイン設計 |
 | ⭐ | `docs/API_TEST_PLAN.md` | APIテスト計画・Firestore修正記録 |
 | ⭐ | `docs/E2E_TEST_SPEC.md` | E2Eテスト仕様（Playwright） |
@@ -267,6 +271,8 @@ facility-care-input-form/
 | 間食記録連携 | スタッフ食事入力×家族品物管理連携（全6Phase） | 2025-12-18 |
 | Phase 13.0 | 品物起点の間食記録（タブUI・リスト・モーダル・API連携） | 2025-12-19 |
 | Phase 13.1 | スケジュール拡張（曜日指定・複数日・E2E 7件） | 2025-12-19 |
+| Phase 13.2 | スタッフ向けスケジュール表示強化（曜日バッジ・次回予定日） | 2025-12-19 |
+| Phase 14 | スタッフ用デモページ（DemoStaffHome・DemoStaffShowcase・E2Eテスト17件追加） | 2025-12-19 |
 
 ### 4.2 将来のタスク
 
@@ -436,16 +442,18 @@ BASE_URL=https://facility-care-input-form.web.app npx playwright test
 - `frontend/playwright.config.ts` - Playwright設定
 - デフォルトbaseURL: `http://localhost:4173`（環境変数で上書き可能）
 
-**現在のテスト**: 全137件
+**現在のテスト**: 全161件（3件スキップ）
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |
 | `family-user-scenario.spec.ts` | 34件 | 家族シナリオ・パリティ・本番準備 |
 | `family-page.spec.ts` | 21件 | 家族ページ（品物詳細・消費ログ等） |
+| `demo-staff.spec.ts` | 17件 | スタッフ用デモ（Phase 14） |
 | `item-based-snack-record.spec.ts` | 13件 | 品物起点の間食記録（Phase 13.0） |
 | `snack-record.spec.ts` | 11件 | 間食記録連携（品物リスト・サジェスト） |
 | `fifo.spec.ts` | 8件 | FIFO機能（期限順ソート・推奨表示） |
 | `schedule-extension.spec.ts` | 7件 | スケジュール拡張（Phase 13.1） |
+| `schedule-display.spec.ts` | 7件 | スケジュール表示強化（Phase 13.2） |
 
 **パリティテスト**: デモと本番で同じUIが表示されることを検証
 - デモツアー完了 = 本番利用スキル習得
@@ -691,6 +699,7 @@ docs/CURRENT_STATUS.md を読んで、次のタスクから再開してくださ
 
 | 日付 | 内容 |
 |------|------|
+| 2025-12-19 | Phase 14: スタッフ用デモページ（DemoStaffHome・DemoStaffShowcase・E2Eテスト17件追加）、E2Eテスト161件 |
 | 2025-12-19 | Phase 13.2: スタッフ向けスケジュール表示強化（ScheduleDisplay・WeekdayBadges・E2Eテスト7件追加）、E2Eテスト144件 |
 | 2025-12-19 | Phase 13.1: スケジュール拡張（曜日指定・複数日・ServingSchedule型・E2Eテスト7件追加）、E2Eテスト137件 |
 | 2025-12-19 | Phase 13.0: 品物起点の間食記録（タブUI・品物リスト・記録モーダル・API連携・E2Eテスト13件追加）、E2Eテスト130件 |
