@@ -56,16 +56,18 @@ npx playwright test e2e/demo-page.spec.ts
 # 本番環境でテスト
 BASE_URL=https://facility-care-input-form.web.app npx playwright test
 
-# テスト件数: 155件 (Phase 15で+18件、一部テスト整理)
+# テスト件数: 188件 (Phase 17まで)
 # - demo-page: 43件
 # - family-user-scenario: 34件
+# - staff-record-form: 22件
 # - family-page: 21件
+# - demo-staff: 17件
+# - item-based-snack: 13件
 # - snack-record: 11件
 # - fifo: 8件
-# - item-based-snack: 13件
 # - schedule-extension: 7件
 # - schedule-display: 7件
-# - demo-staff: 17件
+# - photo-evidence: 5件
 ```
 
 ## デプロイ
