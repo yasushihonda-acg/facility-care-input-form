@@ -111,6 +111,7 @@ gh run list --repo yasushihonda-acg/facility-care-input-form --workflow=gh-pages
 | `docs/ITEM_BASED_SNACK_RECORD_SPEC.md` | 品物起点の間食記録・スケジュール拡張（Phase 13） |
 | `docs/DEMO_STAFF_SPEC.md` | スタッフ用デモページ設計（Phase 14） |
 | `docs/STAFF_RECORD_FORM_SPEC.md` | スタッフ記録入力フォーム設計（Phase 15） |
+| `docs/PHOTO_EVIDENCE_DISPLAY_SPEC.md` | 写真エビデンス表示機能設計（Phase 16） |
 
 #### データ構造
 | ファイル | 用途 |
