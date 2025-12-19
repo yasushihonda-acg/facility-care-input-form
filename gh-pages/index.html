@@ -321,7 +321,6 @@
                     <h2 class="text-lg font-bold text-gray-700 mb-4 flex items-center gap-2">
                         <span class="w-8 h-8 bg-purple-500 text-white rounded-full flex items-center justify-center text-sm">3</span>
                         Phase 8 新機能
-                        <span class="ml-2 bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full">最新</span>
                     </h2>
                     <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div class="bg-white rounded-lg shadow p-5 border-l-4 border-purple-500">
@@ -362,7 +361,6 @@
                     <h2 class="text-lg font-bold text-gray-700 mb-4 flex items-center gap-2">
                         <span class="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center text-sm">4</span>
                         Phase 9 新機能
-                        <span class="ml-2 bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">最新</span>
                     </h2>
                     <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div class="bg-white rounded-lg shadow p-5 border-l-4 border-green-500">
@@ -388,6 +386,35 @@
                             <h3 class="font-semibold mb-1">禁止ルール機能</h3>
                             <p class="text-gray-600 text-sm">家族が設定した提供禁止品目をスタッフに警告表示。入居者設定画面で管理。</p>
                             <span class="inline-block mt-2 bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs">Phase 9.x ✅完了</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phase 16-18 Features -->
+                <div>
+                    <h2 class="text-lg font-bold text-gray-700 mb-4 flex items-center gap-2">
+                        <span class="w-8 h-8 bg-pink-500 text-white rounded-full flex items-center justify-center text-sm">5</span>
+                        Phase 16-18 新機能
+                        <span class="ml-2 bg-pink-100 text-pink-700 text-xs px-2 py-1 rounded-full">最新</span>
+                    </h2>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="bg-white rounded-lg shadow p-5 border-l-4 border-pink-500">
+                            <div class="text-2xl mb-2">📸</div>
+                            <h3 class="font-semibold mb-1">写真エビデンス表示</h3>
+                            <p class="text-gray-600 text-sm">タイムラインにケア写真を表示。家族が摂食状況を視覚的に確認可能。</p>
+                            <span class="inline-block mt-2 bg-pink-100 text-pink-700 px-2 py-0.5 rounded text-xs">Phase 16 ✅完了</span>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-5 border-l-4 border-pink-500">
+                            <div class="text-2xl mb-2">☁️</div>
+                            <h3 class="font-semibold mb-1">Firebase Storage連携</h3>
+                            <p class="text-gray-600 text-sm">写真をFirebase Storageに移行。Cloud FunctionsのAPIで安全に配信。</p>
+                            <span class="inline-block mt-2 bg-pink-100 text-pink-700 px-2 py-0.5 rounded text-xs">Phase 17 ✅完了</span>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-5 border-l-4 border-pink-500">
+                            <div class="text-2xl mb-2">💬</div>
+                            <h3 class="font-semibold mb-1">チャット連携</h3>
+                            <p class="text-gray-600 text-sm">品物起点でスタッフ・家族間のメッセージ機能。未読バッジ付きで通知。</p>
+                            <span class="inline-block mt-2 bg-pink-100 text-pink-700 px-2 py-0.5 rounded text-xs">Phase 18 ✅完了</span>
                         </div>
                     </div>
                 </div>
@@ -660,10 +687,40 @@ flowchart TB
                         </div>
                         <p class="text-sm text-gray-500 mt-1">タブ削除、StaffRecordDialog統一、家族連絡詳細対応、E2Eテスト22件追加</p>
                     </div>
+                    <div class="border-l-4 border-green-500 pl-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-semibold text-gray-800">Phase 15.6: 摂食割合の数値入力</span>
+                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-1">絵文字→0-10数値入力、残り対応フィールド（破棄/保存/その他）</p>
+                    </div>
+                    <div class="border-l-4 border-green-500 pl-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-semibold text-gray-800">Phase 16: 写真エビデンス表示</span>
+                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-1">スタッフ写真を家族向けエビデンス画面で表示、EvidenceMonitor実画像対応</p>
+                    </div>
+                    <div class="border-l-4 border-green-500 pl-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-semibold text-gray-800">Phase 17: Firebase Storage 写真連携</span>
+                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-1">Google Drive → Firebase Storage 移行、getCarePhotos API、Webhook写真対応</p>
+                    </div>
                     <div class="border-l-4 border-green-500 pl-4 bg-green-50 -mx-4 px-4 py-3 rounded-r-lg mt-6">
                         <div class="flex justify-between items-center mb-2">
                             <span class="font-semibold text-gray-800 flex items-center gap-2">
-                                Phase 15.6: 摂食割合の数値入力
+                                Phase 18: チャット連携機能
                                 <span class="bg-green-600 text-white text-xs px-2 py-0.5 rounded">最新</span>
                             </span>
                             <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
@@ -671,7 +728,7 @@ flowchart TB
                         <div class="w-full bg-gray-200 rounded-full h-2">
                             <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
                         </div>
-                        <p class="text-sm text-gray-600 mt-1">絵文字→0-10数値入力、残り対応フィールド（破棄/保存/その他）、E2Eテスト合計183件</p>
+                        <p class="text-sm text-gray-600 mt-1">品物起点のスタッフ⇔家族チャット、フッター通知バッジ、E2Eテスト合計196件</p>
                     </div>
                 </div>
             </div>

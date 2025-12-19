@@ -333,6 +333,46 @@ AI提案以外で品物を手動登録した際にも、プリセット保存を
 
 ### Phase 16: 写真エビデンス表示 (2025-12-19 - 完了)
 
+### Phase 18: チャット連携機能 (2025-12-19 - 完了)
+品物ごとのチャットスペースで、スタッフと家族が双方向にやりとりできる機能。
+
+**主な機能**:
+- チャット一覧（ChatListPage）: アクティブなスレッドのみ表示
+- 品物チャットスペース（ItemChatPage）: スタッフ⇔家族の双方向メッセージ
+- フッターにチャットタブ追加（未読バッジ付き）
+- 品物詳細画面からチャット開始ボタン
+
+**バックエンドAPI**:
+| メソッド | パス | 説明 |
+|----------|------|------|
+| POST | `/sendMessage` | メッセージ送信 |
+| GET | `/getMessages` | メッセージ取得 |
+| POST | `/markAsRead` | 既読マーク |
+| GET | `/getNotifications` | 通知取得 |
+| GET | `/getActiveChatItems` | アクティブチャット一覧 |
+
+**Firestoreコレクション**:
+- `care_items/{itemId}/messages/{messageId}`: チャットメッセージ
+- `residents/{residentId}/notifications/{notificationId}`: 通知
+
+**実装ファイル（バックエンド）**:
+- `functions/src/types/index.ts`: チャット関連型定義
+- `functions/src/functions/chat.ts`: チャットAPI（新規）
+- `functions/src/index.ts`: エクスポート追加
+
+**実装ファイル（フロントエンド）**:
+- `frontend/src/types/chat.ts`: チャット型定義（新規）
+- `frontend/src/api/index.ts`: チャットAPI関数追加
+- `frontend/src/pages/shared/ChatListPage.tsx`: チャット一覧（新規）
+- `frontend/src/pages/shared/ItemChatPage.tsx`: 品物チャット（新規）
+- `frontend/src/components/FooterNav.tsx`: チャットタブ追加
+- `frontend/src/pages/family/ItemDetail.tsx`: チャットリンク追加
+- `frontend/src/pages/staff/FamilyMessageDetail.tsx`: チャットリンク追加
+- `frontend/src/App.tsx`: チャットルート追加
+
+**E2Eテスト**: `chat-integration.spec.ts` (8件)
+**設計書**: `docs/CHAT_INTEGRATION_SPEC.md`
+
 ### Phase 17: Firebase Storage 写真連携 (2025-12-19 - 完了)
 写真保存先をGoogle DriveからFirebase Storageに移行。
 
@@ -363,7 +403,7 @@ AI提案以外で品物を手動登録した際にも、プリセット保存を
 **E2Eテスト**: `photo-evidence.spec.ts` (5件)
 **設計書**: `docs/PHOTO_EVIDENCE_DISPLAY_SPEC.md`
 
-### E2Eテスト（188件、Phase 16で+5件）
+### E2Eテスト（196件、Phase 18で+8件）
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |
@@ -377,6 +417,7 @@ AI提案以外で品物を手動登録した際にも、プリセット保存を
 | `demo-staff.spec.ts` | 17件 | Phase 14 スタッフ用デモページ |
 | `staff-record-form.spec.ts` | 22件 | Phase 15/15.6 スタッフ用記録入力フォーム（数値入力・残り対応） |
 | `photo-evidence.spec.ts` | 5件 | Phase 16 写真エビデンス表示 |
+| `chat-integration.spec.ts` | 8件 | Phase 18 チャット連携 |
 
 - **パリティテスト**: デモと本番で同じUIが表示されることを検証
 - **実行**: `cd frontend && npx playwright test`
