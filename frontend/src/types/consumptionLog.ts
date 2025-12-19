@@ -14,12 +14,12 @@ export type { ConsumptionStatus } from './careItem';
 export type MealTime = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
 // 残った分への対応（Phase 15.6）
-export type RemainingHandling = 'discarded' | 'stored' | 'took_home' | 'other';
+// ※ 施設入居者向けのため「持ち帰り」は対象外
+export type RemainingHandling = 'discarded' | 'stored' | 'other';
 
 export const REMAINING_HANDLING_OPTIONS: { value: RemainingHandling; label: string }[] = [
   { value: 'discarded', label: '破棄した' },
   { value: 'stored', label: '保存した' },
-  { value: 'took_home', label: '持ち帰り' },
   { value: 'other', label: 'その他' },
 ];
 

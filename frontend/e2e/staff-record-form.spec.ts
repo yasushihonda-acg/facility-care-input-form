@@ -277,10 +277,9 @@ test.describe('Phase 15: スタッフ用記録入力フォーム', () => {
       // 「残った分への対応」が表示される
       await expect(dialog.locator('text=残った分への対応')).toBeVisible();
 
-      // 選択肢が表示される
+      // 選択肢が表示される（施設入居者向けのため「持ち帰り」は対象外）
       await expect(dialog.locator('text=破棄した')).toBeVisible();
       await expect(dialog.locator('text=保存した')).toBeVisible();
-      await expect(dialog.locator('text=持ち帰り')).toBeVisible();
       await expect(dialog.locator('text=その他')).toBeVisible();
     });
 

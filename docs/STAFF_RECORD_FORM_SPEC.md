@@ -409,7 +409,7 @@ interface StaffRecordDialogProps {
 現在の摂食状況入力は絵文字ボタン（😋完食 / 😊ほぼ完食 / 😐半分 / 😕少し / 😞なし）の5段階選択。
 これを**0〜10の数値入力**に変更し、より細かい記録を可能にする。
 
-また、残った分への対応（破棄、保存、持ち帰り等）を記録する新フィールドを追加。
+また、残った分への対応（破棄、保存等）を記録する新フィールドを追加。
 
 ### 9.2 摂食状況入力の変更
 
@@ -443,8 +443,9 @@ interface StaffRecordDialogProps {
 |----|--------|------|
 | `discarded` | 破棄した | 食べ残しを廃棄 |
 | `stored` | 保存した | 冷蔵庫等に保管 |
-| `took_home` | 持ち帰り | 利用者が持ち帰り（デイサービス等） |
 | `other` | その他 | 自由記入で詳細入力 |
+
+※ 施設入居者向けのため「持ち帰り」は対象外
 
 ### 9.4 UIデザイン（ダイアログ）
 
@@ -461,7 +462,6 @@ interface StaffRecordDialogProps {
 │  残った分への対応 *    ← 10未満の場合のみ │
 │  ( ) 破棄した                        │
 │  ( ) 保存した                        │
-│  ( ) 持ち帰り                        │
 │  ( ) その他 → [          ]           │
 │                                      │
 │  メモ（任意）                        │
@@ -490,7 +490,7 @@ interface SnackRecord {
   // ...
 }
 
-type RemainingHandling = 'discarded' | 'stored' | 'took_home' | 'other';
+type RemainingHandling = 'discarded' | 'stored' | 'other';
 ```
 
 ### 9.6 Sheet B反映
