@@ -1668,3 +1668,157 @@ export interface ServingSchedule {
   /** 共通: 補足（自由記述） */
   note?: string;
 }
+
+// =============================================================================
+// チャット連携 Types (Phase 18)
+// docs/CHAT_INTEGRATION_SPEC.md に基づく型定義
+// =============================================================================
+
+/** メッセージタイプ */
+export type MessageType = "text" | "record" | "system";
+
+/** 送信者タイプ */
+export type SenderType = "staff" | "family";
+
+/** 通知タイプ */
+export type NotificationType = "new_message" | "record_added" | "item_expiring";
+
+/** 通知対象タイプ */
+export type NotificationTargetType = "staff" | "family" | "both";
+
+/**
+ * チャットメッセージ
+ * Firestore: residents/{residentId}/items/{itemId}/messages/{messageId}
+ */
+export interface ChatMessage {
+  // 識別情報
+  id: string;
+  type: MessageType;
+
+  // 送信者情報
+  senderType: SenderType;
+  senderName: string;
+
+  // メッセージ内容
+  content: string;
+  recordData?: SnackRecord; // type='record'の場合の記録データ
+
+  // 既読管理
+  readByStaff: boolean;
+  readByFamily: boolean;
+
+  // 関連データ（オプション）
+  photoUrl?: string;
+  linkedRecordId?: string; // 関連する記録ID
+
+  // メタ情報
+  createdAt: Timestamp;
+}
+
+/**
+ * 品物のチャット拡張フィールド
+ * CareItemに追加されるチャット関連フィールド
+ */
+export interface CareItemChatExtension {
+  hasMessages: boolean; // チャットが開始されているか
+  unreadCountStaff: number; // スタッフ未読数
+  unreadCountFamily: number; // 家族未読数
+  lastMessageAt?: Timestamp; // 最終メッセージ日時
+  lastMessagePreview?: string; // 最終メッセージのプレビュー
+}
+
+/**
+ * 通知
+ * Firestore: residents/{residentId}/notifications/{notificationId}
+ */
+export interface ChatNotification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+
+  targetType: NotificationTargetType;
+  read: boolean;
+
+  // リンク先
+  linkTo: string; // e.g., '/staff/family-messages/item-123/chat'
+
+  // 関連データ
+  relatedItemId?: string;
+  relatedItemName?: string;
+
+  createdAt: Timestamp;
+}
+
+// === チャットAPI リクエスト/レスポンス型 ===
+
+/** メッセージ送信リクエスト */
+export interface SendMessageRequest {
+  residentId: string;
+  itemId: string;
+  senderType: SenderType;
+  senderName: string;
+  content: string;
+  type?: MessageType; // デフォルト: 'text'
+  recordData?: SnackRecord;
+  photoUrl?: string;
+}
+
+/** メッセージ送信レスポンス */
+export interface SendMessageResponse {
+  messageId: string;
+  createdAt: string;
+}
+
+/** メッセージ取得リクエスト */
+export interface GetMessagesRequest {
+  residentId: string;
+  itemId: string;
+  limit?: number; // デフォルト: 50
+  before?: string; // ページネーション用（ISO8601）
+}
+
+/** メッセージ取得レスポンス */
+export interface GetMessagesResponse {
+  messages: ChatMessage[];
+  hasMore: boolean;
+}
+
+/** 既読マークリクエスト */
+export interface MarkAsReadRequest {
+  residentId: string;
+  itemId: string;
+  readerType: SenderType;
+}
+
+/** 既読マークレスポンス */
+export interface MarkAsReadResponse {
+  markedCount: number;
+}
+
+/** 通知取得リクエスト */
+export interface GetNotificationsRequest {
+  residentId: string;
+  targetType: SenderType;
+  limit?: number; // デフォルト: 20
+  unreadOnly?: boolean;
+}
+
+/** 通知取得レスポンス */
+export interface GetNotificationsResponse {
+  notifications: ChatNotification[];
+  unreadCount: number;
+}
+
+/** アクティブチャット一覧取得リクエスト */
+export interface GetActiveChatItemsRequest {
+  residentId: string;
+  userType: SenderType;
+  limit?: number;
+}
+
+/** アクティブチャット一覧取得レスポンス */
+export interface GetActiveChatItemsResponse {
+  items: (CareItem & CareItemChatExtension)[];
+  total: number;
+}

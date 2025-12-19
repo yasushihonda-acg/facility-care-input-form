@@ -170,3 +170,15 @@ export {
   updateFoodMaster,
   deleteFoodMaster,
 } from "./functions/foodMasters";
+
+// =============================================================================
+// チャット連携（Phase 18）
+// =============================================================================
+
+export {
+  sendMessage,
+  getMessages,
+  markAsRead,
+  getNotifications,
+  getActiveChatItems,
+} from "./functions/chat";
