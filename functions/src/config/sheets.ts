@@ -111,20 +111,6 @@ export const COLLECTIONS = {
 } as const;
 
 /**
- * Google Drive フォルダ設定
- * 画像連携で使用
- */
-export const DRIVE_CONFIG = {
-  /** ルートフォルダ名 */
-  ROOT_FOLDER_NAME: "CareRecordImages",
-  /** フォルダ構成: {ROOT}/{YYYY}/{MM}/ */
-  DATE_FORMAT: {
-    YEAR: "YYYY",
-    MONTH: "MM",
-  },
-} as const;
-
-/**
  * Cloud Functions 共通設定
  */
 export const FUNCTIONS_CONFIG = {

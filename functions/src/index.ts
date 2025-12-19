@@ -43,10 +43,11 @@ export {submitMealRecord} from "./functions/submitMealRecord";
 export {submitFamilyRequest} from "./functions/submitFamilyRequest";
 
 // =============================================================================
-// 画像連携
+// 画像連携（Phase 17: Firebase Storage）
 // =============================================================================
 
 export {uploadCareImage} from "./functions/uploadCareImage";
+export {getCarePhotos} from "./functions/getCarePhotos";
 
 // =============================================================================
 // データ取得 (GET)
@@ -66,7 +67,6 @@ export {getMealFormSettings, updateMealFormSettings} from "./functions/mealFormS
 // =============================================================================
 
 export {testWebhook} from "./functions/testWebhook";
-export {testDriveAccess} from "./functions/testDriveAccess";
 
 // =============================================================================
 // 品物管理（Phase 8.1）

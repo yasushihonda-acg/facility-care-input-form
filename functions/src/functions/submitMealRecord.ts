@@ -123,6 +123,8 @@ function validateRequest(
       // 間食記録連携用（オプショナル）
       snackRecords: req.snackRecords as SnackRecord[] | undefined,
       residentId: req.residentId as string | undefined,
+      // Phase 17: 写真連携
+      photoUrl: req.photoUrl as string | undefined,
     },
   };
 }
@@ -228,6 +230,8 @@ async function submitMealRecordHandler(
             injectionAmount: mealRecord.injectionAmount,
             note: mealRecord.note,
             postId: postId,
+            // Phase 17: 写真URL
+            photoUrl: mealRecord.photoUrl,
           };
 
           // 重要フラグの判定

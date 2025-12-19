@@ -91,6 +91,9 @@ export interface SubmitMealRecordRequest {
   // === 間食記録連携用（オプショナル）===
   snackRecords?: SnackRecord[];
   residentId?: string;
+
+  // === Phase 17: 写真連携 ===
+  photoUrl?: string;
 }
 
 // submitMealRecord response
@@ -108,8 +111,6 @@ export interface MealFormSettings {
   webhookUrl?: string;
   /** 重要Webhook URL（重要記録のみ追加通知先） */
   importantWebhookUrl?: string;
-  /** 写真保存先Google DriveフォルダID */
-  driveUploadFolderId?: string;
   updatedAt: string;
 }
 
@@ -120,5 +121,65 @@ export interface UpdateMealFormSettingsRequest {
   defaultDayServiceName?: string;
   webhookUrl?: string;
   importantWebhookUrl?: string;
-  driveUploadFolderId?: string;
+}
+
+// =============================================================================
+// Phase 17: Firebase Storage 写真連携
+// =============================================================================
+
+/**
+ * 写真メタデータ（Firestore care_photos コレクション）
+ */
+export interface CarePhoto {
+  photoId: string;
+  residentId: string;
+  date: string;         // YYYY-MM-DD
+  mealTime: string;     // breakfast/lunch/dinner/snack
+  photoUrl: string;
+  storagePath: string;
+  fileName: string;
+  mimeType: string;
+  fileSize: number;
+  staffId: string;
+  staffName?: string;
+  uploadedAt: string;
+  postId?: string;
+}
+
+/**
+ * 画像アップロードリクエスト
+ */
+export interface UploadCareImageRequest {
+  staffId: string;
+  residentId: string;
+  mealTime?: string;
+  date?: string;
+  staffName?: string;
+  image: File;
+}
+
+/**
+ * 画像アップロードレスポンス
+ */
+export interface UploadCareImageResponse {
+  photoId: string;
+  fileName: string;
+  photoUrl: string;
+  storagePath: string;
+}
+
+/**
+ * 写真取得リクエスト
+ */
+export interface GetCarePhotosRequest {
+  residentId: string;
+  date: string;
+  mealTime?: string;
+}
+
+/**
+ * 写真取得レスポンス
+ */
+export interface GetCarePhotosResponse {
+  photos: CarePhoto[];
 }

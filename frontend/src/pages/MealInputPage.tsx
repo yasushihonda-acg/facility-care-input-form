@@ -8,7 +8,7 @@ import { useState, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import type { SnackRecord } from '../types/mealForm';
 import { DAY_SERVICE_OPTIONS } from '../types/mealForm';
-import { submitMealRecord } from '../api';
+import { submitMealRecord, uploadCareImage } from '../api';
 import { Layout } from '../components/Layout';
 import { useMealFormSettings } from '../hooks/useMealFormSettings';
 import { MealSettingsModal } from '../components/MealSettingsModal';
@@ -99,6 +99,27 @@ export function MealInputPage() {
 
     setIsSubmitting(true);
     try {
+      // Phase 17: 写真がある場合は先にアップロード
+      let photoUrl: string | undefined;
+      if (form.photo) {
+        try {
+          const uploadResponse = await uploadCareImage({
+            staffId: form.staffName,
+            residentId: 'resident-001',
+            mealTime: 'snack',
+            staffName: form.staffName,
+            image: form.photo,
+          });
+          if (uploadResponse.success && uploadResponse.data) {
+            photoUrl = uploadResponse.data.photoUrl;
+            console.log('写真アップロード成功:', uploadResponse.data.photoId);
+          }
+        } catch (uploadError) {
+          console.error('写真アップロードエラー:', uploadError);
+          // 写真アップロード失敗は警告のみ、記録送信は続行
+        }
+      }
+
       // APIリクエストデータを構築（隠し項目はマスター設定から取得）
       const requestData = {
         recordMode: 'snack_only' as const,
@@ -111,6 +132,7 @@ export function MealInputPage() {
         ...(form.snack && { snack: form.snack }),
         ...(form.note && { note: form.note }),
         ...(snackRecords.length > 0 && { snackRecords }),
+        ...(photoUrl && { photoUrl }),  // Phase 17: 写真URL追加
         residentId: 'resident-001',
       };
 

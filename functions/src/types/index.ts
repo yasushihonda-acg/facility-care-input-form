@@ -80,6 +80,10 @@ export interface SubmitMealRecordRequest {
   // docs/SNACK_RECORD_INTEGRATION_SPEC.md
   snackRecords?: SnackRecord[]; // 間食詳細記録
   residentId?: string; // 入居者ID（品物連携用）
+
+  // === Phase 17: 写真連携 ===
+  // docs/FIREBASE_STORAGE_MIGRATION_SPEC.md
+  photoUrl?: string; // Firebase Storage 公開URL（Webhook送信用）
 }
 
 /**
@@ -161,11 +165,59 @@ export interface SubmitFamilyRequestResponse {
   estimatedReviewDate: string;
 }
 
+/**
+ * 画像アップロードレスポンス
+ * Phase 17: Firebase Storage移行後の新レスポンス形式
+ */
 export interface UploadCareImageResponse {
-  fileId: string;
+  /** Firestore care_photos ドキュメントID */
+  photoId: string;
+  /** ファイル名 */
   fileName: string;
-  publicUrl: string;
-  thumbnailUrl: string;
+  /** Firebase Storage 公開URL */
+  photoUrl: string;
+  /** Storage内のパス */
+  storagePath: string;
+}
+
+/**
+ * 写真メタデータ（Firestore care_photos コレクション）
+ * @see docs/FIREBASE_STORAGE_MIGRATION_SPEC.md
+ */
+export interface CarePhoto {
+  photoId: string;
+  residentId: string;
+  /** YYYY-MM-DD */
+  date: string;
+  /** breakfast/lunch/dinner/snack */
+  mealTime: string;
+  photoUrl: string;
+  storagePath: string;
+  fileName: string;
+  mimeType: string;
+  fileSize: number;
+  staffId: string;
+  staffName?: string;
+  uploadedAt: string;
+  postId?: string;
+}
+
+/**
+ * 写真取得リクエスト
+ */
+export interface GetCarePhotosRequest {
+  residentId: string;
+  /** YYYY-MM-DD */
+  date: string;
+  /** オプション */
+  mealTime?: string;
+}
+
+/**
+ * 写真取得レスポンス
+ */
+export interface GetCarePhotosResponse {
+  photos: CarePhoto[];
 }
 
 /**
@@ -348,8 +400,6 @@ export interface MealFormSettings {
   webhookUrl?: string;
   /** 重要Webhook URL（重要記録のみ追加通知先） */
   importantWebhookUrl?: string;
-  /** 写真保存先Google DriveフォルダID */
-  driveUploadFolderId?: string;
   /** 最終更新日時 */
   updatedAt: string;
 }
@@ -364,7 +414,6 @@ export interface UpdateMealFormSettingsRequest {
   defaultDayServiceName?: string;
   webhookUrl?: string;
   importantWebhookUrl?: string;
-  driveUploadFolderId?: string;
 }
 
 /**
@@ -381,6 +430,8 @@ export interface MealRecordForChat {
   injectionAmount?: string;
   note?: string;
   postId: string;
+  // Phase 17: 写真URL（Webhook送信用）
+  photoUrl?: string;
 }
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];

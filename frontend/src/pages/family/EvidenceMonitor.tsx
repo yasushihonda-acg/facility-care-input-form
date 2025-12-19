@@ -24,6 +24,7 @@ import {
   DEMO_CARE_INSTRUCTIONS,
 } from '../../data/demoFamilyData';
 import { useFamilyMealRecords } from '../../hooks/useFamilyMealRecords';
+import { useCarePhotoList } from '../../hooks/useCarePhotos';
 
 /**
  * タイムスタンプをフォーマット（表示用）
@@ -64,6 +65,17 @@ export function EvidenceMonitor() {
     // デモ版では入居者フィルタなし（全員分表示）
   });
 
+  // Phase 17: Firebase Storage から写真を取得
+  const { photos, isLoading: isPhotosLoading } = useCarePhotoList({
+    residentId: 'resident-001', // デモ版では固定
+    date: targetDate,
+    mealTime: mealTime === 'breakfast' ? 'breakfast'
+            : mealTime === 'lunch' ? 'lunch'
+            : mealTime === 'dinner' ? 'dinner'
+            : 'snack',
+    enabled: true,
+  });
+
   // エビデンスデータを構築（Plan: モック、Result: 実データ優先）
   const evidence = useMemo<EvidenceData>(() => {
     // Plan: モックデータから取得（将来的にはFirestoreから）
@@ -77,6 +89,16 @@ export function EvidenceMonitor() {
     // 実データがない場合はモックにフォールバック
     const fallbackEvidence = getEvidenceData(targetDate, mealTime);
 
+    // Phase 17: Firestoreから取得した写真URLを優先（最新1件）
+    const firestorePhotoUrl = photos.length > 0 ? photos[0].photoUrl : undefined;
+
+    // 結果データにFirestoreの写真URLをマージ
+    const resultWithPhoto = result
+      ? { ...result, photoUrl: firestorePhotoUrl || result.photoUrl }
+      : fallbackEvidence?.result
+        ? { ...fallbackEvidence.result, photoUrl: firestorePhotoUrl || fallbackEvidence.result.photoUrl }
+        : undefined;
+
     return {
       date: targetDate,
       mealTime: mealTime,
@@ -88,10 +110,10 @@ export function EvidenceMonitor() {
             conditions: instruction.conditions,
           }
         : fallbackEvidence?.plan,
-      // 実データ優先、なければモックのresult
-      result: result || fallbackEvidence?.result,
+      // 実データ優先、なければモックのresult（写真URLはFirestore優先）
+      result: resultWithPhoto,
     };
-  }, [targetDate, mealTime, mealResults]);
+  }, [targetDate, mealTime, mealResults, photos]);
 
   const mealLabel = MEAL_TIME_LABELS[evidence.mealTime];
   const mealIcon = MEAL_TIME_ICONS[evidence.mealTime];
@@ -105,7 +127,7 @@ export function EvidenceMonitor() {
     >
       <div className="pb-4 space-y-4">
         {/* ローディング表示 */}
-        {isLoading && (
+        {(isLoading || isPhotosLoading) && (
           <div className="bg-white rounded-lg shadow-card p-6">
             <div className="flex flex-col items-center text-gray-400">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-2" />

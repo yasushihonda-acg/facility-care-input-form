@@ -68,6 +68,12 @@ export function formatMealRecordMessage(record: MealRecordForChat): string {
     `【投稿ID】：${record.postId}`,
   ];
 
+  // Phase 17: 写真URLがあれば追加
+  if (record.photoUrl) {
+    lines.push("");
+    lines.push(`📷 ${record.photoUrl}`);
+  }
+
   return lines.join("\n");
 }
 

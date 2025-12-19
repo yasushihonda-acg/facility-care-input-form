@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月19日 (Phase 16 写真エビデンス表示機能 - 完了)
+> **最終更新**: 2025年12月19日 (Phase 17 Firebase Storage 写真連携 - 実装中)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -20,6 +20,71 @@
 ---
 
 ## 現在のタスク
+
+### Phase 17: Firebase Storage 写真連携（実装中）
+
+**設計書**: [FIREBASE_STORAGE_MIGRATION_SPEC.md](./FIREBASE_STORAGE_MIGRATION_SPEC.md)
+
+**概要**: 写真保存先を Google Drive から Firebase Storage に移行。Firestore `care_photos` コレクションで写真メタデータを管理し、Google Chat Webhook で写真プレビューを表示。
+
+**重要な制約**: Sheet B の構造は**変更しない**。写真URLは Firestore のみで管理。
+
+**進捗**:
+
+| Phase | 内容 | 状態 |
+|-------|------|------|
+| Phase 17.1 | Firebase Storage基盤準備 | ✅ 完了 |
+| Phase 17.2 | バックエンド - Storage移行 | ✅ 完了 |
+| Phase 17.3 | バックエンド - 写真取得API | ✅ 完了 |
+| Phase 17.4 | バックエンド - Webhook連携・型拡張 | ✅ 完了 |
+| Phase 17.5 | バックエンド - クリーンアップ | ✅ 完了 |
+| Phase 17.6 | フロントエンド実装 | ✅ 完了 |
+| Phase 17.7 | ドキュメント更新 | 🔄 進行中 |
+| Phase 17.8 | テスト・デプロイ・本番確認 | ⏳ 未着手 |
+
+**実装ファイル（バックエンド）**:
+
+| ファイル | 内容 |
+|----------|------|
+| `storage.rules` | Firebase Storage セキュリティルール（新規） |
+| `functions/src/services/storageService.ts` | Storage操作サービス（新規） |
+| `functions/src/functions/uploadCareImage.ts` | Drive → Storage に移行 |
+| `functions/src/functions/getCarePhotos.ts` | 写真取得API（新規） |
+| `functions/src/services/googleChatService.ts` | photoUrl対応 |
+| `functions/src/functions/submitMealRecord.ts` | photoUrl対応 |
+| `functions/src/types/index.ts` | CarePhoto型追加 |
+
+**実装ファイル（フロントエンド）**:
+
+| ファイル | 内容 |
+|----------|------|
+| `frontend/src/hooks/useCarePhotos.ts` | 写真取得フック（新規） |
+| `frontend/src/components/MealSettingsModal.tsx` | Drive設定削除、簡素化 |
+| `frontend/src/pages/MealInputPage.tsx` | 写真アップロード→photoUrl送信 |
+| `frontend/src/pages/family/EvidenceMonitor.tsx` | Firestoreから写真取得 |
+| `frontend/src/api/index.ts` | uploadCareImage, getCarePhotos追加 |
+| `frontend/src/types/index.ts` | CarePhoto型追加 |
+
+**削除ファイル**:
+
+| ファイル | 理由 |
+|----------|------|
+| `functions/src/services/driveService.ts` | Google Drive連携不要 |
+| `functions/src/functions/testDriveAccess.ts` | Drive接続テスト不要 |
+
+**データフロー**:
+```
+1. スタッフが写真を選択して送信
+2. uploadCareImage → Firebase Storage に保存
+3. Firestore care_photos コレクションにメタデータ保存
+4. submitMealRecord に photoUrl を渡す
+5. Google Chat Webhook に写真URLを含めて送信
+6. 家族画面で getCarePhotos から写真を取得して表示
+```
+
+**次のステップ**: Phase 17.8 テスト・デプロイ・本番確認
+
+---
 
 ### Phase 16: 写真エビデンス表示機能（完了）
 
@@ -44,8 +109,6 @@
 | `photo-evidence.spec.ts` | E2Eテスト5件追加 |
 
 **E2Eテスト**: 5件パス（本番環境で検証済み）
-
-**注記**: 本番環境での実画像表示には、スタッフが写真をアップロードしてsubmitMealRecordにphotoUrlを渡す実装が別途必要（デモモードのみ完了）
 
 ---
 

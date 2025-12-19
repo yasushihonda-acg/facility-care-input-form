@@ -106,14 +106,6 @@ export interface TestWebhookResponse {
   error?: string;
 }
 
-export interface TestDriveAccessResponse {
-  success: boolean;
-  message: string;
-  folderName?: string;
-  error?: string;
-  advice?: string; // v1.1: 親切なアドバイス
-}
-
 /**
  * Webhook URLのテスト送信
  * 指定されたURLにテストメッセージを送信
@@ -129,19 +121,66 @@ export async function testWebhook(webhookUrl: string): Promise<TestWebhookRespon
   return data as TestWebhookResponse;
 }
 
+// =============================================================================
+// Phase 17: Firebase Storage 写真連携
+// =============================================================================
+
+import type {
+  UploadCareImageRequest,
+  UploadCareImageResponse,
+  GetCarePhotosRequest,
+  GetCarePhotosResponse,
+  CarePhoto,
+} from '../types';
+
+export type { CarePhoto };
+
 /**
- * Google DriveフォルダIDのアクセステスト
- * 指定されたフォルダへのアクセス権限を確認
+ * ケア写真をFirebase Storageにアップロード
  */
-export async function testDriveAccess(folderId: string): Promise<TestDriveAccessResponse> {
-  const response = await fetch(`${API_BASE}/testDriveAccess`, {
+export async function uploadCareImage(
+  params: UploadCareImageRequest
+): Promise<ApiResponse<UploadCareImageResponse>> {
+  const formData = new FormData();
+  formData.append('staffId', params.staffId);
+  formData.append('residentId', params.residentId);
+  formData.append('image', params.image);
+  if (params.mealTime) formData.append('mealTime', params.mealTime);
+  if (params.date) formData.append('date', params.date);
+  if (params.staffName) formData.append('staffName', params.staffName);
+
+  const response = await fetch(`${API_BASE}/uploadCareImage`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ folderId }),
+    body: formData,
   });
 
-  const data = await response.json();
-  return data as TestDriveAccessResponse;
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Upload failed: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * ケア写真を取得
+ */
+export async function getCarePhotos(
+  params: GetCarePhotosRequest
+): Promise<ApiResponse<GetCarePhotosResponse>> {
+  const url = new URL(`${API_BASE}/getCarePhotos`);
+  url.searchParams.set('residentId', params.residentId);
+  url.searchParams.set('date', params.date);
+  if (params.mealTime) url.searchParams.set('mealTime', params.mealTime);
+
+  const response = await fetch(url.toString());
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to get photos: ${response.statusText}`);
+  }
+
+  return response.json();
 }
 
 // =============================================================================

@@ -26,7 +26,6 @@ const DEFAULT_SETTINGS: MealFormSettings = {
   defaultDayServiceName: "",
   webhookUrl: "",
   importantWebhookUrl: "",
-  driveUploadFolderId: "",
   updatedAt: new Date().toISOString(),
 };
 
@@ -162,7 +161,6 @@ async function updateMealFormSettingsHandler(
       defaultDayServiceName: body.defaultDayServiceName ?? currentSettings.defaultDayServiceName,
       webhookUrl: body.webhookUrl ?? currentSettings.webhookUrl ?? "",
       importantWebhookUrl: body.importantWebhookUrl ?? currentSettings.importantWebhookUrl ?? "",
-      driveUploadFolderId: body.driveUploadFolderId ?? currentSettings.driveUploadFolderId ?? "",
       updatedAt: new Date().toISOString(),
     };
 

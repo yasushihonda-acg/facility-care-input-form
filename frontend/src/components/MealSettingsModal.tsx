@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { MealFormSettings, UpdateMealFormSettingsRequest } from '../types';
-import { testWebhook, testDriveAccess } from '../api';
+import { testWebhook } from '../api';
 
 interface MealSettingsModalProps {
   isOpen: boolean;
@@ -38,7 +38,6 @@ export function MealSettingsModal({
     defaultDayServiceName: settings.defaultDayServiceName,
     webhookUrl: settings.webhookUrl || '',
     importantWebhookUrl: settings.importantWebhookUrl || '',
-    driveUploadFolderId: settings.driveUploadFolderId || '',
   });
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -47,12 +46,10 @@ export function MealSettingsModal({
   // テスト状態
   const [webhookTestState, setWebhookTestState] = useState<TestState>(initialTestState);
   const [importantWebhookTestState, setImportantWebhookTestState] = useState<TestState>(initialTestState);
-  const [driveTestState, setDriveTestState] = useState<TestState>(initialTestState);
 
   // クールダウン状態
   const [webhookCooldown, setWebhookCooldown] = useState(false);
   const [importantWebhookCooldown, setImportantWebhookCooldown] = useState(false);
-  const [driveCooldown, setDriveCooldown] = useState(false);
 
   // 全状態をリセットする関数
   const resetAllStates = useCallback(() => {
@@ -62,12 +59,10 @@ export function MealSettingsModal({
       defaultDayServiceName: settings.defaultDayServiceName,
       webhookUrl: settings.webhookUrl || '',
       importantWebhookUrl: settings.importantWebhookUrl || '',
-      driveUploadFolderId: settings.driveUploadFolderId || '',
     });
     // テスト状態をリセット
     setWebhookTestState(initialTestState);
     setImportantWebhookTestState(initialTestState);
-    setDriveTestState(initialTestState);
     // 保存メッセージをリセット
     setSaveMessage(null);
     // クリア確認ダイアログを閉じる
@@ -143,53 +138,6 @@ export function MealSettingsModal({
     setTimeout(() => setCooldown(false), TEST_COOLDOWN_MS);
   }, []);
 
-  // Driveアクセステスト関数
-  const handleTestDriveAccess = useCallback(async () => {
-    const folderId = localSettings.driveUploadFolderId;
-
-    if (!folderId) {
-      setDriveTestState({
-        isLoading: false,
-        result: 'error',
-        message: 'フォルダIDを入力してください',
-      });
-      return;
-    }
-
-    setDriveTestState({ isLoading: true, result: null, message: '' });
-
-    try {
-      const response = await testDriveAccess(folderId);
-      if (response.success) {
-        setDriveTestState({
-          isLoading: false,
-          result: 'success',
-          message: response.folderName
-            ? `${response.message}: ${response.folderName}`
-            : response.message,
-        });
-      } else {
-        // v1.1: adviceフィールドを含める
-        setDriveTestState({
-          isLoading: false,
-          result: 'error',
-          message: response.error || response.message,
-          advice: response.advice,
-        });
-      }
-    } catch (error) {
-      setDriveTestState({
-        isLoading: false,
-        result: 'error',
-        message: error instanceof Error ? error.message : 'テストに失敗しました',
-      });
-    }
-
-    // クールダウン開始
-    setDriveCooldown(true);
-    setTimeout(() => setDriveCooldown(false), TEST_COOLDOWN_MS);
-  }, [localSettings.driveUploadFolderId]);
-
   const handleSave = async () => {
     setIsSaving(true);
     setSaveMessage(null);
@@ -222,7 +170,6 @@ export function MealSettingsModal({
         defaultDayServiceName: '',
         webhookUrl: '',
         importantWebhookUrl: '',
-        driveUploadFolderId: '',
       });
       if (success) {
         setSaveMessage({ type: 'success', text: '設定をクリアしました' });
@@ -483,52 +430,12 @@ export function MealSettingsModal({
             <TestResultDisplay state={importantWebhookTestState} />
           </div>
 
-          {/* セパレーター */}
-          <div className="border-t border-gray-200 pt-4">
-            <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-              <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              写真アップロード設定
-            </h3>
-          </div>
-
-          {/* 写真保存先フォルダID */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              写真保存先フォルダID
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={localSettings.driveUploadFolderId || ''}
-                onChange={(e) => {
-                  setLocalSettings((prev) => ({
-                    ...prev,
-                    driveUploadFolderId: e.target.value,
-                  }));
-                  // 入力が変わったらテスト結果をリセット
-                  setDriveTestState(initialTestState);
-                }}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm font-mono"
-                placeholder="1ABC123xyz..."
-              />
-              <button
-                type="button"
-                onClick={handleTestDriveAccess}
-                disabled={driveTestState.isLoading || driveCooldown || !localSettings.driveUploadFolderId}
-                className="px-3 py-2 text-xs bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
-              >
-                接続テスト
-              </button>
-            </div>
-            <p className="mt-1 text-xs text-gray-500">
-              Google DriveのフォルダURLからIDを取得
-            </p>
-            <p className="mt-0.5 text-xs text-gray-400">
-              例: https://drive.google.com/drive/folders/<span className="font-mono text-blue-600">[ID]</span>
-            </p>
-            <TestResultDisplay state={driveTestState} />
+          {/* 写真保存について */}
+          <div className="p-3 bg-green-50 rounded-lg text-xs text-green-700 flex items-center gap-2">
+            <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span>写真は自動的にクラウドに保存されます（設定不要）</span>
           </div>
 
           {/* 保存メッセージ */}

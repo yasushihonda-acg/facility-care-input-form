@@ -1,0 +1,14 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // care-photos: 読み取りは公開、書き込みは認証済みまたはCloud Functions
+    match /care-photos/{allPaths=**} {
+      // 読み取り: 誰でも可能（Google Chat表示用、家族画面用）
+      allow read: if true;
+
+      // 書き込み: 開発モードでは全開放
+      // 本番移行時は認証チェック追加
+      allow write: if true;
+    }
+  }
+}

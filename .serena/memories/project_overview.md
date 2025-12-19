@@ -330,7 +330,25 @@ AI提案以外で品物を手動登録した際にも、プリセット保存を
 **E2Eテスト**: STAFF-040〜STAFF-043（4件追加）
 **設計書**: `docs/STAFF_RECORD_FORM_SPEC.md` セクション9
 
-### E2Eテスト（183件、Phase 15.6で+4件）
+### Phase 16: 写真エビデンス表示 (2025-12-19)
+スタッフがアップロードした写真を家族向けエビデンス画面で表示する機能。
+
+**主な変更**:
+- EvidenceMonitor.tsx: プレースホルダーから実画像表示に変更
+- TimelineItem.tsx: デモモード対応のリンクパス修正
+- App.tsx: `/demo/family/evidence/:date` ルート追加
+- demoFamilyData.ts: 実画像URL（picsum.photos）使用
+
+**実装ファイル**:
+- `frontend/src/pages/family/EvidenceMonitor.tsx` (実画像表示)
+- `frontend/src/components/family/TimelineItem.tsx` (デモモード対応)
+- `frontend/src/data/demoFamilyData.ts` (実画像URL)
+- `frontend/src/App.tsx` (デモルート追加)
+
+**E2Eテスト**: `photo-evidence.spec.ts` (5件)
+**設計書**: `docs/PHOTO_EVIDENCE_DISPLAY_SPEC.md`
+
+### E2Eテスト（188件、Phase 16で+5件）
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |
@@ -343,6 +361,7 @@ AI提案以外で品物を手動登録した際にも、プリセット保存を
 | `schedule-display.spec.ts` | 7件 | Phase 13.2 スタッフ向けスケジュール表示 |
 | `demo-staff.spec.ts` | 17件 | Phase 14 スタッフ用デモページ |
 | `staff-record-form.spec.ts` | 22件 | Phase 15/15.6 スタッフ用記録入力フォーム（数値入力・残り対応） |
+| `photo-evidence.spec.ts` | 5件 | Phase 16 写真エビデンス表示 |
 
 - **パリティテスト**: デモと本番で同じUIが表示されることを検証
 - **実行**: `cd frontend && npx playwright test`

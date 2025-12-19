@@ -1,8 +1,11 @@
 # 写真エビデンス表示機能設計書
 
 > **作成日**: 2025年12月19日
-> **Phase**: 16
-> **関連**: [PHOTO_UPLOAD_SPEC.md](./PHOTO_UPLOAD_SPEC.md), [FAMILY_UX_DESIGN.md](./FAMILY_UX_DESIGN.md)
+> **最終更新**: 2025年12月19日
+>
+> **Phase**: 16（デモ実装）→ Phase 17（本番実装）
+>
+> **関連**: [FIREBASE_STORAGE_MIGRATION_SPEC.md](./FIREBASE_STORAGE_MIGRATION_SPEC.md), [FAMILY_UX_DESIGN.md](./FAMILY_UX_DESIGN.md)
 
 ---
 
@@ -12,33 +15,27 @@
 
 スタッフがアップロードした写真を家族画面（エビデンス・モニター）で表示し、「指示通りに実施されたか」を写真で確認できるようにする。
 
-### 1.2 現状の問題
+### 1.2 実装状況
 
-| 項目 | 現状 | 問題点 |
-|------|------|--------|
-| 写真アップロード | `uploadCareImage` API実装済み | ✅ 動作する |
-| 食事記録 | `submitMealRecord` API実装済み | ❌ photoUrlフィールドがない |
-| 家族画面 | `EvidenceMonitor.tsx` 実装済み | ❌ プレースホルダのみ表示 |
+| 項目 | Phase 16（デモ） | Phase 17（本番） |
+|------|------------------|------------------|
+| 写真アップロード | Google Drive | Firebase Storage |
+| 写真メタデータ保存 | なし | Firestore `care_photos` |
+| 家族画面表示 | デモデータ（picsum.photos） | Firestoreから取得 |
+| Google Chat連携 | なし | 写真URL含むメッセージ |
 
-**根本原因**: 写真URLと食事記録が紐づいていない
+### 1.3 重要な制約
 
-### 1.3 解決策
-
-```
-[スタッフ]
-1. 写真撮影 → uploadCareImage → publicUrl取得
-2. 食事記録入力 → submitMealRecord(photoUrl含む) → Sheet B & Firestore保存
-
-[家族]
-3. エビデンス画面 → getPlanData/getMealRecords → photoUrl取得
-4. photoUrlから実画像を表示
-```
+| 制約 | 対応方針 |
+|------|----------|
+| **Sheet Bのカラム構造は変更不可** | 写真URLはSheet Bに保存しない |
+| **写真メタデータはFirestoreに保存** | `care_photos` コレクションを使用 |
 
 ---
 
 ## 2. データフロー
 
-### 2.1 アップロード〜保存フロー
+### 2.1 アップロード〜保存フロー（Phase 17）
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -50,16 +47,17 @@
     ├─→ 1. 写真撮影/選択
     │     │
     │     └─→ POST /uploadCareImage
-    │           ├─→ Google Drive にアップロード
-    │           └─→ レスポンス: { publicUrl, thumbnailUrl, fileId }
+    │           ├─→ Firebase Storage にアップロード
+    │           ├─→ Firestore care_photos にメタデータ保存
+    │           └─→ レスポンス: { photoId, photoUrl, storagePath }
     │
-    ├─→ 2. フォームに photoUrl をセット（hidden or state）
+    ├─→ 2. フォームに photoUrl をセット（state管理）
     │
     └─→ 3. 記録送信
           │
           └─→ POST /submitMealRecord (photoUrl 含む)
-                ├─→ Sheet B に書き込み（写真URL列追加）
-                └─→ Firestore meal_records に保存（photoUrl含む）
+                ├─→ Sheet B に書き込み（※写真URLは含めない）
+                └─→ Google Chat Webhook 送信（写真URL含む）
 ```
 
 ### 2.2 表示フロー
@@ -71,198 +69,304 @@
 
 [PWA: エビデンス・モニター]
     │
-    └─→ GET /getPlanData または Firestore クエリ
+    └─→ Firestore クエリ: care_photos
+          │ where residentId == X
+          │ where date == Y
+          │ where mealTime == Z
           │
-          └─→ レスポンス: { ..., photoUrl: "https://drive.google.com/..." }
+          └─→ { photoUrl: "https://firebasestorage.googleapis.com/..." }
                 │
                 └─→ <img src={photoUrl} /> で実画像表示
 ```
 
 ---
 
-## 3. API変更
+## 3. Firestore スキーマ
 
-### 3.1 SubmitMealRecordRequest 型拡張
+### 3.1 care_photos コレクション
 
 ```typescript
-export interface SubmitMealRecordRequest {
-  // ...既存フィールド...
+// Firestore: care_photos/{photoId}
+interface CarePhoto {
+  // 識別子
+  photoId: string;          // ドキュメントID（自動生成）
 
-  // === Phase 16: 写真エビデンス ===
-  photoUrl?: string;      // Google Drive公開URL
-  thumbnailUrl?: string;  // サムネイルURL（高速表示用）
+  // 紐づけ情報
+  residentId: string;       // 入居者ID
+  date: string;             // 日付 (YYYY-MM-DD)
+  mealTime: string;         // 食事タイミング (breakfast/lunch/dinner/snack)
+
+  // 写真情報
+  photoUrl: string;         // Firebase Storage 公開URL
+  storagePath: string;      // Storage内のパス
+  fileName: string;         // ファイル名
+  mimeType: string;         // image/jpeg, image/png 等
+  fileSize: number;         // バイト数
+
+  // メタデータ
+  staffId: string;          // アップロードしたスタッフID
+  staffName?: string;       // スタッフ名（オプション）
+  uploadedAt: string;       // アップロード日時 (ISO8601)
+
+  // 将来拡張用
+  postId?: string;          // 食事記録の投稿IDとの紐づけ（オプション）
 }
 ```
 
-### 3.2 Sheet B カラム追加
+### 3.2 インデックス
 
-| 列 | 名前 | 内容 |
-|----|------|------|
-| (新規) | 写真URL | Google Drive公開URL |
-
-**注意**: Sheet Bのカラム追加は既存のBot連携に影響しないよう、末尾に追加する
-
-### 3.3 Firestore meal_records スキーマ
-
-```typescript
-// Firestore: meal_records/{recordId}
-interface MealRecord {
-  // ...既存フィールド...
-
-  // Phase 16 追加
-  photoUrl?: string;
-  thumbnailUrl?: string;
-}
+```
+care_photos: residentId + date + mealTime + uploadedAt(DESC)
 ```
 
 ---
 
-## 4. フロントエンド変更
+## 4. API仕様
 
-### 4.1 食事入力フォーム（MealInputPage.tsx）
+### 4.1 uploadCareImage（修正）
+
+**エンドポイント**: `POST /uploadCareImage`
+
+**リクエスト**:
+```
+Content-Type: multipart/form-data
+
+Fields:
+- staffId: string (必須)
+- residentId: string (必須)
+- mealTime: string (オプション、デフォルト: snack)
+- date: string (オプション、デフォルト: 今日 YYYY-MM-DD)
+- image: File (必須)
+```
+
+**レスポンス**:
+```json
+{
+  "success": true,
+  "data": {
+    "photoId": "abc123def456",
+    "fileName": "resident123_20251219_120000_abc123.jpg",
+    "photoUrl": "https://firebasestorage.googleapis.com/v0/b/.../o/care-photos%2F...",
+    "storagePath": "care-photos/2025/12/resident123_20251219_120000_abc123.jpg"
+  },
+  "timestamp": "2025-12-19T12:00:00.000Z"
+}
+```
+
+### 4.2 getCarePhotos（新規）
+
+**エンドポイント**: `GET /getCarePhotos`
+
+**リクエスト**:
+```
+GET /getCarePhotos?residentId=xxx&date=2025-12-19&mealTime=lunch
+```
+
+**レスポンス**:
+```json
+{
+  "success": true,
+  "data": {
+    "photos": [
+      {
+        "photoId": "abc123",
+        "photoUrl": "https://firebasestorage.googleapis.com/...",
+        "mealTime": "lunch",
+        "uploadedAt": "2025-12-19T12:00:00.000Z",
+        "staffName": "スタッフA"
+      }
+    ]
+  },
+  "timestamp": "..."
+}
+```
+
+### 4.3 submitMealRecord（拡張）
+
+**リクエスト追加フィールド**:
+```typescript
+interface SubmitMealRecordRequest {
+  // ...既存フィールド（変更なし）...
+
+  // Phase 17 追加
+  photoUrl?: string;  // Firebase Storage 公開URL（Webhook送信用）
+}
+```
+
+**処理**:
+1. Sheet B に書き込み（photoUrlは**含めない**）
+2. Google Chat Webhook 送信（photoUrlがあればメッセージに追加）
+3. レスポンス返却
+
+---
+
+## 5. フロントエンド実装
+
+### 5.1 EvidenceMonitor.tsx
+
+**Phase 16（デモ）- 実装済み**:
+```tsx
+// デモデータから photoUrl を表示
+{evidence.result.photoUrl.startsWith('http') ? (
+  <img
+    src={evidence.result.photoUrl}
+    alt="提供直前の写真"
+    data-testid="evidence-photo"
+    className="w-full h-full object-cover"
+    loading="lazy"
+  />
+) : null}
+```
+
+**Phase 17（本番）- 追加実装**:
+```tsx
+// Firestore から写真を取得
+const { data: photos, isLoading } = useCarePhotos({
+  residentId,
+  date,
+  mealTime,
+});
+
+// 表示
+{isLoading ? (
+  <div>読み込み中...</div>
+) : photos && photos.length > 0 ? (
+  <img
+    src={photos[0].photoUrl}
+    alt="提供写真"
+    data-testid="evidence-photo"
+    className="w-full h-full object-cover"
+    loading="lazy"
+  />
+) : (
+  <div className="text-gray-400">
+    <span className="text-5xl">📷</span>
+    <p>写真なし</p>
+  </div>
+)}
+```
+
+### 5.2 useCarePhotos フック（新規）
 
 ```typescript
-// 写真アップロード後の状態管理
-const [photoUrl, setPhotoUrl] = useState<string | null>(null);
-const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+// frontend/src/hooks/useCarePhotos.ts
+import { useQuery } from '@tanstack/react-query';
+import { getCarePhotos } from '../api';
 
-// uploadCareImage 成功時
+interface UseCarePhotosParams {
+  residentId: string;
+  date: string;
+  mealTime: string;
+}
+
+export function useCarePhotos({ residentId, date, mealTime }: UseCarePhotosParams) {
+  return useQuery({
+    queryKey: ['carePhotos', residentId, date, mealTime],
+    queryFn: () => getCarePhotos({ residentId, date, mealTime }),
+    enabled: !!residentId && !!date && !!mealTime,
+  });
+}
+```
+
+### 5.3 MealInputPage.tsx（修正）
+
+```tsx
+const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+
+// 写真アップロード成功時
 const handlePhotoUpload = async (file: File) => {
-  const result = await uploadCareImage(file, staffId, residentId);
-  setPhotoUrl(result.publicUrl);
-  setThumbnailUrl(result.thumbnailUrl);
+  const result = await uploadCareImage({
+    file,
+    staffId,
+    residentId,
+    mealTime,
+    date: today,
+  });
+  setPhotoUrl(result.photoUrl);
 };
 
-// submitMealRecord 時に photoUrl を含める
+// 記録送信時
 const handleSubmit = async () => {
   await submitMealRecord({
     ...formData,
-    photoUrl,
-    thumbnailUrl,
+    photoUrl, // Webhook送信用
   });
 };
 ```
 
-### 4.2 エビデンス・モニター（EvidenceMonitor.tsx）
-
-```tsx
-// 現在（プレースホルダ）
-{evidence.result.photoUrl && (
-  <div className="...">
-    <span className="text-5xl mb-2">📷</span>
-    <p>（デモ用プレースホルダ）</p>
-  </div>
-)}
-
-// Phase 16 後（実画像表示）
-{evidence.result.photoUrl && (
-  <div className="...">
-    <img
-      src={evidence.result.photoUrl}
-      alt="提供写真"
-      className="w-full h-full object-cover"
-      loading="lazy"
-    />
-  </div>
-)}
-```
-
 ---
 
-## 5. Google Drive 公開設定
+## 6. E2Eテスト
 
-### 5.1 現在の実装（driveService.ts）
+### 6.1 テストファイル
 
-`uploadImage` 関数内で、アップロード後に公開設定を行っている：
+`frontend/e2e/photo-evidence.spec.ts`（Phase 16 実装済み）
 
-```typescript
-// ファイルを公開設定（anyone with link can view）
-await drive.permissions.create({
-  fileId: file.data.id,
-  requestBody: {
-    role: 'reader',
-    type: 'anyone',
-  },
-});
-```
+### 6.2 テストケース
 
-### 5.2 公開URL形式
+| ID | テスト内容 | 期待結果 | 状態 |
+|----|-----------|----------|------|
+| PHOTO-001 | エビデンス画面で写真が表示される | `<img>` タグが存在し、src属性にURLが設定 | ✅ Pass |
+| PHOTO-002 | 写真がない場合はプレースホルダ表示 | 📷アイコンまたはメッセージ表示 | ✅ Pass |
+| PHOTO-003 | 家族ダッシュボードから写真リンク機能 | エビデンス画面に遷移 | ✅ Pass |
+| PHOTO-010 | 記録入力画面に写真アップロードUI | ファイル入力が存在 | ✅ Pass |
+| PHOTO-011 | 写真を選択できる | ファイル選択可能 | ✅ Pass |
 
-```
-https://drive.google.com/uc?id={fileId}&export=view
-```
-
-または
-
-```
-https://lh3.googleusercontent.com/d/{fileId}
-```
-
-**注意**: Google Driveの公開URLは直接`<img src>`で使用可能
-
----
-
-## 6. 実装ステップ
-
-| Phase | 内容 | ファイル |
-|-------|------|----------|
-| 16.1 | E2Eテスト作成（TDD） | `frontend/e2e/photo-evidence.spec.ts` |
-| 16.2 | 型定義拡張 | `functions/src/types/index.ts`, `frontend/src/types/` |
-| 16.3 | submitMealRecord拡張 | `functions/src/functions/submitMealRecord.ts` |
-| 16.4 | フロントエンド - 写真URL送信 | `frontend/src/pages/MealInputPage.tsx` |
-| 16.5 | フロントエンド - 実画像表示 | `frontend/src/pages/family/EvidenceMonitor.tsx` |
-| 16.6 | E2Eテスト実行・修正 | - |
-| 16.7 | 本番デプロイ | `firebase deploy` |
-| 16.8 | 本番検証 | E2Eテスト on 本番URL |
-
----
-
-## 7. E2Eテスト仕様
-
-### 7.1 テストケース
-
-| ID | テスト内容 | 期待結果 |
-|----|-----------|----------|
-| PHOTO-001 | エビデンス画面に写真が表示される | `<img>` タグが存在し、src属性にURLが設定されている |
-| PHOTO-002 | 写真がない場合はプレースホルダ表示 | 📷アイコンが表示される |
-| PHOTO-003 | 写真クリックで拡大表示（将来） | モーダルで大きく表示 |
-
-### 7.2 デモデータ
-
-テスト用にデモデータに`photoUrl`を追加：
+### 6.3 デモデータ
 
 ```typescript
 // demoFamilyData.ts
-export const DEMO_EVIDENCE_DATA: EvidenceData = {
-  // ...
-  result: {
-    // ...
-    photoUrl: 'https://picsum.photos/800/600', // テスト用ダミー画像
-  },
-};
+photoUrl: 'https://picsum.photos/seed/kiwi/800/600',
 ```
+
+---
+
+## 7. 実装ステップ
+
+### Phase 16（デモ）- 完了
+
+| # | タスク | 状態 |
+|---|--------|------|
+| 1 | E2Eテスト作成 | ✅ 完了 |
+| 2 | デモデータに実画像URL追加 | ✅ 完了 |
+| 3 | EvidenceMonitor実画像表示 | ✅ 完了 |
+| 4 | TimelineItemデモモード対応 | ✅ 完了 |
+| 5 | App.tsxデモルート追加 | ✅ 完了 |
+
+### Phase 17（本番）- 未着手
+
+| # | タスク | ファイル |
+|---|--------|----------|
+| 1 | Firebase Storage移行 | [FIREBASE_STORAGE_MIGRATION_SPEC.md](./FIREBASE_STORAGE_MIGRATION_SPEC.md) 参照 |
+| 2 | Firestore care_photos設計 | 同上 |
+| 3 | getCarePhotos API | 同上 |
+| 4 | useCarePhotosフック | 同上 |
+| 5 | EvidenceMonitor本番対応 | 同上 |
+| 6 | MealInputPage写真URL連携 | 同上 |
+| 7 | Google Chat写真URL連携 | 同上 |
 
 ---
 
 ## 8. 注意事項
 
-### 8.1 CORS
+### 8.1 Sheet B変更禁止
 
-Google DriveのURLは直接`<img src>`で使用可能だが、一部のブラウザでCORSエラーが発生する可能性がある。その場合は：
+**重要**: Sheet Bのカラム構造は変更してはいけません。写真URLは以下の方法で管理：
 
-1. `lh3.googleusercontent.com` 形式のURLを使用
-2. または、Cloud Functions経由でプロキシ
+- **保存先**: Firestore `care_photos` コレクション
+- **紐づけ**: residentId + date + mealTime でクエリ
+- **Sheet B**: 写真URL列は追加しない
 
 ### 8.2 パフォーマンス
 
-- `thumbnailUrl` を使用して初期表示を高速化
 - `loading="lazy"` 属性で遅延読み込み
 - 将来的に画像の圧縮・リサイズを検討
 
 ### 8.3 後方互換性
 
 - `photoUrl` はオプショナルフィールド
-- 既存の記録（photoUrlなし）は従来通り動作
+- 写真なしの記録は従来通り動作
+- デモモードは既存のpicsum.photos URLを継続使用
 
 ---
 
@@ -271,3 +375,5 @@ Google DriveのURLは直接`<img src>`で使用可能だが、一部のブラウ
 | 日付 | 内容 |
 |------|------|
 | 2025-12-19 | 初版作成 |
+| 2025-12-19 | Phase 16（デモ）実装完了 |
+| 2025-12-19 | Sheet B変更禁止の制約を反映、Firestore保存に修正 |
