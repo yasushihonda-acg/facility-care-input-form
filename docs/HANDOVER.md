@@ -1,6 +1,6 @@
 # 引き継ぎドキュメント
 
-> **最終更新**: 2025年12月20日（Phase 18: チャット連携機能 - 完了）
+> **最終更新**: 2025年12月20日（Phase 19: 記録のチャット連携 - 完了）
 >
 > 本ドキュメントは、開発を引き継ぐ際に必要な情報をまとめたものです。
 
@@ -96,6 +96,7 @@ cd frontend && npm install && npm run dev
 | 写真エビデンス表示 | スタッフ写真を家族向けエビデンス画面で表示（Phase 16） | ✅ 完了 |
 | Firebase Storage 写真連携 | Google Drive → Firebase Storage 移行（Phase 17） | ✅ 完了 |
 | **チャット連携機能** | 品物起点のスタッフ⇔家族チャット、フッター通知バッジ（Phase 18） | ✅ 完了 |
+| **記録のチャット連携** | 提供記録のスレッド自動反映、RecordMessageCard、ホーム通知（Phase 19） | ✅ 完了 |
 
 ---
 
@@ -162,7 +163,9 @@ facility-care-input-form/
 │   │   │   ├── HomePage.tsx          # 記録閲覧
 │   │   │   ├── MealInputPage.tsx     # 食事入力
 │   │   │   ├── shared/               # 共有ページ
-│   │   │   │   └── StatsDashboard.tsx # 統計ダッシュボード
+│   │   │   │   ├── StatsDashboard.tsx # 統計ダッシュボード
+│   │   │   │   ├── ChatListPage.tsx   # チャット一覧 ✅ Phase 18
+│   │   │   │   └── ItemChatPage.tsx   # 品物チャット ✅ Phase 18/19
 │   │   │   ├── demo/                 # デモ専用ページ
 │   │   │   │   ├── DemoHome.tsx           # 家族デモホーム
 │   │   │   │   ├── DemoShowcase.tsx       # 家族ガイド付きツアー
@@ -179,6 +182,8 @@ facility-care-input-form/
 │   │   ├── components/    # UIコンポーネント
 │   │   │   ├── demo/
 │   │   │   │   └── DemoHeaderButton.tsx   # ツアーTOPに戻るボタン
+│   │   │   ├── shared/
+│   │   │   │   └── NotificationSection.tsx  # ホーム通知セクション ✅ Phase 19
 │   │   │   ├── staff/
 │   │   │   │   └── StaffRecordDialog.tsx  # 統一記録入力ダイアログ ✅ Phase 15
 │   │   │   ├── meal/
@@ -285,6 +290,8 @@ facility-care-input-form/
 | Phase 15.6 | 摂食割合の数値入力（0-10）・残り対応フィールド（破棄/保存/その他） | 2025-12-19 |
 | Phase 16 | 写真エビデンス表示（EvidenceMonitor実画像表示、デモ対応、E2E 5件） | 2025-12-19 |
 | Phase 17 | Firebase Storage写真連携（Drive→Storage移行、care_photos、Webhook連携、E2E検証） | 2025-12-19 |
+| Phase 18 | チャット連携機能（品物チャット、フッター通知バッジ、E2Eテスト16件） | 2025-12-20 |
+| Phase 19 | 記録のチャット連携（記録自動反映、RecordMessageCard、ホーム通知、E2Eテスト8件） | 2025-12-20 |
 
 ### 4.2 将来のタスク
 
@@ -373,6 +380,68 @@ facility-care-input-form/
 4. submitMealRecord に photoUrl を渡す
 5. Google Chat Webhook に写真URLを含めて送信
 6. 家族画面で getCarePhotos から写真を取得して表示
+```
+
+### 4.5 Phase 18-19 チャット連携機能（完了）
+
+**設計書**:
+- `docs/CHAT_INTEGRATION_SPEC.md` - チャット連携設計書
+
+#### Phase 18: チャット連携基本（2025-12-20）
+
+品物を起点としたスタッフ⇔家族のチャット機能。
+
+| サブフェーズ | 内容 | 状態 |
+|-------------|------|------|
+| 18.1 | データモデル・API基盤（sendMessage, getMessages, markAsRead等） | ✅ 完了 |
+| 18.2 | チャットUI基盤（ChatListPage, ItemChatPage） | ✅ 完了 |
+| 18.3 | 通知システム（フッター未読バッジ） | ✅ 完了 |
+| 18.4 | 家族側チャット連携（品物詳細からのチャット開始） | ✅ 完了 |
+| 18.5 | デモモード対応・テスト（E2Eテスト16件） | ✅ 完了 |
+
+**主な実装ファイル**:
+
+| 領域 | ファイル | 内容 |
+|------|----------|------|
+| バックエンド | `functions/src/functions/chat.ts` | チャットAPI（新規） |
+| フロントエンド | `frontend/src/pages/shared/ChatListPage.tsx` | チャット一覧（新規） |
+| フロントエンド | `frontend/src/pages/shared/ItemChatPage.tsx` | 品物チャット（新規） |
+| フロントエンド | `frontend/src/components/FooterNav.tsx` | チャットタブ・未読バッジ追加 |
+| フロントエンド | `frontend/src/types/chat.ts` | チャット型定義（新規） |
+
+**Firestoreコレクション**: `care_items/{itemId}/messages`
+- 品物ごとのメッセージスレッドを管理
+- type: 'text' | 'record' | 'system'
+
+#### Phase 19: 記録のチャット連携（2025-12-20）
+
+提供記録がチャットスレッドに自動反映される機能。
+
+| サブフェーズ | 内容 | 状態 |
+|-------------|------|------|
+| 19.1 | バックエンド - submitMealRecord拡張（記録→メッセージ自動作成） | ✅ 完了 |
+| 19.2 | フロントエンド - RecordMessageCard（type='record'のカード表示） | ✅ 完了 |
+| 19.3 | フロントエンド - ホーム通知セクション（NotificationSection） | ✅ 完了 |
+| 19.4 | E2Eテスト・デプロイ（8件） | ✅ 完了 |
+
+**主な実装ファイル**:
+
+| 領域 | ファイル | 内容 |
+|------|----------|------|
+| バックエンド | `functions/src/functions/submitMealRecord.ts` | 記録保存時にメッセージ自動作成 |
+| フロントエンド | `frontend/src/pages/shared/ItemChatPage.tsx` | RecordMessageCard追加 |
+| フロントエンド | `frontend/src/components/shared/NotificationSection.tsx` | ホーム通知セクション（新規） |
+| フロントエンド | `frontend/src/pages/staff/StaffHome.tsx` | 通知セクション追加 |
+| フロントエンド | `frontend/src/pages/family/FamilyDashboard.tsx` | 通知セクション追加 |
+
+**データフロー（記録→チャット）**:
+```
+1. スタッフがMealInputPageで記録を入力
+2. submitMealRecord API 呼び出し
+3. Sheet B への書き込み（既存処理）
+4. snackRecords内のitemIdごとにtype='record'メッセージ自動作成
+5. 通知を生成（家族向け）
+6. 家族・スタッフがチャットスレッド/ホーム通知で記録を確認
 ```
 
 ---
@@ -516,7 +585,7 @@ BASE_URL=https://facility-care-input-form.web.app npx playwright test
 - `frontend/playwright.config.ts` - Playwright設定
 - デフォルトbaseURL: `http://localhost:4173`（環境変数で上書き可能）
 
-**現在のテスト**: 全188件（3件スキップ）
+**現在のテスト**: 全212件（3件スキップ）
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |
@@ -524,8 +593,10 @@ BASE_URL=https://facility-care-input-form.web.app npx playwright test
 | `staff-record-form.spec.ts` | 22件 | スタッフ記録入力フォーム統一（Phase 15） |
 | `family-page.spec.ts` | 21件 | 家族ページ（品物詳細・消費ログ等） |
 | `demo-staff.spec.ts` | 17件 | スタッフ用デモ（Phase 14） |
+| `chat-integration.spec.ts` | 16件 | チャット連携基本動作（Phase 18） |
 | `item-based-snack-record.spec.ts` | 13件 | 品物起点の間食記録（Phase 13.0） |
 | `snack-record.spec.ts` | 11件 | 間食記録連携（品物リスト・サジェスト） |
+| `record-chat-integration.spec.ts` | 8件 | 記録のチャット連携（Phase 19） |
 | `fifo.spec.ts` | 8件 | FIFO機能（期限順ソート・推奨表示） |
 | `schedule-extension.spec.ts` | 7件 | スケジュール拡張（Phase 13.1） |
 | `schedule-display.spec.ts` | 7件 | スケジュール表示強化（Phase 13.2） |
@@ -775,6 +846,8 @@ docs/CURRENT_STATUS.md を読んで、次のタスクから再開してくださ
 
 | 日付 | 内容 |
 |------|------|
+| 2025-12-20 | Phase 19: 記録のチャット連携完了（記録自動反映・RecordMessageCard・ホーム通知・E2Eテスト8件追加）、全212件 |
+| 2025-12-20 | Phase 18: チャット連携機能完了（品物チャット・フッター通知バッジ・E2Eテスト16件追加） |
 | 2025-12-19 | Phase 15.6: 摂食割合の数値入力（0-10）・残り対応フィールド（破棄/保存/その他、持ち帰り除外）、E2Eテスト183件 |
 | 2025-12-19 | Phase 15: スタッフ記録入力フォーム統一（タブ削除・StaffRecordDialog・家族連絡詳細対応・E2Eテスト22件追加） |
 | 2025-12-19 | Phase 14: スタッフ用デモページ（DemoStaffHome・DemoStaffShowcase・E2Eテスト17件追加）、E2Eテスト161件 |
