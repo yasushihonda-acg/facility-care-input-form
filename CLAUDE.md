@@ -110,6 +110,7 @@ gh run list --repo yasushihonda-acg/facility-care-input-form --workflow=gh-pages
 | `docs/FIFO_DESIGN_SPEC.md` | FIFO（先入れ先出し）対応設計（Phase 12.0） |
 | `docs/ITEM_BASED_SNACK_RECORD_SPEC.md` | 品物起点の間食記録・スケジュール拡張（Phase 13） |
 | `docs/DEMO_STAFF_SPEC.md` | スタッフ用デモページ設計（Phase 14） |
+| `docs/STAFF_RECORD_FORM_SPEC.md` | スタッフ記録入力フォーム設計（Phase 15） |
 
 #### データ構造
 | ファイル | 用途 |

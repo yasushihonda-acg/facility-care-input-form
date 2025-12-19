@@ -1,6 +1,6 @@
 # 引き継ぎドキュメント
 
-> **最終更新**: 2025年12月19日（Phase 14: スタッフ用デモページ）
+> **最終更新**: 2025年12月19日（Phase 15.6: 摂食割合の数値入力・残り対応フィールド）
 >
 > 本ドキュメントは、開発を引き継ぐ際に必要な情報をまとめたものです。
 
@@ -91,6 +91,8 @@ cd frontend && npm install && npm run dev
 | スケジュール拡張 | 毎日・曜日指定・複数日のスケジュール設定（Phase 13.1） | ✅ 完了 |
 | スタッフ向けスケジュール表示 | 曜日バッジ・次回予定日・タイムスロット表示（Phase 13.2） | ✅ 完了 |
 | スタッフ用デモページ | スタッフ向けデモ体験（/demo/staff）、ガイドツアー（Phase 14） | ✅ 完了 |
+| スタッフ記録入力フォーム統一 | タブ削除、統一ダイアログ、家族連絡詳細対応（Phase 15） | ✅ 完了 |
+| 摂食割合の数値入力 | 絵文字→0-10数値入力、残り対応フィールド追加（Phase 15.6） | ✅ 完了 |
 
 ---
 
@@ -174,6 +176,8 @@ facility-care-input-form/
 │   │   ├── components/    # UIコンポーネント
 │   │   │   ├── demo/
 │   │   │   │   └── DemoHeaderButton.tsx   # ツアーTOPに戻るボタン
+│   │   │   ├── staff/
+│   │   │   │   └── StaffRecordDialog.tsx  # 統一記録入力ダイアログ ✅ Phase 15
 │   │   │   ├── meal/
 │   │   │   │   ├── ScheduleDisplay.tsx       # スケジュール表示 ✅ Phase 13.2
 │   │   │   │   └── WeekdayBadges.tsx         # 曜日バッジ ✅ Phase 13.2
@@ -232,6 +236,7 @@ facility-care-input-form/
 | ⭐ | `docs/AI_INTEGRATION_SPEC.md` | AI連携設計（Phase 8.4/8.5/8.7） |
 | ⭐ | `docs/DEMO_SHOWCASE_SPEC.md` | デモショーケース設計（家族向け） |
 | ⭐ | `docs/DEMO_STAFF_SPEC.md` | スタッフ用デモ設計（Phase 14） |
+| ⭐ | `docs/STAFF_RECORD_FORM_SPEC.md` | スタッフ記録入力フォーム設計（Phase 15） |
 | ⭐ | `docs/DEMO_FAMILY_REDESIGN.md` | 家族向けデモ特化リデザイン設計 |
 | ⭐ | `docs/API_TEST_PLAN.md` | APIテスト計画・Firestore修正記録 |
 | ⭐ | `docs/E2E_TEST_SPEC.md` | E2Eテスト仕様（Playwright） |
@@ -273,6 +278,8 @@ facility-care-input-form/
 | Phase 13.1 | スケジュール拡張（曜日指定・複数日・E2E 7件） | 2025-12-19 |
 | Phase 13.2 | スタッフ向けスケジュール表示強化（曜日バッジ・次回予定日） | 2025-12-19 |
 | Phase 14 | スタッフ用デモページ（DemoStaffHome・DemoStaffShowcase・E2Eテスト17件追加） | 2025-12-19 |
+| Phase 15 | スタッフ記録入力フォーム統一（タブ削除、StaffRecordDialog統一、E2Eテスト22件） | 2025-12-19 |
+| Phase 15.6 | 摂食割合の数値入力（0-10）・残り対応フィールド（破棄/保存/その他） | 2025-12-19 |
 
 ### 4.2 将来のタスク
 
@@ -442,11 +449,12 @@ BASE_URL=https://facility-care-input-form.web.app npx playwright test
 - `frontend/playwright.config.ts` - Playwright設定
 - デフォルトbaseURL: `http://localhost:4173`（環境変数で上書き可能）
 
-**現在のテスト**: 全161件（3件スキップ）
+**現在のテスト**: 全183件（3件スキップ）
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |
 | `family-user-scenario.spec.ts` | 34件 | 家族シナリオ・パリティ・本番準備 |
+| `staff-record-form.spec.ts` | 22件 | スタッフ記録入力フォーム統一（Phase 15） |
 | `family-page.spec.ts` | 21件 | 家族ページ（品物詳細・消費ログ等） |
 | `demo-staff.spec.ts` | 17件 | スタッフ用デモ（Phase 14） |
 | `item-based-snack-record.spec.ts` | 13件 | 品物起点の間食記録（Phase 13.0） |
@@ -699,6 +707,8 @@ docs/CURRENT_STATUS.md を読んで、次のタスクから再開してくださ
 
 | 日付 | 内容 |
 |------|------|
+| 2025-12-19 | Phase 15.6: 摂食割合の数値入力（0-10）・残り対応フィールド（破棄/保存/その他、持ち帰り除外）、E2Eテスト183件 |
+| 2025-12-19 | Phase 15: スタッフ記録入力フォーム統一（タブ削除・StaffRecordDialog・家族連絡詳細対応・E2Eテスト22件追加） |
 | 2025-12-19 | Phase 14: スタッフ用デモページ（DemoStaffHome・DemoStaffShowcase・E2Eテスト17件追加）、E2Eテスト161件 |
 | 2025-12-19 | Phase 13.2: スタッフ向けスケジュール表示強化（ScheduleDisplay・WeekdayBadges・E2Eテスト7件追加）、E2Eテスト144件 |
 | 2025-12-19 | Phase 13.1: スケジュール拡張（曜日指定・複数日・ServingSchedule型・E2Eテスト7件追加）、E2Eテスト137件 |
