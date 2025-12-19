@@ -392,8 +392,8 @@ export function StaffRecordDialog({
             <textarea
               value={formData.note}
               onChange={(e) => setFormData(prev => ({ ...prev, note: e.target.value }))}
-              placeholder="【ケアに関すること】"
-              rows={2}
+              placeholder="【ケアに関すること】&#10;&#10;【ACPiece】"
+              rows={3}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none"
             />
           </div>
