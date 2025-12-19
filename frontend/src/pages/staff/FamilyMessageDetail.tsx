@@ -9,7 +9,8 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import { ProhibitionWarning } from '../../components/staff/ProhibitionWarning';
-import { useCareItems, useUpdateCareItem } from '../../hooks/useCareItems';
+import { StaffRecordDialog } from '../../components/staff/StaffRecordDialog';
+import { useCareItems } from '../../hooks/useCareItems';
 import { useDemoMode } from '../../hooks/useDemoMode';
 import {
   getCategoryIcon,
@@ -20,7 +21,6 @@ import {
   getStorageLabel,
   getServingMethodLabel,
 } from '../../types/careItem';
-import type { CareItem } from '../../types/careItem';
 
 // デモ用の入居者ID（将来は認証から取得）
 const DEMO_RESIDENT_ID = 'resident-001';
@@ -256,180 +256,17 @@ export function FamilyMessageDetail() {
           </div>
         )}
 
-        {/* 消費記録モーダル（Phase 9.2で実装） */}
-        {showRecordModal && (
-          <ConsumptionRecordModal
-            item={item}
-            onClose={() => setShowRecordModal(false)}
-          />
-        )}
+        {/* Phase 15.3: 統一された提供・摂食記録ダイアログ */}
+        <StaffRecordDialog
+          isOpen={showRecordModal}
+          onClose={() => setShowRecordModal(false)}
+          item={item}
+          onSuccess={() => {
+            setShowRecordModal(false);
+          }}
+        />
       </div>
     </Layout>
-  );
-}
-
-/**
- * 消費記録モーダル（Phase 9.2 で完全実装予定）
- */
-function ConsumptionRecordModal({
-  item,
-  onClose,
-}: {
-  item: CareItem;
-  onClose: () => void;
-}) {
-  const [servedQty, setServedQty] = useState<string>('1');
-  const [consumedQty, setConsumedQty] = useState<string>('1');
-  const [mealTime, setMealTime] = useState<string>('snack');
-  const [noteToFamily, setNoteToFamily] = useState<string>('');
-
-  const updateItem = useUpdateCareItem();
-
-  const handleSubmit = async () => {
-    // Phase 9.2 で ConsumptionLog API を実装
-    // 今はモックとしてステータス更新のみ
-    const served = parseFloat(servedQty) || 0;
-    const consumed = parseFloat(consumedQty) || 0;
-    const newRemaining = Math.max(0, (item.remainingQuantity || 0) - served);
-
-    try {
-      await updateItem.mutateAsync({
-        itemId: item.id,
-        updates: {
-          remainingQuantity: newRemaining,
-          status: newRemaining <= 0 ? 'consumed' : 'served',
-          consumptionRate: served > 0 ? Math.round((consumed / served) * 100) : undefined,
-          noteToFamily: noteToFamily || undefined,
-        },
-      });
-      onClose();
-    } catch (error) {
-      console.error('Update failed:', error);
-      alert('更新に失敗しました');
-    }
-  };
-
-  const mealTimeOptions = [
-    { value: 'breakfast', label: '朝食' },
-    { value: 'lunch', label: '昼食' },
-    { value: 'snack', label: '間食' },
-    { value: 'dinner', label: '夕食' },
-  ];
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-end z-50">
-      <div className="w-full bg-white rounded-t-2xl max-h-[80vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white px-4 py-3 border-b flex items-center justify-between">
-          <h2 className="font-bold text-lg">提供・摂食を記録</h2>
-          <button onClick={onClose} className="p-2 text-gray-500 hover:text-gray-700">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="p-4 space-y-4">
-          {/* 品物情報 */}
-          <div className="bg-gray-50 rounded-lg p-3">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">{getCategoryIcon(item.category)}</span>
-              <div>
-                <p className="font-bold">{item.itemName}</p>
-                <p className="text-sm text-gray-500">
-                  残り: {item.remainingQuantity}{item.unit}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* 提供タイミング */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              提供タイミング
-            </label>
-            <div className="grid grid-cols-4 gap-2">
-              {mealTimeOptions.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => setMealTime(opt.value)}
-                  className={`py-2 rounded-lg text-sm font-medium transition ${
-                    mealTime === opt.value
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* 提供量 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              提供量（{item.unit}）
-            </label>
-            <input
-              type="number"
-              step="0.5"
-              min="0"
-              max={item.remainingQuantity || 1}
-              value={servedQty}
-              onChange={(e) => setServedQty(e.target.value)}
-              className="w-full px-4 py-3 border rounded-lg text-lg"
-            />
-          </div>
-
-          {/* 摂食量 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              摂食量（{item.unit}）
-            </label>
-            <input
-              type="number"
-              step="0.5"
-              min="0"
-              max={parseFloat(servedQty) || 0}
-              value={consumedQty}
-              onChange={(e) => setConsumedQty(e.target.value)}
-              className="w-full px-4 py-3 border rounded-lg text-lg"
-            />
-            {parseFloat(servedQty) > 0 && (
-              <p className="text-sm text-gray-500 mt-1">
-                摂食率: {Math.round((parseFloat(consumedQty) / parseFloat(servedQty)) * 100)}%
-              </p>
-            )}
-          </div>
-
-          {/* 家族への申し送り */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              家族への申し送り（任意）
-            </label>
-            <textarea
-              value={noteToFamily}
-              onChange={(e) => setNoteToFamily(e.target.value)}
-              placeholder="例: 今日は完食されました！"
-              className="w-full px-4 py-3 border rounded-lg resize-none"
-              rows={2}
-            />
-          </div>
-
-          {/* 送信ボタン */}
-          <button
-            onClick={handleSubmit}
-            disabled={updateItem.isPending}
-            className="w-full py-4 bg-primary text-white rounded-lg font-bold text-lg disabled:opacity-50"
-          >
-            {updateItem.isPending ? '記録中...' : '記録する'}
-          </button>
-
-          <p className="text-xs text-gray-400 text-center">
-            ※ Phase 9.2 で ConsumptionLog API と連携予定
-          </p>
-        </div>
-      </div>
-    </div>
   );
 }
 

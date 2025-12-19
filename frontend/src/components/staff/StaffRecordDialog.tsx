@@ -1,0 +1,474 @@
+/**
+ * StaffRecordDialog - 統一された提供・摂食記録ダイアログ
+ * Phase 15.3: 家族連絡詳細からのダイアログ表示
+ * 設計書: docs/STAFF_RECORD_FORM_SPEC.md セクション4.2
+ */
+
+import { useState, useEffect, useCallback } from 'react';
+import type { CareItem } from '../../types/careItem';
+import type { ConsumptionStatus } from '../../types/consumptionLog';
+import { CONSUMPTION_STATUSES, getCategoryIcon } from '../../types/careItem';
+import { determineConsumptionStatus, calculateConsumptionRate } from '../../types/consumptionLog';
+import { useRecordConsumptionLog } from '../../hooks/useConsumptionLogs';
+import { submitMealRecord } from '../../api';
+import { useMealFormSettings } from '../../hooks/useMealFormSettings';
+import { DAY_SERVICE_OPTIONS } from '../../types/mealForm';
+import type { SnackRecord } from '../../types/mealForm';
+
+// 摂食状況の絵文字マッピング
+const CONSUMPTION_EMOJIS: Record<ConsumptionStatus, string> = {
+  full: '😋',
+  most: '😊',
+  half: '😐',
+  little: '😕',
+  none: '😞',
+};
+
+interface StaffRecordDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  item: CareItem;
+  onSuccess?: () => void;
+}
+
+/**
+ * 統一された提供・摂食記録ダイアログ
+ */
+export function StaffRecordDialog({
+  isOpen,
+  onClose,
+  item,
+  onSuccess,
+}: StaffRecordDialogProps) {
+  const { settings } = useMealFormSettings();
+  const recordMutation = useRecordConsumptionLog();
+
+  // 現在の残量
+  const currentQuantity = item.currentQuantity ?? item.remainingQuantity ?? item.quantity;
+
+  // フォーム状態
+  const [formData, setFormData] = useState({
+    // 共通項目
+    staffName: '',
+    dayServiceUsage: '利用中ではない' as '利用中' | '利用中ではない',
+    dayServiceName: '',
+    // 品物記録
+    servedQuantity: 1,
+    consumptionStatus: 'full' as ConsumptionStatus,
+    consumedQuantity: 1,
+    consumptionNote: '',
+    noteToFamily: '',
+    followedFamilyInstructions: true,
+    // 共通項目（下部）
+    snack: '',
+    note: '',
+    isImportant: '重要ではない' as '重要' | '重要ではない',
+  });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // モーダルが開いた時にフォームをリセット
+  useEffect(() => {
+    if (isOpen) {
+      // 家族の指示から推奨提供数を計算
+      const suggestedQuantity = getSuggestedQuantity(item);
+
+      setFormData({
+        staffName: '',
+        dayServiceUsage: '利用中ではない',
+        dayServiceName: '',
+        servedQuantity: Math.min(suggestedQuantity, currentQuantity),
+        consumptionStatus: 'full',
+        consumedQuantity: Math.min(suggestedQuantity, currentQuantity),
+        consumptionNote: '',
+        noteToFamily: '',
+        followedFamilyInstructions: true,
+        snack: '',
+        note: '',
+        isImportant: '重要ではない',
+      });
+      setErrors({});
+    }
+  }, [isOpen, item, currentQuantity]);
+
+  // 消費数量が変わったら摂食状況を自動更新
+  useEffect(() => {
+    if (formData.servedQuantity > 0) {
+      const rate = calculateConsumptionRate(formData.consumedQuantity, formData.servedQuantity);
+      const status = determineConsumptionStatus(rate);
+      setFormData(prev => ({ ...prev, consumptionStatus: status }));
+    }
+  }, [formData.consumedQuantity, formData.servedQuantity]);
+
+  // バリデーション
+  const validate = useCallback((): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.staffName.trim()) {
+      newErrors.staffName = '入力者名を入力してください。';
+    }
+    if (formData.dayServiceUsage === '利用中' && !formData.dayServiceName) {
+      newErrors.dayServiceName = 'デイサービスを選択してください。';
+    }
+    if (formData.servedQuantity <= 0) {
+      newErrors.servedQuantity = '提供数量を入力してください。';
+    }
+    if (formData.servedQuantity > currentQuantity) {
+      newErrors.servedQuantity = `提供数量が残量(${currentQuantity}${item.unit})を超えています`;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }, [formData, currentQuantity, item.unit]);
+
+  // 送信ハンドラ
+  const handleSubmit = useCallback(async () => {
+    if (!validate()) return;
+
+    try {
+      // 1. consumption_log に記録
+      await recordMutation.mutateAsync({
+        itemId: item.id,
+        servedDate: new Date().toISOString().split('T')[0],
+        servedTime: new Date().toTimeString().slice(0, 5),
+        mealTime: 'snack',
+        servedQuantity: formData.servedQuantity,
+        servedBy: formData.staffName,
+        consumedQuantity: formData.consumedQuantity,
+        consumptionStatus: formData.consumptionStatus,
+        consumptionNote: formData.consumptionNote || undefined,
+        noteToFamily: formData.noteToFamily || undefined,
+        recordedBy: formData.staffName,
+      });
+
+      // 2. Sheet B に記録
+      const snackRecord: SnackRecord = {
+        itemId: item.id,
+        itemName: item.itemName,
+        servedQuantity: formData.servedQuantity,
+        unit: item.unit,
+        consumptionStatus: formData.consumptionStatus,
+        consumptionRate: calculateConsumptionRate(formData.consumedQuantity, formData.servedQuantity),
+        followedInstruction: formData.followedFamilyInstructions,
+        instructionNote: item.noteToStaff || undefined,
+        note: formData.consumptionNote || undefined,
+        noteToFamily: formData.noteToFamily || undefined,
+      };
+
+      await submitMealRecord({
+        recordMode: 'snack_only',
+        staffName: formData.staffName,
+        facility: settings.defaultFacility || '',
+        residentName: settings.defaultResidentName || '',
+        dayServiceUsage: formData.dayServiceUsage,
+        isImportant: formData.isImportant,
+        ...(formData.dayServiceName && { dayServiceName: formData.dayServiceName }),
+        ...(formData.snack && { snack: formData.snack }),
+        ...(formData.note && { note: formData.note }),
+        snackRecords: [snackRecord],
+        residentId: item.residentId,
+      });
+
+      onSuccess?.();
+      onClose();
+    } catch (err) {
+      setErrors({ submit: err instanceof Error ? err.message : '記録に失敗しました' });
+    }
+  }, [formData, item, settings, recordMutation, validate, onSuccess, onClose]);
+
+  // 記録後の残量を計算
+  const quantityAfter = currentQuantity - formData.consumedQuantity;
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" role="dialog">
+      <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        {/* ヘッダー */}
+        <div className="sticky top-0 bg-white px-4 py-3 border-b flex items-center justify-between z-10">
+          <h2 className="font-bold text-lg">提供・摂食を記録</h2>
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-500 hover:text-gray-700"
+            aria-label="閉じる"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="p-4 space-y-4">
+          {/* 品物情報 */}
+          <div className="bg-gray-50 rounded-lg p-3">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">{getCategoryIcon(item.category)}</span>
+              <div>
+                <p className="font-bold">{item.itemName}</p>
+                <p className="text-sm text-gray-500">
+                  残り: {currentQuantity}{item.unit}
+                  {item.expirationDate && (
+                    <span className="ml-2">
+                      期限: {new Date(item.expirationDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+            {item.noteToStaff && (
+              <div className="mt-2 text-sm text-blue-700 bg-blue-50 rounded p-2">
+                💬 {item.noteToStaff}
+              </div>
+            )}
+          </div>
+
+          {/* エラー表示 */}
+          {errors.submit && (
+            <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm">
+              {errors.submit}
+            </div>
+          )}
+
+          {/* 入力者名 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              入力者（あなた）は？ <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={formData.staffName}
+              onChange={(e) => setFormData(prev => ({ ...prev, staffName: e.target.value }))}
+              className={`w-full px-3 py-2 border rounded-lg ${errors.staffName ? 'border-red-500' : 'border-gray-300'}`}
+              placeholder="お名前を入力"
+            />
+            {errors.staffName && (
+              <p className="mt-1 text-sm text-red-500">{errors.staffName}</p>
+            )}
+          </div>
+
+          {/* デイサービス利用 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              デイサービスの利用中ですか？ <span className="text-red-500">*</span>
+            </label>
+            <div className="flex gap-4">
+              {(['利用中', '利用中ではない'] as const).map((option) => (
+                <label key={option} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="dayServiceUsage"
+                    value={option}
+                    checked={formData.dayServiceUsage === option}
+                    onChange={(e) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        dayServiceUsage: e.target.value as typeof option,
+                        dayServiceName: e.target.value === '利用中ではない' ? '' : prev.dayServiceName,
+                      }));
+                    }}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">{option}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* デイサービス名（条件付き） */}
+          {formData.dayServiceUsage === '利用中' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                どこのデイサービスですか？ <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formData.dayServiceName}
+                onChange={(e) => setFormData(prev => ({ ...prev, dayServiceName: e.target.value }))}
+                className={`w-full px-3 py-2 border rounded-lg ${errors.dayServiceName ? 'border-red-500' : 'border-gray-300'}`}
+              >
+                <option value="">選んでください</option>
+                {DAY_SERVICE_OPTIONS.map((ds) => (
+                  <option key={ds} value={ds}>{ds}</option>
+                ))}
+              </select>
+              {errors.dayServiceName && (
+                <p className="mt-1 text-sm text-red-500">{errors.dayServiceName}</p>
+              )}
+            </div>
+          )}
+
+          {/* 提供数量 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              提供数 <span className="text-red-500">*</span>
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min="0.5"
+                max={currentQuantity}
+                step="0.5"
+                value={formData.servedQuantity}
+                onChange={(e) => {
+                  const value = parseFloat(e.target.value) || 0;
+                  setFormData(prev => ({
+                    ...prev,
+                    servedQuantity: value,
+                    consumedQuantity: Math.min(prev.consumedQuantity, value),
+                  }));
+                }}
+                className={`w-24 border rounded-lg px-3 py-2 text-sm ${errors.servedQuantity ? 'border-red-500' : 'border-gray-300'}`}
+              />
+              <span className="text-gray-600">{item.unit}</span>
+            </div>
+            {errors.servedQuantity && (
+              <p className="mt-1 text-sm text-red-500">{errors.servedQuantity}</p>
+            )}
+          </div>
+
+          {/* 摂食状況 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">摂食状況</label>
+            <div className="flex flex-wrap gap-2">
+              {CONSUMPTION_STATUSES.map(status => (
+                <label
+                  key={status.value}
+                  className={`
+                    flex items-center gap-1 px-3 py-2 rounded-lg cursor-pointer text-sm transition-colors
+                    ${formData.consumptionStatus === status.value
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}
+                  `}
+                >
+                  <input
+                    type="radio"
+                    name="consumptionStatus"
+                    value={status.value}
+                    checked={formData.consumptionStatus === status.value}
+                    onChange={(e) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        consumptionStatus: e.target.value as ConsumptionStatus,
+                        consumedQuantity: (status.rate / 100) * prev.servedQuantity,
+                      }));
+                    }}
+                    className="sr-only"
+                  />
+                  <span>{CONSUMPTION_EMOJIS[status.value]}</span>
+                  <span>{status.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* メモ */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">メモ（任意）</label>
+            <textarea
+              value={formData.consumptionNote}
+              onChange={(e) => setFormData(prev => ({ ...prev, consumptionNote: e.target.value }))}
+              placeholder="おいしそうに召し上がりました"
+              rows={2}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none"
+            />
+          </div>
+
+          {/* 間食について補足 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              間食について補足（自由記入）
+            </label>
+            <textarea
+              value={formData.snack}
+              onChange={(e) => setFormData(prev => ({ ...prev, snack: e.target.value }))}
+              placeholder="施設のおやつも召し上がりました など"
+              rows={2}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none"
+            />
+          </div>
+
+          {/* 特記事項 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">特記事項</label>
+            <textarea
+              value={formData.note}
+              onChange={(e) => setFormData(prev => ({ ...prev, note: e.target.value }))}
+              placeholder="【ケアに関すること】"
+              rows={2}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none"
+            />
+          </div>
+
+          {/* 重要特記事項 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              重要特記事項集計表に反映させますか？ <span className="text-red-500">*</span>
+            </label>
+            <div className="flex gap-4">
+              {(['重要', '重要ではない'] as const).map((option) => (
+                <label key={option} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="isImportant"
+                    value={option}
+                    checked={formData.isImportant === option}
+                    onChange={(e) => setFormData(prev => ({ ...prev, isImportant: e.target.value as typeof option }))}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">{option}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* 記録後の残量プレビュー */}
+          <div className="bg-blue-50 rounded-lg p-3 text-center">
+            <span className="text-sm text-gray-600">記録後の残量: </span>
+            <span className="text-lg font-semibold text-blue-700">
+              {quantityAfter.toFixed(1)}{item.unit}
+            </span>
+            {quantityAfter <= 0 && (
+              <span className="text-xs text-orange-600 block mt-1">
+                ※ 在庫がなくなります（品物は「消費完了」になります）
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* フッター */}
+        <div className="sticky bottom-0 bg-white flex justify-end gap-2 p-4 border-t">
+          <button
+            onClick={onClose}
+            disabled={recordMutation.isPending}
+            className="px-4 py-2 text-gray-700 border rounded-lg hover:bg-gray-100 disabled:opacity-50"
+          >
+            キャンセル
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={recordMutation.isPending}
+            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50"
+          >
+            {recordMutation.isPending ? '記録中...' : '記録を保存'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 家族の指示から推奨提供数を計算
+ */
+function getSuggestedQuantity(item: CareItem): number {
+  if (!item.noteToStaff) return 1;
+
+  const match = item.noteToStaff.match(/(\d+(?:\.\d+)?)/);
+  if (match) {
+    const suggested = parseFloat(match[1]);
+    if (suggested > 0 && suggested <= 10) {
+      return suggested;
+    }
+  }
+
+  return 1;
+}

@@ -1,172 +1,127 @@
-import { useState, useMemo, useEffect } from 'react';
+/**
+ * スタッフ用記録入力ページ
+ * Phase 15: タブ削除・統一フォーム
+ * 設計書: docs/STAFF_RECORD_FORM_SPEC.md
+ */
+
+import { useState, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import type { MealInputForm, SnackRecord } from '../types/mealForm';
-import {
-  initialMealForm,
-  RESIDENTS,
-  MEAL_TIMES,
-  INTAKE_RATIOS,
-  INJECTION_TYPES,
-  INJECTION_AMOUNTS,
-  DAY_SERVICE_OPTIONS,
-} from '../types/mealForm';
+import type { SnackRecord } from '../types/mealForm';
+import { DAY_SERVICE_OPTIONS } from '../types/mealForm';
 import { submitMealRecord } from '../api';
 import { Layout } from '../components/Layout';
 import { useMealFormSettings } from '../hooks/useMealFormSettings';
 import { MealSettingsModal } from '../components/MealSettingsModal';
-import { SnackSection, MealInputTabs, ItemBasedSnackRecord } from '../components/meal';
-import type { MealInputTabType } from '../components/meal';
+import { ItemBasedSnackRecord } from '../components/meal';
+
+// 統一フォームの型定義
+interface StaffRecordForm {
+  staffName: string;
+  dayServiceUsage: '利用中' | '利用中ではない';
+  dayServiceName: string;
+  snack: string;         // 間食について補足
+  note: string;          // 特記事項
+  isImportant: '重要' | '重要ではない';
+  photo: File | null;
+}
+
+const initialForm: StaffRecordForm = {
+  staffName: '',
+  dayServiceUsage: '利用中ではない',
+  dayServiceName: '',
+  snack: '',
+  note: '',
+  isImportant: '重要ではない',
+  photo: null,
+};
 
 export function MealInputPage() {
   const [searchParams] = useSearchParams();
   const isAdminMode = searchParams.get('admin') === 'true';
 
   const { settings, isLoading: isSettingsLoading, saveSettings } = useMealFormSettings();
-  const [form, setForm] = useState<MealInputForm>(initialMealForm);
-  const [errors, setErrors] = useState<Partial<Record<keyof MealInputForm, string>>>({});
+  const [form, setForm] = useState<StaffRecordForm>(initialForm);
+  const [errors, setErrors] = useState<Partial<Record<keyof StaffRecordForm, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  // 間食記録連携用 (Phase 9.0)
+
+  // 間食記録（品物から記録で追加されたもの）
   const [snackRecords, setSnackRecords] = useState<SnackRecord[]>([]);
-  // Phase 13.0: タブ切替
-  const [activeTab, setActiveTab] = useState<MealInputTabType>('meal');
-
-  // 設定が読み込まれたら初期値を適用
-  useEffect(() => {
-    if (!isSettingsLoading && settings) {
-      setForm((prev) => ({
-        ...prev,
-        facility: settings.defaultFacility || prev.facility,
-        residentName: settings.defaultResidentName || prev.residentName,
-        // デイサービス利用は常に「利用中ではない」が初期値、デイサービス名は未選択
-        dayServiceUsage: '利用中ではない',
-        dayServiceName: '',
-      }));
-    }
-  }, [isSettingsLoading, settings]);
-
-  // 施設リスト（初期値のみ表示）
-  const availableFacilities = useMemo(() => {
-    // 初期値が設定されている場合のみ、その値だけを選択肢として表示
-    if (settings.defaultFacility) {
-      return [settings.defaultFacility];
-    }
-    return [];
-  }, [settings.defaultFacility]);
-
-  // 施設に連動した利用者リスト（設定値が選択肢にない場合は動的追加）
-  const availableResidents = useMemo(() => {
-    const residents = form.facility ? RESIDENTS[form.facility] || [] : [];
-    // 設定値のデフォルト利用者がリストにない場合は追加
-    if (
-      settings.defaultResidentName &&
-      form.facility === settings.defaultFacility &&
-      !residents.includes(settings.defaultResidentName)
-    ) {
-      return [settings.defaultResidentName, ...residents];
-    }
-    return residents;
-  }, [form.facility, settings.defaultFacility, settings.defaultResidentName]);
 
   // デイサービスリスト（固定リスト使用）
-  // 設計書: docs/DAY_SERVICE_OPTIONS_SPEC.md
   const availableDayServices = DAY_SERVICE_OPTIONS;
 
   // フィールド更新
-  const updateField = <K extends keyof MealInputForm>(
+  const updateField = useCallback(<K extends keyof StaffRecordForm>(
     field: K,
-    value: MealInputForm[K]
+    value: StaffRecordForm[K]
   ) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     // エラーをクリア
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
-    // 施設変更時は利用者をリセット
-    if (field === 'facility') {
-      setForm((prev) => ({ ...prev, residentName: '' }));
-    }
     // デイサービス利用状況変更時はデイサービス名をリセット
     if (field === 'dayServiceUsage' && value === '利用中ではない') {
       setForm((prev) => ({ ...prev, dayServiceName: '' }));
     }
-  };
+  }, [errors]);
 
   // バリデーション
-  const validate = (): boolean => {
-    const newErrors: Partial<Record<keyof MealInputForm, string>> = {};
+  const validate = useCallback((): boolean => {
+    const newErrors: Partial<Record<keyof StaffRecordForm, string>> = {};
 
     if (!form.staffName.trim()) {
-      newErrors.staffName = 'このフィールドを入力してください。';
-    }
-    if (!form.facility) {
-      newErrors.facility = '施設を選択してください。';
-    }
-    if (!form.residentName) {
-      newErrors.residentName = '利用者を選択してください。';
+      newErrors.staffName = '入力者名を入力してください。';
     }
     // 条件付き必須: デイサービス利用中の場合はデイサービス名が必須
     if (form.dayServiceUsage === '利用中' && !form.dayServiceName) {
       newErrors.dayServiceName = 'デイサービスを選択してください。';
     }
-    // 条件付き必須: 注入の種類が「その他」の場合は入力必須
-    if (form.injectionType === 'その他' && !form.injectionTypeOther?.trim()) {
-      newErrors.injectionTypeOther = 'その他の注入種類を入力してください。';
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [form.staffName, form.dayServiceUsage, form.dayServiceName]);
 
   // 送信処理
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validate()) return;
 
+    // snackRecordsが空の場合は警告
+    if (snackRecords.length === 0 && !form.snack.trim()) {
+      if (!confirm('品物の記録がありません。このまま送信しますか？')) {
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
-      // APIリクエストデータを構築
-      // 注入の種類: 「その他」の場合は入力値を使用
-      const injectionTypeValue = form.injectionType === 'その他'
-        ? form.injectionTypeOther
-        : form.injectionType;
-
+      // APIリクエストデータを構築（隠し項目はマスター設定から取得）
       const requestData = {
+        recordMode: 'snack_only' as const,
         staffName: form.staffName,
-        facility: form.facility,
-        residentName: form.residentName,
+        facility: settings.defaultFacility || '',
+        residentName: settings.defaultResidentName || '',
         dayServiceUsage: form.dayServiceUsage,
-        mealTime: form.mealTime,
         isImportant: form.isImportant,
         ...(form.dayServiceName && { dayServiceName: form.dayServiceName }),
-        ...(form.mainDishRatio && { mainDishRatio: form.mainDishRatio }),
-        ...(form.sideDishRatio && { sideDishRatio: form.sideDishRatio }),
-        ...(injectionTypeValue && { injectionType: injectionTypeValue }),
-        ...(form.injectionAmount && { injectionAmount: form.injectionAmount }),
         ...(form.snack && { snack: form.snack }),
         ...(form.note && { note: form.note }),
-        // 間食記録連携（Phase 9.0）
         ...(snackRecords.length > 0 && { snackRecords }),
-        ...(form.residentId && { residentId: form.residentId }),
+        residentId: 'resident-001',
       };
 
       const response = await submitMealRecord(requestData);
       console.log('送信成功:', response);
 
       setShowSuccess(true);
-      // 3秒後にフォームリセット（グローバル初期値を適用）
+      // 3秒後にフォームリセット
       setTimeout(() => {
-        setForm({
-          ...initialMealForm,
-          facility: settings.defaultFacility || '',
-          residentName: settings.defaultResidentName || '',
-          // デイサービス利用は「利用中ではない」、デイサービス名は未選択
-          dayServiceUsage: '利用中ではない',
-          dayServiceName: '',
-        });
-        setSnackRecords([]); // 間食記録もリセット
+        setForm(initialForm);
+        setSnackRecords([]);
         setShowSuccess(false);
       }, 3000);
     } catch (error) {
@@ -175,7 +130,7 @@ export function MealInputPage() {
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [form, snackRecords, settings, validate]);
 
   return (
     <Layout>
@@ -194,14 +149,14 @@ export function MealInputPage() {
             </Link>
             <div>
               <h1 className="text-lg font-bold">
-                食事記録
+                記録入力
                 {isAdminMode && (
                   <span className="ml-2 text-xs bg-yellow-500 text-black px-2 py-0.5 rounded">
                     管理者モード
                   </span>
                 )}
               </h1>
-              <p className="text-xs text-white/70">食事の摂取量を記録します</p>
+              <p className="text-xs text-white/70">品物の提供・摂食を記録</p>
             </div>
           </div>
           {/* 設定ボタン（adminモードのみ表示） */}
@@ -247,13 +202,10 @@ export function MealInputPage() {
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
-            <span className="text-sm font-medium">送信しました</span>
+            <span className="text-sm font-medium">記録しました</span>
           </div>
         </div>
       )}
-
-      {/* Phase 13.0: タブ切替 */}
-      <MealInputTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* ローディング */}
       {isSettingsLoading && (
@@ -262,340 +214,169 @@ export function MealInputPage() {
         </div>
       )}
 
-      {/* Phase 13.0: 品物から記録タブ */}
-      {!isSettingsLoading && activeTab === 'item_based' && (
-        <ItemBasedSnackRecord
-          residentId="resident-001"
-          onRecordComplete={() => {
-            setShowSuccess(true);
-            setTimeout(() => setShowSuccess(false), 3000);
-          }}
-        />
-      )}
-
-      {/* 食事タブ: フォーム */}
-      {!isSettingsLoading && activeTab === 'meal' && (
-        <form onSubmit={handleSubmit} className="p-4 space-y-6 max-w-lg mx-auto">
-          {/* 入力者 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              入力者（あなた）は？ <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={form.staffName}
-              onChange={(e) => updateField('staffName', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary ${
-                errors.staffName ? 'border-red-500' : 'border-gray-300'
-              }`}
-              placeholder="お名前を入力"
-            />
-            {errors.staffName && (
-              <p className="mt-1 text-sm text-red-500">{errors.staffName}</p>
-            )}
-          </div>
-
-          {/* 施設 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              利用者様のお住まいの施設は？ <span className="text-red-500">*</span>
-            </label>
-            <select
-              value={form.facility}
-              onChange={(e) => updateField('facility', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary ${
-                errors.facility ? 'border-red-500' : 'border-gray-300'
-              }`}
-            >
-              <option value="">選んでください</option>
-              {availableFacilities.map((f) => (
-                <option key={f} value={f}>{f}</option>
-              ))}
-            </select>
-            {errors.facility && (
-              <p className="mt-1 text-sm text-red-500">{errors.facility}</p>
-            )}
-          </div>
-
-          {/* 利用者名 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              利用者名は？ <span className="text-red-500">*</span>
-            </label>
-            <select
-              value={form.residentName}
-              onChange={(e) => updateField('residentName', e.target.value)}
-              disabled={!form.facility}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed ${
-                errors.residentName ? 'border-red-500' : 'border-gray-300'
-              }`}
-            >
-              <option value="">選んでください</option>
-              {availableResidents.map((r) => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
-            {errors.residentName && (
-              <p className="mt-1 text-sm text-red-500">{errors.residentName}</p>
-            )}
-          </div>
-
-          {/* デイサービス利用 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              デイサービスの利用中ですか？ <span className="text-red-500">*</span>
-            </label>
-            <div className="flex gap-4">
-              {(['利用中', '利用中ではない'] as const).map((option) => (
-                <label key={option} className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="dayServiceUsage"
-                    value={option}
-                    checked={form.dayServiceUsage === option}
-                    onChange={(e) => updateField('dayServiceUsage', e.target.value as typeof option)}
-                    className="w-4 h-4 text-primary focus:ring-primary"
-                  />
-                  <span className="text-sm text-gray-700">{option}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* どこのデイサービスですか？ ※条件付き表示 */}
-          {form.dayServiceUsage === '利用中' && (
+      {/* メインコンテンツ */}
+      {!isSettingsLoading && (
+        <form onSubmit={handleSubmit} className="pb-24">
+          {/* 共通項目（上部） */}
+          <div className="p-4 space-y-4 bg-white border-b">
+            {/* 入力者 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                どこのデイサービスですか？ <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={form.dayServiceName}
-                onChange={(e) => updateField('dayServiceName', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary ${
-                  errors.dayServiceName ? 'border-red-500' : 'border-gray-300'
-                }`}
-              >
-                <option value="">選んでください</option>
-                {availableDayServices.map((ds) => (
-                  <option key={ds} value={ds}>{ds}</option>
-                ))}
-              </select>
-              {errors.dayServiceName && (
-                <p className="mt-1 text-sm text-red-500">{errors.dayServiceName}</p>
-              )}
-            </div>
-          )}
-
-          {/* 食事時間帯 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              食事はいつのことですか？ <span className="text-red-500">*</span>
-            </label>
-            <div className="flex gap-4">
-              {MEAL_TIMES.map((time) => (
-                <label key={time} className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="mealTime"
-                    value={time}
-                    checked={form.mealTime === time}
-                    onChange={(e) => updateField('mealTime', e.target.value as typeof time)}
-                    className="w-4 h-4 text-primary focus:ring-primary"
-                  />
-                  <span className="text-sm text-gray-700">{time}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* 主食摂取量 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              主食の摂取量は何割ですか？
-            </label>
-            <select
-              value={form.mainDishRatio}
-              onChange={(e) => updateField('mainDishRatio', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-            >
-              <option value="">選んでください</option>
-              {INTAKE_RATIOS.map((r) => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* 副食摂取量 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              副食の摂取量は何割ですか？
-            </label>
-            <select
-              value={form.sideDishRatio}
-              onChange={(e) => updateField('sideDishRatio', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-            >
-              <option value="">選んでください</option>
-              {INTAKE_RATIOS.map((r) => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* 注入の種類 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              注入の種類は？
-            </label>
-            <select
-              value={form.injectionType}
-              onChange={(e) => {
-                updateField('injectionType', e.target.value);
-                // 「その他」以外を選択した場合、その他入力欄をクリア
-                if (e.target.value !== 'その他') {
-                  updateField('injectionTypeOther', '');
-                }
-                // 注入の種類を変更した場合、注入量をリセット
-                if (e.target.value !== form.injectionType) {
-                  updateField('injectionAmount', '');
-                }
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-            >
-              <option value="">選んでください</option>
-              {INJECTION_TYPES.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* その他の注入種類 ※条件付き表示 */}
-          {form.injectionType === 'その他' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                その他の注入種類は？ <span className="text-red-500">*</span>
+                入力者（あなた）は？ <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
-                value={form.injectionTypeOther || ''}
-                onChange={(e) => updateField('injectionTypeOther', e.target.value)}
+                value={form.staffName}
+                onChange={(e) => updateField('staffName', e.target.value)}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary ${
-                  errors.injectionTypeOther ? 'border-red-500' : 'border-gray-300'
+                  errors.staffName ? 'border-red-500' : 'border-gray-300'
                 }`}
-                placeholder="注入の種類を入力"
+                placeholder="お名前を入力"
               />
-              {errors.injectionTypeOther && (
-                <p className="mt-1 text-sm text-red-500">{errors.injectionTypeOther}</p>
+              {errors.staffName && (
+                <p className="mt-1 text-sm text-red-500">{errors.staffName}</p>
               )}
             </div>
-          )}
 
-          {/* 注入量 ※注入の種類が選択されている場合のみ表示 */}
-          {form.injectionType && (
+            {/* デイサービス利用 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                デイサービスの利用中ですか？ <span className="text-red-500">*</span>
+              </label>
+              <div className="flex gap-4">
+                {(['利用中', '利用中ではない'] as const).map((option) => (
+                  <label key={option} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="dayServiceUsage"
+                      value={option}
+                      checked={form.dayServiceUsage === option}
+                      onChange={(e) => updateField('dayServiceUsage', e.target.value as typeof option)}
+                      className="w-4 h-4 text-primary focus:ring-primary"
+                    />
+                    <span className="text-sm text-gray-700">{option}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* どこのデイサービスですか？ ※条件付き表示 */}
+            {form.dayServiceUsage === '利用中' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  どこのデイサービスですか？ <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={form.dayServiceName}
+                  onChange={(e) => updateField('dayServiceName', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary ${
+                    errors.dayServiceName ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                >
+                  <option value="">選んでください</option>
+                  {availableDayServices.map((ds) => (
+                    <option key={ds} value={ds}>{ds}</option>
+                  ))}
+                </select>
+                {errors.dayServiceName && (
+                  <p className="mt-1 text-sm text-red-500">{errors.dayServiceName}</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* 品物から記録（メインエリア） */}
+          <ItemBasedSnackRecord
+            residentId="resident-001"
+            onRecordComplete={() => {
+              setShowSuccess(true);
+              setTimeout(() => setShowSuccess(false), 3000);
+            }}
+          />
+
+          {/* 共通項目（下部） */}
+          <div className="p-4 space-y-4 bg-white border-t">
+            {/* 間食について補足 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                注入量は？
+                間食について補足（自由記入）
               </label>
-              <select
-                value={form.injectionAmount}
-                onChange={(e) => updateField('injectionAmount', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-              >
-                <option value="">選んでください</option>
-                {INJECTION_AMOUNTS.map((a) => (
-                  <option key={a} value={a}>{a}</option>
+              <textarea
+                value={form.snack}
+                onChange={(e) => updateField('snack', e.target.value)}
+                rows={2}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary resize-none"
+                placeholder="施設のおやつも召し上がりました など"
+              />
+            </div>
+
+            {/* 特記事項 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                特記事項
+              </label>
+              <textarea
+                value={form.note}
+                onChange={(e) => updateField('note', e.target.value)}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary resize-none"
+                placeholder="【ケアに関すること】&#10;&#10;【ACPiece】"
+              />
+            </div>
+
+            {/* 重要特記事項 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                重要特記事項集計表に反映させますか？ <span className="text-red-500">*</span>
+              </label>
+              <div className="flex gap-4">
+                {(['重要', '重要ではない'] as const).map((option) => (
+                  <label key={option} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="isImportant"
+                      value={option}
+                      checked={form.isImportant === option}
+                      onChange={(e) => updateField('isImportant', e.target.value as typeof option)}
+                      className="w-4 h-4 text-primary focus:ring-primary"
+                    />
+                    <span className="text-sm text-gray-700">{option}</span>
+                  </label>
                 ))}
-              </select>
+              </div>
             </div>
-          )}
 
-          {/* 間食セクション (Phase 9.0 拡張) */}
-          <div className="border-t border-gray-200 pt-4">
-            <SnackSection
-              residentId="resident-001"
-              snackRecords={snackRecords}
-              onSnackRecordsChange={setSnackRecords}
-              freeText={form.snack || ''}
-              onFreeTextChange={(text) => updateField('snack', text)}
-            />
-          </div>
-
-          {/* 特記事項 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              特記事項
-            </label>
-            <textarea
-              value={form.note}
-              onChange={(e) => updateField('note', e.target.value)}
-              rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary resize-none"
-              placeholder="【ケアに関すること】&#10;&#10;【ACPiece】"
-            />
-          </div>
-
-          {/* 重要特記事項 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              重要特記事項集計表に反映させますか？ <span className="text-red-500">*</span>
-            </label>
-            <div className="flex gap-4">
-              {(['重要', '重要ではない'] as const).map((option) => (
-                <label key={option} className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="isImportant"
-                    value={option}
-                    checked={form.isImportant === option}
-                    onChange={(e) => updateField('isImportant', e.target.value as typeof option)}
-                    className="w-4 h-4 text-primary focus:ring-primary"
-                  />
-                  <span className="text-sm text-gray-700">{option}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* 写真アップロード */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              写真アップロード
-            </label>
-            <div className="flex items-center gap-3">
-              <label className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg cursor-pointer hover:bg-gray-300 transition-colors">
-                ファイル選択
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => updateField('photo', e.target.files?.[0] || null)}
-                  className="hidden"
-                />
+            {/* 写真アップロード */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                写真アップロード
               </label>
-              <span className="text-sm text-gray-500">
-                {form.photo ? form.photo.name : '選択されていません'}
-              </span>
+              <div className="flex items-center gap-3">
+                <label className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg cursor-pointer hover:bg-gray-300 transition-colors">
+                  ファイル選択
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => updateField('photo', e.target.files?.[0] || null)}
+                    className="hidden"
+                  />
+                </label>
+                <span className="text-sm text-gray-500">
+                  {form.photo ? form.photo.name : '選択されていません'}
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* 送信ボタン */}
-          <div className="pt-4">
+          {/* 送信ボタン（固定） */}
+          <div className="fixed bottom-16 left-0 right-0 px-4 pb-4 bg-gradient-to-t from-gray-50 to-transparent pt-6">
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full py-4 bg-primary text-white font-bold rounded-lg shadow-lg hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isSubmitting ? '送信中...' : '送信'}
+              {isSubmitting ? '送信中...' : '記録を送信'}
             </button>
-          </div>
-
-          {/* 記録閲覧へ戻る */}
-          <div className="text-center pt-2 pb-8">
-            <Link
-              to="/view"
-              className="text-primary hover:underline text-sm"
-            >
-              記録閲覧へ戻る
-            </Link>
           </div>
         </form>
       )}

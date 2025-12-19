@@ -10,7 +10,7 @@
 import { useMemo, useState } from 'react';
 import { useCareItems } from '../../hooks/useCareItems';
 import type { CareItem, ItemStatus } from '../../types/careItem';
-import { SnackRecordModal } from './SnackRecordModal';
+import { StaffRecordDialog } from '../staff/StaffRecordDialog';
 import {
   isScheduledForToday as checkScheduledForToday,
   isScheduledForTomorrow as checkScheduledForTomorrow,
@@ -227,9 +227,9 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
         </div>
       )}
 
-      {/* 間食記録モーダル */}
+      {/* Phase 15.3: 統一された提供・摂食記録ダイアログ */}
       {selectedItem && (
-        <SnackRecordModal
+        <StaffRecordDialog
           isOpen={isModalOpen}
           onClose={handleModalClose}
           item={selectedItem}
