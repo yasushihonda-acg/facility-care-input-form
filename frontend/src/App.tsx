@@ -111,6 +111,7 @@ function App() {
       <Route path="/demo/family/tasks" element={<TaskList />} />
       <Route path="/demo/family/presets" element={<PresetManagement />} />
       <Route path="/demo/family/settings/resident" element={<ResidentSettings />} />
+      <Route path="/demo/family/evidence/:date" element={<EvidenceMonitor />} />
 
       {/* デモ: スタッフホーム */}
       <Route path="/demo/staff" element={<DemoStaffHome />} />

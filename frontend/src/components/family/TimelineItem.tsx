@@ -12,12 +12,15 @@ import {
   TIMELINE_STATUS_CONFIG,
   CARE_PRIORITY_LABELS,
 } from '../../types/family';
+import { useDemoMode } from '../../hooks/useDemoMode';
 
 interface TimelineItemProps {
   item: TimelineItemType;
 }
 
 export function TimelineItem({ item }: TimelineItemProps) {
+  const isDemo = useDemoMode();
+  const pathPrefix = isDemo ? '/demo' : '';
   const statusConfig = TIMELINE_STATUS_CONFIG[item.status];
   const mealIcon = MEAL_TIME_ICONS[item.mealTime];
   const mealLabel = MEAL_TIME_LABELS[item.mealTime];
@@ -78,7 +81,7 @@ export function TimelineItem({ item }: TimelineItemProps) {
           <div className="flex gap-2 mt-2">
             {item.photoUrl && (
               <Link
-                to={`/family/evidence/${item.date}?meal=${item.mealTime}`}
+                to={`${pathPrefix}/family/evidence/${item.date}?meal=${item.mealTime}`}
                 className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition"
               >
                 <span>📷</span>
@@ -87,7 +90,7 @@ export function TimelineItem({ item }: TimelineItemProps) {
             )}
             {hasInstruction && (
               <Link
-                to={`/family/evidence/${item.date}?meal=${item.mealTime}`}
+                to={`${pathPrefix}/family/evidence/${item.date}?meal=${item.mealTime}`}
                 className="flex items-center gap-1 px-3 py-1.5 text-sm bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition"
               >
                 <span>📋</span>

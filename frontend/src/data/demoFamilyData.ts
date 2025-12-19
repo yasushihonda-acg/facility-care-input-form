@@ -253,7 +253,8 @@ export const DEMO_EVIDENCE_DATA: EvidenceData = {
   },
   result: {
     id: 'demo-result-001',
-    photoUrl: '/demo-images/kiwi-cut.jpg',
+    // Phase 16: テスト用の実在するダミー画像URL
+    photoUrl: 'https://picsum.photos/seed/kiwi/800/600',
     staffName: '田中花子',
     recordedAt: `${formatDate(today)}T12:15:00`,
     mealTime: 'lunch',

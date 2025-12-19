@@ -189,15 +189,36 @@ export function EvidenceMonitor() {
               </div>
             </div>
             <div className="p-4">
-              {/* 写真エビデンス */}
+              {/* 写真エビデンス - Phase 16: 実画像表示 */}
               {evidence.result.photoUrl && (
                 <div className="mb-4">
                   <div className="relative w-full aspect-video bg-gray-100 rounded-lg overflow-hidden">
-                    {/* デモ用プレースホルダ画像 */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-green-50 to-green-100">
+                    {/* 実在するURLの場合は実画像を表示 */}
+                    {evidence.result.photoUrl.startsWith('http') ? (
+                      <img
+                        src={evidence.result.photoUrl}
+                        alt="提供直前の写真"
+                        data-testid="evidence-photo"
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        onError={(e) => {
+                          // 画像読み込みエラー時はプレースホルダに切り替え
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          target.parentElement?.querySelector('[data-placeholder]')?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    {/* プレースホルダ（画像がない場合や読み込みエラー時） */}
+                    <div
+                      data-placeholder
+                      className={`absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-green-50 to-green-100 ${
+                        evidence.result.photoUrl.startsWith('http') ? 'hidden' : ''
+                      }`}
+                    >
                       <span className="text-5xl mb-2">📷</span>
                       <p className="text-sm text-gray-500">提供直前の写真</p>
-                      <p className="text-xs text-gray-400 mt-1">（デモ用プレースホルダ）</p>
+                      <p className="text-xs text-gray-400 mt-1">（画像を読み込めません）</p>
                     </div>
                   </div>
                 </div>
