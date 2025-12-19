@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月20日 (Phase 18 チャット連携機能 - 実装完了・本番デプロイ済み)
+> **最終更新**: 2025年12月20日 (Phase 19 記録のチャット連携 - 実装中)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -20,6 +20,58 @@
 ---
 
 ## 現在のタスク
+
+### Phase 19: 記録のチャット連携（実装中）
+
+**設計書**: [CHAT_INTEGRATION_SPEC.md](./CHAT_INTEGRATION_SPEC.md) セクション6
+
+**概要**: 提供記録をチャットスレッドに自動反映し、スタッフ・家族双方がリアルタイムで記録を確認できる機能。
+
+**Phase 19 実装計画**:
+
+| Phase | 内容 | 工数 | 状態 |
+|-------|------|------|------|
+| 19.1 | バックエンド - submitMealRecord拡張 | 2-3h | 🔄 進行中 |
+| 19.2 | フロントエンド - RecordMessageCard | 2-3h | ⏳ 待機 |
+| 19.3 | ホーム通知セクション | 2-3h | ⏳ 待機 |
+| 19.4 | E2Eテスト・デプロイ | 1-2h | ⏳ 待機 |
+| **合計** | | **7-11h** | |
+
+**実装ファイル（バックエンド）**:
+
+| ファイル | 変更内容 |
+|----------|----------|
+| `functions/src/functions/submitMealRecord.ts` | 記録保存時にチャットメッセージ自動作成 |
+
+**実装ファイル（フロントエンド）**:
+
+| ファイル | 変更内容 |
+|----------|----------|
+| `frontend/src/pages/shared/ItemChatPage.tsx` | RecordMessageCard追加（type='record'対応） |
+| `frontend/src/pages/staff/StaffHome.tsx` | 通知セクション追加 |
+| `frontend/src/pages/family/FamilyDashboard.tsx` | 通知セクション追加 |
+| `frontend/e2e/record-chat-integration.spec.ts` | E2Eテスト（新規） |
+
+**データフロー（Phase 19.1）**:
+```
+1. スタッフがMealInputPage等で記録を入力
+   ↓
+2. submitMealRecord API 呼び出し
+   ↓
+3. Sheet B への書き込み（既存処理）
+   ↓
+4. snackRecords内のitemIdごとに
+   type='record'のメッセージを自動作成
+   ↓
+5. 家族・スタッフがチャットスレッドで記録を確認
+```
+
+**主要機能**:
+- ⏳ **記録の自動反映** - 提供記録がスレッドに自動表示
+- ⏳ **RecordMessageCard** - カード形式で記録を表示
+- ⏳ **ホーム通知** - 新着メッセージ・記録をホームに表示
+
+---
 
 ### Phase 18: チャット連携機能（実装完了）
 

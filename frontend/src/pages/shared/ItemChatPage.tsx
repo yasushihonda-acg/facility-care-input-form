@@ -257,7 +257,10 @@ function MessageBubble({ message, isOwn }: MessageBubbleProps) {
 
       {/* メッセージ本体 */}
       {message.type === 'text' && (
-        <div className={`max-w-[80%] px-4 py-2 rounded-2xl ${bubbleClass}`}>
+        <div
+          data-testid="text-message"
+          className={`max-w-[80%] px-4 py-2 rounded-2xl ${bubbleClass}`}
+        >
           <p className="text-sm whitespace-pre-wrap break-words">
             {message.content}
           </p>
@@ -265,22 +268,14 @@ function MessageBubble({ message, isOwn }: MessageBubbleProps) {
       )}
 
       {message.type === 'record' && (
-        <div className="max-w-[80%] px-4 py-3 rounded-lg bg-gray-50 border border-dashed border-gray-300">
-          <div className="flex items-center gap-2 text-gray-600 text-sm">
-            <span>📝</span>
-            <span>提供記録</span>
-          </div>
-          <p className="text-sm mt-1">{message.content}</p>
-          {message.recordData && (
-            <div className="text-xs text-gray-500 mt-1">
-              {message.recordData.itemName} - {message.recordData.consumptionStatus}
-            </div>
-          )}
-        </div>
+        <RecordMessageCard message={message} />
       )}
 
       {message.type === 'system' && (
-        <div className="max-w-[90%] px-3 py-2 rounded-lg bg-gray-200 text-gray-600 text-xs text-center">
+        <div
+          data-testid="system-message"
+          className="max-w-[90%] px-3 py-2 rounded-lg bg-gray-200 text-gray-600 text-xs text-center mx-auto"
+        >
           {message.content}
         </div>
       )}
@@ -289,6 +284,107 @@ function MessageBubble({ message, isOwn }: MessageBubbleProps) {
       <span className={`text-xs text-gray-400 mt-1 ${isOwn ? 'mr-1' : 'ml-1'}`}>
         {formatMessageTime(message.createdAt)}
       </span>
+    </div>
+  );
+}
+
+/**
+ * 記録メッセージカードコンポーネント (Phase 19)
+ * type='record'のメッセージを中央配置のカード形式で表示
+ * @see docs/CHAT_INTEGRATION_SPEC.md セクション6
+ */
+interface RecordMessageCardProps {
+  message: ChatMessage;
+}
+
+function RecordMessageCard({ message }: RecordMessageCardProps) {
+  const recordData = message.recordData;
+
+  // 摂食状況を日本語ラベルに変換
+  const getConsumptionStatusLabel = (status?: string): string => {
+    if (!status) return '';
+    const labels: Record<string, string> = {
+      full: '完食',
+      most: 'ほぼ完食',
+      half: '半分',
+      little: '少し',
+      none: '手つかず',
+    };
+    return labels[status] || status;
+  };
+
+  // 摂食状況に応じた色を返す
+  const getStatusColor = (status?: string): string => {
+    if (!status) return 'text-gray-600';
+    const colors: Record<string, string> = {
+      full: 'text-green-600',
+      most: 'text-green-500',
+      half: 'text-yellow-600',
+      little: 'text-orange-500',
+      none: 'text-red-500',
+    };
+    return colors[status] || 'text-gray-600';
+  };
+
+  return (
+    <div className="flex justify-center w-full">
+      <div
+        data-testid="record-message-card"
+        className="max-w-[90%] w-full bg-white border border-gray-200 rounded-lg shadow-sm p-4"
+      >
+        {/* ヘッダー */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2 text-blue-600">
+            <span className="text-lg">📝</span>
+            <span className="font-semibold text-sm">提供記録</span>
+          </div>
+          <span className="text-xs text-gray-400">
+            {message.senderName}
+          </span>
+        </div>
+
+        {/* 記録内容 */}
+        {recordData ? (
+          <div className="space-y-2">
+            {/* 品物名と提供数 */}
+            <div className="flex items-center justify-between bg-gray-50 rounded-lg p-2">
+              <span className="font-medium">{recordData.itemName}</span>
+              <span className="text-sm text-gray-600">
+                {recordData.servedQuantity}{recordData.unit || '個'}
+              </span>
+            </div>
+
+            {/* 摂食状況 */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-500">摂食状況</span>
+              <span className={`font-semibold ${getStatusColor(recordData.consumptionStatus)}`}>
+                {getConsumptionStatusLabel(recordData.consumptionStatus)}
+              </span>
+            </div>
+
+            {/* メモ（あれば） */}
+            {recordData.note && (
+              <div className="mt-2 text-sm text-gray-600 bg-gray-50 rounded p-2">
+                <span className="text-xs text-gray-400 block mb-1">メモ</span>
+                {recordData.note}
+              </div>
+            )}
+
+            {/* 家族への申し送り（あれば） */}
+            {recordData.noteToFamily && (
+              <div className="mt-2 text-sm text-blue-700 bg-blue-50 rounded p-2">
+                <span className="text-xs text-blue-400 block mb-1">家族への申し送り</span>
+                {recordData.noteToFamily}
+              </div>
+            )}
+          </div>
+        ) : (
+          /* recordDataがない場合はcontentをそのまま表示 */
+          <p className="text-sm text-gray-700 whitespace-pre-wrap">
+            {message.content}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

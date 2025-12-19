@@ -6,7 +6,7 @@
 
 import * as functions from "firebase-functions";
 import {Request, Response} from "express";
-import {getFirestore} from "firebase-admin/firestore";
+import {getFirestore, FieldValue, Timestamp} from "firebase-admin/firestore";
 import {appendMealRecordToSheetB} from "../services/sheetsService";
 import {notifyMealRecord} from "../services/googleChatService";
 import {FUNCTIONS_CONFIG} from "../config/sheets";
@@ -17,6 +17,9 @@ import {
   MealRecordForChat,
   ErrorCodes,
   SnackRecord,
+  ChatMessage,
+  ChatNotification,
+  CareItem,
 } from "../types";
 import {
   createConsumptionLogsFromSnackRecords,
@@ -29,6 +32,158 @@ import {
 interface SubmitMealRecordResponse {
   postId: string;
   sheetRow: number;
+}
+
+/**
+ * Phase 19: 記録をチャットメッセージとして自動作成
+ * @see docs/CHAT_INTEGRATION_SPEC.md セクション6
+ *
+ * snackRecords内のitemIdごとに、type='record'のメッセージを作成し、
+ * 家族・スタッフがチャットスレッドで記録を確認できるようにする
+ */
+async function createRecordMessagesFromSnackRecords(
+  snackRecords: SnackRecord[],
+  staffName: string,
+  residentId: string
+): Promise<{createdCount: number; errors: string[]}> {
+  const db = getFirestore();
+  const errors: string[] = [];
+  let createdCount = 0;
+
+  // itemIdを持つレコードのみ処理（itemIdがない場合はスキップ）
+  const recordsWithItemId = snackRecords.filter((record) => record.itemId);
+
+  for (const record of recordsWithItemId) {
+    try {
+      const itemId = record.itemId!;
+      const now = Timestamp.now();
+
+      // 品物情報を取得
+      const itemRef = db.collection("care_items").doc(itemId);
+      const itemDoc = await itemRef.get();
+      const itemData = itemDoc.data() as CareItem | undefined;
+      const itemName = itemData?.itemName || record.itemName || "品物";
+
+      // 摂食状況を日本語に変換
+      const consumptionStatusLabel = getConsumptionStatusLabel(
+        record.consumptionStatus
+      );
+
+      // メッセージ内容を生成
+      const content = generateRecordMessageContent(
+        record,
+        staffName,
+        consumptionStatusLabel
+      );
+
+      // メッセージドキュメントを作成
+      const messageRef = itemRef.collection("messages").doc();
+      const message: ChatMessage = {
+        id: messageRef.id,
+        type: "record",
+        senderType: "staff",
+        senderName: staffName,
+        content: content,
+        recordData: record,
+        readByStaff: true,
+        readByFamily: false,
+        createdAt: now,
+      };
+
+      // バッチ書き込み
+      const batch = db.batch();
+
+      // 1. メッセージを保存
+      batch.set(messageRef, message);
+
+      // 2. care_itemsのチャット関連フィールドを更新
+      batch.update(itemRef, {
+        hasMessages: true,
+        lastMessageAt: now,
+        lastMessagePreview: `📝 ${staffName}が提供記録を追加しました`,
+        unreadCountFamily: FieldValue.increment(1),
+        updatedAt: now,
+      });
+
+      // 3. 通知を作成（家族向け）
+      const notificationRef = db
+        .collection("residents")
+        .doc(residentId)
+        .collection("notifications")
+        .doc();
+
+      const notification: ChatNotification = {
+        id: notificationRef.id,
+        type: "record_added",
+        title: `${itemName}の提供記録が追加されました`,
+        body: `${staffName}: ${record.servedQuantity}${record.unit || "個"} ${consumptionStatusLabel}`,
+        targetType: "family",
+        read: false,
+        linkTo: `/family/items/${itemId}/chat`,
+        relatedItemId: itemId,
+        relatedItemName: itemName,
+        createdAt: now,
+      };
+
+      batch.set(notificationRef, notification);
+
+      await batch.commit();
+      createdCount++;
+
+      functions.logger.info("Record message created", {
+        itemId,
+        itemName,
+        messageId: messageRef.id,
+      });
+    } catch (error) {
+      const errorMsg = `Failed to create record message for item ${record.itemId}: ${error}`;
+      errors.push(errorMsg);
+      functions.logger.warn(errorMsg);
+    }
+  }
+
+  return {createdCount, errors};
+}
+
+/**
+ * 摂食状況を日本語ラベルに変換
+ */
+function getConsumptionStatusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    full: "完食",
+    most: "ほぼ完食",
+    half: "半分",
+    little: "少し",
+    none: "手つかず",
+  };
+  return labels[status] || status;
+}
+
+/**
+ * 記録メッセージの内容を生成
+ */
+function generateRecordMessageContent(
+  record: SnackRecord,
+  staffName: string,
+  consumptionStatusLabel: string
+): string {
+  const parts: string[] = [
+    "📝 提供記録",
+    `${record.itemName} ${record.servedQuantity}${record.unit || "個"}`,
+    `摂食状況: ${consumptionStatusLabel}`,
+  ];
+
+  if (record.note) {
+    parts.push(`メモ: ${record.note}`);
+  }
+
+  if (record.noteToFamily) {
+    parts.push(`家族への申し送り: ${record.noteToFamily}`);
+  }
+
+  parts.push(`記録者: ${staffName}`);
+
+  return parts.join("\n");
 }
 
 /**
@@ -270,6 +425,26 @@ async function submitMealRecordHandler(
       } catch (consumptionError) {
         // 消費ログエラーは記録成功には影響させない
         functions.logger.warn("Consumption log creation failed:", consumptionError);
+      }
+    }
+
+    // Phase 19: 記録をチャットメッセージとして自動作成
+    // snackRecordsがあり、residentIdが指定されている場合のみ
+    if (mealRecord.snackRecords && mealRecord.snackRecords.length > 0 &&
+        mealRecord.residentId) {
+      try {
+        const recordMessageResult = await createRecordMessagesFromSnackRecords(
+          mealRecord.snackRecords,
+          mealRecord.staffName,
+          mealRecord.residentId
+        );
+        functions.logger.info("Record messages created for chat", {
+          createdCount: recordMessageResult.createdCount,
+          errors: recordMessageResult.errors,
+        });
+      } catch (recordMessageError) {
+        // チャットメッセージ作成エラーは記録成功には影響させない
+        functions.logger.warn("Record message creation failed:", recordMessageError);
       }
     }
 

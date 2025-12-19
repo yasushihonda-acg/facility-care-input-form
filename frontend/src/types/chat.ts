@@ -43,6 +43,9 @@ export interface ChatMessage {
     consumptionStatus: string;
     consumptionRate?: number;
     note?: string;
+    noteToFamily?: string;
+    followedInstruction?: boolean;
+    instructionNote?: string;
   };
 
   // 既読管理
