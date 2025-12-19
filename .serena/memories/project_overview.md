@@ -189,13 +189,15 @@ facility-care-input-form/
 
 ## デモ機能
 
-### デモショーケース（家族向け特化）
-- **URL**: https://facility-care-input-form.web.app/demo
-- **ガイド付きツアー**: `/demo/showcase`（家族視点の6ステップ）
+### デモショーケース（家族向け・スタッフ向け）
+- **家族デモURL**: https://facility-care-input-form.web.app/demo
+- **スタッフデモURL**: https://facility-care-input-form.web.app/demo/staff (Phase 14)
+- **ガイド付きツアー（家族）**: `/demo/showcase`（家族視点の6ステップ）
+- **ガイド付きツアー（スタッフ）**: `/demo/staff/showcase`（スタッフ視点の4ステップ）
 - **デモモード判定**: `useDemoMode` フック（パスが `/demo` で始まるか判定）
-- **シードデータ**: `frontend/src/data/demo/` に12品物、18ログ、9タスク等
-- **設計書**: `docs/DEMO_FAMILY_REDESIGN.md`
-- **スタッフ機能**: 無効化（将来 `/demo/staff-app` として復活予定）
+- **シードデータ**: `frontend/src/data/demo/` に15品物、18ログ、9タスク等（家族・スタッフで共有）
+- **設計書（家族）**: `docs/DEMO_FAMILY_REDESIGN.md`
+- **設計書（スタッフ）**: `docs/DEMO_STAFF_SPEC.md`
 
 ### ツアーナビゲーション（ヘッダーボタン）
 - `/demo/*` ページ（`/demo/showcase` 除く）でヘッダー右側にオレンジ色のボタン表示
@@ -294,7 +296,7 @@ AI提案以外で品物を手動登録した際にも、プリセット保存を
 **E2Eテスト**: `schedule-extension.spec.ts` (7件)
 **設計書**: `docs/ITEM_BASED_SNACK_RECORD_SPEC.md` セクション3.4-3.5
 
-### E2Eテスト（144件）
+### E2Eテスト（161件）
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |
@@ -305,6 +307,7 @@ AI提案以外で品物を手動登録した際にも、プリセット保存を
 | `item-based-snack.spec.ts` | 13件 | Phase 13.0 品物起点の間食記録 |
 | `schedule-extension.spec.ts` | 7件 | Phase 13.1 スケジュール拡張機能 |
 | `schedule-display.spec.ts` | 7件 | Phase 13.2 スタッフ向けスケジュール表示 |
+| `demo-staff.spec.ts` | 17件 | Phase 14 スタッフ用デモページ |
 
 - **パリティテスト**: デモと本番で同じUIが表示されることを検証
 - **実行**: `cd frontend && npx playwright test`

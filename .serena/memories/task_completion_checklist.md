@@ -64,6 +64,8 @@ BASE_URL=https://facility-care-input-form.web.app npx playwright test
 # - fifo: 8件
 # - item-based-snack: 13件
 # - schedule-extension: 7件
+# - schedule-display: 7件
+# - demo-staff: 17件
 ```
 
 ## デプロイ
