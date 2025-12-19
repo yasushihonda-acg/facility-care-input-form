@@ -311,10 +311,26 @@ AI提案以外で品物を手動登録した際にも、プリセット保存を
 - `FamilyMessageDetail.tsx`: StaffRecordDialog使用
 - `ItemBasedSnackRecord.tsx`: StaffRecordDialog使用
 
-**E2Eテスト**: `staff-record-form.spec.ts` (18件)
+**E2Eテスト**: `staff-record-form.spec.ts` (22件)
 **設計書**: `docs/STAFF_RECORD_FORM_SPEC.md`
 
-### E2Eテスト（155件、Phase 15で+18件）
+### Phase 15.6: 摂食割合の数値入力・残り対応 (2025-12-19)
+摂食状況の入力方式を絵文字ボタン（😋完食など）から0-10の数値入力に変更。完食でない場合（10未満）に「残った分への対応」を記録。
+
+**主な変更**:
+- 絵文字5択 → 数値入力（0-10）+ スライダー
+- 残った分への対応（条件付き表示）: 破棄/保存/その他
+- ※ 施設入居者向けのため「持ち帰り」は対象外
+
+**実装ファイル**:
+- `consumptionLog.ts`: RemainingHandling型・選択肢追加
+- `mealForm.ts`: SnackRecord型更新
+- `StaffRecordDialog.tsx`: 数値入力UI、残り対応フィールド追加
+
+**E2Eテスト**: STAFF-040〜STAFF-043（4件追加）
+**設計書**: `docs/STAFF_RECORD_FORM_SPEC.md` セクション9
+
+### E2Eテスト（183件、Phase 15.6で+4件）
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |
@@ -326,7 +342,7 @@ AI提案以外で品物を手動登録した際にも、プリセット保存を
 | `schedule-extension.spec.ts` | 7件 | Phase 13.1 スケジュール拡張機能 |
 | `schedule-display.spec.ts` | 7件 | Phase 13.2 スタッフ向けスケジュール表示 |
 | `demo-staff.spec.ts` | 17件 | Phase 14 スタッフ用デモページ |
-| `staff-record-form.spec.ts` | 18件 | Phase 15 スタッフ用記録入力フォーム統一 |
+| `staff-record-form.spec.ts` | 22件 | Phase 15/15.6 スタッフ用記録入力フォーム（数値入力・残り対応） |
 
 - **パリティテスト**: デモと本番で同じUIが表示されることを検証
 - **実行**: `cd frontend && npx playwright test`
