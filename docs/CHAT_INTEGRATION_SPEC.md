@@ -606,12 +606,14 @@ exports.onMessageCreated = functions.firestore
 | ファイル | 変更内容 |
 |----------|----------|
 | `functions/src/functions/submitMealRecord.ts` | 記録保存時にtype='record'メッセージ自動作成 |
-| `frontend/src/pages/shared/ItemChatPage.tsx` | RecordMessageCard追加（type='record'カード表示） |
+| `frontend/src/pages/shared/ItemChatPage.tsx` | RecordMessageCard追加（type='record'カード表示）、FooterNav追加 |
+| `frontend/src/pages/shared/ChatListPage.tsx` | Layoutコンポーネント使用でフッター表示 |
 | `frontend/src/components/shared/NotificationSection.tsx` | ホーム通知セクション（新規） |
 | `frontend/src/pages/staff/StaffHome.tsx` | 通知セクション追加 |
 | `frontend/src/pages/family/FamilyDashboard.tsx` | 通知セクション追加 |
 | `frontend/src/types/chat.ts` | recordData型にnoteToFamily等追加 |
 | `frontend/e2e/record-chat-integration.spec.ts` | E2Eテスト8件（新規） |
+| `frontend/src/data/demo/demoMessages.ts` | チャットシードデータ（新規） |
 
 ### 10.3 後方互換性
 

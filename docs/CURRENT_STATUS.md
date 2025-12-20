@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月20日 (デモチャット擬似動作・シードデータ対応)
+> **最終更新**: 2025年12月20日 (チャットページフッター追加)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -16,12 +16,27 @@
 | **GitHub Pages** | https://yasushihonda-acg.github.io/facility-care-input-form/ |
 | **引き継ぎドキュメント** | [HANDOVER.md](./HANDOVER.md) |
 | **ロードマップ** | [ROADMAP.md](./ROADMAP.md) |
+| **E2Eテスト** | 212件パス（2025-12-20時点） |
 
 ---
 
-## 現在のタスク
+## 本日の修正（2025-12-20）
 
-### バグ修正: デモモードチャット機能の擬似動作対応（2025-12-20）
+### 1. チャットページフッターナビゲーション追加
+
+**問題**: チャットビュー（一覧・個別）でフッターナビゲーションが表示されない
+
+**修正内容**:
+- `frontend/src/pages/shared/ItemChatPage.tsx`: FooterNav追加、入力エリアをフッター上に配置
+- `frontend/src/pages/shared/ChatListPage.tsx`: Layoutコンポーネント使用でフッター表示
+
+**コミット**: `a062897`
+
+**設計書参照**: [FOOTER_NAVIGATION_SPEC.md](./FOOTER_NAVIGATION_SPEC.md)
+
+---
+
+### 2. デモモードチャット擬似動作・シードデータ対応
 
 **問題**: デモモードでチャット送信時に500エラーが発生（API呼び出しが実行されてしまう）
 ```
@@ -32,7 +47,7 @@ POST /sendMessage → 500 Internal Server Error
 - `frontend/src/data/demo/demoMessages.ts`: チャットシードデータ新規作成
   - 5品物分のメッセージ履歴（バナナ、キウイ、りんご、羊羹、緑茶）
   - テキストメッセージ・記録メッセージ両タイプ対応
-  - 通知データ
+  - 通知データ・getDemoActiveChatItems関数
 - `frontend/src/pages/shared/ItemChatPage.tsx`: デモモード対応
   - `isDemo=true`時はローカルデータ使用
   - 擬似送信（ローカルstate追加のみ）
@@ -41,9 +56,25 @@ POST /sendMessage → 500 Internal Server Error
 
 **コミット**: `647a21b`
 
-**E2Eテスト**: 16件パス（chat-integration + record-chat-integration）
+---
+
+### 3. getCareItems itemIdパラメータ対応
+
+**問題**: チャット機能で品物情報取得時に500エラー（FIRESTORE_ERROR）が発生
+```
+GET /getCareItems?itemId=demo-item-012 → 500 Internal Server Error
+```
+
+**修正内容**:
+- `functions/src/types/index.ts`: `GetCareItemsRequest` に `itemId` フィールド追加
+- `functions/src/functions/careItems.ts`: `itemId` 指定時は直接ドキュメント取得（クエリ不使用）
+- `docs/API_SPEC.md`: `itemId` パラメータのドキュメント追加
+
+**コミット**: `583905c`
 
 ---
+
+## 現在のタスク
 
 ### バグ修正: getCareItems itemIdパラメータ対応（2025-12-20）
 
