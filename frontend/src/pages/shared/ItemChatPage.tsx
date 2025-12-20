@@ -13,6 +13,7 @@ import type { CareItem } from '../../types/careItem';
 import { getCategoryIcon } from '../../types/careItem';
 import { DEMO_RESIDENT_ID } from '../../hooks/useDemoMode';
 import { getDemoMessages, getDemoCareItemById } from '../../data/demo';
+import { FooterNav } from '../../components/FooterNav';
 
 interface ItemChatPageProps {
   userType: SenderType;
@@ -172,8 +173,12 @@ export function ItemChatPage({ userType, userName = 'ユーザー' }: ItemChatPa
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">読み込み中...</div>
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-gray-500">読み込み中...</div>
+        </div>
+        <FooterNav />
+        <div style={{ height: 'calc(64px + env(safe-area-inset-bottom, 0))' }} />
       </div>
     );
   }
@@ -230,8 +235,11 @@ export function ItemChatPage({ userType, userName = 'ユーザー' }: ItemChatPa
         <div ref={messagesEndRef} />
       </div>
 
-      {/* 入力エリア */}
-      <div className="bg-white border-t sticky bottom-0">
+      {/* 入力エリア - フッターの上に配置 */}
+      <div
+        className="bg-white border-t fixed left-0 right-0 z-10"
+        style={{ bottom: 'calc(64px + env(safe-area-inset-bottom, 0))' }}
+      >
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-2">
           <input
             ref={inputRef}
@@ -265,6 +273,15 @@ export function ItemChatPage({ userType, userName = 'ユーザー' }: ItemChatPa
           </button>
         </div>
       </div>
+
+      {/* フッターナビゲーション */}
+      <FooterNav />
+
+      {/* フッター + 入力エリアの高さ分のスペーサー */}
+      <div
+        className="flex-shrink-0"
+        style={{ height: 'calc(64px + 56px + env(safe-area-inset-bottom, 0))' }}
+      />
     </div>
   );
 }

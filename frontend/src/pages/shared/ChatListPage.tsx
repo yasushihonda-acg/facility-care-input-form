@@ -12,6 +12,7 @@ import { formatMessageTime } from '../../types/chat';
 import { getCategoryIcon } from '../../types/careItem';
 import { DEMO_RESIDENT_ID } from '../../hooks/useDemoMode';
 import { getDemoActiveChatItems } from '../../data/demo';
+import { Layout } from '../../components/Layout';
 
 interface ChatListPageProps {
   userType: SenderType;
@@ -69,44 +70,23 @@ export function ChatListPage({ userType }: ChatListPageProps) {
     navigate(`${basePath}/chat/${itemId}`);
   };
 
-  const handleBack = () => {
-    const basePath = isDemo
-      ? (userType === 'staff' ? '/demo/staff' : '/demo/family')
-      : (userType === 'staff' ? '/staff' : '/family');
-    navigate(basePath);
-  };
-
   const getUnreadCount = (item: CareItemWithChat) => {
     return userType === 'staff' ? item.unreadCountStaff : item.unreadCountFamily;
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">読み込み中...</div>
-      </div>
+      <Layout title="チャット" showBackButton>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-gray-500">読み込み中...</div>
+        </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* ヘッダー */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-10">
-        <div className="max-w-lg mx-auto px-4 py-3 flex items-center">
-          <button
-            onClick={handleBack}
-            className="mr-3 p-1 hover:bg-gray-100 rounded-full"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <h1 className="text-lg font-bold">チャット</h1>
-        </div>
-      </div>
-
-      {/* メインコンテンツ */}
-      <div className="max-w-lg mx-auto px-4 py-4">
+    <Layout title="チャット" showBackButton>
+      <div className="max-w-lg mx-auto">
         {error && (
           <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
             {error}
@@ -174,6 +154,6 @@ export function ChatListPage({ userType }: ChatListPageProps) {
           </div>
         )}
       </div>
-    </div>
+    </Layout>
   );
 }
