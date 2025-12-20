@@ -28,7 +28,7 @@ links:
 | **引き継ぎドキュメント** | [HANDOVER.md](./HANDOVER.md) |
 | **ロードマップ** | [ROADMAP.md](./ROADMAP.md) |
 | **ドキュメント目次** | [INDEX.md](./INDEX.md) |
-| **E2Eテスト** | 240件パス（2025-12-20時点、Phase 20追加15件含む） |
+| **E2Eテスト** | 249件パス（2025-12-20時点、Phase 20.1追加9件含む） |
 
 ---
 
@@ -40,7 +40,8 @@ links:
 
 | Phase | 内容 | 完了日 |
 |-------|------|--------|
-| **Phase 20** | デモ環境完結（離脱防止） | 12/20 |
+| **Phase 20.1** | デモモードAPI 500エラー修正 | 12/20 |
+| Phase 20 | デモ環境完結（離脱防止） | 12/20 |
 | Phase 19 | 記録のチャット連携 | 12/20 |
 | Phase 18 | チャット連携機能 | 12/19 |
 | Phase 17 | Firebase Storage 写真連携 | 12/18 |
@@ -93,6 +94,14 @@ links:
   - E2Eテスト15件追加（demo-staff-containment.spec.ts）
   - TDDアプローチで実装：Red→Green→回帰テストパス
   - 設計書: [DEMO_STAFF_CONTAINMENT.md](./DEMO_STAFF_CONTAINMENT.md)
+- **Phase 20.1完了**: デモモードAPI 500エラー修正 (`29570f7`)
+  - FooterNav.tsx: デモモードでgetActiveChatItems API呼び出しをスキップ
+  - NotificationSection.tsx: デモモードでgetNotifications API呼び出しをスキップ
+  - Firestoreインデックス追加: care_items (residentId, hasMessages, lastMessageAt)
+  - Firestoreインデックス追加: notifications (targetType, createdAt)
+  - E2Eテスト9件追加（footer-nav-demo.spec.ts）
+  - TDDアプローチで実装：Red→Green→本番検証完了
+  - 設計書: [FOOTERNAV_DEMO_FIX_SPEC.md](./FOOTERNAV_DEMO_FIX_SPEC.md)
 
 ---
 
