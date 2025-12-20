@@ -64,6 +64,43 @@ function getLogBorderColor(rate: number): string {
   return 'border-orange-400';
 }
 
+/**
+ * Phase 22.2: タイムスタンプを人間可読形式でフォーマット
+ * @see docs/ITEM_MANAGEMENT_SPEC.md セクション9.3
+ */
+function formatTimestampRelative(timestamp: string | { toDate?: () => Date } | undefined): string {
+  if (!timestamp) return '';
+
+  let date: Date;
+  if (typeof timestamp === 'string') {
+    date = new Date(timestamp);
+  } else if (timestamp.toDate) {
+    date = timestamp.toDate();
+  } else {
+    return '';
+  }
+
+  if (isNaN(date.getTime())) return '';
+
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const timeStr = `${hours}:${minutes}`;
+
+  if (diffDays === 0) {
+    return `今日 ${timeStr}`;
+  } else if (diffDays === 1) {
+    return `昨日 ${timeStr}`;
+  } else if (diffDays < 7) {
+    return `${diffDays}日前`;
+  } else {
+    return `${date.getMonth() + 1}/${date.getDate()} ${timeStr}`;
+  }
+}
+
 export function ItemDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -164,13 +201,22 @@ export function ItemDetail() {
       title={item.itemName}
       showBackButton
       rightElement={
-        <button
-          onClick={() => setShowDeleteConfirm(true)}
-          className="p-2 text-gray-400 hover:text-red-500 transition"
-          aria-label="削除"
-        >
-          🗑️
-        </button>
+        <div className="flex items-center gap-1">
+          <Link
+            to={`${pathPrefix}/family/items/${item.id}/edit`}
+            className="p-2 text-gray-400 hover:text-primary transition"
+            aria-label="編集"
+          >
+            ✏️
+          </Link>
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="p-2 text-gray-400 hover:text-red-500 transition"
+            aria-label="削除"
+          >
+            🗑️
+          </button>
+        </div>
       }
     >
       <div className="pb-24">
@@ -247,6 +293,24 @@ export function ItemDetail() {
                     {getServingMethodLabel(item.servingMethod)}
                     {item.servingMethodDetail && ` (${item.servingMethodDetail})`}
                   </span>
+                </div>
+              )}
+            </div>
+
+            {/* Phase 22.2: タイムスタンプ表示 */}
+            {/* @see docs/ITEM_MANAGEMENT_SPEC.md セクション9.3 */}
+            <div className="mt-3 pt-3 border-t border-gray-200 text-xs text-gray-400 space-y-1">
+              {item.createdAt && (
+                <div className="flex items-center gap-1">
+                  <span>📝 登録:</span>
+                  <span>{formatTimestampRelative(item.createdAt)}</span>
+                </div>
+              )}
+              {item.updatedAt && item.createdAt &&
+                JSON.stringify(item.updatedAt) !== JSON.stringify(item.createdAt) && (
+                <div className="flex items-center gap-1">
+                  <span>✏️ 更新:</span>
+                  <span>{formatTimestampRelative(item.updatedAt)}</span>
                 </div>
               )}
             </div>

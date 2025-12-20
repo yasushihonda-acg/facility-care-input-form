@@ -21,6 +21,7 @@ import { RequestBuilder } from './pages/family/RequestBuilder';
 import { ItemManagement } from './pages/family/ItemManagement';
 import { ItemForm } from './pages/family/ItemForm';
 import { ItemDetail } from './pages/family/ItemDetail';
+import { ItemEditPage } from './pages/family/ItemEditPage';
 import { TaskList } from './pages/family/TaskList';
 import { PresetManagement } from './pages/family/PresetManagement';
 import { ResidentSettings } from './pages/family/ResidentSettings';
@@ -79,6 +80,7 @@ function App() {
       <Route path="/family/items" element={<ItemManagement />} />
       <Route path="/family/items/new" element={<ItemForm />} />
       <Route path="/family/items/:id" element={<ItemDetail />} />
+      <Route path="/family/items/:id/edit" element={<ItemEditPage />} />
 
       {/* ケア指示 */}
       <Route path="/family/request" element={<RequestBuilder />} />
@@ -121,6 +123,7 @@ function App() {
       <Route path="/demo/family/items" element={<ItemManagement />} />
       <Route path="/demo/family/items/new" element={<ItemForm />} />
       <Route path="/demo/family/items/:id" element={<ItemDetail />} />
+      <Route path="/demo/family/items/:id/edit" element={<ItemEditPage />} />
       <Route path="/demo/family/tasks" element={<TaskList />} />
       <Route path="/demo/family/presets" element={<PresetManagement />} />
       <Route path="/demo/family/settings/resident" element={<ResidentSettings />} />

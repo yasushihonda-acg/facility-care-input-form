@@ -2,12 +2,12 @@
 status: working
 scope: feature
 owner: core-team
-last_reviewed: 2025-12-20
+last_reviewed: 2025-12-21
 ---
 
 # 品物管理機能 詳細設計書
 
-> **最終更新**: 2025年12月17日（Phase 9.0 再設計版 + 禁止ルール追加）
+> **最終更新**: 2025年12月21日（Phase 22 品物編集・タイムスタンプ管理追加）
 >
 > 本ドキュメントは、家族から入居者への品物（食品等）送付を管理する機能の詳細設計を定義します。
 >
@@ -927,7 +927,302 @@ interface ProhibitionRule {
 
 ---
 
-## 9. 参照資料
+## 9. 品物編集・タイムスタンプ管理（Phase 22）
+
+### 9.1 概要
+
+Phase 22では、品物管理機能に以下の機能を追加します：
+
+1. **品物編集機能** (Phase 22.1): 登録済み品物の編集UI
+2. **タイムスタンプ表示** (Phase 22.2): 登録日時・更新日時の表示
+3. **編集履歴タイムライン** (Phase 22.3): 登録・編集イベントのタイムライン表示
+
+### 9.2 Phase 22.1: 品物編集機能
+
+#### 9.2.1 目的
+
+現在、品物（CareItem）は登録のみ可能で、登録後の編集ができません。
+家族が間違った情報を登録した場合や、提供方法を変更したい場合に対応するため、編集機能を追加します。
+
+#### 9.2.2 編集可能フィールド
+
+| フィールド | 編集可 | 備考 |
+|-----------|--------|------|
+| itemName | ✅ | 品物名 |
+| category | ✅ | カテゴリ |
+| quantity | ✅ | 個数 |
+| unit | ✅ | 単位 |
+| expirationDate | ✅ | 賞味期限 |
+| storageMethod | ✅ | 保存方法 |
+| servingMethod | ✅ | 提供方法 |
+| servingMethodDetail | ✅ | 提供方法詳細 |
+| plannedServeDate | ✅ | 提供予定日 |
+| noteToStaff | ✅ | スタッフへの申し送り |
+| sentDate | ❌ | 送付日（変更不可） |
+| remainingQuantity | ❌ | 残量（自動計算） |
+| status | ❌ | ステータス（自動更新） |
+
+#### 9.2.3 権限
+
+| ユーザー | 編集権限 |
+|----------|----------|
+| 作成者（家族） | ✅ 可能 |
+| 他の家族 | ❌ 不可 |
+| スタッフ | ❌ 不可（提供記録は別API） |
+| 管理者 | ✅ 可能 |
+
+#### 9.2.4 UI設計
+
+**編集ボタン配置**: ItemDetail.tsx の右上ヘッダー
+
+```
+┌─────────────────────────────────────────────┐
+│ ← キウイ                    [編集] [削除]   │
+├─────────────────────────────────────────────┤
+```
+
+**編集ページ**: `/family/items/:id/edit`
+
+```
+┌─────────────────────────────────────────────┐
+│ ← 品物を編集                                │
+├─────────────────────────────────────────────┤
+│                                             │
+│ 品物名 *                                    │
+│ ┌─────────────────────────────────────────┐ │
+│ │ キウイ                                  │ │
+│ └─────────────────────────────────────────┘ │
+│                                             │
+│ カテゴリ *                                  │
+│ ● 果物  ○ お菓子  ○ 飲み物  ○ その他     │
+│                                             │
+│ 送付日（変更不可）                          │
+│ ┌─────────────────────────────────────────┐ │
+│ │ 2025/12/16                 [🔒]         │ │
+│ └─────────────────────────────────────────┘ │
+│                                             │
+│ 個数 *                単位                  │
+│ ┌───────┐            ┌─────┐               │
+│ │   3   │            │ 個  │               │
+│ └───────┘            └─────┘               │
+│                                             │
+│ 賞味期限                                    │
+│ ┌───────────────┐                          │
+│ │ 2025/12/20   │                          │
+│ └───────────────┘                          │
+│                                             │
+│ ... (他フィールド) ...                      │
+│                                             │
+│      [キャンセル]    [更新する]             │
+│                                             │
+└─────────────────────────────────────────────┘
+```
+
+#### 9.2.5 デモモード対応
+
+デモモード（`/demo/family/items/:id/edit`）では：
+- APIコールをスキップ
+- ローカルstateで編集をシミュレート
+- 編集完了後、詳細ページに戻る
+
+#### 9.2.6 E2Eテスト項目
+
+| テストID | 説明 |
+|----------|------|
+| ITEM-EDIT-001 | 編集ボタンが表示される |
+| ITEM-EDIT-002 | 編集ページに遷移できる |
+| ITEM-EDIT-003 | 既存の値がフォームに入力されている |
+| ITEM-EDIT-004 | 品物名を変更して保存できる |
+| ITEM-EDIT-005 | 送付日は編集不可 |
+| ITEM-EDIT-006 | キャンセルで元の詳細ページに戻る |
+| ITEM-EDIT-007 | デモモードで編集が動作する |
+
+### 9.3 Phase 22.2: タイムスタンプ表示
+
+#### 9.3.1 目的
+
+品物の登録日時・更新日時を表示し、いつ登録されたか、いつ変更されたかを明確にします。
+
+#### 9.3.2 表示フォーマット
+
+```typescript
+// 日付フォーマット関数
+function formatTimestamp(timestamp: Timestamp): string {
+  const date = timestamp.toDate();
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) {
+    // 今日: 時刻のみ
+    return `今日 ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+  } else if (diffDays === 1) {
+    return '昨日';
+  } else if (diffDays < 7) {
+    return `${diffDays}日前`;
+  } else {
+    // 7日以上: 日付表示
+    return `${date.getMonth() + 1}/${date.getDate()}`;
+  }
+}
+```
+
+#### 9.3.3 UI配置
+
+ItemDetail.tsx の品物情報セクション下部に表示：
+
+```
+┌─ 品物情報 ─────────────────────────────┐
+│ カテゴリ:     果物                     │
+│ 送付日:       2025/12/16               │
+│ 個数:         3個                      │
+│ 賞味期限:     2025/12/20 (あと4日)     │
+│ 保存方法:     冷蔵                     │
+├────────────────────────────────────────┤
+│ 📝 登録: 12/16 14:30                   │
+│ ✏️ 更新: 12/17 09:15                   │
+└────────────────────────────────────────┘
+```
+
+#### 9.3.4 E2Eテスト項目
+
+| テストID | 説明 |
+|----------|------|
+| ITEM-TS-001 | 登録日時が表示される |
+| ITEM-TS-002 | 更新日時が表示される（更新がある場合） |
+| ITEM-TS-003 | 更新がない場合は更新日時を表示しない |
+
+### 9.4 Phase 22.3: 編集履歴タイムライン
+
+#### 9.4.1 目的
+
+品物の変更履歴をタイムラインで表示し、いつ・どのような変更が行われたかを追跡できるようにします。
+
+#### 9.4.2 実装方針
+
+**方針A: item_events コレクション（推奨）**
+
+```typescript
+// Firestore: care_items/{itemId}/events/{eventId}
+interface CareItemEvent {
+  id: string;
+  itemId: string;
+  eventType: 'created' | 'updated' | 'served' | 'consumed';
+  timestamp: Timestamp;
+  userId: string;          // 操作したユーザー
+  changes?: {              // 変更内容（updateの場合）
+    field: string;
+    oldValue: any;
+    newValue: any;
+  }[];
+  metadata?: {
+    consumptionRate?: number;
+    servedQuantity?: number;
+  };
+}
+```
+
+**メリット**:
+- 詳細な変更履歴を保持
+- 変更内容（どのフィールドがどう変わったか）を記録可能
+
+**デメリット**:
+- サブコレクションの追加が必要
+- 書き込みコスト増加
+
+#### 9.4.3 イベントタイプ
+
+| eventType | 説明 | アイコン |
+|-----------|------|----------|
+| created | 品物登録 | 📦 |
+| updated | 品物編集 | ✏️ |
+| served | 提供記録 | 🍽️ |
+| consumed | 消費記録 | ✅ |
+
+#### 9.4.4 タイムライン表示
+
+ItemTimeline.tsx の表示形式：
+
+```
+┌─ タイムライン ──────────────────────────┐
+│                                        │
+│ 📦 12/16 14:30  品物登録               │
+│    家族: 山田様                         │
+│                                        │
+│ ✏️ 12/17 09:15  品物編集               │
+│    賞味期限: 12/20 → 12/22             │
+│    提供方法: そのまま → カット          │
+│                                        │
+│ 🍽️ 12/17 15:30  提供                   │
+│    1個 / スタッフ: 佐藤                 │
+│                                        │
+│ ✅ 12/17 16:00  消費記録               │
+│    完食（100%）                         │
+│                                        │
+└────────────────────────────────────────┘
+```
+
+#### 9.4.5 E2Eテスト項目
+
+| テストID | 説明 |
+|----------|------|
+| ITEM-TL-001 | 登録イベントがタイムラインに表示される |
+| ITEM-TL-002 | 編集イベントがタイムラインに表示される |
+| ITEM-TL-003 | 提供イベントがタイムラインに表示される |
+| ITEM-TL-004 | 消費イベントがタイムラインに表示される |
+| ITEM-TL-005 | イベントが時系列順に表示される |
+
+### 9.5 実装順序
+
+| Phase | 内容 | 依存 |
+|-------|------|------|
+| 22.1 | 品物編集機能 | なし |
+| 22.2 | タイムスタンプ表示 | なし |
+| 22.3 | 編集履歴タイムライン | 22.1（編集時にイベント生成） |
+
+### 9.6 API拡張
+
+#### updateCareItem API の拡張
+
+```typescript
+// 現在の実装を維持しつつ、events サブコレクションにイベントを追加
+async function updateCareItemHandler(req: UpdateCareItemRequest): Promise<UpdateCareItemResponse> {
+  const { itemId, updates } = req;
+
+  // 1. 現在の値を取得（変更差分の記録用）
+  const currentDoc = await firestore.collection('care_items').doc(itemId).get();
+  const currentData = currentDoc.data();
+
+  // 2. 更新実行
+  await firestore.collection('care_items').doc(itemId).update({
+    ...updates,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  // 3. 変更イベントを記録
+  const changes = Object.keys(updates)
+    .filter(key => updates[key] !== currentData[key])
+    .map(key => ({
+      field: key,
+      oldValue: currentData[key],
+      newValue: updates[key],
+    }));
+
+  await firestore.collection('care_items').doc(itemId)
+    .collection('events').add({
+      eventType: 'updated',
+      timestamp: FieldValue.serverTimestamp(),
+      userId: req.userId, // 追加パラメータ
+      changes,
+    });
+
+  return { success: true, data: { itemId, updatedAt: new Date().toISOString() } };
+}
+```
+
+---
+
+## 10. 参照資料
 
 - [USER_ROLE_SPEC.md](./USER_ROLE_SPEC.md) - ユーザーロール・権限設計
 - [TASK_MANAGEMENT_SPEC.md](./TASK_MANAGEMENT_SPEC.md) - タスク管理詳細設計
