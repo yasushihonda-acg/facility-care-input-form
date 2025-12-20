@@ -75,6 +75,10 @@ links:
   - uploadCareImage APIでFirebase Storageにアップロード
   - E2Eテスト4件追加（STAFF-009, STAFF-070〜072）
   - 設計の不整合修正: セクション3.1の項目10が未実装だった問題を解決
+- **Phase 15.9 設計準拠修正**: photoURL連携完成 (`1ee4518`)
+  - uploadCareImageからphotoUrlを取得しsubmitMealRecordに渡す
+  - FIREBASE_STORAGE_MIGRATION_SPEC.md セクション5.2に準拠
+  - Google Chat Webhook連携用のphotoUrl連携を完成
 
 ---
 
