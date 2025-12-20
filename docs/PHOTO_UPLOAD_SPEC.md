@@ -1,15 +1,23 @@
 ---
-status: working
+status: deprecated
 scope: feature
 owner: core-team
 last_reviewed: 2025-12-20
+superseded_by: FIREBASE_STORAGE_MIGRATION_SPEC.md
 ---
 
-# 写真アップロード機能設計書
+# 写真アップロード機能設計書（非推奨）
 
-> **最終更新**: 2025年12月15日
+> ⚠️ **このドキュメントは非推奨です**
 >
-> このドキュメントは写真アップロード機能の設計仕様を定義します。
+> Phase 17でGoogle DriveからFirebase Storageに移行しました。
+> 最新の写真アップロード仕様は **[FIREBASE_STORAGE_MIGRATION_SPEC.md](./FIREBASE_STORAGE_MIGRATION_SPEC.md)** を参照してください。
+>
+> ---
+>
+> **最終更新**: 2025年12月15日（Phase 17移行前）
+>
+> 以下は歴史的参照のために保持されています。
 
 ---
 
