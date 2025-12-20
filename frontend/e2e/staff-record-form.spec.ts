@@ -157,11 +157,22 @@ test.describe('Phase 15: スタッフ用記録入力フォーム', () => {
       await expect(importantLabel.first()).toBeVisible();
     });
 
-    // Phase 15.8: 写真アップロードはダイアログ内には存在しない（ベースページからも削除）
-    // このテストはスキップ（写真アップロードは将来的にダイアログに追加予定）
-    test.skip('STAFF-009: 写真アップロードが表示される', async ({ page }) => {
-      // Phase 15.8: 写真アップロードはベースページから削除
-      // 将来的にダイアログ内に追加予定
+    // Phase 15.9: 写真アップロードはダイアログ内に表示される
+    test('STAFF-009: ダイアログ内に写真アップロードが表示される', async ({ page }) => {
+      await page.goto(`${BASE_URL}/demo/staff/input/meal`);
+
+      // 品物カードの提供記録ボタンをクリック
+      const recordButton = page.locator('button:has-text("提供記録")').first();
+      await expect(recordButton).toBeVisible({ timeout: 10000 });
+      await recordButton.click();
+
+      // ダイアログが開く
+      const dialog = page.locator('[role="dialog"]');
+      await expect(dialog).toBeVisible();
+
+      // ダイアログ内に写真アップロードエリアがある
+      const photoUploadArea = dialog.locator('text=写真').or(dialog.locator('input[type="file"][accept*="image"]'));
+      await expect(photoUploadArea.first()).toBeVisible();
     });
 
     // Phase 15.8: ダイアログ内に記録保存ボタンがある
@@ -626,6 +637,66 @@ test.describe('Phase 15: スタッフ用記録入力フォーム', () => {
       // 少なくとも品物リストのセクションが表示されている
       const itemSection = page.locator('text=品物から間食記録').or(page.locator('text=品物から記録'));
       await expect(itemSection.first()).toBeVisible();
+    });
+  });
+
+  // =============================================================================
+  // Phase 15.9: 写真アップロード機能
+  // =============================================================================
+  test.describe('15.9: 写真アップロード機能', () => {
+    test('STAFF-070: ダイアログ内に写真追加ボタンが表示される', async ({ page }) => {
+      await page.goto(`${BASE_URL}/demo/staff/input/meal`);
+
+      // 品物カードの提供記録ボタンをクリック
+      const recordButton = page.locator('button:has-text("提供記録")').first();
+      await expect(recordButton).toBeVisible({ timeout: 10000 });
+      await recordButton.click();
+
+      // ダイアログが開く
+      const dialog = page.locator('[role="dialog"]');
+      await expect(dialog).toBeVisible();
+
+      // 写真追加ボタンまたは写真エリアがある
+      const photoButton = dialog.locator('button:has-text("写真")').or(
+        dialog.locator('label:has-text("写真")')
+      ).or(
+        dialog.locator('[data-testid="photo-upload"]')
+      );
+      await expect(photoButton.first()).toBeVisible();
+    });
+
+    test('STAFF-071: 写真ファイル入力が存在する', async ({ page }) => {
+      await page.goto(`${BASE_URL}/demo/staff/input/meal`);
+
+      // 品物カードの提供記録ボタンをクリック
+      const recordButton = page.locator('button:has-text("提供記録")').first();
+      await expect(recordButton).toBeVisible({ timeout: 10000 });
+      await recordButton.click();
+
+      // ダイアログが開く
+      const dialog = page.locator('[role="dialog"]');
+      await expect(dialog).toBeVisible();
+
+      // 写真用のfile inputが存在する（hidden でもOK）
+      const fileInput = dialog.locator('input[type="file"][accept*="image"]');
+      await expect(fileInput).toHaveCount(1);
+    });
+
+    test('STAFF-072: 写真セクションのラベルが表示される', async ({ page }) => {
+      await page.goto(`${BASE_URL}/demo/staff/input/meal`);
+
+      // 品物カードの提供記録ボタンをクリック
+      const recordButton = page.locator('button:has-text("提供記録")').first();
+      await expect(recordButton).toBeVisible({ timeout: 10000 });
+      await recordButton.click();
+
+      // ダイアログが開く
+      const dialog = page.locator('[role="dialog"]');
+      await expect(dialog).toBeVisible();
+
+      // 「写真」というラベルが存在する
+      const photoLabel = dialog.locator('text=写真');
+      await expect(photoLabel.first()).toBeVisible();
     });
   });
 });

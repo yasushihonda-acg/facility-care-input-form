@@ -1,7 +1,8 @@
 /**
  * StaffRecordDialog - 統一された提供・摂食記録ダイアログ
  * Phase 15.3: 家族連絡詳細からのダイアログ表示
- * 設計書: docs/STAFF_RECORD_FORM_SPEC.md セクション4.2
+ * Phase 15.9: 写真アップロード機能追加
+ * 設計書: docs/STAFF_RECORD_FORM_SPEC.md セクション4.2, 12
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -10,7 +11,7 @@ import type { RemainingHandling } from '../../types/consumptionLog';
 import { getCategoryIcon } from '../../types/careItem';
 import { determineConsumptionStatus, REMAINING_HANDLING_OPTIONS } from '../../types/consumptionLog';
 import { useRecordConsumptionLog } from '../../hooks/useConsumptionLogs';
-import { submitMealRecord } from '../../api';
+import { submitMealRecord, uploadCareImage } from '../../api';
 import { useMealFormSettings } from '../../hooks/useMealFormSettings';
 import { DAY_SERVICE_OPTIONS } from '../../types/mealForm';
 import type { SnackRecord } from '../../types/mealForm';
@@ -58,6 +59,9 @@ export function StaffRecordDialog({
     snack: '',
     note: '',
     isImportant: '重要ではない' as '重要' | '重要ではない',
+    // Phase 15.9: 写真アップロード
+    photo: null as File | null,
+    photoPreview: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -82,6 +86,9 @@ export function StaffRecordDialog({
         snack: '',
         note: '',
         isImportant: '重要ではない',
+        // Phase 15.9: 写真リセット
+        photo: null,
+        photoPreview: '',
       });
       setErrors({});
     }
@@ -137,6 +144,18 @@ export function StaffRecordDialog({
     const consumptionStatus = determineConsumptionStatus(consumptionRate);
 
     try {
+      // Phase 15.9: 写真がある場合は先にアップロード
+      if (formData.photo) {
+        await uploadCareImage({
+          staffId: formData.staffName,
+          residentId: item.residentId,
+          image: formData.photo,
+          staffName: formData.staffName,
+          date: new Date().toISOString().split('T')[0],
+        });
+        // 注: アップロードされた写真URLは消費ログには含めない（将来拡張予定）
+      }
+
       // 1. consumption_log に記録
       await recordMutation.mutateAsync({
         itemId: item.id,
@@ -497,6 +516,71 @@ export function StaffRecordDialog({
                 </label>
               ))}
             </div>
+          </div>
+
+          {/* Phase 15.9: 写真アップロード */}
+          <div data-testid="photo-upload">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              写真（任意）
+            </label>
+            {!formData.photoPreview ? (
+              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <svg className="w-8 h-8 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <p className="text-sm text-gray-500">写真を追加</p>
+                  <p className="text-xs text-gray-400 mt-1">タップして撮影または選択</p>
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      // ファイルサイズチェック（10MB以下）
+                      if (file.size > 10 * 1024 * 1024) {
+                        setErrors(prev => ({ ...prev, photo: '画像サイズは10MB以下にしてください' }));
+                        return;
+                      }
+                      // プレビュー生成
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setFormData(prev => ({
+                          ...prev,
+                          photo: file,
+                          photoPreview: reader.result as string,
+                        }));
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                />
+              </label>
+            ) : (
+              <div className="relative">
+                <img
+                  src={formData.photoPreview}
+                  alt="プレビュー"
+                  className="w-full h-48 object-cover rounded-lg"
+                />
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, photo: null, photoPreview: '' }))}
+                  className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                  aria-label="写真を削除"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            )}
+            {errors.photo && (
+              <p className="mt-1 text-sm text-red-500">{errors.photo}</p>
+            )}
           </div>
 
           {/* 記録後の残量プレビュー (Phase 15.7対応) */}
