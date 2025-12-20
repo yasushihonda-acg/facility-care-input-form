@@ -517,27 +517,10 @@ export function ItemDetail() {
           </div>
         </div>
 
-        {/* タイムラインへのリンク */}
-        <div className="px-4 mb-4">
-          <Link
-            to={`${pathPrefix}/items/${item.id}/timeline`}
-            state={{ from: 'family' }}
-            className="block bg-white rounded-lg shadow-card p-4 hover:shadow-md transition"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">📜</span>
-                <div>
-                  <p className="font-bold">タイムラインを見る</p>
-                  <p className="text-sm text-gray-500">登録〜消費の完全履歴</p>
-                </div>
-              </div>
-              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-          </Link>
-        </div>
+        {/* 「タイムラインを見る」リンクは削除
+         * Phase 22.3で「タイムライン（履歴）」セクションに統合済み
+         * 別ページへの遷移は冗長なため不要
+         */}
 
         {/* Phase 21: チャット機能一時非表示
         <div className="px-4 mb-4">
