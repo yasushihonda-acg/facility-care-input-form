@@ -310,7 +310,7 @@ facility-care-input-form/
 | Phase 20 | デモ環境完結（離脱防止）（MealInputPage戻るボタン・ItemTimelineリンク、E2Eテスト15件） | 2025-12-20 |
 | Phase 20.1 | デモモードAPI 500エラー修正（FooterNav・NotificationSection対応、E2Eテスト9件） | 2025-12-20 |
 | **Phase 21** | **チャット機能一時非表示**（内部チャット全非表示、E2Eテスト16件スキップ） | 2025-12-21 |
-| **Phase 22** | **品物編集機能**（編集UI・タイムスタンプ表示・タイムライン表示、E2Eテスト21件追加） | 2025-12-21 |
+| **Phase 22** | **品物編集機能**（編集UI・タイムスタンプ表示・タイムライン表示・編集履歴デモ、E2Eテスト23件） | 2025-12-21 |
 
 ### 4.2 将来のタスク
 
@@ -702,7 +702,7 @@ BASE_URL=https://facility-care-input-form.web.app npx playwright test
 - `frontend/playwright.config.ts` - Playwright設定
 - デフォルトbaseURL: `http://localhost:4173`（環境変数で上書き可能）
 
-**現在のテスト**: 全265件（16件スキップ含む）
+**現在のテスト**: 全267件（16件スキップ含む）
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |
@@ -720,7 +720,7 @@ BASE_URL=https://facility-care-input-form.web.app npx playwright test
 | `schedule-extension.spec.ts` | 7件 | スケジュール拡張（Phase 13.1） |
 | `schedule-display.spec.ts` | 7件 | スケジュール表示強化（Phase 13.2） |
 | `photo-evidence.spec.ts` | 5件 | 写真エビデンス表示（Phase 16） |
-| `item-edit.spec.ts` | 21件 | 品物編集・タイムスタンプ・タイムライン（Phase 22） |
+| `item-edit.spec.ts` | 23件 | 品物編集・タイムスタンプ・編集履歴タイムライン（Phase 22） |
 
 **パリティテスト**: デモと本番で同じUIが表示されることを検証
 - デモツアー完了 = 本番利用スキル習得
@@ -966,7 +966,8 @@ docs/CURRENT_STATUS.md を読んで、次のタスクから再開してくださ
 
 | 日付 | 内容 |
 |------|------|
-| 2025-12-21 | **Phase 22: 品物編集機能**（編集UI・タイムスタンプ表示・タイムライン表示・E2Eテスト21件追加）、全265件 |
+| 2025-12-21 | **Phase 22.3拡張: 編集履歴デモデータ**（demoItemEvents・useItemEvents・タイムライン統合表示・E2Eテスト+2件）、全267件 |
+| 2025-12-21 | **Phase 22: 品物編集機能**（編集UI・タイムスタンプ表示・タイムライン表示・E2Eテスト21件追加） |
 | 2025-12-20 | **Phase 20.1: デモモードAPI 500エラー修正**（FooterNav・NotificationSection対応・Firestoreインデックス・E2Eテスト9件追加）、全249件 |
 | 2025-12-20 | **Phase 20: デモ環境完結（離脱防止）**（MealInputPage・ItemTimeline・App.tsx・E2Eテスト15件追加） |
 | 2025-12-20 | **Phase 15.9: 写真アップロードUI**（StaffRecordDialog写真添付・Firebase Storage連携・E2Eテスト4件追加） |

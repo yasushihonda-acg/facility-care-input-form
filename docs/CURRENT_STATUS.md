@@ -28,7 +28,7 @@ links:
 | **引き継ぎドキュメント** | [HANDOVER.md](./HANDOVER.md) |
 | **ロードマップ** | [ROADMAP.md](./ROADMAP.md) |
 | **ドキュメント目次** | [INDEX.md](./INDEX.md) |
-| **E2Eテスト** | 265件（16件スキップ含む）（2025-12-21時点、Phase 22.3追加21件）|
+| **E2Eテスト** | 267件（16件スキップ含む）（2025-12-21時点、Phase 22.3拡張+2件）|
 
 ---
 
@@ -57,10 +57,12 @@ links:
 
 ### 本日の修正 (12/21)
 
-- **Phase 22.3完了**: タイムライン表示拡張
-  - ItemDetail.tsx: 「タイムライン（履歴）」セクション追加
-  - data-testid追加: item-timeline, event-created, event-served
-  - E2Eテスト: item-edit.spec.ts 21件（locator構文修正含む）
+- **Phase 22.3拡張完了**: 編集履歴デモデータ追加 (`41c1dfc`)
+  - demoItemEvents.ts: 品物イベント（編集履歴）デモデータ追加
+  - itemEvent.ts: ItemEvent型定義とヘルパー関数
+  - useItemEvents.ts: 品物イベント取得フック
+  - ItemDetail.tsx: 編集イベントをタイムラインに統合表示（登録・編集・提供を時系列表示）
+  - E2Eテスト: item-edit.spec.ts 23件（+2件追加: 変更内容・実行者表示確認）
   - 設計書: [ITEM_MANAGEMENT_SPEC.md](./ITEM_MANAGEMENT_SPEC.md) セクション9.4
 
 - **Phase 22完了**: 品物編集機能 (`e5fb97a`)
