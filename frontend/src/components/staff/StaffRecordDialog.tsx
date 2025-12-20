@@ -150,6 +150,9 @@ export function StaffRecordDialog({
         consumptionNote: formData.consumptionNote || undefined,
         noteToFamily: formData.noteToFamily || undefined,
         recordedBy: formData.staffName,
+        // Phase 15.7: 残り対応をAPIに送信
+        remainingHandling: formData.remainingHandling || undefined,
+        remainingHandlingOther: formData.remainingHandlingOther || undefined,
       });
 
       // 2. Sheet B に記録

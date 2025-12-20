@@ -409,9 +409,12 @@ async function submitMealRecordHandler(
     }
 
     // 間食記録から消費ログを作成（非同期・エラーでも処理続行）
+    // Note: snack_only モードでは StaffRecordDialog が直接 recordConsumptionLog を
+    // 呼び出すため、ここでの自動生成はスキップして二重記録を防止
     let consumptionLogResult: {createdCount: number; errors: string[]} | null =
       null;
-    if (mealRecord.snackRecords && mealRecord.snackRecords.length > 0) {
+    if (mealRecord.snackRecords && mealRecord.snackRecords.length > 0 &&
+        mealRecord.recordMode !== "snack_only") {
       try {
         consumptionLogResult = await createConsumptionLogsFromSnackRecords(
           mealRecord.snackRecords,

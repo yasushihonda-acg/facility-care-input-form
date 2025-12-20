@@ -752,16 +752,20 @@ interface RecordConsumptionLogResponse {
 }
 ```
 
-### 10.10 実装計画
+### 10.10 実装計画（✅完了）
 
-| ステップ | 内容 | 影響ファイル |
-|----------|------|-------------|
-| **15.7.1** | 計算関数追加 | `frontend/src/utils/consumptionCalc.ts`（新規） |
-| **15.7.2** | StaffRecordDialog UI更新 | `StaffRecordDialog.tsx` |
-| **15.7.3** | ConsumptionLog型拡張 | `consumptionLog.ts` |
-| **15.7.4** | recordConsumptionLog API更新 | `functions/src/functions/consumptionLog.ts` |
-| **15.7.5** | 在庫更新ロジック修正 | `functions/src/services/firestoreService.ts` |
-| **15.7.6** | E2Eテスト追加 | `staff-record-form.spec.ts` |
+| ステップ | 内容 | 影響ファイル | 状態 |
+|----------|------|-------------|------|
+| **15.7.1** | 計算関数追加 | `frontend/src/utils/consumptionCalc.ts`, `functions/src/utils/consumptionCalc.ts` | ✅ |
+| **15.7.2** | StaffRecordDialog UI更新 | `StaffRecordDialog.tsx` | ✅ |
+| **15.7.3** | ConsumptionLog型拡張 | `consumptionLog.ts`, `functions/src/types/index.ts` | ✅ |
+| **15.7.4** | recordConsumptionLog API更新 | `functions/src/functions/consumptionLogs.ts` | ✅ |
+| **15.7.5** | 在庫更新ロジック修正 | API内トランザクションで対応 | ✅ |
+| **15.7.6** | E2Eテスト追加 | `staff-record-form.spec.ts` (STAFF-050〜053) | ✅ |
+| **15.7.7** | APIペイロードに残り対応を含める | `StaffRecordDialog.tsx:141` | ✅ |
+| **15.7.8** | snack_only時の二重記録防止 | `submitMealRecord.ts:416` | ✅ |
+
+**コミット**: `ce07bf8` (Phase 15.7本体), `708fcc1` (ドキュメント)
 
 ### 10.11 E2Eテストケース
 
@@ -790,6 +794,7 @@ const inventoryDeducted = log.inventoryDeducted ?? log.consumedQuantity;
 
 | 日付 | 内容 |
 |------|------|
+| 2025-12-20 | Phase 15.7実装完了: APIペイロードにremainingHandling追加、二重記録防止ロジック追加 |
 | 2025-12-20 | Phase 15.7: 残り対応による在庫・統計の分離計算設計を追加 |
 | 2025-12-19 | Phase 15.6: 摂食状況を数値入力に変更、残り対応フィールド追加 |
 | 2025-12-19 | 初版作成（Phase 15設計） |

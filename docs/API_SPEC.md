@@ -2185,6 +2185,142 @@ AI摂食傾向分析。入居者の食品消費データを分析し、傾向・
 
 ---
 
+### 4.34 POST /recordConsumptionLog (Phase 9.2 + 15.7)
+
+消費ログを記録します。品物の提供・摂食情報を記録し、在庫を更新します。
+
+#### リクエスト
+
+```http
+POST /recordConsumptionLog
+Content-Type: application/json
+```
+
+```json
+{
+  "itemId": "item-123",
+  "servedDate": "2025-12-20",
+  "servedTime": "15:00",
+  "mealTime": "snack",
+  "servedQuantity": 2,
+  "servedBy": "田中太郎",
+  "consumedQuantity": 1,
+  "consumptionStatus": "half",
+  "consumptionNote": "半分残した",
+  "noteToFamily": "今日は食欲控えめでした",
+  "recordedBy": "田中太郎",
+  "remainingHandling": "discarded",
+  "remainingHandlingOther": null
+}
+```
+
+| フィールド | 型 | 必須 | 説明 |
+|------------|-----|------|------|
+| `itemId` | string | ✅ | 品物ID |
+| `servedDate` | string | ✅ | 提供日（YYYY-MM-DD） |
+| `servedTime` | string | | 提供時刻（HH:mm） |
+| `mealTime` | string | | 食事時間帯（breakfast/lunch/dinner/snack） |
+| `servedQuantity` | number | ✅ | 提供数量 |
+| `servedBy` | string | ✅ | 提供者名 |
+| `consumedQuantity` | number | ✅ | 消費数量 |
+| `consumptionStatus` | string | ✅ | 摂食状況（full/most/half/little/none） |
+| `consumptionNote` | string | | 消費メモ |
+| `noteToFamily` | string | | 家族への申し送り |
+| `recordedBy` | string | ✅ | 記録者名 |
+| `remainingHandling` | string | | **Phase 15.7** 残り対応（discarded/stored/other） |
+| `remainingHandlingOther` | string | | remainingHandling="other"時の詳細 |
+
+**remainingHandling による在庫計算 (Phase 15.7)**:
+
+| 値 | 在庫から引く量 | 廃棄量 | 説明 |
+|----|---------------|--------|------|
+| `discarded` | 提供量全て | 残量 | 破棄した（残りは捨てた） |
+| `stored` | 消費量のみ | 0 | 保存した（残りは冷蔵庫へ） |
+| `other` | 消費量のみ | 0 | その他（保存と同じ扱い） |
+| (未指定) | 消費量のみ | 0 | デフォルトは保存扱い |
+
+#### レスポンス
+
+```json
+{
+  "success": true,
+  "data": {
+    "logId": "log-abc123",
+    "itemId": "item-123",
+    "currentQuantity": 8,
+    "status": "in_progress",
+    "inventoryDeducted": 2,
+    "wastedQuantity": 1
+  },
+  "timestamp": "2025-12-20T06:00:00.000Z"
+}
+```
+
+| フィールド | 型 | 説明 |
+|------------|-----|------|
+| `logId` | string | 作成された消費ログID |
+| `itemId` | string | 品物ID |
+| `currentQuantity` | number | 更新後の残量 |
+| `status` | string | 更新後のステータス |
+| `inventoryDeducted` | number | **Phase 15.7** 在庫から引いた量 |
+| `wastedQuantity` | number | **Phase 15.7** 廃棄量 |
+
+---
+
+### 4.35 GET /getConsumptionLogs (Phase 9.2 + 15.7)
+
+消費ログ一覧を取得します。
+
+#### リクエスト
+
+```http
+GET /getConsumptionLogs?itemId=item-123&startDate=2025-12-01&endDate=2025-12-31&limit=50
+```
+
+| パラメータ | 型 | 必須 | 説明 |
+|------------|-----|------|------|
+| `itemId` | string | ✅ | 品物ID |
+| `startDate` | string | | 開始日（YYYY-MM-DD） |
+| `endDate` | string | | 終了日（YYYY-MM-DD） |
+| `limit` | number | | 取得件数（デフォルト50） |
+
+#### レスポンス
+
+```json
+{
+  "success": true,
+  "data": {
+    "logs": [
+      {
+        "id": "log-abc123",
+        "itemId": "item-123",
+        "servedDate": "2025-12-20",
+        "servedTime": "15:00",
+        "mealTime": "snack",
+        "servedQuantity": 2,
+        "servedBy": "田中太郎",
+        "consumedQuantity": 1,
+        "consumptionRate": 50,
+        "consumptionStatus": "half",
+        "remainingHandling": "discarded",
+        "inventoryDeducted": 2,
+        "wastedQuantity": 1,
+        "quantityBefore": 10,
+        "quantityAfter": 8,
+        "consumptionNote": "半分残した",
+        "noteToFamily": "今日は食欲控えめでした",
+        "recordedBy": "田中太郎",
+        "recordedAt": "2025-12-20T06:00:00.000Z"
+      }
+    ],
+    "total": 15
+  },
+  "timestamp": "2025-12-20T06:00:00.000Z"
+}
+```
+
+---
+
 ## 6. cURLサンプル
 
 ### 6.1 ヘルスチェック
@@ -2247,6 +2383,7 @@ curl -X POST \
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
+| 2025-12-20 | 1.14.0 | Phase 15.7: recordConsumptionLog/getConsumptionLogs詳細追加、残り対応フィールド（remainingHandling, inventoryDeducted, wastedQuantity） |
 | 2025-12-19 | 1.13.0 | Phase 17: Firebase Storage移行（uploadCareImage更新、getCarePhotos追加、testDriveAccess削除） |
 | 2025-12-19 | 1.12.0 | Phase 13.0: submitMealRecord recordModeパラメータ追加（snack_only対応） |
 | 2025-12-18 | 1.11.0 | Phase 8.4.1: AI API詳細ドキュメント追加（aiSuggest, aiAnalyze） |
