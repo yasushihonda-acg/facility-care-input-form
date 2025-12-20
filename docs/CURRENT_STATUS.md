@@ -79,6 +79,11 @@ links:
   - uploadCareImageからphotoUrlを取得しsubmitMealRecordに渡す
   - FIREBASE_STORAGE_MIGRATION_SPEC.md セクション5.2に準拠
   - Google Chat Webhook連携用のphotoUrl連携を完成
+- **写真アップロード設計の整合性監査** (`a60bf40`)
+  - アーキテクチャ・データフロー・シーケンス検証完了
+  - PHOTO_UPLOAD_SPEC.md: 非推奨マーク追加（Phase 17移行済み）
+  - STAFF_RECORD_FORM_SPEC.md: データフロー図修正、完了ステータス反映
+  - 本番E2Eテスト4件パス（写真アップロード機能）
 
 ---
 
