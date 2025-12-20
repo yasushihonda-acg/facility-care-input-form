@@ -25,7 +25,7 @@ const SHOWCASE_STEPS: ShowcaseStep[] = [
     id: 1,
     title: '家族連絡を確認',
     description: '家族から送られた品物・指示を確認します',
-    story: '朝の申し送り。蒲池様のご家族から新しい差し入れが届いています',
+    story: '朝の申し送り。蒲地様のご家族から新しい差し入れが届いています',
     icon: '📋',
     path: '/demo/staff/family-messages',
     highlights: [
@@ -51,7 +51,7 @@ const SHOWCASE_STEPS: ShowcaseStep[] = [
     id: 3,
     title: '食事記録を入力',
     description: '食事・間食の提供記録を入力します',
-    story: 'おやつの時間。蒲池様に羊羹をお出ししました。記録をつけましょう',
+    story: 'おやつの時間。蒲地様に羊羹をお出ししました。記録をつけましょう',
     icon: '🍽️',
     path: '/demo/staff/input/meal',
     highlights: [
@@ -64,7 +64,7 @@ const SHOWCASE_STEPS: ShowcaseStep[] = [
     id: 4,
     title: '統計を確認',
     description: '摂食傾向や在庫状況を確認します',
-    story: '蒲池様は最近どんなものをよく召し上がっているかな',
+    story: '蒲地様は最近どんなものをよく召し上がっているかな',
     icon: '📊',
     path: '/demo/stats',
     highlights: [

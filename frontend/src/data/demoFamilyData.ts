@@ -1,6 +1,6 @@
 /**
  * デモ用モックデータ
- * 蒲池様のFAX内容に基づく初期データ
+ * 蒲地様のFAX内容に基づく初期データ
  * @see docs/FAMILY_UX_DESIGN.md
  * @see docs/PRESET_MANAGEMENT_SPEC.md (プリセットデータ定義)
  */
@@ -19,22 +19,22 @@ import type { ProhibitionRule } from '../types/careItem';
 // デモユーザー・入居者情報
 // ============================================
 
-/** デモ入居者（蒲池 キヌヱ様） */
+/** デモ入居者（蒲地 キヌヱ様） */
 export const DEMO_RESIDENT: Resident = {
   id: 'resident-001',
-  name: '蒲池 キヌヱ',
+  name: '蒲地 キヌヱ',
   roomNumber: '215',
 };
 
 /** デモ家族ユーザー */
 export const DEMO_FAMILY_USER: FamilyUser = {
   id: 'family-001',
-  name: '蒲池（ご家族）',
+  name: '蒲地（ご家族）',
   residentId: 'resident-001',
 };
 
 // ============================================
-// プリセット設定（蒲池様FAX内容に基づく）
+// プリセット設定（蒲地様FAX内容に基づく）
 // @see docs/PRESET_MANAGEMENT_SPEC.md - セクション3「初期プリセットデータ」
 //
 // 重要: プリセットには「品物のみ」を登録
@@ -99,7 +99,7 @@ export const DEMO_PRESETS: CarePreset[] = [
 ];
 
 // ============================================
-// 禁止ルールデモデータ（蒲池様FAX内容に基づく）
+// 禁止ルールデモデータ（蒲地様FAX内容に基づく）
 // @see docs/ITEM_MANAGEMENT_SPEC.md - セクション8「禁止ルール」
 //
 // 「七福のお菓子は出さない」が初期設定済み

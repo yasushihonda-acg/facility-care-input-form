@@ -9,7 +9,7 @@ last_reviewed: 2025-12-20
 
 ## 1. 概要
 
-本ドキュメントは、蒲池様プロジェクトのCloud Run functions APIエンドポイント仕様を定義します。
+本ドキュメントは、蒲地様プロジェクトのCloud Run functions APIエンドポイント仕様を定義します。
 
 ### 開発モード (Dev Mode) について
 
