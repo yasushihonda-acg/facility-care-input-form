@@ -11,6 +11,7 @@ import type { CareItemWithChat, SenderType } from '../../types/chat';
 import { formatMessageTime } from '../../types/chat';
 import { getCategoryIcon } from '../../types/careItem';
 import { DEMO_RESIDENT_ID } from '../../hooks/useDemoMode';
+import { getDemoActiveChatItems } from '../../data/demo';
 
 interface ChatListPageProps {
   userType: SenderType;
@@ -34,6 +35,15 @@ export function ChatListPage({ userType }: ChatListPageProps) {
       setLoading(true);
       setError(null);
 
+      // デモモードではローカルデータを使用
+      if (isDemo) {
+        const demoItems = getDemoActiveChatItems(userType);
+        setItems(demoItems);
+        setLoading(false);
+        return;
+      }
+
+      // 本番モード: API経由で取得
       const response = await getActiveChatItems({
         residentId: DEMO_RESIDENT_ID,
         userType,

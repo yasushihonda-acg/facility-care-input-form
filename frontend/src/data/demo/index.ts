@@ -37,3 +37,6 @@ export * from './demoTasks';
 
 // 食品マスタデモデータ (Phase 11)
 export * from './demoFoodMasters';
+
+// チャットメッセージデモデータ (Phase 18)
+export * from './demoMessages';

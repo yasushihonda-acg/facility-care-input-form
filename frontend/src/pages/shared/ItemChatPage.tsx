@@ -12,6 +12,7 @@ import { formatMessageTime } from '../../types/chat';
 import type { CareItem } from '../../types/careItem';
 import { getCategoryIcon } from '../../types/careItem';
 import { DEMO_RESIDENT_ID } from '../../hooks/useDemoMode';
+import { getDemoMessages, getDemoCareItemById } from '../../data/demo';
 
 interface ItemChatPageProps {
   userType: SenderType;
@@ -54,7 +55,19 @@ export function ItemChatPage({ userType, userName = 'ユーザー' }: ItemChatPa
       setLoading(true);
       setError(null);
 
-      // 品物情報とメッセージを並行取得
+      // デモモードではローカルデータを使用
+      if (isDemo) {
+        const demoItem = getDemoCareItemById(itemId);
+        if (demoItem) {
+          setItem(demoItem);
+        }
+        const demoMessages = getDemoMessages(itemId);
+        setMessages(demoMessages);
+        setLoading(false);
+        return;
+      }
+
+      // 本番モード: 品物情報とメッセージを並行取得
       const [itemResponse, messagesResponse] = await Promise.all([
         getCareItem(itemId),
         getMessages({
@@ -91,6 +104,27 @@ export function ItemChatPage({ userType, userName = 'ユーザー' }: ItemChatPa
 
     try {
       setSending(true);
+
+      // デモモードでは擬似送信（ローカル追加のみ）
+      if (isDemo) {
+        const newMessage: ChatMessage = {
+          id: `demo-msg-${Date.now()}`,
+          type: 'text',
+          senderType: userType,
+          senderName: userName,
+          content: inputText.trim(),
+          readByStaff: userType === 'staff',
+          readByFamily: userType === 'family',
+          createdAt: new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, newMessage]);
+        setInputText('');
+        inputRef.current?.focus();
+        setSending(false);
+        return;
+      }
+
+      // 本番モード: API経由で送信
       const response = await sendMessage({
         residentId: DEMO_RESIDENT_ID,
         itemId,
