@@ -342,7 +342,7 @@ AI提案以外で品物を手動登録した際にも、プリセット保存を
 - フッターにチャットタブ追加（未読バッジ付き）
 - 品物詳細画面からチャット開始ボタン
 
-### Phase 15.7: 残り対応による在庫・統計の分離計算 (設計完了 2025-12-20)
+### Phase 15.7: 残り対応による在庫・統計の分離計算 (2025-12-20 完了)
 「残った分への対応」（破棄/保存/その他）に応じて在庫計算を分岐する機能。
 
 **設計方針**:
@@ -354,7 +354,35 @@ AI提案以外で品物を手動登録した際にも、プリセット保存を
 - `inventoryDeducted`: 在庫から引いた量
 - `wastedQuantity`: 廃棄量（破棄時のみ）
 
+**E2Eテスト**: STAFF-050〜053（4件追加）
 **設計書**: `docs/STAFF_RECORD_FORM_SPEC.md` セクション10
+
+### Phase 15.8: ベースページ簡素化 (2025-12-20 完了)
+MealInputPage.tsxを大幅簡素化（407行→122行）。品物リスト表示のみに特化。
+
+**TDDアプローチ**:
+1. E2Eテスト5件追加（STAFF-060〜064）
+2. MealInputPage.tsxからフォーム要素削除
+3. ローカル・本番テストパス確認
+
+### Phase 15.9: 写真アップロードUI (2025-12-20 完了)
+StaffRecordDialog.tsxに写真アップロード機能を追加。Firebase Storageへ直接保存し、photoUrlをsubmitMealRecordに渡してGoogle Chat Webhookに連携。
+
+**主な機能**:
+- ファイルサイズ制限: 10MB以下
+- プレビュー表示・削除機能
+- Firebase Storage連携（uploadCareImage API）
+- Google Chat Webhook連携（submitMealRecordでphotoUrl送信）
+
+**データフロー**:
+1. StaffRecordDialogで写真を選択
+2. [記録を保存]クリック時にuploadCareImage API呼び出し
+3. Firebase Storageにアップロード → photoUrl取得
+4. submitMealRecordにphotoUrlを渡す
+5. Google Chat Webhookで写真付きメッセージ送信
+
+**E2Eテスト**: STAFF-009, STAFF-070〜072（4件追加）
+**設計準拠**: FIREBASE_STORAGE_MIGRATION_SPEC.md セクション5.2
 
 ### Phase 19 + 追加修正: 記録のチャット連携・フッター修正 (2025-12-20 - 完了)
 スタッフが記録を入力した際にチャットスペースへ自動反映し、ホーム画面に通知を表示する機能。
@@ -441,7 +469,7 @@ AI提案以外で品物を手動登録した際にも、プリセット保存を
 **E2Eテスト**: `photo-evidence.spec.ts` (5件)
 **設計書**: `docs/PHOTO_EVIDENCE_DISPLAY_SPEC.md`
 
-### E2Eテスト（212件、Phase 19で+16件）
+### E2Eテスト（225件、Phase 15.9で+13件）
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |
@@ -453,7 +481,7 @@ AI提案以外で品物を手動登録した際にも、プリセット保存を
 | `schedule-extension.spec.ts` | 7件 | Phase 13.1 スケジュール拡張機能 |
 | `schedule-display.spec.ts` | 7件 | Phase 13.2 スタッフ向けスケジュール表示 |
 | `demo-staff.spec.ts` | 17件 | Phase 14 スタッフ用デモページ |
-| `staff-record-form.spec.ts` | 22件 | Phase 15/15.6 スタッフ用記録入力フォーム（数値入力・残り対応） |
+| `staff-record-form.spec.ts` | 34件 | Phase 15/15.6-15.9 スタッフ用記録入力フォーム（数値入力・残り対応・写真） |
 | `photo-evidence.spec.ts` | 5件 | Phase 16 写真エビデンス表示 |
 | `chat-integration.spec.ts` | 8件 | Phase 18 チャット連携 |
 | `record-chat-integration.spec.ts` | 8件 | Phase 19 記録のチャット連携 |
