@@ -333,6 +333,104 @@ test.describe('Phase 15: スタッフ用記録入力フォーム', () => {
     });
   });
 
+  test.describe('15.7: 残り対応による在庫・統計分離（Phase 15.7）', () => {
+    test('STAFF-050: 「破棄した」選択時は提供量全てが在庫から引かれる', async ({ page }) => {
+      await page.goto(`${BASE_URL}/demo/staff/input/meal`);
+
+      const recordButton = page.locator('button:has-text("提供記録")').first();
+      await expect(recordButton).toBeVisible({ timeout: 10000 });
+      await recordButton.click();
+
+      const dialog = page.locator('[role="dialog"]');
+      await expect(dialog).toBeVisible();
+
+      // 摂食割合を5に変更（50%）
+      const numberInput = dialog.locator('input[type="number"][min="0"][max="10"]');
+      await numberInput.fill('5');
+
+      // 「破棄した」を選択
+      await dialog.locator('input[name="remainingHandling"][value="discarded"]').check();
+
+      // 廃棄量の表示を確認
+      const wasteInfo = dialog.locator('text=/廃棄/');
+      await expect(wasteInfo).toBeVisible();
+
+      // 記録後の残量プレビューで提供量全てが引かれていることを確認
+      // （例：提供1個、50%食べた→廃棄量0.5個、在庫から1個引かれる）
+      const quantityPreview = dialog.locator('text=/記録後の残量/');
+      await expect(quantityPreview).toBeVisible();
+    });
+
+    test('STAFF-051: 「保存した」選択時は食べた分のみ在庫から引かれる', async ({ page }) => {
+      await page.goto(`${BASE_URL}/demo/staff/input/meal`);
+
+      const recordButton = page.locator('button:has-text("提供記録")').first();
+      await expect(recordButton).toBeVisible({ timeout: 10000 });
+      await recordButton.click();
+
+      const dialog = page.locator('[role="dialog"]');
+      await expect(dialog).toBeVisible();
+
+      // 摂食割合を5に変更（50%）
+      const numberInput = dialog.locator('input[type="number"][min="0"][max="10"]');
+      await numberInput.fill('5');
+
+      // 「保存した」を選択
+      await dialog.locator('input[name="remainingHandling"][value="stored"]').check();
+
+      // 廃棄量の表示がないことを確認
+      const wasteInfo = dialog.locator('text=/廃棄/');
+      await expect(wasteInfo).toHaveCount(0);
+
+      // 記録後の残量プレビューが表示される
+      const quantityPreview = dialog.locator('text=/記録後の残量/');
+      await expect(quantityPreview).toBeVisible();
+    });
+
+    test('STAFF-052: 残り対応切替で残量プレビューが更新される', async ({ page }) => {
+      await page.goto(`${BASE_URL}/demo/staff/input/meal`);
+
+      const recordButton = page.locator('button:has-text("提供記録")').first();
+      await expect(recordButton).toBeVisible({ timeout: 10000 });
+      await recordButton.click();
+
+      const dialog = page.locator('[role="dialog"]');
+      await expect(dialog).toBeVisible();
+
+      // 摂食割合を5に変更（50%）
+      const numberInput = dialog.locator('input[type="number"][min="0"][max="10"]');
+      await numberInput.fill('5');
+
+      // 「保存した」を選択
+      await dialog.locator('input[name="remainingHandling"][value="stored"]').check();
+
+      // 「破棄した」に切替
+      await dialog.locator('input[name="remainingHandling"][value="discarded"]').check();
+
+      // 廃棄量が表示される
+      const wasteInfo = dialog.locator('text=/廃棄/');
+      await expect(wasteInfo).toBeVisible();
+    });
+
+    test('STAFF-053: 完食（10割）の場合は残り対応が不要', async ({ page }) => {
+      await page.goto(`${BASE_URL}/demo/staff/input/meal`);
+
+      const recordButton = page.locator('button:has-text("提供記録")').first();
+      await expect(recordButton).toBeVisible({ timeout: 10000 });
+      await recordButton.click();
+
+      const dialog = page.locator('[role="dialog"]');
+      await expect(dialog).toBeVisible();
+
+      // デフォルト（10）のまま確認
+      const numberInput = dialog.locator('input[type="number"][min="0"][max="10"]');
+      await expect(numberInput).toHaveValue('10');
+
+      // 「残った分への対応」が表示されない
+      await expect(dialog.locator('text=残った分への対応')).toHaveCount(0);
+    });
+  });
+
   test.describe('15.4: バリデーション・送信', () => {
     test('STAFF-030: 入力者名が空の場合はエラー', async ({ page }) => {
       await page.goto(`${BASE_URL}/demo/staff/input/meal`);

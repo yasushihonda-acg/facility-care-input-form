@@ -23,7 +23,9 @@ import {
   ItemStatus,
   MealTime,
   CareItem,
+  RemainingHandling,
 } from "../types";
+import {calculateConsumptionAmounts} from "../utils/consumptionCalc";
 
 // Firestoreコレクション名
 const CARE_ITEMS_COLLECTION = "care_items";
@@ -96,6 +98,14 @@ function validateRecordConsumptionLogRequest(
     }
   }
 
+  // Phase 15.7: remainingHandling (optional)
+  if (req.remainingHandling !== undefined) {
+    const validHandlings: RemainingHandling[] = ["discarded", "stored", "other"];
+    if (!validHandlings.includes(req.remainingHandling as RemainingHandling)) {
+      return {valid: false, error: "remainingHandling must be one of: " + validHandlings.join(", ")};
+    }
+  }
+
   return {
     valid: true,
     data: {
@@ -110,6 +120,9 @@ function validateRecordConsumptionLogRequest(
       consumptionNote: req.consumptionNote as string | undefined,
       noteToFamily: req.noteToFamily as string | undefined,
       recordedBy: req.recordedBy as string,
+      // Phase 15.7: 残り対応
+      remainingHandling: req.remainingHandling as RemainingHandling | undefined,
+      remainingHandlingOther: req.remainingHandlingOther as string | undefined,
     },
   };
 }
@@ -229,13 +242,20 @@ async function recordConsumptionLogHandler(
         throw new Error(`提供数量(${input.servedQuantity})が残量(${currentQty})を超えています`);
       }
 
-      // 新しい残量を計算（消費した分だけ減らす）
-      const newQuantity = currentQty - input.consumedQuantity;
-
       // 摂食率を計算
       const consumptionRate = input.servedQuantity > 0 ?
         Math.round((input.consumedQuantity / input.servedQuantity) * 100) :
         0;
+
+      // Phase 15.7: 残り対応に基づいて消費量を計算
+      const amounts = calculateConsumptionAmounts(
+        input.servedQuantity,
+        consumptionRate,
+        input.remainingHandling
+      );
+
+      // 新しい残量を計算（inventoryDeductedを使用）
+      const newQuantity = currentQty - amounts.inventoryDeducted;
 
       // 既存のサマリーを取得
       const existingSummary = item.consumptionSummary ?? {
@@ -284,6 +304,11 @@ async function recordConsumptionLogHandler(
         consumedQuantity: input.consumedQuantity,
         consumptionRate,
         consumptionStatus: input.consumptionStatus,
+        // Phase 15.7: 残り対応による在庫・統計分離
+        remainingHandling: input.remainingHandling ?? null,
+        remainingHandlingOther: input.remainingHandlingOther ?? null,
+        inventoryDeducted: amounts.inventoryDeducted,
+        wastedQuantity: amounts.wastedQuantity,
         quantityBefore: currentQty,
         quantityAfter: newQuantity,
         consumptionNote: input.consumptionNote ?? null,
@@ -316,6 +341,9 @@ async function recordConsumptionLogHandler(
         logId: logRef.id,
         currentQuantity: newQuantity,
         status: newStatus,
+        // Phase 15.7: 追加フィールド
+        inventoryDeducted: amounts.inventoryDeducted,
+        wastedQuantity: amounts.wastedQuantity,
       };
     });
 
@@ -324,6 +352,8 @@ async function recordConsumptionLogHandler(
       itemId: input.itemId,
       currentQuantity: result.currentQuantity,
       status: result.status,
+      inventoryDeducted: result.inventoryDeducted,
+      wastedQuantity: result.wastedQuantity,
     });
 
     const responseData: RecordConsumptionLogResponse = {
@@ -331,6 +361,9 @@ async function recordConsumptionLogHandler(
       itemId: input.itemId,
       currentQuantity: result.currentQuantity,
       status: result.status,
+      // Phase 15.7: 追加フィールド
+      inventoryDeducted: result.inventoryDeducted,
+      wastedQuantity: result.wastedQuantity,
     };
 
     const response: ApiResponse<RecordConsumptionLogResponse> = {
@@ -452,6 +485,11 @@ async function getConsumptionLogsHandler(
         consumedQuantity: data.consumedQuantity,
         consumptionRate: data.consumptionRate,
         consumptionStatus: data.consumptionStatus,
+        // Phase 15.7: 残り対応フィールド
+        remainingHandling: data.remainingHandling ?? undefined,
+        remainingHandlingOther: data.remainingHandlingOther ?? undefined,
+        inventoryDeducted: data.inventoryDeducted ?? undefined,
+        wastedQuantity: data.wastedQuantity ?? undefined,
         quantityBefore: data.quantityBefore,
         quantityAfter: data.quantityAfter,
         consumptionNote: data.consumptionNote ?? undefined,

@@ -4,7 +4,7 @@
  * 設計書: docs/STAFF_RECORD_FORM_SPEC.md セクション4.2
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { CareItem } from '../../types/careItem';
 import type { RemainingHandling } from '../../types/consumptionLog';
 import { getCategoryIcon } from '../../types/careItem';
@@ -14,6 +14,7 @@ import { submitMealRecord } from '../../api';
 import { useMealFormSettings } from '../../hooks/useMealFormSettings';
 import { DAY_SERVICE_OPTIONS } from '../../types/mealForm';
 import type { SnackRecord } from '../../types/mealForm';
+import { calculateConsumptionAmounts } from '../../utils/consumptionCalc';
 
 interface StaffRecordDialogProps {
   isOpen: boolean;
@@ -189,9 +190,14 @@ export function StaffRecordDialog({
     }
   }, [formData, item, settings, recordMutation, validate, onSuccess, onClose]);
 
-  // 記録後の残量を計算（Phase 15.6: 0-10入力からの計算）
-  const consumedQuantity = (formData.consumptionRateInput / 10) * formData.servedQuantity;
-  const quantityAfter = currentQuantity - consumedQuantity;
+  // Phase 15.7: 残り対応に基づいて消費量・残量を計算
+  const consumptionAmounts = useMemo(() => {
+    const rate = formData.consumptionRateInput * 10; // 0-10 → 0-100
+    const handling = formData.remainingHandling || undefined;
+    return calculateConsumptionAmounts(formData.servedQuantity, rate, handling);
+  }, [formData.servedQuantity, formData.consumptionRateInput, formData.remainingHandling]);
+
+  const quantityAfter = currentQuantity - consumptionAmounts.inventoryDeducted;
 
   if (!isOpen) return null;
 
@@ -490,12 +496,17 @@ export function StaffRecordDialog({
             </div>
           </div>
 
-          {/* 記録後の残量プレビュー */}
+          {/* 記録後の残量プレビュー (Phase 15.7対応) */}
           <div className="bg-blue-50 rounded-lg p-3 text-center">
             <span className="text-sm text-gray-600">記録後の残量: </span>
             <span className="text-lg font-semibold text-blue-700">
               {quantityAfter.toFixed(1)}{item.unit}
             </span>
+            {consumptionAmounts.wastedQuantity > 0 && (
+              <span className="text-xs text-orange-600 block mt-1">
+                🗑️ 廃棄: {consumptionAmounts.wastedQuantity.toFixed(1)}{item.unit}
+              </span>
+            )}
             {quantityAfter <= 0 && (
               <span className="text-xs text-orange-600 block mt-1">
                 ※ 在庫がなくなります（品物は「消費完了」になります）

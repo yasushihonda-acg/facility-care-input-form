@@ -40,6 +40,10 @@ export interface SnackRecord {
   consumptionStatus: ConsumptionStatus; // full/most/half/little/none
   consumptionRate?: number; // 0-100（オプション、statusから自動計算可）
 
+  // Phase 15.7: 残り対応
+  remainingHandling?: RemainingHandling;
+  remainingHandlingOther?: string;
+
   // 家族指示対応
   followedInstruction?: boolean; // 家族指示に従ったか
   instructionNote?: string; // 指示対応メモ
@@ -649,6 +653,9 @@ export interface DeleteCareItemRequest {
 /** 食事時間帯 */
 export type MealTime = "breakfast" | "lunch" | "dinner" | "snack";
 
+/** 残った分への対応 (Phase 15.6) */
+export type RemainingHandling = "discarded" | "stored" | "other";
+
 /**
  * 消費ログ（Firestore: care_items/{itemId}/consumption_logs/{logId}）
  */
@@ -668,6 +675,12 @@ export interface ConsumptionLog {
   consumedQuantity: number;
   consumptionRate: number; // 0-100
   consumptionStatus: ConsumptionStatus;
+
+  // Phase 15.7: 残り対応による在庫・統計分離
+  remainingHandling?: RemainingHandling;
+  remainingHandlingOther?: string;
+  inventoryDeducted?: number; // 在庫から引いた量
+  wastedQuantity?: number; // 廃棄量（破棄時のみ）
 
   // 残量情報
   quantityBefore: number;
@@ -703,6 +716,9 @@ export interface RecordConsumptionLogRequest {
   consumptionNote?: string;
   noteToFamily?: string;
   recordedBy: string;
+  // Phase 15.7: 残り対応
+  remainingHandling?: RemainingHandling;
+  remainingHandlingOther?: string;
 }
 
 /** 消費ログ記録レスポンス */
@@ -711,6 +727,9 @@ export interface RecordConsumptionLogResponse {
   itemId: string;
   currentQuantity: number; // 更新後の残量
   status: ItemStatus; // 更新後のステータス
+  // Phase 15.7: 追加フィールド
+  inventoryDeducted?: number; // 在庫から引いた量
+  wastedQuantity?: number; // 廃棄量
 }
 
 /** 消費ログ一覧取得リクエスト */

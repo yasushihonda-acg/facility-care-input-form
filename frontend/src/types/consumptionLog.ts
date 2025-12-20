@@ -53,6 +53,12 @@ export interface ConsumptionLog {
   consumptionRate: number;         // 0-100
   consumptionStatus: ConsumptionStatus;
 
+  // Phase 15.7: 残り対応による在庫・統計分離
+  remainingHandling?: RemainingHandling;  // 残り対応
+  remainingHandlingOther?: string;        // その他の場合の詳細
+  inventoryDeducted?: number;             // 在庫から引いた量
+  wastedQuantity?: number;                // 廃棄量（破棄時のみ）
+
   // 残量情報
   quantityBefore: number;
   quantityAfter: number;
@@ -106,6 +112,9 @@ export interface RecordConsumptionLogRequest {
   consumptionNote?: string;
   noteToFamily?: string;
   recordedBy: string;
+  // Phase 15.7: 残り対応
+  remainingHandling?: RemainingHandling;
+  remainingHandlingOther?: string;
 }
 
 /**
@@ -117,6 +126,9 @@ export interface RecordConsumptionLogResponse {
   itemId: string;
   currentQuantity: number;       // 更新後の残量
   status: string;                // 更新後のステータス
+  // Phase 15.7: 追加フィールド
+  inventoryDeducted?: number;    // 在庫から引いた量
+  wastedQuantity?: number;       // 廃棄量
 }
 
 /**
