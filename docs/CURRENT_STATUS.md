@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月20日 (getCareItems itemIdサポート追加)
+> **最終更新**: 2025年12月20日 (デモチャット擬似動作・シードデータ対応)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -20,6 +20,30 @@
 ---
 
 ## 現在のタスク
+
+### バグ修正: デモモードチャット機能の擬似動作対応（2025-12-20）
+
+**問題**: デモモードでチャット送信時に500エラーが発生（API呼び出しが実行されてしまう）
+```
+POST /sendMessage → 500 Internal Server Error
+```
+
+**修正内容**:
+- `frontend/src/data/demo/demoMessages.ts`: チャットシードデータ新規作成
+  - 5品物分のメッセージ履歴（バナナ、キウイ、りんご、羊羹、緑茶）
+  - テキストメッセージ・記録メッセージ両タイプ対応
+  - 通知データ
+- `frontend/src/pages/shared/ItemChatPage.tsx`: デモモード対応
+  - `isDemo=true`時はローカルデータ使用
+  - 擬似送信（ローカルstate追加のみ）
+- `frontend/src/pages/shared/ChatListPage.tsx`: デモモード対応
+  - `isDemo=true`時はアクティブチャット一覧をローカル取得
+
+**コミット**: `647a21b`
+
+**E2Eテスト**: 16件パス（chat-integration + record-chat-integration）
+
+---
 
 ### バグ修正: getCareItems itemIdパラメータ対応（2025-12-20）
 
