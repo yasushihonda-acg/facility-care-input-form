@@ -125,7 +125,7 @@ last_reviewed: 2025-12-20
 **デモモード特記事項**:
 - `/demo/*` ページでは `TourReturnBanner` が表示される（`/demo/showcase` 除く）
 - デモモードはローカルシードデータで動作（本番APIを呼ばない）
-- 詳細は [DEMO_SHOWCASE_SPEC.md](./DEMO_SHOWCASE_SPEC.md) を参照
+- 詳細は [DEMO_SHOWCASE_SPEC.md](./archive/DEMO_SHOWCASE_SPEC.md) を参照
 
 ### 2.2 App.tsx ルーティング実装
 

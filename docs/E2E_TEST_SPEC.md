@@ -110,7 +110,7 @@ npx playwright test --headed
 #### 2.2.6 ツアーナビゲーション（TourReturnBanner）
 
 > **追加日**: 2025年12月17日
-> **設計書**: [DEMO_SHOWCASE_SPEC.md](./DEMO_SHOWCASE_SPEC.md) セクション10
+> **設計書**: [DEMO_SHOWCASE_SPEC.md](./archive/DEMO_SHOWCASE_SPEC.md) セクション10
 
 | テストID | テスト名 | 期待結果 |
 |----------|----------|----------|
@@ -126,7 +126,7 @@ npx playwright test --headed
 ## 3. 家族ユーザーシナリオテスト仕様
 
 > **追加日**: 2025年12月18日
-> **設計書**: [DEMO_FAMILY_REDESIGN.md](./DEMO_FAMILY_REDESIGN.md), [FAMILY_UX_DESIGN.md](./FAMILY_UX_DESIGN.md)
+> **設計書**: [DEMO_FAMILY_REDESIGN.md](./archive/DEMO_FAMILY_REDESIGN.md), [FAMILY_UX_DESIGN.md](./FAMILY_UX_DESIGN.md)
 > **テストファイル**: `frontend/e2e/family-user-scenario.spec.ts`
 
 ### 3.1 テスト目的
@@ -307,7 +307,7 @@ npx playwright test --headed
 
 | ドキュメント | 内容 |
 |--------------|------|
-| [DEMO_SHOWCASE_SPEC.md](./DEMO_SHOWCASE_SPEC.md) | デモショーケース設計 |
+| [DEMO_SHOWCASE_SPEC.md](./archive/DEMO_SHOWCASE_SPEC.md) | デモショーケース設計 |
 | [VIEW_ARCHITECTURE_SPEC.md](./VIEW_ARCHITECTURE_SPEC.md) | ビュー構成設計 |
 | [FAMILY_UX_DESIGN.md](./FAMILY_UX_DESIGN.md) | 家族向けUX設計 |
 | [SNACK_RECORD_INTEGRATION_SPEC.md](./SNACK_RECORD_INTEGRATION_SPEC.md) | 間食記録連携設計 |

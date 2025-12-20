@@ -833,7 +833,7 @@ Accent: #14B8A6 (Teal)
 1. 複数ユーザー・複数デバイスからの同時同期によるデータ重複を防止
 2. Firestoreコストを90%以上削減
 
-> **詳細**: [SYNC_CONCURRENCY.md](./SYNC_CONCURRENCY.md) を参照
+> **詳細**: [SYNC_CONCURRENCY.md](./archive/SYNC_CONCURRENCY.md) を参照
 
 ### Phase 4.8 完了条件 ✅
 
@@ -1145,7 +1145,7 @@ Phase 15: 記録フォーム統一     █████████████�
 | Phase 14.0 | 5 | スタッフ用デモページ（DemoStaffHome・DemoStaffShowcase・E2E 17件） | ✅ 完了 |
 | Phase 15 | 4 | スタッフ記録入力フォーム統一（タブ削除・StaffRecordDialog・E2E 22件） | ✅ 完了 |
 | Phase 15.6 | 2 | 摂食割合の数値入力（0-10）・残り対応フィールド（破棄/保存/その他） | ✅ 完了 |
-| Phase 15.7 | 3 | 残り対応による在庫・統計の分離計算（破棄→全量減、保存→食べた分のみ減） | 📋 設計完了 |
+| Phase 15.7 | 3 | 残り対応による在庫・統計の分離計算（破棄→全量減、保存→食べた分のみ減）・E2E 4件追加 | ✅ 完了 |
 
 ---
 
@@ -1723,7 +1723,7 @@ interface Task {
 
 ## デモショーケース実装 ✅ 完了
 
-**設計書**: [DEMO_SHOWCASE_SPEC.md](./DEMO_SHOWCASE_SPEC.md)、[DEMO_FAMILY_REDESIGN.md](./DEMO_FAMILY_REDESIGN.md)
+**設計書**: [DEMO_SHOWCASE_SPEC.md](./archive/DEMO_SHOWCASE_SPEC.md)、[DEMO_FAMILY_REDESIGN.md](./archive/DEMO_FAMILY_REDESIGN.md)
 
 **目的**: 本番データに影響せず、デモ・プレゼン用の専用環境を提供
 

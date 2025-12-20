@@ -61,6 +61,9 @@ links:
   - 保存時は食べた分のみ在庫から引く
   - 廃棄量(wastedQuantity)を記録・表示
   - E2Eテスト4件追加（STAFF-050〜053）
+- **Phase 15.7 仕上げ** (`3923c82`)
+  - フロントエンドがremainingHandlingをAPIに送信するよう修正
+  - snack_onlyモードでの二重記録防止
 
 ---
 

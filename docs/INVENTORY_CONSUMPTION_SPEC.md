@@ -359,7 +359,9 @@ type ItemStatus =
 ┌─────────────────────────────────────────┐
 │ 2. ConsumptionLog ドキュメント作成      │
 │    - quantityBefore = currentQuantity   │
-│    - quantityAfter = before - consumed  │
+│    - inventoryDeducted = 計算値         │
+│      (Phase 15.7: 残り対応で変動)       │
+│    - quantityAfter = before - deducted  │
 └─────────────────────────────────────────┘
       ↓
 ┌─────────────────────────────────────────┐
@@ -448,10 +450,16 @@ async function recordConsumption(
       throw new Error('消費数量が提供数量を超えています');
     }
 
-    // 新しい残量を計算
-    // 注意: 残した分は廃棄扱い（戻さない）
-    const newQuantity = currentQuantity - input.consumedQuantity;
-    // または: 残した分も減らす場合
+    // Phase 15.7: 残り対応に基づいて在庫減算量を計算
+    // @see docs/STAFF_RECORD_FORM_SPEC.md セクション10
+    const amounts = calculateConsumptionAmounts(
+      input.servedQuantity,
+      consumptionRate,
+      input.remainingHandling  // 'discarded' | 'stored' | 'other' | undefined
+    );
+    // - discarded: 在庫から提供量全て引く（残りは捨てた）
+    // - stored/other/未指定: 在庫から消費量のみ引く（残りは冷蔵庫へ）
+    const newQuantity = currentQuantity - amounts.inventoryDeducted;
     // const newQuantity = currentQuantity - input.servedQuantity;
 
     // 消費ログを作成

@@ -338,7 +338,7 @@ service cloud.firestore {
 | [SETUP.md](./SETUP.md) | 環境セットアップガイド（CLI版） |
 | [BUSINESS_RULES.md](./BUSINESS_RULES.md) | 業務ルール・Bot連携ハック |
 | [API_SPEC.md](./API_SPEC.md) | API仕様書（Dev Mode） |
-| [SYNC_CONCURRENCY.md](./SYNC_CONCURRENCY.md) | 同期処理の競合防止設計 |
+| [SYNC_CONCURRENCY.md](./archive/SYNC_CONCURRENCY.md) | 同期処理の競合防止設計 |
 | [TABLE_VIEW_COLUMNS.md](./TABLE_VIEW_COLUMNS.md) | テーブルビュー表示カラム設計 |
 | [GOOGLE_CHAT_WEBHOOK_SPEC.md](./GOOGLE_CHAT_WEBHOOK_SPEC.md) | Google Chat Webhook仕様 |
 | [PHOTO_UPLOAD_SPEC.md](./PHOTO_UPLOAD_SPEC.md) | 写真アップロード仕様 |
@@ -381,7 +381,7 @@ service cloud.firestore {
 > - **差分同期**（15分）: 新規レコードのみ追加、削除なし
 > - **完全同期**（日次）: 洗い替えでデータ整合性担保
 > - **コスト削減**: 月$144 → $5-15（90%以上削減）
-> 詳細は [SYNC_CONCURRENCY.md](./SYNC_CONCURRENCY.md) を参照。
+> 詳細は [SYNC_CONCURRENCY.md](./archive/SYNC_CONCURRENCY.md) を参照。
 
 ### 10.4 システム構成（デモ版）
 
@@ -414,7 +414,7 @@ graph LR
 
 > **注**: PWAからsyncPlanDataへの直接呼び出しは廃止。Cloud Schedulerが唯一の同期トリガー。
 
-詳細は [DEMO_PWA_SPEC.md](./DEMO_PWA_SPEC.md) を参照。
+詳細は [DEMO_PWA_SPEC.md](./archive/DEMO_PWA_SPEC.md) を参照。
 
 ---
 
