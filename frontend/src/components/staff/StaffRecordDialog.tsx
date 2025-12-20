@@ -144,16 +144,18 @@ export function StaffRecordDialog({
     const consumptionStatus = determineConsumptionStatus(consumptionRate);
 
     try {
-      // Phase 15.9: 写真がある場合は先にアップロード
+      // Phase 15.9: 写真がある場合は先にアップロードしてURLを取得
+      let photoUrl: string | undefined;
       if (formData.photo) {
-        await uploadCareImage({
+        const uploadResult = await uploadCareImage({
           staffId: formData.staffName,
           residentId: item.residentId,
           image: formData.photo,
           staffName: formData.staffName,
           date: new Date().toISOString().split('T')[0],
         });
-        // 注: アップロードされた写真URLは消費ログには含めない（将来拡張予定）
+        // ApiResponse<UploadCareImageResponse> からphotoUrlを取得
+        photoUrl = uploadResult.data?.photoUrl;
       }
 
       // 1. consumption_log に記録
@@ -203,6 +205,8 @@ export function StaffRecordDialog({
         ...(formData.note && { note: formData.note }),
         snackRecords: [snackRecord],
         residentId: item.residentId,
+        // Phase 15.9: 写真URLを渡す（Google Chat Webhook連携用）
+        ...(photoUrl && { photoUrl }),
       });
 
       onSuccess?.();
