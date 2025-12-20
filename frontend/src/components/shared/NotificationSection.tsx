@@ -33,9 +33,42 @@ export function NotificationSection({
 
   useEffect(() => {
     loadNotifications();
-  }, [userType]);
+  }, [userType, isDemo]);
 
   const loadNotifications = async () => {
+    // デモモードではAPIを呼び出さず、ダミーデータを使用
+    // @see docs/FOOTERNAV_DEMO_FIX_SPEC.md
+    if (isDemo) {
+      setNotifications([
+        {
+          id: 'demo-notif-1',
+          type: 'new_message',
+          title: '山田さんからメッセージ',
+          body: 'みかんを半分食べました',
+          relatedItemId: 'item-001',
+          relatedItemName: 'みかん',
+          targetType: userType,
+          read: false,
+          createdAt: new Date().toISOString(),
+          linkTo: `/staff/family-messages/item-001`,
+        },
+        {
+          id: 'demo-notif-2',
+          type: 'record_added',
+          title: '記録が追加されました',
+          body: 'りんごの提供記録',
+          relatedItemId: 'item-002',
+          relatedItemName: 'りんご',
+          targetType: userType,
+          read: true,
+          createdAt: new Date(Date.now() - 3600000).toISOString(),
+          linkTo: `/staff/family-messages/item-002`,
+        },
+      ]);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);

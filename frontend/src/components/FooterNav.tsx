@@ -76,7 +76,17 @@ export function FooterNav({ className = '' }: FooterNavProps) {
   }), [isDemoMode]);
 
   // 未読チャット数の取得
+  // デモモードではAPIを呼び出さず、ダミーデータを使用
+  // @see docs/FOOTERNAV_DEMO_FIX_SPEC.md
   useEffect(() => {
+    // デモモードではAPIを呼び出さない（500エラー回避）
+    if (isDemoMode) {
+      // デモ用のダミー未読数を設定
+      setFamilyUnreadCount(2);
+      setStaffUnreadCount(1);
+      return;
+    }
+
     const fetchUnreadCounts = async () => {
       try {
         // 家族の未読数
@@ -113,7 +123,7 @@ export function FooterNav({ className = '' }: FooterNavProps) {
     // 30秒ごとに更新
     const interval = setInterval(fetchUnreadCounts, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isDemoMode]);
 
   // 家族用フッター
   if (showFamilyFooter) {
