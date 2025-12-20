@@ -69,10 +69,22 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
           comparison = numA - numB;
           break;
         }
-        case 'date':
-          // 日付ソート（文字列比較でOK: YYYY/MM/DD HH:MM:SS形式）
-          comparison = valueA.localeCompare(valueB, 'ja');
+        case 'date': {
+          // 日付ソート（Dateオブジェクトに変換して比較）
+          // 形式: "YYYY/MM/DD HH:MM:SS" or "YYYY/M/D H:MM:SS"
+          const parseDate = (str: string): number => {
+            if (!str) return 0;
+            const [datePart, timePart] = str.split(' ');
+            if (!datePart) return 0;
+            const [year, month, day] = datePart.split('/').map(Number);
+            const [hour, minute, second] = (timePart || '0:0:0').split(':').map(Number);
+            return new Date(year, (month || 1) - 1, day || 1, hour || 0, minute || 0, second || 0).getTime();
+          };
+          const dateA = parseDate(valueA);
+          const dateB = parseDate(valueB);
+          comparison = dateA - dateB;
           break;
+        }
         default:
           // 文字列ソート
           comparison = valueA.localeCompare(valueB, 'ja');
