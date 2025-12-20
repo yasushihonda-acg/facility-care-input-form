@@ -57,6 +57,12 @@ links:
 
 ### 本日の修正 (12/21)
 
+- **UX改善**: 冗長な「タイムラインを見る」リンク削除 (`e4eede4`)
+  - ItemDetail.tsx: 別ページへの遷移リンクを削除
+  - 理由: 「タイムライン（履歴）」セクションで同じ情報を表示しているため冗長
+  - 設計書: [VIEW_ARCHITECTURE_SPEC.md](./VIEW_ARCHITECTURE_SPEC.md) セクション4.3
+  - 設計書: [ITEM_MANAGEMENT_SPEC.md](./ITEM_MANAGEMENT_SPEC.md) セクション9.4.4
+
 - **Phase 22.3拡張完了**: 編集履歴デモデータ追加 (`41c1dfc`)
   - demoItemEvents.ts: 品物イベント（編集履歴）デモデータ追加
   - itemEvent.ts: ItemEvent型定義とヘルパー関数
@@ -156,8 +162,8 @@ links:
 | 22.5 | ビルド・デプロイ・動作確認 | ✅完了 |
 
 > **設計書**: [ITEM_MANAGEMENT_SPEC.md](./ITEM_MANAGEMENT_SPEC.md) セクション9
-> **コミット**: `e5fb97a`
-> **テスト結果**: 252件パス + 16件スキップ
+> **コミット**: `e5fb97a` (Phase 22), `41c1dfc` (Phase 22.3), `e4eede4` (UX改善)
+> **テスト結果**: 267件（16件スキップ含む）
 
 ### チャット機能について
 

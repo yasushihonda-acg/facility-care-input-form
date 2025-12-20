@@ -966,8 +966,9 @@ docs/CURRENT_STATUS.md を読んで、次のタスクから再開してくださ
 
 | 日付 | 内容 |
 |------|------|
+| 2025-12-21 | **UX改善: タイムラインリンク削除**（ItemDetail.tsx「タイムラインを見る」冗長リンク削除）|
 | 2025-12-21 | **Phase 22.3拡張: 編集履歴デモデータ**（demoItemEvents・useItemEvents・タイムライン統合表示・E2Eテスト+2件）、全267件 |
-| 2025-12-21 | **Phase 22: 品物編集機能**（編集UI・タイムスタンプ表示・タイムライン表示・E2Eテスト21件追加） |
+| 2025-12-21 | **Phase 22: 品物編集機能**（編集UI・タイムスタンプ表示・タイムライン表示・E2Eテスト23件） |
 | 2025-12-20 | **Phase 20.1: デモモードAPI 500エラー修正**（FooterNav・NotificationSection対応・Firestoreインデックス・E2Eテスト9件追加）、全249件 |
 | 2025-12-20 | **Phase 20: デモ環境完結（離脱防止）**（MealInputPage・ItemTimeline・App.tsx・E2Eテスト15件追加） |
 | 2025-12-20 | **Phase 15.9: 写真アップロードUI**（StaffRecordDialog写真添付・Firebase Storage連携・E2Eテスト4件追加） |
