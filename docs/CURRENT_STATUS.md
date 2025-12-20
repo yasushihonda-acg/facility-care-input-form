@@ -1,6 +1,6 @@
 # 現在のステータス
 
-> **最終更新**: 2025年12月20日 (Phase 19 完了 - 記録のチャット連携)
+> **最終更新**: 2025年12月20日 (getCareItems itemIdサポート追加)
 >
 > このファイルは、会話セッションをクリアした後でも開発を継続できるよう、現在の進捗状況を記録しています。
 
@@ -20,6 +20,24 @@
 ---
 
 ## 現在のタスク
+
+### バグ修正: getCareItems itemIdパラメータ対応（2025-12-20）
+
+**問題**: チャット機能で品物情報取得時に500エラー（FIRESTORE_ERROR）が発生
+```
+GET /getCareItems?itemId=demo-item-012 → 500 Internal Server Error
+```
+
+**原因**: フロントエンドの `getCareItem` 関数が `itemId` パラメータで呼び出していたが、バックエンドがサポートしていなかった
+
+**修正内容**:
+- `functions/src/types/index.ts`: `GetCareItemsRequest` に `itemId` フィールド追加
+- `functions/src/functions/careItems.ts`: `itemId` 指定時は直接ドキュメント取得（クエリ不使用）
+- `docs/API_SPEC.md`: `itemId` パラメータのドキュメント追加
+
+**コミット**: `583905c` (style fix含む)
+
+---
 
 ### Phase 19: 記録のチャット連携（実装完了）
 
