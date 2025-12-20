@@ -7,7 +7,7 @@ last_reviewed: 2025-12-20
 
 # 引き継ぎドキュメント
 
-> **最終更新**: 2025年12月20日（Phase 15.9完了・写真アップロード設計準拠確認）
+> **最終更新**: 2025年12月20日（Phase 20.1完了・デモモードAPI 500エラー修正）
 >
 > 本ドキュメントは、開発を引き継ぐ際に必要な情報をまとめたものです。
 
@@ -105,6 +105,8 @@ cd frontend && npm install && npm run dev
 | Firebase Storage 写真連携 | Google Drive → Firebase Storage 移行（Phase 17） | ✅ 完了 |
 | **チャット連携機能** | 品物起点のスタッフ⇔家族チャット、フッター通知バッジ（Phase 18） | ✅ 完了 |
 | **記録のチャット連携** | 提供記録のスレッド自動反映、RecordMessageCard、ホーム通知（Phase 19） | ✅ 完了 |
+| **デモ環境完結（離脱防止）** | デモモード内で全ナビゲーション完結、本番離脱防止（Phase 20） | ✅ 完了 |
+| **デモモードAPI 500エラー修正** | FooterNav/NotificationSectionのデモモード対応、Firestoreインデックス追加（Phase 20.1） | ✅ 完了 |
 
 ---
 
@@ -303,6 +305,8 @@ facility-care-input-form/
 | Phase 17 | Firebase Storage写真連携（Drive→Storage移行、care_photos、Webhook連携、E2E検証） | 2025-12-19 |
 | Phase 18 | チャット連携機能（品物チャット、フッター通知バッジ、E2Eテスト16件） | 2025-12-20 |
 | Phase 19 | 記録のチャット連携（記録自動反映、RecordMessageCard、ホーム通知、E2Eテスト8件） | 2025-12-20 |
+| **Phase 20** | **デモ環境完結（離脱防止）**（MealInputPage戻るボタン・ItemTimelineリンク、E2Eテスト15件） | 2025-12-20 |
+| **Phase 20.1** | **デモモードAPI 500エラー修正**（FooterNav・NotificationSection対応、E2Eテスト9件） | 2025-12-20 |
 
 ### 4.2 将来のタスク
 
@@ -518,6 +522,41 @@ StaffRecordDialog.tsx に写真アップロード機能を追加。Firebase Stor
 6. 家族・スタッフがチャットスレッド/ホーム通知で記録を確認
 ```
 
+### 4.7 Phase 20-20.1 デモ環境完結（完了）
+
+**設計書**:
+- `docs/DEMO_STAFF_CONTAINMENT.md` - デモ環境完結設計
+- `docs/FOOTERNAV_DEMO_FIX_SPEC.md` - フッターナビデモモード対応
+
+#### Phase 20: デモ環境完結（離脱防止）（2025-12-20）
+
+スタッフデモ（/demo/staff）から本番環境への意図しない離脱を防止。
+
+| 項目 | 内容 |
+|------|------|
+| 対象 | MealInputPage.tsx, ItemTimeline.tsx, App.tsx |
+| 修正 | 戻るボタン・リンクをデモモード対応、/demo/staff/statsルート追加 |
+| E2Eテスト | demo-staff-containment.spec.ts（15件） |
+
+#### Phase 20.1: デモモードAPI 500エラー修正（2025-12-20）
+
+デモページ（/demo/staff, /demo/family等）でのgetActiveChatItems/getNotifications API 500エラーを修正。
+
+| 項目 | 内容 |
+|------|------|
+| 原因 | デモモードでもAPIを呼び出していた + Firestoreインデックス不足 |
+| 修正 | デモモードではAPIをスキップしダミーデータを使用 |
+| インデックス追加 | care_items (residentId, hasMessages, lastMessageAt), notifications (targetType, createdAt) |
+| E2Eテスト | footer-nav-demo.spec.ts（9件） |
+
+**主な実装ファイル**:
+
+| 領域 | ファイル | 内容 |
+|------|----------|------|
+| フロントエンド | `frontend/src/components/FooterNav.tsx` | デモモードでAPI呼び出しスキップ |
+| フロントエンド | `frontend/src/components/shared/NotificationSection.tsx` | デモモードでAPI呼び出しスキップ |
+| バックエンド | `firestore.indexes.json` | 複合インデックス2件追加 |
+
 ---
 
 ## 5. データフロー
@@ -659,7 +698,7 @@ BASE_URL=https://facility-care-input-form.web.app npx playwright test
 - `frontend/playwright.config.ts` - Playwright設定
 - デフォルトbaseURL: `http://localhost:4173`（環境変数で上書き可能）
 
-**現在のテスト**: 全225件（3件スキップ）
+**現在のテスト**: 全249件（3件スキップ）
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |
@@ -671,6 +710,8 @@ BASE_URL=https://facility-care-input-form.web.app npx playwright test
 | `item-based-snack-record.spec.ts` | 13件 | 品物起点の間食記録（Phase 13.0） |
 | `snack-record.spec.ts` | 11件 | 間食記録連携（品物リスト・サジェスト） |
 | `record-chat-integration.spec.ts` | 8件 | 記録のチャット連携（Phase 19） |
+| `demo-staff-containment.spec.ts` | 15件 | デモ環境完結・離脱防止（Phase 20） |
+| `footer-nav-demo.spec.ts` | 9件 | デモモードフッターナビ・API 500修正（Phase 20.1） |
 | `fifo.spec.ts` | 8件 | FIFO機能（期限順ソート・推奨表示） |
 | `schedule-extension.spec.ts` | 7件 | スケジュール拡張（Phase 13.1） |
 | `schedule-display.spec.ts` | 7件 | スケジュール表示強化（Phase 13.2） |
@@ -920,7 +961,9 @@ docs/CURRENT_STATUS.md を読んで、次のタスクから再開してくださ
 
 | 日付 | 内容 |
 |------|------|
-| 2025-12-20 | **Phase 15.9: 写真アップロードUI**（StaffRecordDialog写真添付・Firebase Storage連携・E2Eテスト4件追加）、全225件 |
+| 2025-12-20 | **Phase 20.1: デモモードAPI 500エラー修正**（FooterNav・NotificationSection対応・Firestoreインデックス・E2Eテスト9件追加）、全249件 |
+| 2025-12-20 | **Phase 20: デモ環境完結（離脱防止）**（MealInputPage・ItemTimeline・App.tsx・E2Eテスト15件追加） |
+| 2025-12-20 | **Phase 15.9: 写真アップロードUI**（StaffRecordDialog写真添付・Firebase Storage連携・E2Eテスト4件追加） |
 | 2025-12-20 | **Phase 15.8: ベースページ簡素化**（MealInputPage 407行→122行・E2Eテスト5件追加） |
 | 2025-12-20 | **Phase 15.7: 残り対応による在庫・統計分離**（破棄=全量控除、保存=食べた分控除、wastedQuantity追加、E2Eテスト4件追加） |
 | 2025-12-20 | チャットページフッター修正（ItemChatPage・ChatListPageにFooterNav追加）、getCareItems itemId対応、デモチャットシードデータ追加 |

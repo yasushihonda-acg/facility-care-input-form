@@ -156,6 +156,8 @@ last_reviewed: 2025-12-20
 | [ROADMAP.md](./ROADMAP.md) | 開発ロードマップ | canonical |
 | [CURRENT_STATUS.md](./CURRENT_STATUS.md) | 現在のステータス | working |
 | [FIREBASE_STORAGE_MIGRATION_SPEC.md](./FIREBASE_STORAGE_MIGRATION_SPEC.md) | Firebase Storage移行 | working |
+| [DEMO_STAFF_CONTAINMENT.md](./DEMO_STAFF_CONTAINMENT.md) | デモ環境完結・離脱防止（Phase 20） | canonical |
+| [FOOTERNAV_DEMO_FIX_SPEC.md](./FOOTERNAV_DEMO_FIX_SPEC.md) | デモモードAPI 500エラー修正（Phase 20.1） | canonical |
 
 ### 週次ステータス
 
@@ -187,5 +189,6 @@ last_reviewed: 2025-12-20
 
 | 日付 | 変更内容 |
 |------|----------|
+| 2025-12-20 | DEMO_STAFF_CONTAINMENT.md, FOOTERNAV_DEMO_FIX_SPEC.md 追加（Phase 20/20.1） |
 | 2025-12-20 | PHOTO_UPLOAD_SPEC.md を deprecated に変更（Phase 17移行済み） |
 | 2025-12-20 | 初版作成・ドキュメント整理 |

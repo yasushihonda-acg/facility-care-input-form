@@ -469,7 +469,32 @@ StaffRecordDialog.tsxに写真アップロード機能を追加。Firebase Stora
 **E2Eテスト**: `photo-evidence.spec.ts` (5件)
 **設計書**: `docs/PHOTO_EVIDENCE_DISPLAY_SPEC.md`
 
-### E2Eテスト（225件、Phase 15.9で+13件）
+### Phase 20: デモ環境完結（離脱防止）(2025-12-20 完了)
+スタッフデモ（/demo/staff）から本番環境への意図しない離脱を防止。
+
+**主な変更**:
+- MealInputPage.tsx: 戻るボタンをデモモード対応
+- ItemTimeline.tsx: リンクをデモモード対応
+- App.tsx: /demo/staff/statsルート追加
+
+**E2Eテスト**: demo-staff-containment.spec.ts (15件)
+**設計書**: `docs/DEMO_STAFF_CONTAINMENT.md`
+
+### Phase 20.1: デモモードAPI 500エラー修正 (2025-12-20 完了)
+デモページでのgetActiveChatItems/getNotifications API 500エラーを修正。
+
+**原因**:
+- FooterNav.tsx/NotificationSection.tsx: デモモードでもAPIを呼び出していた
+- Firestoreインデックス不足
+
+**修正**:
+- デモモードではAPIをスキップし、ダミーデータを使用
+- firestore.indexes.json: 複合インデックス2件追加
+
+**E2Eテスト**: footer-nav-demo.spec.ts (9件)
+**設計書**: `docs/FOOTERNAV_DEMO_FIX_SPEC.md`
+
+### E2Eテスト（249件、Phase 20.1で+24件）
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |
@@ -485,6 +510,8 @@ StaffRecordDialog.tsxに写真アップロード機能を追加。Firebase Stora
 | `photo-evidence.spec.ts` | 5件 | Phase 16 写真エビデンス表示 |
 | `chat-integration.spec.ts` | 8件 | Phase 18 チャット連携 |
 | `record-chat-integration.spec.ts` | 8件 | Phase 19 記録のチャット連携 |
+| `demo-staff-containment.spec.ts` | 15件 | Phase 20 デモ環境完結・離脱防止 |
+| `footer-nav-demo.spec.ts` | 9件 | Phase 20.1 デモモードAPI 500修正 |
 
 - **パリティテスト**: デモと本番で同じUIが表示されることを検証
 - **実行**: `cd frontend && npx playwright test`
