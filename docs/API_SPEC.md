@@ -861,6 +861,7 @@ Webhook URLの動作確認テスト。管理者が設定保存前にURLの有効
 
 | パラメータ | 型 | 必須 | 説明 |
 |-----------|-----|------|------|
+| `itemId` | string | No | 品物IDで単一取得（指定時は他のフィルタは無視） |
 | `residentId` | string | No | 入居者IDで絞り込み |
 | `status` | string | No | ステータスで絞り込み（`pending`, `served`, `consumed`, `expired`, `discarded`） |
 | `sortBy` | string | No | ソート項目（`sentDate`, `expirationDate`, `createdAt`） |

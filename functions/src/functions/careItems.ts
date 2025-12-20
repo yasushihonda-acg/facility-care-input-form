@@ -271,6 +271,7 @@ async function getCareItemsHandler(
 
     // クエリパラメータを取得
     const params: GetCareItemsRequest = {
+      itemId: req.query.itemId as string | undefined,
       residentId: req.query.residentId as string | undefined,
       userId: req.query.userId as string | undefined,
       status: req.query.status as ItemStatus | ItemStatus[] | undefined,
@@ -284,6 +285,71 @@ async function getCareItemsHandler(
     functions.logger.info("getCareItems started", params);
 
     const db = getFirestore();
+
+    // itemIdが指定された場合は単一ドキュメントを直接取得
+    if (params.itemId) {
+      const docRef = db.collection(CARE_ITEMS_COLLECTION).doc(params.itemId);
+      const docSnap = await docRef.get();
+
+      if (!docSnap.exists) {
+        const response: ApiResponse<GetCareItemsResponse> = {
+          success: true,
+          data: {
+            items: [],
+            total: 0,
+            hasMore: false,
+          },
+          timestamp,
+        };
+        res.status(200).json(response);
+        return;
+      }
+
+      const data = docSnap.data()!;
+      const item: CareItem = {
+        id: docSnap.id,
+        residentId: data.residentId,
+        userId: data.userId,
+        itemName: data.itemName,
+        category: data.category,
+        sentDate: data.sentDate,
+        quantity: data.quantity,
+        unit: data.unit,
+        expirationDate: data.expirationDate,
+        storageMethod: data.storageMethod,
+        servingMethod: data.servingMethod,
+        servingMethodDetail: data.servingMethodDetail,
+        plannedServeDate: data.plannedServeDate,
+        noteToStaff: data.noteToStaff,
+        actualServeDate: data.actualServeDate,
+        servedQuantity: data.servedQuantity,
+        servedBy: data.servedBy,
+        consumptionRate: data.consumptionRate,
+        consumptionStatus: data.consumptionStatus,
+        consumptionNote: data.consumptionNote,
+        recordedBy: data.recordedBy,
+        noteToFamily: data.noteToFamily,
+        status: data.status,
+        remainingQuantity: data.remainingQuantity,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+      } as CareItem;
+
+      functions.logger.info("getCareItems by itemId success", { itemId: params.itemId });
+
+      const response: ApiResponse<GetCareItemsResponse> = {
+        success: true,
+        data: {
+          items: [item],
+          total: 1,
+          hasMore: false,
+        },
+        timestamp,
+      };
+      res.status(200).json(response);
+      return;
+    }
+
     let query = db.collection(CARE_ITEMS_COLLECTION)
       .orderBy("sentDate", "desc")
       .orderBy("createdAt", "desc");

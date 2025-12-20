@@ -582,6 +582,7 @@ export interface SubmitCareItemResponse {
 
 /** 品物一覧取得リクエスト */
 export interface GetCareItemsRequest {
+  itemId?: string; // 単一品物取得用
   residentId?: string;
   userId?: string;
   status?: ItemStatus | ItemStatus[];
