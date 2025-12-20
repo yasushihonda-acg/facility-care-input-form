@@ -24,6 +24,20 @@
 3. **Push**: `git push origin main` でリモートリポジトリに反映
 4. **確認**: 会話クリア前に必ず未pushの変更がないか確認
 
+### 本番デプロイ（自動）
+
+**重要**: 本番デプロイは `git push origin main` で自動実行される。手動デプロイは不要。
+
+- mainブランチへのpush時に `deploy.yml` ワークフローが自動実行
+- Functions、Hosting、Firestore Rulesが自動デプロイされる
+- **`firebase deploy` コマンドを手動で実行する必要はない**
+- デプロイ状況は `gh run list` で確認可能
+
+```bash
+# デプロイ状況確認
+gh run list --repo yasushihonda-acg/facility-care-input-form --limit 3
+```
+
 ### GitHub Pages（プロジェクト紹介ページ）
 
 **公開URL**: https://yasushihonda-acg.github.io/facility-care-input-form/
@@ -300,7 +314,15 @@ cd frontend && npm run dev
 ```
 
 ### デプロイ
+
+> **重要**: 本番デプロイはGitHub Actionsで自動実行されます。
+> mainブランチにpushすると `deploy.yml` が自動的にFirebaseへデプロイします。
+> **手動での `firebase deploy` は不要です。**
+
 ```bash
+# ※ 以下は緊急時・手動デプロイが必要な場合のみ使用
+# 通常はgit push origin mainで自動デプロイされる
+
 # Functions デプロイ
 firebase deploy --only functions
 
@@ -312,6 +334,11 @@ firebase deploy --only firestore:rules
 
 # 全てデプロイ
 firebase deploy
+```
+
+デプロイ状況確認:
+```bash
+gh run list --repo yasushihonda-acg/facility-care-input-form --limit 3
 ```
 
 ---
