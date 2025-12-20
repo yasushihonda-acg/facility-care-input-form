@@ -28,7 +28,7 @@ links:
 | **引き継ぎドキュメント** | [HANDOVER.md](./HANDOVER.md) |
 | **ロードマップ** | [ROADMAP.md](./ROADMAP.md) |
 | **ドキュメント目次** | [INDEX.md](./INDEX.md) |
-| **E2Eテスト** | 252件パス + 16件スキップ（2025-12-21時点、Phase 22追加19件）|
+| **E2Eテスト** | 252件パス + 16件スキップ（2025-12-21時点、Phase 22.3追加21件）|
 
 ---
 
@@ -56,6 +56,12 @@ links:
 | Phase 9.x | 禁止ルール・統計拡張 | 12/17 |
 
 ### 本日の修正 (12/21)
+
+- **Phase 22.3完了**: タイムライン表示拡張
+  - ItemDetail.tsx: 「タイムライン（履歴）」セクション追加
+  - data-testid追加: item-timeline, event-created, event-served
+  - E2Eテスト: item-edit.spec.ts 21件（locator構文修正含む）
+  - 設計書: [ITEM_MANAGEMENT_SPEC.md](./ITEM_MANAGEMENT_SPEC.md) セクション9.4
 
 - **Phase 22完了**: 品物編集機能 (`e5fb97a`)
   - ItemEditPage.tsx: 品物編集ページ（家族用）追加

@@ -1182,6 +1182,34 @@ ItemTimeline.tsx の表示形式：
 
 ### 9.6 API拡張
 
+#### getItemEvents API（新規）
+
+```
+GET /getItemEvents?itemId={itemId}
+```
+
+**リクエスト**:
+```typescript
+interface GetItemEventsRequest {
+  itemId: string;
+  limit?: number;      // デフォルト: 50
+}
+```
+
+**レスポンス**:
+```typescript
+interface GetItemEventsResponse {
+  success: boolean;
+  data?: {
+    events: CareItemEvent[];
+  };
+  error?: ApiError;
+  timestamp: string;
+}
+```
+
+**権限**: 家族・スタッフ共通
+
 #### updateCareItem API の拡張
 
 ```typescript

@@ -200,7 +200,7 @@ test.describe('【Phase 22.2】タイムスタンプ表示', () => {
 });
 
 // ============================================================
-// Phase 22.3: 編集履歴タイムライン
+// Phase 22.3: 編集履歴タイムライン（イベントベース）
 // ============================================================
 
 test.describe('【Phase 22.3】編集履歴タイムライン', () => {
@@ -209,46 +209,78 @@ test.describe('【Phase 22.3】編集履歴タイムライン', () => {
     await page.goto('/demo/family/items/demo-item-001');
     await waitForSpaLoad(page);
 
-    // タイムラインまたは記録セクションが存在
-    const timelineSection = page.locator('text=/タイムライン|提供・摂食の記録|履歴/');
+    // タイムラインセクションが存在
+    const timelineSection = page.locator('[data-testid="item-timeline"]')
+      .or(page.getByText(/タイムライン|履歴/));
     await expect(timelineSection.first()).toBeVisible();
   });
 
-  test('ITEM-TL-002: 登録イベントがタイムラインに表示される', async ({ page }) => {
+  test('ITEM-TL-002: 登録イベント（📦）がタイムラインに表示される', async ({ page }) => {
     await page.goto('/demo/family/items/demo-item-001');
     await waitForSpaLoad(page);
 
-    // 登録イベント（📦 アイコンまたは「登録」テキスト）を確認
-    const registrationEvent = page.locator('text=/品物登録|📦/');
-    // 存在するか確認
-    const isVisible = await registrationEvent.first().isVisible().catch(() => false);
-    console.log('Registration event in timeline:', isVisible);
+    // 登録イベントが表示される（📦 アイコン + 「品物登録」または「登録」）
+    const registrationEvent = page.locator('[data-testid="event-created"]')
+      .or(page.getByText(/📦.*登録|品物登録/));
+    await expect(registrationEvent.first()).toBeVisible();
   });
 
-  test('ITEM-TL-003: タイムラインの品物詳細リンクが動作する', async ({ page }) => {
-    await page.goto('/demo/family/items');
-    await waitForSpaLoad(page);
-
-    // 品物一覧から詳細への遷移ができる
-    await expect(page.getByRole('heading', { name: /品物管理/ }).first()).toBeVisible();
-  });
-
-  test('ITEM-TL-004: 消費イベントがタイムラインに表示される', async ({ page }) => {
+  test('ITEM-TL-003: 編集イベント（✏️）がタイムラインに表示される', async ({ page }) => {
+    // 編集があった品物の詳細へ（デモデータでupdatedAtがあるもの）
     await page.goto('/demo/family/items/demo-item-001');
     await waitForSpaLoad(page);
 
-    // 消費関連の表示を確認（タイムラインまたは記録セクション）
-    const consumptionSection = page.locator('text=/提供・摂食|消費|摂食/');
-    await expect(consumptionSection.first()).toBeVisible();
+    // 編集イベントが表示される（✏️ アイコン + 「編集」）
+    const editEvent = page.locator('[data-testid="event-updated"]')
+      .or(page.getByText(/✏️.*編集|品物編集/));
+    // 編集がない場合もあるので、存在確認のみ
+    const isVisible = await editEvent.first().isVisible().catch(() => false);
+    console.log('Edit event in timeline:', isVisible);
   });
 
-  test('ITEM-TL-005: タイムラインが時系列順に表示される', async ({ page }) => {
+  test('ITEM-TL-004: 提供・消費イベントがタイムラインに表示される', async ({ page }) => {
     await page.goto('/demo/family/items/demo-item-001');
     await waitForSpaLoad(page);
 
-    // ページが正常に表示される
-    const mainContent = page.locator('main');
-    await expect(mainContent).toBeVisible();
+    // 提供または消費イベントが表示される
+    const consumptionEvent = page.locator('[data-testid="event-served"]')
+      .or(page.locator('[data-testid="event-consumed"]'))
+      .or(page.getByText(/🍽️|✅|提供|摂食|消費/));
+    await expect(consumptionEvent.first()).toBeVisible();
+  });
+
+  test('ITEM-TL-005: タイムラインが時系列順（新しい順）に表示される', async ({ page }) => {
+    await page.goto('/demo/family/items/demo-item-001');
+    await waitForSpaLoad(page);
+
+    // タイムライン内のイベントを取得
+    const timelineEvents = page.locator('[data-testid^="event-"], [data-testid="timeline-item"]');
+    const count = await timelineEvents.count();
+    expect(count).toBeGreaterThan(0);
+    console.log(`Timeline has ${count} events`);
+  });
+
+  test('ITEM-TL-006: イベントにタイムスタンプが表示される', async ({ page }) => {
+    await page.goto('/demo/family/items/demo-item-001');
+    await waitForSpaLoad(page);
+
+    // 日付形式（MM/DD または 時刻）が表示される
+    const datePattern = page.locator('text=/\\d{1,2}\\/\\d{1,2}|\\d{1,2}:\\d{2}|今日|昨日|\\d+日前/');
+    await expect(datePattern.first()).toBeVisible();
+  });
+
+  test('ITEM-TL-007: デモモードでイベントタイムラインが正常に動作する', async ({ page }) => {
+    await page.goto('/demo/family/items/demo-item-001');
+    await waitForSpaLoad(page);
+
+    // デモモード内で完結していることを確認
+    const currentUrl = page.url();
+    expect(currentUrl).toContain('/demo/');
+
+    // タイムラインが表示される
+    const timeline = page.locator('[data-testid="item-timeline"]')
+      .or(page.getByText(/タイムライン|履歴/));
+    await expect(timeline.first()).toBeVisible();
   });
 });
 

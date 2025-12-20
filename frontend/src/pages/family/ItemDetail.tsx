@@ -348,10 +348,11 @@ export function ItemDetail() {
           </div>
         )}
 
-        {/* 提供・摂食の記録 */}
-        <div className="px-4 mb-4">
+        {/* Phase 22.3: 提供・摂食の記録（タイムライン） */}
+        {/* @see docs/ITEM_MANAGEMENT_SPEC.md セクション9.4 */}
+        <div className="px-4 mb-4" data-testid="item-timeline">
           <div className="bg-white rounded-lg shadow-card p-4">
-            <h2 className="font-bold text-sm text-gray-700 mb-3">提供・摂食の記録</h2>
+            <h2 className="font-bold text-sm text-gray-700 mb-3">タイムライン（履歴）</h2>
 
             {logsLoading ? (
               <p className="text-gray-500 text-center py-4">読み込み中...</p>
@@ -371,7 +372,7 @@ export function ItemDetail() {
                   const borderColor = getLogBorderColor(log.consumptionRate);
 
                   return (
-                    <div key={log.id} className={`border-l-4 ${borderColor} pl-3 py-2`}>
+                    <div key={log.id} className={`border-l-4 ${borderColor} pl-3 py-2`} data-testid="event-served">
                       <div className="flex items-center gap-2 text-sm text-gray-500">
                         <span>🍽️</span>
                         <span>{formatDateTime(log.recordedAt)}</span>
@@ -422,12 +423,12 @@ export function ItemDetail() {
                 })}
 
                 {/* 登録イベント */}
-                <div className="border-l-4 border-gray-300 pl-3 py-2">
+                <div className="border-l-4 border-gray-300 pl-3 py-2" data-testid="event-created">
                   <div className="flex items-center gap-2 text-sm text-gray-500">
                     <span>📦</span>
                     <span>{formatDateTime(item.sentDate + 'T10:30:00')}</span>
                   </div>
-                  <p className="text-sm mt-1">登録しました</p>
+                  <p className="text-sm mt-1">📦 品物登録</p>
                 </div>
               </div>
             )}
