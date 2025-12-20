@@ -344,7 +344,7 @@ service cloud.firestore {
 | [PHOTO_UPLOAD_SPEC.md](./PHOTO_UPLOAD_SPEC.md) | 写真アップロード仕様 |
 | [SETTINGS_MODAL_UI_SPEC.md](./SETTINGS_MODAL_UI_SPEC.md) | 設定モーダルUI仕様 |
 | [MEAL_INPUT_FORM_SPEC.md](./MEAL_INPUT_FORM_SPEC.md) | 食事入力フォーム設計 |
-| [SHEET_B_STRUCTURE.md](./SHEET_B_STRUCTURE.md) | Sheet B（書き込み先）構造 |
+| [SHEET_B_STRUCTURE.md](./archive/SHEET_B_STRUCTURE.md) | Sheet B（書き込み先）構造 |
 | [FAMILY_UX_DESIGN.md](./FAMILY_UX_DESIGN.md) | **家族向けUX設計（Flow C詳細）** |
 
 ---

@@ -1,3 +1,10 @@
+---
+status: archived
+scope: feature
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # デモショーケース設計書
 
 > **作成日**: 2025年12月17日

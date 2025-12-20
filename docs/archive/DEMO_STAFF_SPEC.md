@@ -1,3 +1,10 @@
+---
+status: archived
+scope: feature
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # Phase 14: スタッフ用デモページ設計書
 
 > **作成日**: 2025年12月19日

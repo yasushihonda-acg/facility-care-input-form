@@ -193,7 +193,7 @@ export interface EvidenceData {
 | ドキュメント | 内容 |
 |--------------|------|
 | [FAMILY_UX_DESIGN.md](./FAMILY_UX_DESIGN.md) | 家族向けUX設計 |
-| [SHEET_A_STRUCTURE.md](./SHEET_A_STRUCTURE.md) | 食事シート構造 |
+| [SHEET_A_STRUCTURE.md](./archive/SHEET_A_STRUCTURE.md) | 食事シート構造 |
 | [CURRENT_STATUS.md](./CURRENT_STATUS.md) | 現在の進捗 |
 
 ---

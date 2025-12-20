@@ -7,6 +7,8 @@ last_reviewed: 2025-12-20
 
 # API テスト計画書（Firestore undefined エラー検証）
 
+> **📌 統合ドキュメント**: 本文の要点は [TEST_STRATEGY.md](./TEST_STRATEGY.md) に統合されています。
+
 > **作成日**: 2025年12月17日
 > **目的**: オプショナルフィールドをundefinedで送信した場合のFirestoreエラー検証
 > **実行環境**: 本番環境（安全に実行・クリーンアップ完了）

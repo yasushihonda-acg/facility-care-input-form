@@ -4,8 +4,8 @@ scope: data
 owner: core-team
 last_reviewed: 2025-12-20
 links:
-  - docs/SHEET_A_STRUCTURE.md
-  - docs/SHEET_B_STRUCTURE.md
+  - docs/archive/SHEET_A_STRUCTURE.md
+  - docs/archive/SHEET_B_STRUCTURE.md
   - docs/API_SPEC.md
 ---
 
@@ -60,7 +60,7 @@ links:
 
 ### 3.1 Sheet A（記録の結果 / 読み取り専用）
 
-**詳細仕様**: [SHEET_A_STRUCTURE.md](./SHEET_A_STRUCTURE.md)
+**詳細仕様**: [SHEET_A_STRUCTURE.md](./archive/SHEET_A_STRUCTURE.md)
 
 施設側の記録システムから出力されたケア記録データ。家族向け閲覧用。
 
@@ -82,7 +82,7 @@ links:
 
 ### 3.2 Sheet B（実績入力先 / 書き込み用）
 
-**詳細仕様**: [SHEET_B_STRUCTURE.md](./SHEET_B_STRUCTURE.md)
+**詳細仕様**: [SHEET_B_STRUCTURE.md](./archive/SHEET_B_STRUCTURE.md)
 
 PWAからの入力データを保存するシート。
 
@@ -160,8 +160,8 @@ gs://facility-care-input-form.appspot.com/
 
 ## 8. 関連ドキュメント
 
-- [SHEET_A_STRUCTURE.md](./SHEET_A_STRUCTURE.md) - Sheet A 詳細仕様
-- [SHEET_B_STRUCTURE.md](./SHEET_B_STRUCTURE.md) - Sheet B 詳細仕様
+- [SHEET_A_STRUCTURE.md](./archive/SHEET_A_STRUCTURE.md) - Sheet A 詳細仕様
+- [SHEET_B_STRUCTURE.md](./archive/SHEET_B_STRUCTURE.md) - Sheet B 詳細仕様
 - [API_SPEC.md](./API_SPEC.md) - API仕様
 
 ---

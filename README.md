@@ -10,6 +10,7 @@
 | [デモショーケース](https://facility-care-input-form.web.app/demo) | ガイド付きデモ（本番データに影響なし） |
 | [管理者モード](https://facility-care-input-form.web.app/input/meal?admin=true) | 設定変更画面 |
 | [プロジェクト紹介](https://yasushihonda-acg.github.io/facility-care-input-form/) | GitHub Pages（Mermaid図付き） |
+| [ドキュメント目次](docs/INDEX.md) | 設計・仕様書の一覧 |
 
 ---
 

@@ -43,7 +43,7 @@ last_reviewed: 2025-12-20
 | ドキュメント | 関連箇所 |
 |-------------|----------|
 | [MEAL_INPUT_FORM_SPEC.md](./MEAL_INPUT_FORM_SPEC.md) | 食事入力フォーム全体設計 |
-| [SHEET_B_STRUCTURE.md](./SHEET_B_STRUCTURE.md) | Sheet Bのカラム構造 |
+| [SHEET_B_STRUCTURE.md](./archive/SHEET_B_STRUCTURE.md) | Sheet Bのカラム構造 |
 | [ITEM_MANAGEMENT_SPEC.md](./ITEM_MANAGEMENT_SPEC.md) | 品物管理機能 |
 | [INVENTORY_CONSUMPTION_SPEC.md](./INVENTORY_CONSUMPTION_SPEC.md) | 消費ログ・在庫追跡 |
 | [PRESET_MANAGEMENT_SPEC.md](./PRESET_MANAGEMENT_SPEC.md) | プリセット（いつもの指示） |

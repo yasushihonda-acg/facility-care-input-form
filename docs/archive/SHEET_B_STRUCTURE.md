@@ -1,3 +1,10 @@
+---
+status: archived
+scope: data
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # Sheet B（実績入力先）構造ドキュメント
 
 > **最終更新**: 2025年12月14日

@@ -1,3 +1,10 @@
+---
+status: archived
+scope: data
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # Sheet A（記録の結果）データ構造仕様書
 **スプレッドシートID**: `1Gf8QTbGyKB7rn5QQa5cYOg1NNYWMV8lzqySdbDkfG-w`
 **解析日時**: 2025-12-13T08:24:32.540Z

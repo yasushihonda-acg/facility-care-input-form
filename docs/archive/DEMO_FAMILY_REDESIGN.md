@@ -1,3 +1,10 @@
+---
+status: archived
+scope: feature
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # 家族向けデモ特化 再設計書
 
 > **作成日**: 2025年12月17日

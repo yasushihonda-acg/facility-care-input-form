@@ -1,3 +1,10 @@
+---
+status: archived
+scope: feature
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # 品質チェック: デモモード書き込み操作の安全対策
 
 > **実施日時**: 2025年12月17日
