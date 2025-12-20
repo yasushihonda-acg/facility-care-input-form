@@ -142,6 +142,9 @@ function App() {
       <Route path="/demo/staff/chats" element={<ChatListPage userType="staff" />} />
       <Route path="/demo/staff/chat/:id" element={<ItemChatPage userType="staff" userName="スタッフ" />} />
 
+      {/* デモ: スタッフ統計（共有統計ページへリダイレクト） */}
+      <Route path="/demo/staff/stats" element={<Navigate to="/demo/stats" replace />} />
+
       {/* デモ: 統計ダッシュボード */}
       <Route path="/demo/stats" element={<StatsDashboard />} />
 

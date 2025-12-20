@@ -11,7 +11,7 @@ links:
 
 # 現在のステータス
 
-> **最終更新**: 2025年12月20日 (Phase 15.9完了)
+> **最終更新**: 2025年12月20日 (Phase 20完了)
 >
 > このファイルは現在の進捗の**要約**です。詳細は週次ステータスを参照してください。
 
@@ -28,7 +28,7 @@ links:
 | **引き継ぎドキュメント** | [HANDOVER.md](./HANDOVER.md) |
 | **ロードマップ** | [ROADMAP.md](./ROADMAP.md) |
 | **ドキュメント目次** | [INDEX.md](./INDEX.md) |
-| **E2Eテスト** | 225件パス（2025-12-20時点、Phase 15.9追加4件含む） |
+| **E2Eテスト** | 240件パス（2025-12-20時点、Phase 20追加15件含む） |
 
 ---
 
@@ -40,7 +40,8 @@ links:
 
 | Phase | 内容 | 完了日 |
 |-------|------|--------|
-| **Phase 19** | 記録のチャット連携 | 12/20 |
+| **Phase 20** | デモ環境完結（離脱防止） | 12/20 |
+| Phase 19 | 記録のチャット連携 | 12/20 |
 | Phase 18 | チャット連携機能 | 12/19 |
 | Phase 17 | Firebase Storage 写真連携 | 12/18 |
 | Phase 16 | 写真エビデンス表示機能 | 12/18 |
@@ -84,6 +85,14 @@ links:
   - PHOTO_UPLOAD_SPEC.md: 非推奨マーク追加（Phase 17移行済み）
   - STAFF_RECORD_FORM_SPEC.md: データフロー図修正、完了ステータス反映
   - 本番E2Eテスト4件パス（写真アップロード機能）
+- **Phase 20完了**: デモ環境完結（離脱防止）
+  - スタッフデモからの本番環境離脱問題を修正
+  - MealInputPage.tsx: 戻るボタンをデモモード対応
+  - ItemTimeline.tsx: リンクをデモモード対応
+  - App.tsx: `/demo/staff/stats`ルートを追加
+  - E2Eテスト15件追加（demo-staff-containment.spec.ts）
+  - TDDアプローチで実装：Red→Green→回帰テストパス
+  - 設計書: [DEMO_STAFF_CONTAINMENT.md](./DEMO_STAFF_CONTAINMENT.md)
 
 ---
 

@@ -32,6 +32,10 @@ export function ItemTimeline() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
 
+  // デモモード判定
+  const isDemo = location.pathname.startsWith('/demo');
+  const pathPrefix = isDemo ? '/demo' : '';
+
   // 品物一覧から該当品物を取得
   const { data, isLoading, error } = useCareItems({
     residentId: DEMO_RESIDENT_ID,
@@ -60,7 +64,7 @@ export function ItemTimeline() {
           <div className="bg-red-50 text-red-600 p-4 rounded-lg">
             {error ? 'エラーが発生しました' : '品物が見つかりません'}
           </div>
-          <Link to="/view" className="block mt-4 text-primary text-center">
+          <Link to={`${pathPrefix}/view`} className="block mt-4 text-primary text-center">
             ← 記録閲覧に戻る
           </Link>
         </div>
@@ -219,7 +223,7 @@ export function ItemTimeline() {
         {!isFromFamily && item.status !== 'consumed' && (
           <div className="fixed bottom-20 left-0 right-0 px-4 pb-4 bg-gradient-to-t from-gray-50 to-transparent pt-6">
             <Link
-              to={`/staff/family-messages/${item.id}`}
+              to={`${pathPrefix}/staff/family-messages/${item.id}`}
               className="block w-full py-4 bg-primary text-white rounded-lg font-bold text-lg text-center shadow-lg hover:bg-primary-dark transition"
             >
               提供・摂食を記録する

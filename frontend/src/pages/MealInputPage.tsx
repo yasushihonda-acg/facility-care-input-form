@@ -12,10 +12,13 @@ import { Layout } from '../components/Layout';
 import { useMealFormSettings } from '../hooks/useMealFormSettings';
 import { MealSettingsModal } from '../components/MealSettingsModal';
 import { ItemBasedSnackRecord } from '../components/meal';
+import { useDemoMode } from '../hooks/useDemoMode';
 
 export function MealInputPage() {
   const [searchParams] = useSearchParams();
   const isAdminMode = searchParams.get('admin') === 'true';
+  const isDemo = useDemoMode();
+  const backPath = isDemo ? '/demo/view' : '/view';
 
   const { settings, isLoading: isSettingsLoading, saveSettings } = useMealFormSettings();
   const [showSuccess, setShowSuccess] = useState(false);
@@ -28,7 +31,7 @@ export function MealInputPage() {
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <Link
-              to="/view"
+              to={backPath}
               className="p-1 -ml-1 rounded-full hover:bg-white/10 transition-colors"
               aria-label="記録閲覧に戻る"
             >
