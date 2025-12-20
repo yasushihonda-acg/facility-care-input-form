@@ -1,3 +1,10 @@
+---
+status: working
+scope: ops
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # Firebase Storage 移行設計書
 
 > **作成日**: 2025年12月19日

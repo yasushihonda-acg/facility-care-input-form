@@ -1,3 +1,10 @@
+---
+status: working
+scope: feature
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # 写真エビデンス表示機能設計書
 
 > **作成日**: 2025年12月19日

@@ -1,3 +1,10 @@
+---
+status: working
+scope: feature
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # スタッフ用記録入力フォーム リデザイン仕様書
 
 > **Phase 15**: スタッフ用記録入力フォームの統一化

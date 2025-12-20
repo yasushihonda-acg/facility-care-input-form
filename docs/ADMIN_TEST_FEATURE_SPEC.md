@@ -1,3 +1,10 @@
+---
+status: working
+scope: test
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # 管理設定テスト機能 設計書
 
 > **作成日**: 2025年12月15日
@@ -163,7 +170,10 @@ export const testWebhook = functions.https.onRequest(async (req, res) => {
     return res.status(400).json({ success: false, message: 'webhookUrl is required' });
   }
 
-  const testMessage = '[テスト] 施設ケア入力フォームからの接続テストです。\nこのメッセージが表示されれば設定は正常です。\n\n送信時刻: ' + new Date().toLocaleString('ja-JP');
+  const testMessage = '[テスト] 施設ケア入力フォームからの接続テストです。
+このメッセージが表示されれば設定は正常です。
+
+送信時刻: ' + new Date().toLocaleString('ja-JP');
 
   const result = await sendToGoogleChat(webhookUrl, testMessage);
 

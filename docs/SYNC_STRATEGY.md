@@ -1,8 +1,19 @@
+---
+status: canonical
+scope: core
+owner: core-team
+last_reviewed: 2025-12-20
+links:
+  - docs/ARCHITECTURE.md
+  - docs/DATA_MODEL.md
+---
+
 # 同期戦略設計書
 
-> **最終更新**: 2025年12月13日
+> **最終更新**: 2025年12月20日
 >
 > このドキュメントは、Sheet A（記録の結果）からFirestoreへのデータ同期戦略を定義します。
+> 競合防止設計（旧 SYNC_CONCURRENCY.md）の内容も統合しています。
 
 ---
 
@@ -323,10 +334,57 @@ async function syncSheetData(records: PlanDataRecord[]): Promise<void> {
 
 ---
 
-## 10. 関連ドキュメント
+## 10. 並行制御・競合防止
+
+> **統合元**: 旧 SYNC_CONCURRENCY.md（[archive/SYNC_CONCURRENCY.md](./archive/SYNC_CONCURRENCY.md)）
+
+### 10.1 問題と対策
+
+| 問題 | 原因 | 対策 |
+|------|------|------|
+| 重複データ発生 | 同時同期実行 | Cloud Scheduler による排他制御 |
+| データ不整合 | 差分同期の競合 | sync_metadata によるロック管理 |
+
+### 10.2 同期方式
+
+| 同期種別 | 実行 | 頻度 |
+|----------|------|------|
+| 差分同期 | Cloud Scheduler | 15分ごと |
+| 完全同期 | Cloud Scheduler | 日次午前3時 |
+| 手動同期 | ユーザー操作 | 任意 |
+
+### 10.3 sync_metadata コレクション
+
+```typescript
+interface SyncMetadata {
+  lastSyncAt: Timestamp;      // 最終同期日時
+  syncType: 'diff' | 'full';  // 同期種別
+  status: 'running' | 'completed' | 'failed';
+  recordCount: number;
+}
+```
+
+### 10.4 重複防止の保証
+
+1. **Cloud Scheduler**: 同時実行を防止（cron 式で排他）
+2. **sync_metadata**: ロック状態をチェック
+3. **完全同期**: 洗い替えで重複を解消
+
+---
+
+## 11. 関連ドキュメント
 
 | ドキュメント | 内容 |
 |--------------|------|
-| [SHEET_A_STRUCTURE.md](./SHEET_A_STRUCTURE.md) | シート別の列構造詳細 |
-| [DEMO_PWA_SPEC.md](./DEMO_PWA_SPEC.md) | PWA仕様 |
+| [DATA_MODEL.md](./DATA_MODEL.md) | データモデル統合ドキュメント |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | システム全体設計 |
+| [archive/SYNC_CONCURRENCY.md](./archive/SYNC_CONCURRENCY.md) | 競合防止設計（詳細版・アーカイブ） |
+
+---
+
+## 更新履歴
+
+| 日付 | 変更内容 |
+|------|----------|
+| 2025-12-20 | SYNC_CONCURRENCY.md を統合 |
+| 2025-12-13 | 初版作成 |

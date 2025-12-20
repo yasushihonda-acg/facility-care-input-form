@@ -1,3 +1,10 @@
+---
+status: canonical
+scope: feature
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # フッターナビゲーション設計書
 
 > **ステータス**: ✅ Phase 18 チャット連携対応完了

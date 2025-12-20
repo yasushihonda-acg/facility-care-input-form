@@ -1,3 +1,10 @@
+---
+status: working
+scope: feature
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # 品物管理機能 詳細設計書
 
 > **最終更新**: 2025年12月17日（Phase 9.0 再設計版 + 禁止ルール追加）

@@ -1,3 +1,10 @@
+---
+status: canonical
+scope: ops
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # 引き継ぎドキュメント
 
 > **最終更新**: 2025年12月20日（Phase 19: 記録のチャット連携 - 完了）

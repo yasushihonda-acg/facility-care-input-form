@@ -1,3 +1,10 @@
+---
+status: canonical
+scope: core
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # API仕様書 (Dev Mode)
 
 ## 1. 概要

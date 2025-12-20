@@ -1,3 +1,10 @@
+---
+status: working
+scope: feature
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # 家族向けUX設計書 (Family Side UX Design)
 
 > **最終更新**: 2025年12月17日
@@ -441,8 +448,10 @@ export const DEMO_CARE_INSTRUCTIONS: CareInstruction[] = [
     mealTime: "lunch",
     menuName: "キウイ",
     processingDetail:
-      "輪切り4等分をさらに半分に切ってください。\n" +
-      "皮は必ず剥いてください。\n" +
+      "輪切り4等分をさらに半分に切ってください。
+" +
+      "皮は必ず剥いてください。
+" +
       "種が多い部分は避けてください。",
     conditions: [
       { trigger: "leftover", action: "reserve_snack" }

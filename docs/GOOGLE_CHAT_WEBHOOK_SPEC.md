@@ -1,3 +1,10 @@
+---
+status: working
+scope: integration
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # Google Chat Webhook連携設計書
 
 > **最終更新**: 2025年12月15日
@@ -290,7 +297,8 @@ function formatMealRecordMessage(record: MealRecordForChat): string {
     `【投稿ID】：${record.postId}`,
   ];
 
-  return lines.join('\n');
+  return lines.join('
+');
 }
 
 /**

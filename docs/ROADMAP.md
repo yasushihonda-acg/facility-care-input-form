@@ -1,3 +1,10 @@
+---
+status: canonical
+scope: ops
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # 開発ロードマップ
 
 ## 目標

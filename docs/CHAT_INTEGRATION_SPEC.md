@@ -1,3 +1,10 @@
+---
+status: canonical
+scope: integration
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # チャット連携機能 設計書
 
 > **ステータス**: ✅ 実装完了（Phase 18 + Phase 19）

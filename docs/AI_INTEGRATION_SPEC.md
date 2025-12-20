@@ -1,3 +1,10 @@
+---
+status: working
+scope: integration
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # Gemini AI連携 詳細設計書
 
 > **最終更新**: 2025年12月18日
@@ -1237,7 +1244,9 @@ const handleApplyPreset = useCallback((preset: PresetSuggestion) => {
     }),
     // スタッフへの申し送り（指示内容を追加）
     noteToStaff: prev.noteToStaff
-      ? `${prev.noteToStaff}\n\n【いつもの指示】${preset.instruction.content}`
+      ? `${prev.noteToStaff}
+
+【いつもの指示】${preset.instruction.content}`
       : `【いつもの指示】${preset.instruction.content}`,
     // 適用済みプリセットID記録
     appliedPresetIds: [...(prev.appliedPresetIds || []), preset.presetId],

@@ -1,3 +1,10 @@
+---
+status: working
+scope: feature
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # 品物起点の間食記録・スケジュール拡張設計書
 
 > **最終更新**: 2025年12月19日

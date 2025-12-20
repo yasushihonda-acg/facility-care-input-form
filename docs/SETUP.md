@@ -1,3 +1,10 @@
+---
+status: canonical
+scope: ops
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # 環境セットアップガイド（CLI版）
 
 本ドキュメントは、全ての操作をCLIで実行するためのセットアップ手順書です。

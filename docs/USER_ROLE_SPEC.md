@@ -1,3 +1,10 @@
+---
+status: canonical
+scope: core
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # ユーザーロール・権限設計書
 
 > **最終更新**: 2025年12月16日（Phase 9.0 再設計版）

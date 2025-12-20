@@ -1,3 +1,10 @@
+---
+status: working
+scope: feature
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # タスク管理機能 詳細設計書
 
 > **最終更新**: 2025年12月16日
@@ -199,7 +206,8 @@ const items = await firestore
 ```typescript
 {
   title: `【提供予定】${item.itemName}を提供してください`,
-  description: `提供方法: ${item.servingMethod}\n${item.servingMethodDetail || ''}`,
+  description: `提供方法: ${item.servingMethod}
+${item.servingMethodDetail || ''}`,
   taskType: 'serve_reminder',
   relatedItemId: item.id,
   dueDate: today,

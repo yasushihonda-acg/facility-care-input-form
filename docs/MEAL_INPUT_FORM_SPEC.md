@@ -1,3 +1,10 @@
+---
+status: working
+scope: feature
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # 食事入力フォーム設計書
 
 > **最終更新**: 2025年12月14日

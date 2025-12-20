@@ -1,3 +1,10 @@
+---
+status: canonical
+scope: core
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # ビュー構成設計書
 
 > **最終更新**: 2025年12月17日

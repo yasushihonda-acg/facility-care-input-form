@@ -1,3 +1,10 @@
+---
+status: working
+scope: test
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # E2Eテスト仕様書
 
 > **作成日**: 2025年12月17日

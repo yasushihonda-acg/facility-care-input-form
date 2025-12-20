@@ -1,3 +1,10 @@
+---
+status: working
+scope: test
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # API テスト計画書（Firestore undefined エラー検証）
 
 > **作成日**: 2025年12月17日

@@ -1,3 +1,10 @@
+---
+status: working
+scope: integration
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # MoE複眼チェック分析: 品物管理 × ケア指示 統合設計
 
 ## 概要

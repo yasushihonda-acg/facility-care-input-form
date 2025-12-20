@@ -1,3 +1,10 @@
+---
+status: working
+scope: feature
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # デイサービス選択肢機能 設計書
 
 > **作成日**: 2025年12月15日

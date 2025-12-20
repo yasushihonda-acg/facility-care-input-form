@@ -1,3 +1,10 @@
+---
+status: working
+scope: feature
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # FIFO（先入れ先出し）対応設計書
 
 > **作成日**: 2025年12月18日

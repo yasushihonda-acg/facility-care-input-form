@@ -1,4 +1,16 @@
+---
+status: archived
+scope: core
+owner: core-team
+last_reviewed: 2025-12-20
+links:
+  - docs/SYNC_STRATEGY.md
+---
+
 # 同期処理の競合防止設計書
+
+> **⚠️ アーカイブ済み**: 本ドキュメントの要点は [SYNC_STRATEGY.md](../SYNC_STRATEGY.md) に統合されました。
+> 詳細な経緯・実装の参照用としてアーカイブに保存しています。
 
 > **作成日**: 2025-12-14
 > **更新日**: 2025-12-14

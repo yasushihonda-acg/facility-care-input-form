@@ -1,3 +1,10 @@
+---
+status: working
+scope: feature
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # デザインガイドライン
 
 > **作成日**: 2025年12月13日

@@ -1,3 +1,10 @@
+---
+status: working
+scope: feature
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # 予実管理設計書（Plan/Result Management Design）
 
 > **最終更新**: 2025年12月15日

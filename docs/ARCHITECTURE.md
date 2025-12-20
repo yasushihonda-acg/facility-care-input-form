@@ -1,3 +1,10 @@
+---
+status: canonical
+scope: core
+owner: core-team
+last_reviewed: 2025-12-20
+---
+
 # システムアーキテクチャ設計書
 
 ## 1. プロジェクト概要
