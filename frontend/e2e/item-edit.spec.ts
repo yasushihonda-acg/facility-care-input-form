@@ -233,9 +233,26 @@ test.describe('【Phase 22.3】編集履歴タイムライン', () => {
     // 編集イベントが表示される（✏️ アイコン + 「編集」）
     const editEvent = page.locator('[data-testid="event-updated"]')
       .or(page.getByText(/✏️.*編集|品物編集/));
-    // 編集がない場合もあるので、存在確認のみ
-    const isVisible = await editEvent.first().isVisible().catch(() => false);
-    console.log('Edit event in timeline:', isVisible);
+    // demo-item-001には編集履歴があるので表示される
+    await expect(editEvent.first()).toBeVisible();
+  });
+
+  test('ITEM-TL-003a: 編集イベントに変更内容が表示される', async ({ page }) => {
+    await page.goto('/demo/family/items/demo-item-001');
+    await waitForSpaLoad(page);
+
+    // 編集イベントの変更内容が表示される
+    const changeDetail = page.getByText(/変更内容/);
+    await expect(changeDetail.first()).toBeVisible();
+  });
+
+  test('ITEM-TL-003b: 編集イベントに実行者が表示される', async ({ page }) => {
+    await page.goto('/demo/family/items/demo-item-001');
+    await waitForSpaLoad(page);
+
+    // 編集イベントの実行者（家族 太郎）が表示される
+    const performer = page.getByText(/家族 太郎/);
+    await expect(performer.first()).toBeVisible();
   });
 
   test('ITEM-TL-004: 提供・消費イベントがタイムラインに表示される', async ({ page }) => {

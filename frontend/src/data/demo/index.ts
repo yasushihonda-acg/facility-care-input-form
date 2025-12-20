@@ -40,3 +40,6 @@ export * from './demoFoodMasters';
 
 // チャットメッセージデモデータ (Phase 18)
 export * from './demoMessages';
+
+// 品物イベント（編集履歴）デモデータ (Phase 22.3)
+export * from './demoItemEvents';

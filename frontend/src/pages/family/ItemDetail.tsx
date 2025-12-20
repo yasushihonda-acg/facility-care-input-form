@@ -23,6 +23,8 @@ import {
   CONSUMPTION_STATUSES,
 } from '../../types/careItem';
 import type { ConsumptionStatus } from '../../types/careItem';
+import { useItemEvents } from '../../hooks/useItemEvents';
+import { getEventTypeIcon, getEventTypeLabel } from '../../types/itemEvent';
 import { useState } from 'react';
 // useMemo is already imported at the top
 
@@ -122,6 +124,14 @@ export function ItemDetail() {
     limit: 10,
   });
   const consumptionLogs = logsData?.logs || [];
+
+  // 品物イベント（編集履歴）を取得
+  // @see docs/ITEM_MANAGEMENT_SPEC.md セクション9.4
+  const { data: eventsData, isLoading: eventsLoading } = useItemEvents({
+    itemId: id || '',
+    limit: 20,
+  });
+  const itemEvents = eventsData?.events || [];
 
   // 同じ品物名の他のアイテムを取得（FIFOガイド用）
   // docs/FIFO_DESIGN_SPEC.md セクション4.3に基づく
@@ -354,82 +364,154 @@ export function ItemDetail() {
           <div className="bg-white rounded-lg shadow-card p-4">
             <h2 className="font-bold text-sm text-gray-700 mb-3">タイムライン（履歴）</h2>
 
-            {logsLoading ? (
+            {(logsLoading || eventsLoading) ? (
               <p className="text-gray-500 text-center py-4">読み込み中...</p>
-            ) : consumptionLogs.length === 0 && item.status === 'pending' ? (
+            ) : consumptionLogs.length === 0 && itemEvents.length === 0 && item.status === 'pending' ? (
               <p className="text-gray-500 text-center py-4">
                 まだ提供されていません
               </p>
-            ) : consumptionLogs.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">
-                記録がありません
-              </p>
             ) : (
               <div className="space-y-4">
-                {/* 消費ログ表示 */}
-                {consumptionLogs.map((log) => {
-                  const statusDisplay = getConsumptionStatusDisplay(log.consumptionStatus);
-                  const borderColor = getLogBorderColor(log.consumptionRate);
+                {/* タイムラインを時系列で統合表示 */}
+                {(() => {
+                  // 消費ログと品物イベントを統合してソート
+                  type TimelineItem =
+                    | { type: 'consumption'; data: typeof consumptionLogs[0]; timestamp: number }
+                    | { type: 'event'; data: typeof itemEvents[0]; timestamp: number };
 
-                  return (
-                    <div key={log.id} className={`border-l-4 ${borderColor} pl-3 py-2`} data-testid="event-served">
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <span>🍽️</span>
-                        <span>{formatDateTime(log.recordedAt)}</span>
-                        {log.mealTime && (
-                          <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">
-                            {log.mealTime === 'breakfast' ? '朝食' :
-                             log.mealTime === 'lunch' ? '昼食' :
-                             log.mealTime === 'dinner' ? '夕食' : '間食'}
-                          </span>
-                        )}
-                        {log.sourceType === 'meal_form' && (
-                          <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
-                            食事入力
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm mt-1">
-                        {log.servedBy}さんが提供: {log.servedQuantity}{item.unit}
-                      </p>
-                      <p className="text-sm">
-                        摂食: {log.consumedQuantity}{item.unit} ({log.consumptionRate}%)
-                        <span className={`ml-1 ${statusDisplay.color}`}>
-                          {statusDisplay.emoji}{statusDisplay.label}
-                        </span>
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        → 残り {log.quantityAfter}{item.unit}
-                      </p>
+                  const allItems: TimelineItem[] = [
+                    ...consumptionLogs.map(log => ({
+                      type: 'consumption' as const,
+                      data: log,
+                      timestamp: new Date(log.recordedAt).getTime(),
+                    })),
+                    ...itemEvents.map(event => ({
+                      type: 'event' as const,
+                      data: event,
+                      timestamp: new Date(event.eventAt).getTime(),
+                    })),
+                  ];
 
-                      {/* 家族指示対応表示 */}
-                      {log.followedInstruction && (
-                        <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm">
-                          <span className="text-blue-800">
-                            ✅ 家族の指示に従いました
-                            {log.instructionNote && ` - ${log.instructionNote}`}
-                          </span>
+                  // 新しい順にソート
+                  allItems.sort((a, b) => b.timestamp - a.timestamp);
+
+                  if (allItems.length === 0) {
+                    return (
+                      <p className="text-gray-500 text-center py-4">
+                        記録がありません
+                      </p>
+                    );
+                  }
+
+                  return allItems.map((timelineItem) => {
+                    if (timelineItem.type === 'consumption') {
+                      const log = timelineItem.data;
+                      const statusDisplay = getConsumptionStatusDisplay(log.consumptionStatus);
+                      const borderColor = getLogBorderColor(log.consumptionRate);
+
+                      return (
+                        <div key={`log-${log.id}`} className={`border-l-4 ${borderColor} pl-3 py-2`} data-testid="event-served">
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <span>🍽️</span>
+                            <span>{formatDateTime(log.recordedAt)}</span>
+                            {log.mealTime && (
+                              <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">
+                                {log.mealTime === 'breakfast' ? '朝食' :
+                                 log.mealTime === 'lunch' ? '昼食' :
+                                 log.mealTime === 'dinner' ? '夕食' : '間食'}
+                              </span>
+                            )}
+                            {log.sourceType === 'meal_form' && (
+                              <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
+                                食事入力
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm mt-1">
+                            {log.servedBy}さんが提供: {log.servedQuantity}{item.unit}
+                          </p>
+                          <p className="text-sm">
+                            摂食: {log.consumedQuantity}{item.unit} ({log.consumptionRate}%)
+                            <span className={`ml-1 ${statusDisplay.color}`}>
+                              {statusDisplay.emoji}{statusDisplay.label}
+                            </span>
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            → 残り {log.quantityAfter}{item.unit}
+                          </p>
+
+                          {/* 家族指示対応表示 */}
+                          {log.followedInstruction && (
+                            <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm">
+                              <span className="text-blue-800">
+                                ✅ 家族の指示に従いました
+                                {log.instructionNote && ` - ${log.instructionNote}`}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* 家族へのメモ */}
+                          {log.noteToFamily && (
+                            <div className={`mt-2 p-2 ${statusDisplay.bgColor} rounded text-sm`}>
+                              <span className={statusDisplay.color}>💬 {log.noteToFamily}</span>
+                            </div>
+                          )}
                         </div>
-                      )}
+                      );
+                    } else {
+                      // 品物イベント（登録・編集など）
+                      const event = timelineItem.data;
+                      const icon = getEventTypeIcon(event.eventType);
+                      const label = getEventTypeLabel(event.eventType);
+                      const borderColor = event.eventType === 'created' ? 'border-gray-300'
+                        : event.eventType === 'updated' ? 'border-purple-400'
+                        : 'border-blue-300';
+                      const testId = event.eventType === 'created' ? 'event-created'
+                        : event.eventType === 'updated' ? 'event-updated'
+                        : 'event-other';
 
-                      {/* 家族へのメモ */}
-                      {log.noteToFamily && (
-                        <div className={`mt-2 p-2 ${statusDisplay.bgColor} rounded text-sm`}>
-                          <span className={statusDisplay.color}>💬 {log.noteToFamily}</span>
+                      return (
+                        <div key={`event-${event.id}`} className={`border-l-4 ${borderColor} pl-3 py-2`} data-testid={testId}>
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <span>{icon}</span>
+                            <span>{formatDateTime(event.eventAt)}</span>
+                            {event.eventType === 'updated' && (
+                              <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
+                                編集
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm mt-1">
+                            {icon} {label}
+                            {event.performedBy && ` (${event.performedBy})`}
+                          </p>
+
+                          {/* 編集内容の詳細表示 */}
+                          {event.eventType === 'updated' && event.changes && event.changes.length > 0 && (
+                            <div className="mt-2 p-2 bg-purple-50 border border-purple-200 rounded text-sm">
+                              <p className="text-purple-800 font-medium mb-1">変更内容:</p>
+                              <ul className="text-purple-700 text-xs space-y-1">
+                                {event.changes.map((change, idx) => (
+                                  <li key={idx}>
+                                    <span className="font-medium">{change.fieldLabel}:</span>{' '}
+                                    <span className="line-through text-gray-400">{change.oldValue}</span>
+                                    {' → '}
+                                    <span className="text-purple-800">{change.newValue}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* イベント説明 */}
+                          {event.description && event.eventType !== 'updated' && (
+                            <p className="text-xs text-gray-500 mt-1">{event.description}</p>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-
-                {/* 登録イベント */}
-                <div className="border-l-4 border-gray-300 pl-3 py-2" data-testid="event-created">
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <span>📦</span>
-                    <span>{formatDateTime(item.sentDate + 'T10:30:00')}</span>
-                  </div>
-                  <p className="text-sm mt-1">📦 品物登録</p>
-                </div>
+                      );
+                    }
+                  });
+                })()}
               </div>
             )}
           </div>
