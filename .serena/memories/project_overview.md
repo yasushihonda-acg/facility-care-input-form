@@ -494,7 +494,24 @@ StaffRecordDialog.tsxに写真アップロード機能を追加。Firebase Stora
 **E2Eテスト**: footer-nav-demo.spec.ts (9件)
 **設計書**: `docs/FOOTERNAV_DEMO_FIX_SPEC.md`
 
-### E2Eテスト（249件、Phase 20.1で+24件）
+### Phase 21: チャット機能一時非表示 (2025-12-21 完了)
+内部チャット機能（スタッフ⇔家族間）を一時的に非表示化。
+
+**非表示対象**:
+- FooterNav: チャットタブ（家族・スタッフ両方）
+- App.tsx: チャット関連ルート10件
+- ItemDetail.tsx: 「スタッフにチャット」ボタン
+- FamilyMessageDetail.tsx: 「家族とチャット」ボタン
+- FamilyDashboard/StaffHome: NotificationSection
+
+**非表示対象外**:
+- Google Chat Webhook（外部通知）は引き続き動作
+
+**E2Eテスト**: 233件パス + 16件スキップ（chat-integration.spec.ts, record-chat-integration.spec.ts）
+**設計書**: `docs/CHAT_FEATURE_HIDE_SPEC.md`
+**復元手順**: CHAT_FEATURE_HIDE_SPEC.md セクション6を参照
+
+### E2Eテスト（233件パス + 16件スキップ、Phase 21でチャットテストをスキップ）
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |

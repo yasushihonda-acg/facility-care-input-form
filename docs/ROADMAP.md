@@ -2,7 +2,7 @@
 status: canonical
 scope: ops
 owner: core-team
-last_reviewed: 2025-12-20
+last_reviewed: 2025-12-21
 ---
 
 # 開発ロードマップ
@@ -1823,6 +1823,35 @@ interface Task {
 | CareItem更新連携 | 消費記録作成時にremainingQuantity自動更新 |
 | タイムライン表示 | ItemTimeline.tsxで実データ表示（現在はモック） |
 | 摂食率計算 | 統計ダッシュボードに摂食傾向グラフ追加 |
+
+---
+
+## Phase 11-21: 機能拡張フェーズ ✅ 完了
+
+> 以下はPhase 10以降に実装された主要フェーズの概要です。詳細は各設計書を参照してください。
+
+| Phase | 内容 | 完了日 | 設計書 |
+|-------|------|--------|--------|
+| Phase 11 | FoodMaster食品マスタ（AI提案キャッシュ・自動蓄積） | 2025-12-18 | INVENTORY_CONSUMPTION_SPEC.md |
+| Phase 12 | FIFO対応・プリセット保存提案 | 2025-12-18 | FIFO_DESIGN_SPEC.md |
+| Phase 13 | 品物起点の間食記録・スケジュール拡張 | 2025-12-19 | ITEM_BASED_SNACK_RECORD_SPEC.md |
+| Phase 14 | スタッフ用デモページ | 2025-12-19 | archive/DEMO_STAFF_SPEC.md |
+| Phase 15 | スタッフ記録入力フォーム統一（数値入力・残り対応・写真） | 2025-12-20 | STAFF_RECORD_FORM_SPEC.md |
+| Phase 16 | 写真エビデンス表示 | 2025-12-19 | PHOTO_EVIDENCE_DISPLAY_SPEC.md |
+| Phase 17 | Firebase Storage写真連携（Drive→Storage移行） | 2025-12-19 | FIREBASE_STORAGE_MIGRATION_SPEC.md |
+| Phase 18 | チャット連携（品物チャット・フッター通知バッジ） | 2025-12-20 | CHAT_INTEGRATION_SPEC.md |
+| Phase 19 | 記録のチャット連携（記録自動反映・ホーム通知） | 2025-12-20 | CHAT_INTEGRATION_SPEC.md |
+| Phase 20 | デモ環境完結（離脱防止） | 2025-12-20 | DEMO_STAFF_CONTAINMENT.md |
+| Phase 20.1 | デモモードAPI 500エラー修正 | 2025-12-20 | FOOTERNAV_DEMO_FIX_SPEC.md |
+| **Phase 21** | **チャット機能一時非表示** | 2025-12-21 | CHAT_FEATURE_HIDE_SPEC.md |
+
+### E2Eテスト状況
+
+| 日付 | テスト件数 | 備考 |
+|------|-----------|------|
+| 2025-12-21 | 233件パス + 16件スキップ | Phase 21でチャット関連テストをスキップ |
+| 2025-12-20 | 249件パス | Phase 20.1完了時点 |
+| 2025-12-19 | 183件パス | Phase 15.6完了時点 |
 
 ---
 

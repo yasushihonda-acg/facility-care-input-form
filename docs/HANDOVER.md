@@ -2,12 +2,12 @@
 status: canonical
 scope: ops
 owner: core-team
-last_reviewed: 2025-12-20
+last_reviewed: 2025-12-21
 ---
 
 # 引き継ぎドキュメント
 
-> **最終更新**: 2025年12月20日（Phase 20.1完了・デモモードAPI 500エラー修正）
+> **最終更新**: 2025年12月21日（Phase 21完了・チャット機能一時非表示）
 >
 > 本ドキュメントは、開発を引き継ぐ際に必要な情報をまとめたものです。
 
@@ -103,10 +103,11 @@ cd frontend && npm install && npm run dev
 | **残り対応による在庫計算分離** | 破棄/保存で在庫控除を分離、廃棄量記録（Phase 15.7） | ✅ 完了 |
 | 写真エビデンス表示 | スタッフ写真を家族向けエビデンス画面で表示（Phase 16） | ✅ 完了 |
 | Firebase Storage 写真連携 | Google Drive → Firebase Storage 移行（Phase 17） | ✅ 完了 |
-| **チャット連携機能** | 品物起点のスタッフ⇔家族チャット、フッター通知バッジ（Phase 18） | ✅ 完了 |
-| **記録のチャット連携** | 提供記録のスレッド自動反映、RecordMessageCard、ホーム通知（Phase 19） | ✅ 完了 |
+| **チャット連携機能** | 品物起点のスタッフ⇔家族チャット、フッター通知バッジ（Phase 18） | ⏸️ 非表示 |
+| **記録のチャット連携** | 提供記録のスレッド自動反映、RecordMessageCard、ホーム通知（Phase 19） | ⏸️ 非表示 |
 | **デモ環境完結（離脱防止）** | デモモード内で全ナビゲーション完結、本番離脱防止（Phase 20） | ✅ 完了 |
 | **デモモードAPI 500エラー修正** | FooterNav/NotificationSectionのデモモード対応、Firestoreインデックス追加（Phase 20.1） | ✅ 完了 |
+| **チャット機能一時非表示** | 内部チャット機能をUIから一時的に非表示化（Phase 21） | ✅ 完了 |
 
 ---
 
@@ -303,10 +304,11 @@ facility-care-input-form/
 | **Phase 15.9** | **写真アップロードUI**（StaffRecordDialog写真添付、Firebase Storage連携） | 2025-12-20 |
 | Phase 16 | 写真エビデンス表示（EvidenceMonitor実画像表示、デモ対応、E2E 5件） | 2025-12-19 |
 | Phase 17 | Firebase Storage写真連携（Drive→Storage移行、care_photos、Webhook連携、E2E検証） | 2025-12-19 |
-| Phase 18 | チャット連携機能（品物チャット、フッター通知バッジ、E2Eテスト16件） | 2025-12-20 |
-| Phase 19 | 記録のチャット連携（記録自動反映、RecordMessageCard、ホーム通知、E2Eテスト8件） | 2025-12-20 |
-| **Phase 20** | **デモ環境完結（離脱防止）**（MealInputPage戻るボタン・ItemTimelineリンク、E2Eテスト15件） | 2025-12-20 |
-| **Phase 20.1** | **デモモードAPI 500エラー修正**（FooterNav・NotificationSection対応、E2Eテスト9件） | 2025-12-20 |
+| Phase 18 | チャット連携機能（品物チャット、フッター通知バッジ、E2Eテスト16件）**※Phase 21で非表示** | 2025-12-20 |
+| Phase 19 | 記録のチャット連携（記録自動反映、RecordMessageCard、ホーム通知、E2Eテスト8件）**※Phase 21で非表示** | 2025-12-20 |
+| Phase 20 | デモ環境完結（離脱防止）（MealInputPage戻るボタン・ItemTimelineリンク、E2Eテスト15件） | 2025-12-20 |
+| Phase 20.1 | デモモードAPI 500エラー修正（FooterNav・NotificationSection対応、E2Eテスト9件） | 2025-12-20 |
+| **Phase 21** | **チャット機能一時非表示**（内部チャット全非表示、E2Eテスト16件スキップ） | 2025-12-21 |
 
 ### 4.2 将来のタスク
 
