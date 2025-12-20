@@ -335,7 +335,7 @@ async function getCareItemsHandler(
         updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
       } as CareItem;
 
-      functions.logger.info("getCareItems by itemId success", { itemId: params.itemId });
+      functions.logger.info("getCareItems by itemId success", {itemId: params.itemId});
 
       const response: ApiResponse<GetCareItemsResponse> = {
         success: true,
