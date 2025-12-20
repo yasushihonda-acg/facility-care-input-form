@@ -6,7 +6,8 @@
 
 import { Link } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
-import { NotificationSection } from '../../components/shared/NotificationSection';
+// Phase 21: チャット機能一時非表示
+// import { NotificationSection } from '../../components/shared/NotificationSection';
 import { useCareItems } from '../../hooks/useCareItems';
 import {
   getCategoryIcon,
@@ -108,8 +109,9 @@ export function StaffHome() {
           </Link>
         </div>
 
-        {/* 通知セクション (Phase 19.2) */}
+        {/* Phase 21: チャット機能一時非表示
         <NotificationSection userType="staff" maxItems={3} />
+        */}
 
         {/* アラートセクション */}
         {expiringItems.length > 0 && (

@@ -244,7 +244,7 @@ export function FamilyMessageDetail() {
           </Link>
         </div>
 
-        {/* 家族とチャット（Phase 18） */}
+        {/* Phase 21: チャット機能一時非表示
         <div className="px-4 mb-4">
           <Link
             to={`${pathPrefix}/staff/chat/${item.id}`}
@@ -264,6 +264,7 @@ export function FamilyMessageDetail() {
             </div>
           </Link>
         </div>
+        */}
 
         {/* 提供・摂食記録ボタン */}
         {item.status !== 'consumed' && (

@@ -4,6 +4,8 @@
  * @see docs/E2E_TEST_SPEC.md
  *
  * 品物起点のチャット機能を検証します。
+ *
+ * Phase 21: チャット機能一時非表示のため全テストスキップ
  */
 
 import { test, expect, Page } from '@playwright/test';
@@ -14,7 +16,8 @@ async function waitForSpaLoad(page: Page) {
   await page.waitForTimeout(2000);
 }
 
-test.describe('チャット連携基本動作', () => {
+// Phase 21: チャット機能一時非表示のため全テストスキップ
+test.describe.skip('チャット連携基本動作', () => {
   test.describe.configure({ timeout: 60000 });
 
   test('CHAT-001: 家族用チャット一覧にアクセスできる', async ({ page }) => {
@@ -84,7 +87,8 @@ test.describe('チャット連携基本動作', () => {
   });
 });
 
-test.describe('品物詳細からのチャット連携', () => {
+// Phase 21: チャット機能一時非表示のため全テストスキップ
+test.describe.skip('品物詳細からのチャット連携', () => {
   test.describe.configure({ timeout: 60000 });
 
   test('CHAT-007: 家族品物詳細にチャットリンクがある', async ({ page }) => {
@@ -104,7 +108,8 @@ test.describe('品物詳細からのチャット連携', () => {
   });
 });
 
-test.describe('チャット一覧の表示', () => {
+// Phase 21: チャット機能一時非表示のため全テストスキップ
+test.describe.skip('チャット一覧の表示', () => {
   test.describe.configure({ timeout: 60000 });
 
   test('CHAT-008: チャット一覧で空の状態メッセージが表示される', async ({ page }) => {

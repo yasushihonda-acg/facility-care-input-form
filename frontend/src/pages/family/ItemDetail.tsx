@@ -392,7 +392,7 @@ export function ItemDetail() {
           </Link>
         </div>
 
-        {/* チャットで連絡（Phase 18） */}
+        {/* Phase 21: チャット機能一時非表示
         <div className="px-4 mb-4">
           <Link
             to={`${pathPrefix}/family/chat/${item.id}`}
@@ -412,6 +412,7 @@ export function ItemDetail() {
             </div>
           </Link>
         </div>
+        */}
       </div>
 
       {/* 削除確認モーダル */}

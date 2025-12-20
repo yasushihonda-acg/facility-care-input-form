@@ -4,6 +4,8 @@
  * @see docs/E2E_TEST_SPEC.md
  *
  * 提供記録がチャットスレッドに自動反映される機能を検証します。
+ *
+ * Phase 21: チャット機能一時非表示のため全テストスキップ
  */
 
 import { test, expect, Page } from '@playwright/test';
@@ -14,7 +16,8 @@ async function waitForSpaLoad(page: Page) {
   await page.waitForTimeout(2000);
 }
 
-test.describe('記録のチャット連携 - UI表示', () => {
+// Phase 21: チャット機能一時非表示のため全テストスキップ
+test.describe.skip('記録のチャット連携 - UI表示', () => {
   test.describe.configure({ timeout: 60000 });
 
   test('RECORD-CHAT-001: チャットスレッドに記録カードが表示される', async ({ page }) => {
@@ -84,7 +87,8 @@ test.describe('記録のチャット連携 - UI表示', () => {
   });
 });
 
-test.describe('ホーム通知機能', () => {
+// Phase 21: チャット機能一時非表示のため全テストスキップ
+test.describe.skip('ホーム通知機能', () => {
   test.describe.configure({ timeout: 60000 });
 
   test('RECORD-CHAT-003: 家族ホームに通知セクションが表示される', async ({ page }) => {
@@ -135,7 +139,8 @@ test.describe('ホーム通知機能', () => {
   });
 });
 
-test.describe('記録メッセージのスタイル', () => {
+// Phase 21: チャット機能一時非表示のため全テストスキップ
+test.describe.skip('記録メッセージのスタイル', () => {
   test.describe.configure({ timeout: 60000 });
 
   test('RECORD-CHAT-006: 記録カードは中央配置で表示される', async ({ page }) => {
@@ -205,7 +210,8 @@ test.describe('記録メッセージのスタイル', () => {
   });
 });
 
-test.describe('デモモード対応', () => {
+// Phase 21: チャット機能一時非表示のため全テストスキップ
+test.describe.skip('デモモード対応', () => {
   test.describe.configure({ timeout: 60000 });
 
   test('RECORD-CHAT-008: デモモードでは記録カードがモックデータで表示される', async ({ page }) => {

@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { getActiveChatItems } from '../api';
-import { DEMO_RESIDENT_ID } from '../hooks/useDemoMode';
+// Phase 21: チャット機能一時非表示
+// import { useState } from 'react';
+// import { getActiveChatItems } from '../api';
+// import { DEMO_RESIDENT_ID } from '../hooks/useDemoMode';
 
 interface FooterNavProps {
   className?: string;
@@ -29,8 +31,9 @@ const DEMO_SHARED_PATHS = ['/demo/view', '/demo/stats', '/demo/items'];
  */
 export function FooterNav({ className = '' }: FooterNavProps) {
   const location = useLocation();
-  const [familyUnreadCount, setFamilyUnreadCount] = useState(0);
-  const [staffUnreadCount, setStaffUnreadCount] = useState(0);
+  // Phase 21: チャット機能一時非表示
+  // const [familyUnreadCount, setFamilyUnreadCount] = useState(0);
+  // const [staffUnreadCount, setStaffUnreadCount] = useState(0);
 
   // デモモード判定
   const isDemoMode = location.pathname.startsWith('/demo');
@@ -66,64 +69,57 @@ export function FooterNav({ className = '' }: FooterNavProps) {
   const paths = useMemo(() => ({
     familyHome: isDemoMode ? '/demo/family' : '/family',
     familyItems: isDemoMode ? '/demo/family/items' : '/family/items',
-    familyChats: isDemoMode ? '/demo/family/chats' : '/family/chats',
+    // Phase 21: チャット機能一時非表示
+    // familyChats: isDemoMode ? '/demo/family/chats' : '/family/chats',
     view: isDemoMode ? '/demo/view' : '/view',
     stats: isDemoMode ? '/demo/stats' : '/stats',
     staffInput: isDemoMode ? '/demo/staff/input/meal' : '/input/meal',
-    staffChats: isDemoMode ? '/demo/staff/chats' : '/staff/chats',
+    // Phase 21: チャット機能一時非表示
+    // staffChats: isDemoMode ? '/demo/staff/chats' : '/staff/chats',
     staffFamilyMessages: isDemoMode ? '/demo/staff/family-messages' : '/staff/family-messages',
     staffStats: isDemoMode ? '/demo/staff/stats' : '/staff/stats',
   }), [isDemoMode]);
 
-  // 未読チャット数の取得
-  // デモモードではAPIを呼び出さず、ダミーデータを使用
-  // @see docs/FOOTERNAV_DEMO_FIX_SPEC.md
-  useEffect(() => {
-    // デモモードではAPIを呼び出さない（500エラー回避）
-    if (isDemoMode) {
-      // デモ用のダミー未読数を設定
-      setFamilyUnreadCount(2);
-      setStaffUnreadCount(1);
-      return;
-    }
-
-    const fetchUnreadCounts = async () => {
-      try {
-        // 家族の未読数
-        const familyResponse = await getActiveChatItems({
-          residentId: DEMO_RESIDENT_ID,
-          userType: 'family',
-        });
-        if (familyResponse.success && familyResponse.data) {
-          const totalUnread = familyResponse.data.items.reduce(
-            (sum, item) => sum + (item.unreadCountFamily || 0),
-            0
-          );
-          setFamilyUnreadCount(totalUnread);
-        }
-
-        // スタッフの未読数
-        const staffResponse = await getActiveChatItems({
-          residentId: DEMO_RESIDENT_ID,
-          userType: 'staff',
-        });
-        if (staffResponse.success && staffResponse.data) {
-          const totalUnread = staffResponse.data.items.reduce(
-            (sum, item) => sum + (item.unreadCountStaff || 0),
-            0
-          );
-          setStaffUnreadCount(totalUnread);
-        }
-      } catch (error) {
-        console.error('Failed to fetch unread counts:', error);
-      }
-    };
-
-    fetchUnreadCounts();
-    // 30秒ごとに更新
-    const interval = setInterval(fetchUnreadCounts, 30000);
-    return () => clearInterval(interval);
-  }, [isDemoMode]);
+  // Phase 21: チャット機能一時非表示
+  // 未読チャット数の取得（コメントアウト）
+  // useEffect(() => {
+  //   if (isDemoMode) {
+  //     setFamilyUnreadCount(2);
+  //     setStaffUnreadCount(1);
+  //     return;
+  //   }
+  //   const fetchUnreadCounts = async () => {
+  //     try {
+  //       const familyResponse = await getActiveChatItems({
+  //         residentId: DEMO_RESIDENT_ID,
+  //         userType: 'family',
+  //       });
+  //       if (familyResponse.success && familyResponse.data) {
+  //         const totalUnread = familyResponse.data.items.reduce(
+  //           (sum, item) => sum + (item.unreadCountFamily || 0),
+  //           0
+  //         );
+  //         setFamilyUnreadCount(totalUnread);
+  //       }
+  //       const staffResponse = await getActiveChatItems({
+  //         residentId: DEMO_RESIDENT_ID,
+  //         userType: 'staff',
+  //       });
+  //       if (staffResponse.success && staffResponse.data) {
+  //         const totalUnread = staffResponse.data.items.reduce(
+  //           (sum, item) => sum + (item.unreadCountStaff || 0),
+  //           0
+  //         );
+  //         setStaffUnreadCount(totalUnread);
+  //       }
+  //     } catch (error) {
+  //       console.error('Failed to fetch unread counts:', error);
+  //     }
+  //   };
+  //   fetchUnreadCounts();
+  //   const interval = setInterval(fetchUnreadCounts, 30000);
+  //   return () => clearInterval(interval);
+  // }, [isDemoMode]);
 
   // 家族用フッター
   if (showFamilyFooter) {
@@ -211,7 +207,7 @@ export function FooterNav({ className = '' }: FooterNavProps) {
             }}
           </NavLink>
 
-          {/* チャットタブ（Phase 18） */}
+          {/* Phase 21: チャット機能一時非表示
           <NavLink
             to={paths.familyChats}
             className={({ isActive }) => `
@@ -256,6 +252,7 @@ export function FooterNav({ className = '' }: FooterNavProps) {
               );
             }}
           </NavLink>
+          */}
 
           {/* 記録閲覧タブ（共有ビュー） */}
           <NavLink
@@ -414,7 +411,7 @@ export function FooterNav({ className = '' }: FooterNavProps) {
           )}
         </NavLink>
 
-        {/* チャットタブ（Phase 18） */}
+        {/* Phase 21: チャット機能一時非表示
         <NavLink
           to={paths.staffChats}
           className={({ isActive }) => `
@@ -459,6 +456,7 @@ export function FooterNav({ className = '' }: FooterNavProps) {
             );
           }}
         </NavLink>
+        */}
 
         {/* 家族連絡タブ（スタッフ向け：閲覧用） */}
         <NavLink
