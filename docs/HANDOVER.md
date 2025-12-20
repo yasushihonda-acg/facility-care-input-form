@@ -7,7 +7,7 @@ last_reviewed: 2025-12-20
 
 # 引き継ぎドキュメント
 
-> **最終更新**: 2025年12月20日（Phase 15.7仕上げ・ドキュメント整備完了）
+> **最終更新**: 2025年12月20日（Phase 15.9完了・写真アップロード設計準拠確認）
 >
 > 本ドキュメントは、開発を引き継ぐ際に必要な情報をまとめたものです。
 
@@ -296,6 +296,9 @@ facility-care-input-form/
 | Phase 14 | スタッフ用デモページ（DemoStaffHome・DemoStaffShowcase・E2Eテスト17件追加） | 2025-12-19 |
 | Phase 15 | スタッフ記録入力フォーム統一（タブ削除、StaffRecordDialog統一、E2Eテスト22件） | 2025-12-19 |
 | Phase 15.6 | 摂食割合の数値入力（0-10）・残り対応フィールド（破棄/保存/その他） | 2025-12-19 |
+| **Phase 15.7** | **残り対応による在庫・統計分離**（破棄=全量控除、保存=食べた分控除、wastedQuantity） | 2025-12-20 |
+| **Phase 15.8** | **ベースページ簡素化**（MealInputPage 407行→122行、リスト表示のみ） | 2025-12-20 |
+| **Phase 15.9** | **写真アップロードUI**（StaffRecordDialog写真添付、Firebase Storage連携） | 2025-12-20 |
 | Phase 16 | 写真エビデンス表示（EvidenceMonitor実画像表示、デモ対応、E2E 5件） | 2025-12-19 |
 | Phase 17 | Firebase Storage写真連携（Drive→Storage移行、care_photos、Webhook連携、E2E検証） | 2025-12-19 |
 | Phase 18 | チャット連携機能（品物チャット、フッター通知バッジ、E2Eテスト16件） | 2025-12-20 |
@@ -329,7 +332,70 @@ facility-care-input-form/
 - **原因**: Reactコンポーネントは`isOpen=false`でも破棄されない
 - **解決**: `useEffect`で`isOpen`監視、開いた時に`resetAllStates()`実行
 
-### 4.4 Phase 16-17 写真連携機能（完了）
+### 4.4 Phase 15.7-15.9 スタッフ記録入力完成（完了）
+
+**設計書**:
+- `docs/STAFF_RECORD_FORM_SPEC.md` - スタッフ記録入力フォーム設計
+
+#### Phase 15.7: 残り対応による在庫・統計分離（2025-12-20）
+
+食べ残しの処理方法（破棄/保存）によって在庫計算と統計を分離。
+
+| 処理 | 在庫控除 | 統計反映 |
+|------|----------|----------|
+| 破棄 | 提供量全てを控除 | wastedQuantity として記録 |
+| 保存 | 食べた分のみ控除 | consumedQuantity のみ |
+
+**主な実装ファイル**:
+- `frontend/src/api/index.ts` - `remainingHandling` パラメータ追加
+- `functions/src/functions/recordConsumptionLog.ts` - 処理分岐ロジック
+
+**E2Eテスト**: STAFF-050〜053（4件追加）
+
+#### Phase 15.8: ベースページ簡素化（2025-12-20）
+
+MealInputPage.tsx を大幅簡素化（407行→122行）。品物リスト表示のみに特化し、入力は各品物のダイアログで完結。
+
+**TDDアプローチ**:
+1. E2Eテスト5件追加（STAFF-060〜064）- 失敗確認
+2. MealInputPage.tsx からフォーム要素削除
+3. ローカル・本番テストパス確認
+
+#### Phase 15.9: 写真アップロードUI（2025-12-20）
+
+StaffRecordDialog.tsx に写真アップロード機能を追加。Firebase Storage へ直接保存し、photoUrl を submitMealRecord に渡してGoogle Chat Webhookに連携。
+
+| 項目 | 内容 |
+|------|------|
+| ファイルサイズ制限 | 10MB以下 |
+| 対応フォーマット | image/*（JPEG, PNG等） |
+| プレビュー | アップロード前にローカルプレビュー表示 |
+| 削除 | 選択済み写真のキャンセル可能 |
+
+**データフロー**:
+```
+1. StaffRecordDialog で写真を選択
+2. [記録を保存] クリック時に uploadCareImage API 呼び出し
+3. Firebase Storage にアップロード → photoUrl 取得
+4. submitMealRecord に photoUrl を渡す
+5. Google Chat Webhook で写真付きメッセージ送信
+```
+
+**主な実装ファイル**:
+
+| 領域 | ファイル | 内容 |
+|------|----------|------|
+| フロントエンド | `frontend/src/components/staff/StaffRecordDialog.tsx` | 写真UI追加 |
+| バックエンド | `functions/src/functions/uploadCareImage.ts` | photoUrl 返却 |
+| バックエンド | `functions/src/functions/submitMealRecord.ts` | Webhook連携 |
+
+**E2Eテスト**: STAFF-009, STAFF-070〜072（4件追加）
+
+**設計準拠**: FIREBASE_STORAGE_MIGRATION_SPEC.md セクション5.2に準拠
+
+---
+
+### 4.5 Phase 16-17 写真連携機能（完了）
 
 **設計書**:
 - `docs/PHOTO_EVIDENCE_DISPLAY_SPEC.md` - 写真エビデンス表示設計
@@ -390,7 +456,7 @@ facility-care-input-form/
 6. 家族画面で getCarePhotos から写真を取得して表示
 ```
 
-### 4.5 Phase 18-19 チャット連携機能（完了）
+### 4.6 Phase 18-19 チャット連携機能（完了）
 
 **設計書**:
 - `docs/CHAT_INTEGRATION_SPEC.md` - チャット連携設計書
@@ -593,12 +659,12 @@ BASE_URL=https://facility-care-input-form.web.app npx playwright test
 - `frontend/playwright.config.ts` - Playwright設定
 - デフォルトbaseURL: `http://localhost:4173`（環境変数で上書き可能）
 
-**現在のテスト**: 全216件（3件スキップ）
+**現在のテスト**: 全225件（3件スキップ）
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |
 | `family-user-scenario.spec.ts` | 34件 | 家族シナリオ・パリティ・本番準備 |
-| `staff-record-form.spec.ts` | 22件 | スタッフ記録入力フォーム統一（Phase 15） |
+| `staff-record-form.spec.ts` | 34件 | スタッフ記録入力フォーム統一（Phase 15・15.7-15.9含む） |
 | `family-page.spec.ts` | 21件 | 家族ページ（品物詳細・消費ログ等） |
 | `demo-staff.spec.ts` | 17件 | スタッフ用デモ（Phase 14） |
 | `chat-integration.spec.ts` | 16件 | チャット連携基本動作（Phase 18） |
@@ -854,7 +920,9 @@ docs/CURRENT_STATUS.md を読んで、次のタスクから再開してくださ
 
 | 日付 | 内容 |
 |------|------|
-| 2025-12-20 | **Phase 15.7: 残り対応による在庫・統計分離**（破棄=全量控除、保存=食べた分控除、wastedQuantity追加、E2Eテスト4件追加）、全216件 |
+| 2025-12-20 | **Phase 15.9: 写真アップロードUI**（StaffRecordDialog写真添付・Firebase Storage連携・E2Eテスト4件追加）、全225件 |
+| 2025-12-20 | **Phase 15.8: ベースページ簡素化**（MealInputPage 407行→122行・E2Eテスト5件追加） |
+| 2025-12-20 | **Phase 15.7: 残り対応による在庫・統計分離**（破棄=全量控除、保存=食べた分控除、wastedQuantity追加、E2Eテスト4件追加） |
 | 2025-12-20 | チャットページフッター修正（ItemChatPage・ChatListPageにFooterNav追加）、getCareItems itemId対応、デモチャットシードデータ追加 |
 | 2025-12-20 | Phase 19: 記録のチャット連携完了（記録自動反映・RecordMessageCard・ホーム通知・E2Eテスト8件追加）、全212件 |
 | 2025-12-20 | Phase 18: チャット連携機能完了（品物チャット・フッター通知バッジ・E2Eテスト16件追加） |

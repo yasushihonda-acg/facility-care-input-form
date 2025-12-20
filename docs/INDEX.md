@@ -89,7 +89,7 @@ last_reviewed: 2025-12-20
 | [TASK_MANAGEMENT_SPEC.md](./TASK_MANAGEMENT_SPEC.md) | タスク管理機能 | working |
 | [PLAN_RESULT_MANAGEMENT.md](./PLAN_RESULT_MANAGEMENT.md) | 予実管理設計 | working |
 | [DAY_SERVICE_OPTIONS_SPEC.md](./DAY_SERVICE_OPTIONS_SPEC.md) | デイサービス選択肢 | working |
-| [PHOTO_UPLOAD_SPEC.md](./PHOTO_UPLOAD_SPEC.md) | 写真アップロード | working |
+| [PHOTO_UPLOAD_SPEC.md](./PHOTO_UPLOAD_SPEC.md) | 写真アップロード（非推奨） | deprecated |
 | [PHOTO_EVIDENCE_DISPLAY_SPEC.md](./PHOTO_EVIDENCE_DISPLAY_SPEC.md) | 写真エビデンス表示 | working |
 | [DESIGN_GUIDELINES.md](./DESIGN_GUIDELINES.md) | デザインガイドライン | working |
 
@@ -187,4 +187,5 @@ last_reviewed: 2025-12-20
 
 | 日付 | 変更内容 |
 |------|----------|
+| 2025-12-20 | PHOTO_UPLOAD_SPEC.md を deprecated に変更（Phase 17移行済み） |
 | 2025-12-20 | 初版作成・ドキュメント整理 |
