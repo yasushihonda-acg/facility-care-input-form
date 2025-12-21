@@ -1030,5 +1030,134 @@ test.describe('Phase 15: スタッフ用記録入力フォーム', () => {
       const dayServiceLabel = dialog.locator('text=デイサービスの利用中ですか？');
       await expect(dayServiceLabel).toBeVisible();
     });
+
+    test('STAFF-093: 水分タブで全量消費時は残り対応が非表示', async ({ page }) => {
+      await page.goto(`${BASE_URL}/demo/staff/input/meal`);
+
+      // 飲み物カテゴリの品物を探す（または任意の品物を使用）
+      const recordButton = page.locator('button:has-text("提供記録")').first();
+      await expect(recordButton).toBeVisible({ timeout: 10000 });
+      await recordButton.click();
+
+      // ダイアログが開く
+      const dialog = page.locator('[role="dialog"]');
+      await expect(dialog).toBeVisible();
+
+      // 水分タブをクリック
+      const hydrationTab = dialog.locator('[role="tab"]:has-text("水分")');
+      await hydrationTab.click();
+
+      // 水分量フィールドを確認（デフォルトで全量消費）
+      const hydrationInput = dialog.locator('input[type="number"]').filter({ hasText: '' }).first();
+
+      // 「残った分への対応」が表示されない（全量消費のため）
+      await expect(dialog.locator('label:has-text("残った分への対応")')).toHaveCount(0);
+    });
+
+    test('STAFF-094: 水分タブで全量未消費時に残り対応が表示される', async ({ page }) => {
+      await page.goto(`${BASE_URL}/demo/staff/input/meal`);
+
+      // 飲み物カテゴリ(🥤アイコン)のカードを見つけて提供記録ボタンをクリック
+      const drinkCard = page.locator('[data-testid="item-card"]').filter({ hasText: '🥤' }).first();
+
+      // 飲み物カードが見つかった場合のみテスト実行
+      if (await drinkCard.count() > 0) {
+        const recordButton = drinkCard.locator('button:has-text("提供記録")');
+        await expect(recordButton).toBeVisible({ timeout: 10000 });
+        await recordButton.click();
+
+        const dialog = page.locator('[role="dialog"]');
+        await expect(dialog).toBeVisible();
+
+        // 飲み物カテゴリなので水分タブがデフォルトで選択されている
+        // 水分量入力フィールドを取得
+        const hydrationInput = dialog.locator('[data-testid="hydration-amount"]');
+        await expect(hydrationInput).toBeVisible();
+
+        // 水分量を減らす（現在の値の70%）
+        const currentValue = await hydrationInput.inputValue();
+        const reducedValue = Math.floor(parseFloat(currentValue || '1000') * 0.7);
+        await hydrationInput.fill(reducedValue.toString());
+
+        // 「残った分への対応」が表示される
+        await expect(dialog.locator('label:has-text("残った分への対応")')).toBeVisible();
+
+        // 選択肢が表示される
+        await expect(dialog.locator('text=破棄した')).toBeVisible();
+        await expect(dialog.locator('text=保存した')).toBeVisible();
+        await expect(dialog.locator('text=その他')).toBeVisible();
+      }
+    });
+
+    test('STAFF-095: 水分タブで残り対応未選択時はエラー', async ({ page }) => {
+      await page.goto(`${BASE_URL}/demo/staff/input/meal`);
+
+      // 飲み物カテゴリ(🥤アイコン)のカードを見つけて提供記録ボタンをクリック
+      const drinkCard = page.locator('[data-testid="item-card"]').filter({ hasText: '🥤' }).first();
+
+      // 飲み物カードが見つかった場合のみテスト実行
+      if (await drinkCard.count() > 0) {
+        const recordButton = drinkCard.locator('button:has-text("提供記録")');
+        await expect(recordButton).toBeVisible({ timeout: 10000 });
+        await recordButton.click();
+
+        const dialog = page.locator('[role="dialog"]');
+        await expect(dialog).toBeVisible();
+
+        // 水分量入力フィールドを取得
+        const hydrationInput = dialog.locator('[data-testid="hydration-amount"]');
+        await expect(hydrationInput).toBeVisible();
+
+        // 水分量を減らす（現在の値の70%）
+        const currentValue = await hydrationInput.inputValue();
+        const reducedValue = Math.floor(parseFloat(currentValue || '1000') * 0.7);
+        await hydrationInput.fill(reducedValue.toString());
+
+        // 入力者名を入力
+        const recorderInput = dialog.locator('input[placeholder*="入力者"]');
+        await recorderInput.fill('テスト');
+
+        // 残り対応を選択せずに送信
+        const submitButton = dialog.locator('button:has-text("記録する")');
+        await submitButton.click();
+
+        // エラーメッセージが表示される
+        const errorMessage = dialog.locator('text=/残った分への対応を選択/');
+        await expect(errorMessage).toBeVisible();
+      }
+    });
+
+    test('STAFF-096: 水分タブで残り対応「破棄した」を選択可能', async ({ page }) => {
+      await page.goto(`${BASE_URL}/demo/staff/input/meal`);
+
+      // 飲み物カテゴリ(🥤アイコン)のカードを見つけて提供記録ボタンをクリック
+      const drinkCard = page.locator('[data-testid="item-card"]').filter({ hasText: '🥤' }).first();
+
+      // 飲み物カードが見つかった場合のみテスト実行
+      if (await drinkCard.count() > 0) {
+        const recordButton = drinkCard.locator('button:has-text("提供記録")');
+        await expect(recordButton).toBeVisible({ timeout: 10000 });
+        await recordButton.click();
+
+        const dialog = page.locator('[role="dialog"]');
+        await expect(dialog).toBeVisible();
+
+        // 水分量入力フィールドを取得
+        const hydrationInput = dialog.locator('[data-testid="hydration-amount"]');
+        await expect(hydrationInput).toBeVisible();
+
+        // 水分量を減らす（現在の値の70%）
+        const currentValue = await hydrationInput.inputValue();
+        const reducedValue = Math.floor(parseFloat(currentValue || '1000') * 0.7);
+        await hydrationInput.fill(reducedValue.toString());
+
+        // 「破棄した」を選択
+        const discardedRadio = dialog.locator('input[type="radio"][value="discarded"]');
+        await discardedRadio.click();
+
+        // 選択状態を確認
+        await expect(discardedRadio).toBeChecked();
+      }
+    });
   });
 });

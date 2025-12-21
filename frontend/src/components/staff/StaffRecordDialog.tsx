@@ -206,6 +206,17 @@ export function StaffRecordDialog({
       if (formData.hydrationAmount === null || formData.hydrationAmount <= 0) {
         newErrors.hydrationAmount = '水分量を入力してください。';
       }
+      // Phase 29追加: 水分タブでも残った分への対応を必須に
+      const maxHydrationAmount = calculateHydrationAmount(formData.servedQuantity, item.unit);
+      if (maxHydrationAmount !== null &&
+          formData.hydrationAmount !== null &&
+          formData.hydrationAmount < maxHydrationAmount &&
+          !formData.remainingHandling) {
+        newErrors.remainingHandling = '残った分への対応を選択してください。';
+      }
+      if (formData.remainingHandling === 'other' && !formData.remainingHandlingOther.trim()) {
+        newErrors.remainingHandlingOther = '対応の詳細を入力してください。';
+      }
     }
 
     setErrors(newErrors);
@@ -320,32 +331,56 @@ export function StaffRecordDialog({
   }, [formData, item, settings, recordMutation, validate, onSuccess, onClose]);
 
   // Phase 15.7: 残り対応に基づいて消費量・残量を計算
-  // Phase 29修正: タブ別に計算ロジックを分岐
+  // Phase 29修正: タブ別に計算ロジックを分岐（水分タブも残り対応を考慮）
   const consumptionAmounts = useMemo(() => {
     if (formData.activeTab === 'hydration') {
       // 水分タブ: hydrationAmount(cc) → item.unit への逆変換
       const hydrationCc = formData.hydrationAmount ?? 0;
-      let inventoryDeducted: number;
       const normalizedUnit = item.unit.toLowerCase().trim();
+
+      // 飲んだ量を品物の単位に変換
+      let consumedInItemUnit: number;
       switch (normalizedUnit) {
         case 'ml':
         case 'cc':
-          inventoryDeducted = hydrationCc;
+          consumedInItemUnit = hydrationCc;
           break;
         case 'l':
-          inventoryDeducted = hydrationCc / 1000;
+          consumedInItemUnit = hydrationCc / 1000;
           break;
         case 'コップ':
         case '杯':
-          inventoryDeducted = hydrationCc / 200;
+          consumedInItemUnit = hydrationCc / 200;
           break;
         default:
-          inventoryDeducted = formData.servedQuantity; // フォールバック: 提供数をそのまま使用
+          consumedInItemUnit = formData.servedQuantity; // フォールバック
       }
+
+      // 残った量
+      const remainingInItemUnit = formData.servedQuantity - consumedInItemUnit;
+
+      // Phase 29追加: 残り対応に基づいて在庫消費量を決定（食事タブと同じロジック）
+      let inventoryDeducted: number;
+      let wastedQuantity: number;
+
+      if (remainingInItemUnit <= 0) {
+        // 全量消費
+        inventoryDeducted = formData.servedQuantity;
+        wastedQuantity = 0;
+      } else if (formData.remainingHandling === 'discarded') {
+        // 破棄: 提供量全てを在庫から引く
+        inventoryDeducted = formData.servedQuantity;
+        wastedQuantity = remainingInItemUnit;
+      } else {
+        // 保存・その他: 飲んだ分のみ在庫から引く
+        inventoryDeducted = consumedInItemUnit;
+        wastedQuantity = 0;
+      }
+
       return {
-        consumedQuantity: inventoryDeducted,
+        consumedQuantity: consumedInItemUnit,
         inventoryDeducted,
-        wastedQuantity: 0,
+        wastedQuantity,
       };
     } else {
       // 食事タブ: 従来の計算ロジック
@@ -564,6 +599,65 @@ export function StaffRecordDialog({
               )}
             </div>
           )}
+
+          {/* Phase 29追加: 水分タブ - 残った分への対応（全量消費していない場合） */}
+          {formData.activeTab === 'hydration' && (() => {
+            const maxHydrationAmount = calculateHydrationAmount(formData.servedQuantity, item.unit);
+            const hasRemaining = maxHydrationAmount !== null &&
+              formData.hydrationAmount !== null &&
+              formData.hydrationAmount < maxHydrationAmount;
+            if (!hasRemaining) return null;
+            return (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  残った分への対応 <span className="text-red-500">*</span>
+                </label>
+                <div className="space-y-2">
+                  {REMAINING_HANDLING_OPTIONS.map(option => (
+                    <label
+                      key={option.value}
+                      className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer border transition-colors ${
+                        formData.remainingHandling === option.value
+                          ? 'border-primary bg-primary/5'
+                          : 'border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="remainingHandlingHydration"
+                        value={option.value}
+                        checked={formData.remainingHandling === option.value}
+                        onChange={(e) => setFormData(prev => ({ ...prev, remainingHandling: e.target.value as RemainingHandling }))}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm">{option.label}</span>
+                    </label>
+                  ))}
+                </div>
+                {errors.remainingHandling && (
+                  <p className="mt-1 text-sm text-red-500">{errors.remainingHandling}</p>
+                )}
+
+                {/* その他の詳細入力 */}
+                {formData.remainingHandling === 'other' && (
+                  <div className="mt-3">
+                    <input
+                      type="text"
+                      value={formData.remainingHandlingOther}
+                      onChange={(e) => setFormData(prev => ({ ...prev, remainingHandlingOther: e.target.value }))}
+                      placeholder="対応の詳細を入力"
+                      className={`w-full px-3 py-2 border rounded-lg text-sm ${
+                        errors.remainingHandlingOther ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    />
+                    {errors.remainingHandlingOther && (
+                      <p className="mt-1 text-sm text-red-500">{errors.remainingHandlingOther}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Phase 15.6: 摂食した割合（0-10数値入力）- 食事タブのみ */}
           {formData.activeTab === 'meal' && (
