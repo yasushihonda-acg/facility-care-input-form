@@ -4,7 +4,9 @@
  */
 
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { aiAnalyze } from '../../api';
+import { DEMO_AI_ANALYSIS } from '../../data/demo';
 import type {
   AIAnalyzeResponse,
   AIFinding,
@@ -26,6 +28,9 @@ interface AIAnalysisProps {
 }
 
 export function AIAnalysis({ residentId, consumptionData, period }: AIAnalysisProps) {
+  const location = useLocation();
+  const isDemo = location.pathname.startsWith('/demo');
+
   const [analysis, setAnalysis] = useState<AIAnalyzeResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +42,16 @@ export function AIAnalysis({ residentId, consumptionData, period }: AIAnalysisPr
     setWarning(null);
 
     try {
+      // デモモードではモックデータを使用
+      if (isDemo) {
+        // 少し遅延を入れてローディング感を出す
+        await new Promise(resolve => setTimeout(resolve, 800));
+        setAnalysis(DEMO_AI_ANALYSIS);
+        setIsLoading(false);
+        return;
+      }
+
+      // 本番モード: API呼び出し
       // デフォルト期間: 過去30日
       const endDate = period?.endDate || new Date().toISOString().split('T')[0];
       const startDate = period?.startDate || (() => {

@@ -11,7 +11,7 @@ import type {
   ItemStatsData,
   Alert,
 } from '../../types/stats';
-import type { ItemCategory } from '../../types/careItem';
+import type { ItemCategory, AIAnalyzeResponse } from '../../types/careItem';
 
 // ===== 日付ヘルパー =====
 
@@ -367,3 +367,60 @@ export const DEMO_ALERTS: Alert[] = [
     createdAt: getDateString(-2),
   },
 ];
+
+// ===== AI分析モックデータ (Phase 34) =====
+
+/**
+ * デモ用AI分析結果
+ * @see docs/DEMO_AI_ANALYSIS_SPEC.md
+ */
+export const DEMO_AI_ANALYSIS: AIAnalyzeResponse = {
+  analysisType: 'consumption',
+  summary: '過去30日間の摂食傾向を分析しました。全体的に果物・和菓子類の摂取率が高く、健康的な食生活が維持されています。特にプリンとキウイの摂取率が非常に高い一方で、りんごは食べにくさから摂取率が低下傾向にあります。',
+  findings: [
+    {
+      type: 'positive',
+      title: 'プリンの摂取率が非常に高い',
+      description: '大好物のようで、提供のたびにほぼ完食されています',
+      metric: { current: 95, previous: 88, change: 7 },
+    },
+    {
+      type: 'positive',
+      title: 'キウイの完食率向上',
+      description: '前月比で摂取率が15%改善。酸味が好まれているようです',
+      metric: { current: 93, previous: 78, change: 15 },
+    },
+    {
+      type: 'negative',
+      title: 'りんごの摂取率が低下傾向',
+      description: '固さが原因で食べにくい可能性があります',
+      metric: { current: 25, previous: 45, change: -20 },
+    },
+    {
+      type: 'neutral',
+      title: '麦茶の摂取は安定',
+      description: '水分補給として適切に摂取されています',
+      metric: { current: 90 },
+    },
+  ],
+  suggestions: [
+    {
+      priority: 'high',
+      title: 'りんごの提供方法を変更',
+      description: 'すりおろしや薄切り、またはコンポートなど食べやすい形態での提供を検討してください',
+      relatedItemName: 'りんご',
+    },
+    {
+      priority: 'medium',
+      title: '黒豆の提供頻度を見直し',
+      description: '摂取率40%のため、小皿で少量ずつの提供をお勧めします。他の豆類との組み合わせも検討してください',
+      relatedItemName: '黒豆',
+    },
+    {
+      priority: 'low',
+      title: 'プリンのストック確保',
+      description: '大変お気に入りの品目です。切らさないようストックを確保することをお勧めします',
+      relatedItemName: 'プリン',
+    },
+  ],
+};
