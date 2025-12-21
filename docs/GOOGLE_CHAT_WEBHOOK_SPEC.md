@@ -479,8 +479,206 @@ export interface UpdateMealFormSettingsRequest {
 
 ---
 
+## Phase 29: 水分記録のWebhook通知
+
+### 概要
+
+水分記録（`recordType: 'hydration'`）時にもGoogle Chat Webhookへ通知を送信する。
+
+### タグ仕様
+
+チャット投稿には以下のタグを含める:
+
+| タグ | 表示条件 | 形式 | 例 |
+|------|----------|------|-----|
+| `#デイ利用中[X]` | デイサービス利用中の場合 | `#デイ利用中[{dayServiceName}]` | `#デイ利用中[武]` |
+| `#水分摂取💧` | 水分記録の場合（必須） | 固定 | `#水分摂取💧` |
+| `#食事🍚` | 食事記録の場合（必須） | 固定 | `#食事🍚` |
+| `#重要⚠️` | `isImportant === '重要'` の場合 | 固定 | `#重要⚠️` |
+
+**デイサービス選択肢**: 武, 田上, 笹貫, 下荒田, 東千石, 南栄, 永吉, 七福の里
+（参照: [DAY_SERVICE_OPTIONS_SPEC.md](./DAY_SERVICE_OPTIONS_SPEC.md)）
+
+### 水分記録メッセージテンプレート
+
+```
+【{facility}_{residentName}様(ID{residentId})】
+{#デイ利用中[dayServiceName] // 条件付き}
+#水分摂取💧
+{#重要⚠️ // 条件付き}
+
+記録者：{staffName}
+
+摂取量：{hydrationAmount}cc
+
+特記事項：{note}
+
+【ACPiece】
+
+
+【投稿ID】：{postId}
+```
+
+### 投稿例
+
+#### 例1: デイサービス利用中 + 重要
+
+```
+【七福の里101_田口　エヴェリン様(ID7533)】
+#デイ利用中[武]
+#水分摂取💧
+#重要⚠️
+
+記録者：木之瀬
+
+摂取量：200cc
+
+特記事項：【ケアに関すること】
+脱水傾向あり、こまめな水分補給を継続
+
+【ACPiece】
+
+
+【投稿ID】：HYD20251221095450678429
+```
+
+#### 例2: デイサービス利用なし + 重要ではない
+
+```
+【七福の里215_蒲地　キヌヱ様(ID7282)】
+#水分摂取💧
+
+記録者：田中
+
+摂取量：150cc
+
+特記事項：【ケアに関すること】
+
+【ACPiece】
+
+
+【投稿ID】：HYD20251221103000123456
+```
+
+### 投稿ID形式
+
+| recordType | プレフィックス | 例 |
+|------------|---------------|-----|
+| meal | `MEL` | `MEL20251221094500123456` |
+| snack | `SNK` | `SNK20251221103000123456` |
+| hydration | `HYD` | `HYD20251221095450678429` |
+
+### 食事記録メッセージテンプレート（更新）
+
+既存の食事記録メッセージにもタグを追加:
+
+```
+【{facility}_{residentName}様(ID{residentId})】
+{#デイ利用中[dayServiceName] // 条件付き}
+#食事🍚
+{#重要⚠️ // 条件付き}
+
+記録者：{staffName}
+
+摂取時間：{mealTime}
+
+食事摂取方法：{intakeMethod}
+
+主食摂取量：{mainDishRatio || '--'}
+
+副食摂取量：{sideDishRatio || '--'}
+
+特記事項：{note}
+
+
+【投稿ID】：{postId}
+```
+
+### 実装変更点
+
+#### 1. googleChatService.ts
+
+```typescript
+// 新規追加: 水分記録メッセージフォーマット
+export function formatHydrationRecordMessage(record: HydrationRecordForChat): string {
+  const header = `【${record.facility}_${record.residentName}様(ID${record.residentId})】`;
+
+  const tags: string[] = [];
+  if (record.dayServiceUsage === '利用中' && record.dayServiceName) {
+    tags.push(`#デイ利用中[${record.dayServiceName}]`);
+  }
+  tags.push('#水分摂取💧');
+  if (record.isImportant === '重要') {
+    tags.push('#重要⚠️');
+  }
+
+  const lines = [
+    header,
+    ...tags,
+    '',
+    `記録者：${record.staffName}`,
+    '',
+    `摂取量：${record.hydrationAmount}cc`,
+    '',
+    `特記事項：${record.note || '【ケアに関すること】'}`,
+    '',
+    '【ACPiece】',
+    '',
+    '',
+    `【投稿ID】：${record.postId}`,
+  ];
+
+  return lines.join('\n');
+}
+
+// 型定義
+export interface HydrationRecordForChat {
+  facility: string;
+  residentName: string;
+  residentId: string;
+  staffName: string;
+  hydrationAmount: number;
+  note?: string;
+  dayServiceUsage: '利用中' | '利用中ではない';
+  dayServiceName?: string;
+  isImportant: '重要' | '重要ではない';
+  postId: string;
+}
+```
+
+#### 2. submitMealRecord.ts / StaffRecordDialog.tsx
+
+水分記録送信時にWebhook通知を追加:
+
+```typescript
+// 水分記録がある場合、Webhook送信
+if (hydrationAmount && settings.webhookUrl) {
+  const hydrationMessage = formatHydrationRecordMessage({
+    facility,
+    residentName,
+    residentId,
+    staffName,
+    hydrationAmount,
+    note,
+    dayServiceUsage,
+    dayServiceName,
+    isImportant,
+    postId: `HYD${timestamp}`,
+  });
+
+  await sendToGoogleChat(settings.webhookUrl, hydrationMessage);
+
+  if (isImportant === '重要' && settings.importantWebhookUrl) {
+    await sendToGoogleChat(settings.importantWebhookUrl, hydrationMessage);
+  }
+}
+```
+
+---
+
 ## 更新履歴
 
 | 日付 | 内容 |
 |------|------|
+| 2025-12-21 | Phase 29: 水分記録Webhook通知仕様を追加、タグ仕様を定義 |
 | 2025-12-15 | 初版作成（Google Chat Webhook連携設計書） |

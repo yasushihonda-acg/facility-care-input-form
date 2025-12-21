@@ -1052,10 +1052,232 @@ interface FormData {
 
 ---
 
-## 13. 変更履歴
+## 13. Phase 29: 水分記録機能
+
+### 13.1 背景と目的
+
+#### 現状の問題
+
+飲み物は既に品物として登録・管理されている（例: `demo-item-009: 麦茶`）。
+しかし、品物提供記録は `recordType: 'snack'` で食事シートに記録されるのみで、
+**水分摂取量シート**（健康管理用）には記録されていない。
+
+```
+現在のフロー:
+品物選択（麦茶）→ 提供数・摂食割合 → 食事シートへ ✅
+                                   → 水分摂取量シートへ ❌ 未対応
+```
+
+#### 目的
+
+飲み物を提供した際に、**水分量(cc)**も同時に記録できるようにする。
+これにより、1日の水分摂取量の追跡が可能になる。
+
+### 13.2 設計方針
+
+**在庫管理と水分追跡は異なる目的**:
+
+| 目的 | 対象 | 記録先 |
+|------|------|--------|
+| **在庫管理** | 麦茶が残り何L | consumption_logs + care_items |
+| **水分追跡** | 今日何cc飲んだか | 水分摂取量シート（Sheet A/B） |
+
+両方を1つのアクションで記録するのが自然なため、
+StaffRecordDialogに**水分量入力フィールドを追加**する（オプションA）。
+
+### 13.3 UIデザイン
+
+StaffRecordDialogに「水分量」フィールドを追加:
+
+```
+┌──────────────────────────────────────┐
+│  📦 麦茶                             │
+│  残り: 1L ┃ 期限: 12/24              │
+├──────────────────────────────────────┤
+│                                      │
+│  提供数 *                            │
+│  [  200  ] mL                        │  ← 飲み物の場合はmL表示
+│                                      │
+│  摂食した割合 *                       │
+│  [  10  ] / 10                       │
+│                                      │
+│  ─────── 水分記録 ───────            │  ← 新規セクション
+│                                      │
+│  水分量（cc）                         │
+│  [  200  ]                           │  ← 提供数から自動計算可能
+│  💧 この水分量が水分摂取量シートに    │
+│     記録されます                     │
+│                                      │
+│  ────────────────────────────────    │
+│                                      │
+│  メモ（任意）                        │
+│  ...                                 │
+└──────────────────────────────────────┘
+```
+
+#### 表示条件
+
+| 条件 | 水分量フィールド表示 |
+|------|---------------------|
+| `category: 'drink'` の品物選択時 | **常に表示**（推奨値を自動設定） |
+| その他のカテゴリ | **任意表示**（「水分も記録する」トグル） |
+
+#### 自動計算ロジック
+
+飲み物カテゴリの場合、提供数から水分量を自動計算:
+
+```typescript
+// 単位変換
+function calculateHydrationAmount(
+  quantity: number,
+  unit: string
+): number | null {
+  switch (unit.toLowerCase()) {
+    case 'ml':
+    case 'cc':
+      return quantity;
+    case 'l':
+      return quantity * 1000;
+    case 'コップ':
+    case '杯':
+      return quantity * 200; // 1杯 ≈ 200cc
+    default:
+      return null; // 手動入力が必要
+  }
+}
+```
+
+### 13.4 データフロー
+
+```
+[記録を保存] クリック
+    │
+    ├─1→ recordConsumptionLog API（在庫・消費ログ）
+    │       └─→ 在庫更新、consumption_logs記録
+    │
+    ├─2→ 水分量が入力されている場合:
+    │       submitCareRecord API（recordType: 'hydration'）
+    │       ├─→ 水分摂取量シートに記録
+    │       └─→ Google Chat Webhook通知（#水分摂取💧タグ付き）
+    │
+    └─3→ submitMealRecord API（Sheet B + Webhook）
+            └─→ 食事シートに記録（間食として）
+```
+
+### 13.4.1 Google Chat Webhook通知
+
+水分記録時にはGoogle Chatへタグ付きメッセージを送信する。
+
+**メッセージ形式**:
+```
+【{facility}_{residentName}様(ID{residentId})】
+#デイ利用中[{dayServiceName}]  ← 条件付き
+#水分摂取💧
+#重要⚠️  ← 条件付き
+
+記録者：{staffName}
+
+摂取量：{hydrationAmount}cc
+
+特記事項：{note}
+
+【ACPiece】
+
+
+【投稿ID】：HYD{timestamp}
+```
+
+**タグ仕様**:
+
+| タグ | 表示条件 |
+|------|----------|
+| `#デイ利用中[X]` | デイサービス利用中の場合 |
+| `#水分摂取💧` | 必須（水分記録を示す） |
+| `#重要⚠️` | `isImportant === '重要'` の場合 |
+
+詳細は [GOOGLE_CHAT_WEBHOOK_SPEC.md](./GOOGLE_CHAT_WEBHOOK_SPEC.md) Phase 29セクション参照。
+
+### 13.5 API変更
+
+#### submitCareRecord（既存）
+
+`recordType: 'hydration'` は既にサポート済み。
+フロントエンドから呼び出すだけでOK。
+
+```typescript
+// リクエスト例
+{
+  staffId: "田中",
+  residentId: "resident-001",
+  recordType: "hydration",      // ← 水分記録
+  content: "200",               // ← cc数
+  timestamp: "2025-12-21T14:30:00.000Z"
+}
+```
+
+#### Sheet B (水分摂取量) 列マッピング
+
+| 列 | ヘッダー | 値 |
+|----|----------|-----|
+| A | タイムスタンプ | ISO日時 |
+| B | あなたの名前は？ | staffName |
+| C | ご利用者様のお名前は？ | residentName |
+| D | 水分量はいくらでしたか？ | hydrationAmount (cc) |
+| E | 特記事項 | note |
+| F | 重要特記事項に反映？ | isImportant |
+| G | 施設 | facility |
+| H | デイ利用有無 | dayServiceUsage |
+| I | 投稿ID | `HYD{timestamp}` |
+| J | どこのデイサービス？ | dayServiceName |
+
+### 13.6 フォームデータ拡張
+
+```typescript
+// StaffRecordDialog formData
+interface FormData {
+  // ... 既存フィールド ...
+
+  // Phase 29: 水分記録
+  hydrationAmount: number | null;  // 水分量(cc)、nullは未入力
+  recordHydration: boolean;        // 水分記録を有効にするか（drink以外のカテゴリ用）
+}
+```
+
+### 13.7 E2Eテストケース
+
+| ID | テストケース | 期待結果 |
+|----|-------------|----------|
+| STAFF-080 | 飲み物カテゴリで水分量フィールドが表示される | フィールドが存在 |
+| STAFF-081 | 飲み物以外では「水分も記録」トグルで表示 | トグル操作で表示切替 |
+| STAFF-082 | 提供数入力で水分量が自動計算される | 正しい値が入る |
+| STAFF-083 | 水分量を手動編集できる | 編集可能 |
+| STAFF-084 | 水分量入力ありで記録送信 | hydration APIが呼ばれる |
+| STAFF-085 | 水分量なしで記録送信 | hydration APIは呼ばれない |
+
+### 13.8 実装計画
+
+| ステップ | 内容 | 影響ファイル |
+|----------|------|-------------|
+| 29.1 | 設計ドキュメント更新 | STAFF_RECORD_FORM_SPEC.md |
+| 29.2 | StaffRecordDialog UI更新 | StaffRecordDialog.tsx |
+| 29.3 | 水分量自動計算ロジック追加 | StaffRecordDialog.tsx |
+| 29.4 | submitCareRecord API呼び出し追加 | StaffRecordDialog.tsx, api/index.ts |
+| 29.5 | E2Eテスト追加 | staff-record-form.spec.ts |
+| 29.6 | ローカルテスト・本番デプロイ | - |
+
+### 13.9 後方互換性
+
+- 水分量フィールドは**任意**（入力なしでも記録可能）
+- 既存のsnack記録フローに影響なし
+- `recordType: 'hydration'` は既存APIで対応済み
+
+---
+
+## 14. 変更履歴
 
 | 日付 | 内容 |
 |------|------|
+| 2025-12-21 | Phase 29: 水分記録機能設計を追加 |
 | 2025-12-20 | Phase 15.9: 写真アップロード機能設計を追加（セクション3.1の項目10が未実装だった問題を修正） |
 | 2025-12-20 | Phase 15.8実装完了: ベースページ簡素化（`14b61a8`） |
 | 2025-12-20 | Phase 15.8: ベースページ簡素化設計を追加 |
