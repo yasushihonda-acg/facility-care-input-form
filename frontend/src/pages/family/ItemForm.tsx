@@ -478,8 +478,8 @@ export function ItemForm() {
                 value={formData.servingMethodDetail || ''}
                 onChange={(e) => updateField('servingMethodDetail', e.target.value || undefined)}
                 placeholder="例: 食べやすい大きさにカットしてください"
-                rows={2}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary resize-none"
+                rows={3}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary resize-y"
               />
             </div>
           )}
@@ -513,7 +513,7 @@ export function ItemForm() {
               onChange={(e) => updateField('noteToStaff', e.target.value || undefined)}
               placeholder="例: 好物なのでぜひ食べさせてあげてください"
               rows={3}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary resize-none"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary resize-y"
             />
           </div>
 
