@@ -159,6 +159,19 @@ export function StaffRecordDialog({
     }
   }, [formData.consumptionRateInput]);
 
+  // Phase 29修正: 提供数変更時に水分量を自動再計算
+  useEffect(() => {
+    if (formData.activeTab === 'hydration') {
+      const newHydrationAmount = calculateHydrationAmount(formData.servedQuantity, item.unit);
+      if (newHydrationAmount !== null) {
+        setFormData(prev => ({
+          ...prev,
+          hydrationAmount: newHydrationAmount,
+        }));
+      }
+    }
+  }, [formData.servedQuantity, formData.activeTab, item.unit]);
+
   // バリデーション
   const validate = useCallback((): boolean => {
     const newErrors: Record<string, string> = {};
@@ -307,11 +320,40 @@ export function StaffRecordDialog({
   }, [formData, item, settings, recordMutation, validate, onSuccess, onClose]);
 
   // Phase 15.7: 残り対応に基づいて消費量・残量を計算
+  // Phase 29修正: タブ別に計算ロジックを分岐
   const consumptionAmounts = useMemo(() => {
-    const rate = formData.consumptionRateInput * 10; // 0-10 → 0-100
-    const handling = formData.remainingHandling || undefined;
-    return calculateConsumptionAmounts(formData.servedQuantity, rate, handling);
-  }, [formData.servedQuantity, formData.consumptionRateInput, formData.remainingHandling]);
+    if (formData.activeTab === 'hydration') {
+      // 水分タブ: hydrationAmount(cc) → item.unit への逆変換
+      const hydrationCc = formData.hydrationAmount ?? 0;
+      let inventoryDeducted: number;
+      const normalizedUnit = item.unit.toLowerCase().trim();
+      switch (normalizedUnit) {
+        case 'ml':
+        case 'cc':
+          inventoryDeducted = hydrationCc;
+          break;
+        case 'l':
+          inventoryDeducted = hydrationCc / 1000;
+          break;
+        case 'コップ':
+        case '杯':
+          inventoryDeducted = hydrationCc / 200;
+          break;
+        default:
+          inventoryDeducted = formData.servedQuantity; // フォールバック: 提供数をそのまま使用
+      }
+      return {
+        consumedQuantity: inventoryDeducted,
+        inventoryDeducted,
+        wastedQuantity: 0,
+      };
+    } else {
+      // 食事タブ: 従来の計算ロジック
+      const rate = formData.consumptionRateInput * 10; // 0-10 → 0-100
+      const handling = formData.remainingHandling || undefined;
+      return calculateConsumptionAmounts(formData.servedQuantity, rate, handling);
+    }
+  }, [formData.activeTab, formData.servedQuantity, formData.consumptionRateInput, formData.remainingHandling, formData.hydrationAmount, item.unit]);
 
   const quantityAfter = currentQuantity - consumptionAmounts.inventoryDeducted;
 
