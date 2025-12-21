@@ -534,10 +534,112 @@ export const DEMO_CARE_INSTRUCTIONS: CareInstruction[] = [
 
 ---
 
+## Phase 27: クイックアクセスカードレイアウト修正
+
+### 27.1 背景・課題
+
+Phase 26で入居者設定画面を削除した結果、家族ホーム（FamilyDashboard）のクイックアクセスセクションに問題が発生しました。
+
+| 問題 | 詳細 |
+|------|------|
+| **レイアウト崩れ** | `grid-cols-2`（2列）レイアウトで1つのカード（タスク）のみ → 右側に隙間 |
+| **見た目の不整合** | 空白スペースが目立ち、UIの完成度が低下 |
+
+### 27.2 解決策
+
+**採用案: タスクカードを横幅フル（1列）レイアウトに変更**
+
+```
+【Before: 2列レイアウト（隙間あり）】
+┌─────────────────┐ ┌─────────────────┐
+│ 📋 タスク       │ │                 │ ← 空白
+│    7件          │ │                 │
+└─────────────────┘ └─────────────────┘
+
+【After: 1列フルワイドレイアウト】
+┌───────────────────────────────────────┐
+│ 📋 タスク                         7  │
+│    7件のタスクがあります              │
+└───────────────────────────────────────┘
+```
+
+### 27.3 代替案の検討
+
+| 案 | メリット | デメリット | 採用 |
+|----|---------|-----------|------|
+| **A: フル幅1列** | シンプル、隙間なし | 高さが小さくなる可能性 | ✅ |
+| B: 新カード追加 | 情報量増加 | 追加機能の設計・実装必要 | ❌ |
+| C: セクション削除 | 最もシンプル | タスクへの導線が消える | ❌ |
+| D: col-span-2 | グリッド維持 | 将来カード追加時に再修正必要 | ❌ |
+
+**選定理由**:
+- シンプルで確実な修正
+- 将来カードを追加する場合は`grid-cols-2`に戻せばよい
+- タスクの視認性が向上（フル幅で情報表示しやすい）
+
+### 27.4 実装変更
+
+**ファイル**: `frontend/src/pages/family/FamilyDashboard.tsx`
+
+```diff
+- <div className="grid grid-cols-2 gap-3 mb-4">
++ <div className="mb-4">
+    {/* タスク管理 */}
+    <Link
+      to={`${pathPrefix}/family/tasks`}
+-     className={`block bg-white rounded-lg shadow-card p-3 hover:shadow-md transition ${
++     className={`block bg-white rounded-lg shadow-card p-4 hover:shadow-md transition ${
+        hasOverdue ? 'ring-2 ring-red-300' : ''
+      }`}
+    >
+-     <div className="flex items-center gap-2">
++     <div className="flex items-center gap-3">
+        <span className="text-xl">📋</span>
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-gray-800 text-sm">タスク</p>
+          <p className="text-xs text-gray-500 truncate">
+-           {taskCount > 0 ? `${taskCount}件` : 'なし'}
++           {taskCount > 0 ? `${taskCount}件のタスクがあります` : 'タスクはありません'}
+          </p>
+        </div>
+        {taskCount > 0 && (
+          <span className={`...`}>
+            {taskCount}
+          </span>
+        )}
+      </div>
+    </Link>
+  </div>
+```
+
+### 27.5 UI仕様
+
+| 項目 | 値 |
+|------|-----|
+| レイアウト | 1列フル幅 |
+| パディング | `p-4`（以前は`p-3`） |
+| アイコンとテキストの間隔 | `gap-3`（以前は`gap-2`） |
+| サブテキスト | 「{n}件のタスクがあります」/「タスクはありません」 |
+| 下マージン | `mb-4`（維持） |
+
+### 27.6 将来の拡張
+
+将来、クイックアクセスカードを追加する場合は、以下の変更で2列レイアウトに戻せます：
+
+```tsx
+<div className="grid grid-cols-2 gap-3 mb-4">
+  {/* タスクカード */}
+  {/* 新規カード */}
+</div>
+```
+
+---
+
 ## 更新履歴
 
 | 日付 | 内容 |
 |------|------|
+| 2025-12-21 | Phase 27 クイックアクセスカードレイアウト修正設計追加 |
 | 2025-12-15 | 初版作成（3ビュー設計・データモデル定義） |
 | 2025-12-15 | Phase 7.0 実装完了・実装状況セクション追加 |
 | 2025-12-15 | Phase 7.1 予実管理実装完了 |

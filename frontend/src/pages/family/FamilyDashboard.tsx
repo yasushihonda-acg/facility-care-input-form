@@ -120,21 +120,21 @@ export function FamilyDashboard() {
       showBackButton={false}
     >
       <div className="pb-4">
-        {/* フッターに無い機能へのクイックアクセス */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
+        {/* フッターに無い機能へのクイックアクセス - Phase 27: 1列フル幅レイアウトに変更 */}
+        <div className="mb-4">
           {/* タスク管理 */}
           <Link
             to={`${pathPrefix}/family/tasks`}
-            className={`block bg-white rounded-lg shadow-card p-3 hover:shadow-md transition ${
+            className={`block bg-white rounded-lg shadow-card p-4 hover:shadow-md transition ${
               hasOverdue ? 'ring-2 ring-red-300' : ''
             }`}
           >
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <span className="text-xl">📋</span>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-gray-800 text-sm">タスク</p>
                 <p className="text-xs text-gray-500 truncate">
-                  {taskCount > 0 ? `${taskCount}件` : 'なし'}
+                  {taskCount > 0 ? `${taskCount}件のタスクがあります` : 'タスクはありません'}
                 </p>
               </div>
               {taskCount > 0 && (
@@ -146,21 +146,6 @@ export function FamilyDashboard() {
               )}
             </div>
           </Link>
-
-          {/* Phase 26: 入居者設定削除
-          <Link
-            to={`${pathPrefix}/family/settings/resident`}
-            className="block bg-white rounded-lg shadow-card p-3 hover:shadow-md transition"
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-xl">👤</span>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-gray-800 text-sm">入居者設定</p>
-                <p className="text-xs text-gray-500 truncate">禁止品目など</p>
-              </div>
-            </div>
-          </Link>
-          */}
         </div>
 
         {/* Phase 21: チャット機能一時非表示
