@@ -79,12 +79,23 @@ export function ItemManagement() {
             <span>📦</span>
             品物管理
           </h1>
-          <Link
-            to={`${pathPrefix}/family/items/new`}
-            className="px-4 py-2 bg-primary text-white rounded-lg font-medium text-sm"
-          >
-            + 新規登録
-          </Link>
+          <div className="flex items-center gap-2">
+            {/* いつもの指示ボタン: モバイルではアイコンのみ */}
+            <Link
+              to={`${pathPrefix}/family/presets`}
+              className="px-3 py-2 border border-primary text-primary rounded-lg font-medium text-sm flex items-center gap-1 hover:bg-primary/5 transition-colors"
+            >
+              <span>⭐</span>
+              <span className="hidden sm:inline">いつもの指示</span>
+            </Link>
+            {/* 新規登録ボタン */}
+            <Link
+              to={`${pathPrefix}/family/items/new`}
+              className="px-4 py-2 bg-primary text-white rounded-lg font-medium text-sm"
+            >
+              + 新規登録
+            </Link>
+          </div>
         </div>
 
         {/* フィルタタブ */}
