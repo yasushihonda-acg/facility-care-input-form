@@ -19,7 +19,9 @@ import {
   STORAGE_METHODS,
   SERVING_METHODS,
   ITEM_UNITS,
+  REMAINING_HANDLING_INSTRUCTION_OPTIONS,
 } from '../../types/careItem';
+import type { RemainingHandlingInstruction } from '../../types/careItem';
 import type {
   CareItemInput,
   ItemCategory,
@@ -513,6 +515,41 @@ export function ItemForm() {
               rows={3}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary resize-none"
             />
+          </div>
+
+          {/* Phase 33: 残った場合の処置指示 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              残った場合の処置指示
+            </label>
+            <div className="space-y-2">
+              {REMAINING_HANDLING_INSTRUCTION_OPTIONS.map((option) => (
+                <label
+                  key={option.value}
+                  className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer border transition-colors ${
+                    (formData.remainingHandlingInstruction ?? 'none') === option.value
+                      ? 'border-primary bg-primary/5'
+                      : 'border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="remainingHandlingInstruction"
+                    value={option.value}
+                    checked={(formData.remainingHandlingInstruction ?? 'none') === option.value}
+                    onChange={(e) => updateField('remainingHandlingInstruction', e.target.value as RemainingHandlingInstruction)}
+                    className="mt-1 w-4 h-4"
+                  />
+                  <div>
+                    <span className="font-medium text-sm">{option.label}</span>
+                    <p className="text-xs text-gray-500 mt-0.5">{option.description}</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-gray-500">
+              ※ 指示がある場合、スタッフは指示通りの対応のみ選択可能になります
+            </p>
           </div>
 
           {/* 送信ボタン（フォーム最下部に通常配置） */}

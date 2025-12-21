@@ -92,6 +92,37 @@ export const ITEM_STATUSES: { value: ItemStatus; label: string; color: string; b
 // 単位
 export const ITEM_UNITS: string[] = ['個', 'パック', '本', '袋', '箱', '枚', 'g', 'ml'];
 
+// =============================================================================
+// 残ったものへの処置指示 (Phase 33)
+// @see docs/REMAINING_HANDLING_INSTRUCTION_SPEC.md
+// =============================================================================
+
+/**
+ * 残った場合の処置指示（家族が設定）
+ * - discarded: 破棄してください
+ * - stored: 保存してください
+ * - none: 指定なし（スタッフ判断）
+ */
+export type RemainingHandlingInstruction = 'discarded' | 'stored' | 'none';
+
+export const REMAINING_HANDLING_INSTRUCTION_OPTIONS: {
+  value: RemainingHandlingInstruction;
+  label: string;
+  description: string;
+}[] = [
+  { value: 'none', label: '指定なし', description: 'スタッフの判断に任せます' },
+  { value: 'discarded', label: '破棄してください', description: '残った場合は破棄してください' },
+  { value: 'stored', label: '保存してください', description: '残った場合は保存してください' },
+];
+
+/**
+ * 処置指示のラベルを取得
+ */
+export function getRemainingHandlingInstructionLabel(instruction: RemainingHandlingInstruction | undefined): string {
+  if (!instruction || instruction === 'none') return '指定なし';
+  return REMAINING_HANDLING_INSTRUCTION_OPTIONS.find(o => o.value === instruction)?.label ?? '指定なし';
+}
+
 // === インターフェース ===
 
 // 品物（Firestore: care_items/{itemId}）
@@ -124,6 +155,9 @@ export interface CareItem {
   plannedServeDate?: string;     // YYYY-MM-DD（後方互換）
   servingSchedule?: ServingSchedule; // 構造化スケジュール（Phase 13.1）
   noteToStaff?: string;
+
+  // Phase 33: 残った場合の処置指示（家族が設定）
+  remainingHandlingInstruction?: RemainingHandlingInstruction;
 
   // 提供記録（スタッフが入力）- 旧: 互換性のため残す
   actualServeDate?: string;      // YYYY-MM-DD
@@ -170,6 +204,8 @@ export interface CareItemInput {
   plannedServeDate?: string;
   servingSchedule?: ServingSchedule; // 構造化スケジュール（Phase 13.1）
   noteToStaff?: string;
+  // Phase 33: 残った場合の処置指示
+  remainingHandlingInstruction?: RemainingHandlingInstruction;
 }
 
 // スタッフが入力する提供記録

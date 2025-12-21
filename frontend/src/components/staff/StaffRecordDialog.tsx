@@ -9,7 +9,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { CareItem } from '../../types/careItem';
 import type { RemainingHandling } from '../../types/consumptionLog';
-import { getCategoryIcon, migrateCategory } from '../../types/careItem';
+import { getCategoryIcon, migrateCategory, getRemainingHandlingInstructionLabel } from '../../types/careItem';
 import { determineConsumptionStatus, REMAINING_HANDLING_OPTIONS } from '../../types/consumptionLog';
 import { useRecordConsumptionLog } from '../../hooks/useConsumptionLogs';
 import { submitMealRecord, uploadCareImage, submitHydrationRecord } from '../../api';
@@ -125,6 +125,13 @@ export function StaffRecordDialog({
         ? calculateHydrationAmount(servedQty, item.unit)
         : null;
 
+      // Phase 33: 家族の処置指示がある場合は自動選択
+      const familyInstruction = item.remainingHandlingInstruction;
+      const autoRemainingHandling: RemainingHandling | '' =
+        familyInstruction && familyInstruction !== 'none'
+          ? (familyInstruction as RemainingHandling)
+          : '';
+
       setFormData({
         // Phase 29: タブ選択
         activeTab: defaultTab,
@@ -136,7 +143,7 @@ export function StaffRecordDialog({
         consumptionNote: '',
         noteToFamily: '',
         followedFamilyInstructions: true,
-        remainingHandling: '',
+        remainingHandling: autoRemainingHandling,
         remainingHandlingOther: '',
         snack: '',
         note: DEFAULT_NOTE, // Phase 29: placeholderからdefaultValueに変更
@@ -592,27 +599,57 @@ export function StaffRecordDialog({
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   残った分への対応 <span className="text-red-500">*</span>
                 </label>
+
+                {/* Phase 33: 家族からの処置指示バナー */}
+                {item.remainingHandlingInstruction && item.remainingHandlingInstruction !== 'none' && (
+                  <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <div className="flex items-center gap-2 text-amber-700">
+                      <span className="text-lg">💡</span>
+                      <span className="font-medium text-sm">ご家族からの指示があります</span>
+                    </div>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className="text-lg">📌</span>
+                      <span className="font-semibold text-amber-800">
+                        {getRemainingHandlingInstructionLabel(item.remainingHandlingInstruction)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-2">
-                  {REMAINING_HANDLING_OPTIONS.map(option => (
-                    <label
-                      key={option.value}
-                      className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer border transition-colors ${
-                        formData.remainingHandling === option.value
-                          ? 'border-primary bg-primary/5'
-                          : 'border-gray-200 hover:bg-gray-50'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="remainingHandlingHydration"
-                        value={option.value}
-                        checked={formData.remainingHandling === option.value}
-                        onChange={(e) => setFormData(prev => ({ ...prev, remainingHandling: e.target.value as RemainingHandling }))}
-                        className="w-4 h-4"
-                      />
-                      <span className="text-sm">{option.label}</span>
-                    </label>
-                  ))}
+                  {REMAINING_HANDLING_OPTIONS.map(option => {
+                    // Phase 33: 家族指示がある場合、該当オプション以外は非活性
+                    const hasInstruction = item.remainingHandlingInstruction && item.remainingHandlingInstruction !== 'none';
+                    const isAllowed = !hasInstruction || option.value === item.remainingHandlingInstruction;
+                    const isDisabled = hasInstruction && !isAllowed;
+
+                    return (
+                      <label
+                        key={option.value}
+                        className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+                          isDisabled
+                            ? 'cursor-not-allowed opacity-50 border-gray-200 bg-gray-50'
+                            : formData.remainingHandling === option.value
+                              ? 'cursor-pointer border-primary bg-primary/5'
+                              : 'cursor-pointer border-gray-200 hover:bg-gray-50'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="remainingHandlingHydration"
+                          value={option.value}
+                          checked={formData.remainingHandling === option.value}
+                          disabled={isDisabled}
+                          onChange={(e) => setFormData(prev => ({ ...prev, remainingHandling: e.target.value as RemainingHandling }))}
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm">{option.label}</span>
+                        {isDisabled && (
+                          <span className="text-xs text-gray-400 ml-auto">（家族指示により選択不可）</span>
+                        )}
+                      </label>
+                    );
+                  })}
                 </div>
                 {errors.remainingHandling && (
                   <p className="mt-1 text-sm text-red-500">{errors.remainingHandling}</p>
@@ -687,27 +724,57 @@ export function StaffRecordDialog({
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 残った分への対応 <span className="text-red-500">*</span>
               </label>
+
+              {/* Phase 33: 家族からの処置指示バナー */}
+              {item.remainingHandlingInstruction && item.remainingHandlingInstruction !== 'none' && (
+                <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div className="flex items-center gap-2 text-amber-700">
+                    <span className="text-lg">💡</span>
+                    <span className="font-medium text-sm">ご家族からの指示があります</span>
+                  </div>
+                  <div className="mt-1 flex items-center gap-2">
+                    <span className="text-lg">📌</span>
+                    <span className="font-semibold text-amber-800">
+                      {getRemainingHandlingInstructionLabel(item.remainingHandlingInstruction)}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
-                {REMAINING_HANDLING_OPTIONS.map(option => (
-                  <label
-                    key={option.value}
-                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer border transition-colors ${
-                      formData.remainingHandling === option.value
-                        ? 'border-primary bg-primary/5'
-                        : 'border-gray-200 hover:bg-gray-50'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="remainingHandling"
-                      value={option.value}
-                      checked={formData.remainingHandling === option.value}
-                      onChange={(e) => setFormData(prev => ({ ...prev, remainingHandling: e.target.value as RemainingHandling }))}
-                      className="w-4 h-4"
-                    />
-                    <span className="text-sm">{option.label}</span>
-                  </label>
-                ))}
+                {REMAINING_HANDLING_OPTIONS.map(option => {
+                  // Phase 33: 家族指示がある場合、該当オプション以外は非活性
+                  const hasInstruction = item.remainingHandlingInstruction && item.remainingHandlingInstruction !== 'none';
+                  const isAllowed = !hasInstruction || option.value === item.remainingHandlingInstruction;
+                  const isDisabled = hasInstruction && !isAllowed;
+
+                  return (
+                    <label
+                      key={option.value}
+                      className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+                        isDisabled
+                          ? 'cursor-not-allowed opacity-50 border-gray-200 bg-gray-50'
+                          : formData.remainingHandling === option.value
+                            ? 'cursor-pointer border-primary bg-primary/5'
+                            : 'cursor-pointer border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="remainingHandling"
+                        value={option.value}
+                        checked={formData.remainingHandling === option.value}
+                        disabled={isDisabled}
+                        onChange={(e) => setFormData(prev => ({ ...prev, remainingHandling: e.target.value as RemainingHandling }))}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm">{option.label}</span>
+                      {isDisabled && (
+                        <span className="text-xs text-gray-400 ml-auto">（家族指示により選択不可）</span>
+                      )}
+                    </label>
+                  );
+                })}
               </div>
               {errors.remainingHandling && (
                 <p className="mt-1 text-sm text-red-500">{errors.remainingHandling}</p>

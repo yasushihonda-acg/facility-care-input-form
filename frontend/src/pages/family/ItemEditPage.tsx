@@ -14,6 +14,7 @@ import {
   STORAGE_METHODS,
   SERVING_METHODS,
   ITEM_UNITS,
+  REMAINING_HANDLING_INSTRUCTION_OPTIONS,
   formatDate,
   migrateCategory,
 } from '../../types/careItem';
@@ -21,6 +22,7 @@ import type {
   ItemCategory,
   StorageMethod,
   ServingMethod,
+  RemainingHandlingInstruction,
 } from '../../types/careItem';
 
 // デモ用の入居者ID（将来は認証から取得）
@@ -37,6 +39,8 @@ interface EditFormData {
   servingMethodDetail: string;
   plannedServeDate: string;
   noteToStaff: string;
+  // Phase 33: 残った場合の処置指示
+  remainingHandlingInstruction: RemainingHandlingInstruction;
 }
 
 export function ItemEditPage() {
@@ -65,6 +69,7 @@ export function ItemEditPage() {
     servingMethodDetail: '',
     plannedServeDate: '',
     noteToStaff: '',
+    remainingHandlingInstruction: 'none',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -84,6 +89,7 @@ export function ItemEditPage() {
         servingMethodDetail: item.servingMethodDetail || '',
         plannedServeDate: item.plannedServeDate || '',
         noteToStaff: item.noteToStaff || '',
+        remainingHandlingInstruction: item.remainingHandlingInstruction || 'none',
       });
     }
   }, [item]);
@@ -150,6 +156,8 @@ export function ItemEditPage() {
           servingMethodDetail: formData.servingMethodDetail || undefined,
           plannedServeDate: formData.plannedServeDate || undefined,
           noteToStaff: formData.noteToStaff || undefined,
+          // Phase 33: 残った場合の処置指示
+          remainingHandlingInstruction: formData.remainingHandlingInstruction,
         },
       });
       navigate(`/family/items/${id}`);
@@ -424,6 +432,41 @@ export function ItemEditPage() {
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             placeholder="スタッフに伝えたいことがあれば記入"
           />
+        </div>
+
+        {/* Phase 33: 残った場合の処置指示 */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            残った場合の処置指示
+          </label>
+          <div className="space-y-2">
+            {REMAINING_HANDLING_INSTRUCTION_OPTIONS.map((option) => (
+              <label
+                key={option.value}
+                className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer border transition-colors ${
+                  formData.remainingHandlingInstruction === option.value
+                    ? 'border-primary bg-primary/5'
+                    : 'border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="remainingHandlingInstruction"
+                  value={option.value}
+                  checked={formData.remainingHandlingInstruction === option.value}
+                  onChange={handleChange}
+                  className="mt-1 w-4 h-4"
+                />
+                <div>
+                  <span className="font-medium text-sm">{option.label}</span>
+                  <p className="text-xs text-gray-500 mt-0.5">{option.description}</p>
+                </div>
+              </label>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-gray-500">
+            ※ 指示がある場合、スタッフは指示通りの対応のみ選択可能になります
+          </p>
         </div>
 
         {/* ボタン */}
