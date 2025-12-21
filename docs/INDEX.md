@@ -124,6 +124,8 @@ last_reviewed: 2025-12-21
 | [AI_INTEGRATION_SPEC.md](./AI_INTEGRATION_SPEC.md) | Gemini AI連携 | working |
 | [GOOGLE_CHAT_WEBHOOK_SPEC.md](./GOOGLE_CHAT_WEBHOOK_SPEC.md) | Google Chat Webhook | working |
 | [FAMILY_NOTIFY_SPEC.md](./FAMILY_NOTIFY_SPEC.md) | 家族操作・入力無し通知（Phase 30） | canonical |
+| [REMAINING_HANDLING_INSTRUCTION_SPEC.md](./REMAINING_HANDLING_INSTRUCTION_SPEC.md) | 残ったものへの処置指示（Phase 33） | canonical |
+| [DEMO_AI_ANALYSIS_SPEC.md](./DEMO_AI_ANALYSIS_SPEC.md) | 統計AI分析デモモード対応（Phase 34） | canonical |
 | [MOE_ANALYSIS_ITEM_CARE_INTEGRATION.md](./MOE_ANALYSIS_ITEM_CARE_INTEGRATION.md) | 品物×ケア統合分析 | working |
 
 ---
@@ -191,6 +193,8 @@ last_reviewed: 2025-12-21
 
 | 日付 | 変更内容 |
 |------|----------|
+| 2025-12-21 | DEMO_AI_ANALYSIS_SPEC.md 追加（Phase 34） |
+| 2025-12-21 | REMAINING_HANDLING_INSTRUCTION_SPEC.md 追加（Phase 33） |
 | 2025-12-21 | FAMILY_NOTIFY_SPEC.md 追加（Phase 30） |
 | 2025-12-21 | CHAT_FEATURE_HIDE_SPEC.md 追加（Phase 21） |
 | 2025-12-20 | DEMO_STAFF_CONTAINMENT.md, FOOTERNAV_DEMO_FIX_SPEC.md 追加（Phase 20/20.1） |
