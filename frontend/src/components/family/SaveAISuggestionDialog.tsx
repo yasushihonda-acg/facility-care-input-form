@@ -15,13 +15,12 @@ const STORAGE_METHOD_LABELS: Record<string, string> = {
 };
 
 // 提供方法ラベル
+// Phase 28で整理: cooled/blended削除
 const SERVING_METHOD_LABELS: Record<string, string> = {
   as_is: 'そのまま',
   cut: 'カット',
   peeled: '皮むき',
   heated: '温める',
-  cooled: '冷やす',
-  blended: 'ミキサー',
   other: 'その他',
 };
 

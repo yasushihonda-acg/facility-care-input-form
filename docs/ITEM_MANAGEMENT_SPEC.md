@@ -179,14 +179,12 @@ const STORAGE_METHODS: { value: StorageMethod; label: string }[] = [
   { value: 'frozen', label: '冷凍' },
 ];
 
-// 提供方法
+// 提供方法（Phase 28で整理: cooled/blended削除）
 type ServingMethod =
   | 'as_is'      // そのまま
   | 'cut'        // カット
   | 'peeled'     // 皮むき
   | 'heated'     // 温める
-  | 'cooled'     // 冷やす
-  | 'blended'    // ミキサー
   | 'other';     // その他
 
 const SERVING_METHODS: { value: ServingMethod; label: string }[] = [
@@ -194,8 +192,6 @@ const SERVING_METHODS: { value: ServingMethod; label: string }[] = [
   { value: 'cut', label: 'カット' },
   { value: 'peeled', label: '皮むき' },
   { value: 'heated', label: '温める' },
-  { value: 'cooled', label: '冷やす' },
-  { value: 'blended', label: 'ミキサー' },
   { value: 'other', label: 'その他' },
 ];
 
@@ -1280,7 +1276,83 @@ async function updateCareItemHandler(req: UpdateCareItemRequest): Promise<Update
 
 ---
 
-## 10. 参照資料
+## 10. Phase 28: 提供方法の選択肢整理
+
+### 10.1 背景・課題
+
+品物登録フォームの「提供方法」選択肢が多すぎ、使用頻度の低いオプションがユーザーを混乱させています。
+
+| 問題 | 詳細 |
+|------|------|
+| **選択肢過多** | 7つの選択肢があり、選択に迷う |
+| **使用頻度低** | 「冷やす」「ミキサー」は実際にはほぼ使用されない |
+| **UI煩雑** | 2列グリッドで4行表示になり、スクロールが必要 |
+
+### 10.2 削除対象
+
+| 値 | ラベル | 削除理由 |
+|----|--------|----------|
+| `cooled` | 冷やす | 保存方法「冷蔵」と重複。使用頻度低 |
+| `blended` | ミキサー | 特殊な調理方法。使用頻度低。必要時は「その他」で対応可 |
+
+### 10.3 変更後の選択肢
+
+| 値 | ラベル | 用途 |
+|----|--------|------|
+| `as_is` | そのまま | 加工なしで提供 |
+| `cut` | カット | 切って提供（デフォルト的） |
+| `peeled` | 皮むき | 皮をむいて提供 |
+| `heated` | 温める | 温めて提供 |
+| `other` | その他 | 上記以外（詳細は自由記述で） |
+
+### 10.4 実装変更
+
+**ファイル一覧**:
+
+| ファイル | 変更内容 |
+|----------|----------|
+| `frontend/src/types/careItem.ts` | `ServingMethod`型から`cooled`/`blended`を削除 |
+| `frontend/src/types/careItem.ts` | `SERVING_METHODS`配列から該当項目削除 |
+| `frontend/src/types/careItem.ts` | `SERVING_METHOD_LABELS`から該当項目削除 |
+| `functions/src/types/index.ts` | バックエンド型定義の同期（もしあれば） |
+
+### 10.5 後方互換性
+
+既存データへの影響:
+
+| 状況 | 対応 |
+|------|------|
+| 既存の`cooled`/`blended`データ | 表示時は「その他」として扱う（ラベル取得関数で対応） |
+| 新規登録 | 選択肢に表示されないため登録不可 |
+| 編集時 | 既存値は保持、変更する場合は新しい選択肢から選択 |
+
+### 10.6 UI変更
+
+```
+【Before: 7選択肢（2列×4行）】
+┌──────────┐ ┌──────────┐
+│ そのまま │ │ カット   │
+├──────────┤ ├──────────┤
+│ 皮むき   │ │ 温める   │
+├──────────┤ ├──────────┤
+│ 冷やす   │ │ ミキサー │
+├──────────┤ ├──────────┤
+│ その他   │ │          │
+└──────────┘ └──────────┘
+
+【After: 5選択肢（2列×3行）】
+┌──────────┐ ┌──────────┐
+│ そのまま │ │ カット   │
+├──────────┤ ├──────────┤
+│ 皮むき   │ │ 温める   │
+├──────────┤ ├──────────┤
+│ その他   │ │          │
+└──────────┘ └──────────┘
+```
+
+---
+
+## 11. 参照資料
 
 - [USER_ROLE_SPEC.md](./USER_ROLE_SPEC.md) - ユーザーロール・権限設計
 - [TASK_MANAGEMENT_SPEC.md](./TASK_MANAGEMENT_SPEC.md) - タスク管理詳細設計

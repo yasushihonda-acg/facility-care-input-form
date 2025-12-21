@@ -37,14 +37,12 @@ export const STORAGE_METHODS: { value: StorageMethod; label: string }[] = [
   { value: 'frozen', label: '冷凍' },
 ];
 
-// 提供方法
+// 提供方法（Phase 28で整理: cooled/blended削除）
 export type ServingMethod =
   | 'as_is'      // そのまま
   | 'cut'        // カット
   | 'peeled'     // 皮むき
   | 'heated'     // 温める
-  | 'cooled'     // 冷やす
-  | 'blended'    // ミキサー
   | 'other';     // その他
 
 export const SERVING_METHODS: { value: ServingMethod; label: string }[] = [
@@ -52,8 +50,6 @@ export const SERVING_METHODS: { value: ServingMethod; label: string }[] = [
   { value: 'cut', label: 'カット' },
   { value: 'peeled', label: '皮むき' },
   { value: 'heated', label: '温める' },
-  { value: 'cooled', label: '冷やす' },
-  { value: 'blended', label: 'ミキサー' },
   { value: 'other', label: 'その他' },
 ];
 
@@ -383,14 +379,12 @@ export const STORAGE_METHOD_LABELS: Record<StorageMethod, string> = {
   frozen: '冷凍',
 };
 
-/** 提供方法ラベルマップ（AI提案表示用） */
+/** 提供方法ラベルマップ（AI提案表示用）（Phase 28で整理: cooled/blended削除） */
 export const SERVING_METHOD_LABELS: Record<ServingMethod, string> = {
   as_is: 'そのまま',
   cut: 'カット',
   peeled: '皮むき',
   heated: '温める',
-  cooled: '冷やす',
-  blended: 'ミキサー',
   other: 'その他',
 };
 

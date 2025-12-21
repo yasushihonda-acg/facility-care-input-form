@@ -461,14 +461,12 @@ export type StorageMethod =
   | "refrigerated" // 冷蔵
   | "frozen"; // 冷凍
 
-/** 提供方法 */
+/** 提供方法（Phase 28で整理: cooled/blended削除） */
 export type ServingMethod =
   | "as_is" // そのまま
   | "cut" // カット
   | "peeled" // 皮むき
   | "heated" // 温める
-  | "cooled" // 冷やす
-  | "blended" // ミキサー
   | "other"; // その他
 
 /** 摂食状況 */

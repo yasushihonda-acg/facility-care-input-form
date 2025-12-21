@@ -217,7 +217,7 @@ export const DEMO_FOOD_MASTERS: FoodMaster[] = [
     defaultUnit: '本',
     defaultExpirationDays: 180,
     defaultStorageMethod: 'room_temp' as StorageMethod,
-    defaultServingMethods: ['heated', 'cooled'] as ServingMethod[],
+    defaultServingMethods: ['heated', 'as_is'] as ServingMethod[],
     careNotes: '適温（60〜70℃）で提供。カフェイン含有のため就寝前は避ける。',
     stats: {
       totalServed: 100,
@@ -240,7 +240,7 @@ export const DEMO_FOOD_MASTERS: FoodMaster[] = [
     defaultUnit: '本',
     defaultExpirationDays: 30,
     defaultStorageMethod: 'refrigerated' as StorageMethod,
-    defaultServingMethods: ['cooled'] as ServingMethod[],
+    defaultServingMethods: ['as_is'] as ServingMethod[],
     careNotes: '開封後は早めに消費。糖分があるため1日200ml程度。',
     stats: {
       totalServed: 40,
@@ -315,7 +315,7 @@ export const DEMO_FOOD_MASTERS: FoodMaster[] = [
     defaultUnit: '本',
     defaultExpirationDays: 365,
     defaultStorageMethod: 'room_temp' as StorageMethod,
-    defaultServingMethods: ['as_is', 'cooled'] as ServingMethod[],
+    defaultServingMethods: ['as_is'] as ServingMethod[],
     careNotes: '医師・栄養士の指示に従って提供。1日の摂取量を守る。',
     stats: {
       totalServed: 60,
