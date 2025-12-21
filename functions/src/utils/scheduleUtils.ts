@@ -5,15 +5,15 @@
  * フロントエンドの scheduleUtils.ts から必要な関数を移植
  */
 
-import type { ServingSchedule } from '../types';
+import type {ServingSchedule} from "../types";
 
 /**
  * 日付を YYYY-MM-DD 形式でフォーマット
  */
 export function formatDateString(date: Date): string {
   const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
 }
 
@@ -32,27 +32,27 @@ export function isScheduledForDate(
   const targetWeekday = targetDate.getDay(); // 0-6 (日曜始まり)
 
   // 開始日チェック（daily/weeklyの場合のみ）
-  if (schedule.startDate && (schedule.type === 'daily' || schedule.type === 'weekly')) {
+  if (schedule.startDate && (schedule.type === "daily" || schedule.type === "weekly")) {
     if (targetStr < schedule.startDate) {
       return false; // 開始日より前は対象外
     }
   }
 
   switch (schedule.type) {
-    case 'once':
-      return schedule.date === targetStr;
+  case "once":
+    return schedule.date === targetStr;
 
-    case 'daily':
-      return true;
+  case "daily":
+    return true;
 
-    case 'weekly':
-      return schedule.weekdays?.includes(targetWeekday) ?? false;
+  case "weekly":
+    return schedule.weekdays?.includes(targetWeekday) ?? false;
 
-    case 'specific_dates':
-      return schedule.dates?.includes(targetStr) ?? false;
+  case "specific_dates":
+    return schedule.dates?.includes(targetStr) ?? false;
 
-    default:
-      return false;
+  default:
+    return false;
   }
 }
 
