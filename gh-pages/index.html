@@ -515,396 +515,42 @@ flowchart TB
                 <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
                     <span class="text-2xl">📈</span> 開発進捗
                 </h2>
-                <div class="space-y-6">
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 1-4: 基盤〜デモ版</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">Firebase基盤構築、PWA化、Sheets連携</p>
+
+                <!-- Summary -->
+                <div class="bg-green-50 rounded-lg p-4 mb-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-bold text-green-800">Phase 1〜37 完了</span>
+                        <span class="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium">100%</span>
                     </div>
+                    <p class="text-sm text-green-700">E2Eテスト: 328件定義 / 275件パス / 39件スキップ</p>
+                </div>
+
+                <!-- Major Milestones -->
+                <div class="space-y-4">
                     <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 5: 食事入力〜設定改善</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">食事入力フォーム、写真アップロード、管理設定、テスト機能</p>
+                        <h3 class="font-semibold text-gray-800">Phase 1-9: コア機能</h3>
+                        <p class="text-sm text-gray-500">Firebase基盤、PWA、食事入力、家族ビュー、品物管理、AI連携、在庫追跡</p>
                     </div>
                     <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 6: フッターナビゲーション</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">PWAフッターナビ、画面遷移改善</p>
+                        <h3 class="font-semibold text-gray-800">Phase 10-15: 統合機能</h3>
+                        <p class="text-sm text-gray-500">間食記録連携、FoodMasterキャッシュ、FIFO、スケジュール、スタッフデモ</p>
                     </div>
                     <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 7: 家族ビュー・予実管理</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">家族向けUX、予定vs実績表示、ケア指示</p>
+                        <h3 class="font-semibold text-gray-800">Phase 16-19: 写真・チャット</h3>
+                        <p class="text-sm text-gray-500">Firebase Storage、写真エビデンス、チャット連携、通知</p>
                     </div>
                     <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 8: 品物管理・タスク・統計・AI連携</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">品物管理、タスク自動生成、統計、Gemini AI連携（品物提案+摂食傾向分析）、プリセット管理</p>
+                        <h3 class="font-semibold text-gray-800">Phase 20-37: 改善・最適化</h3>
+                        <p class="text-sm text-gray-500">デモ最適化、編集機能、水分記録、通知、カテゴリ簡素化、AI分析</p>
                     </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 9: 在庫・消費追跡システム</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">ビュー構成設計、ルーティング実装、消費記録連携、禁止ルール機能</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 9.3: 統計ダッシュボード拡張</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">在庫サマリーAPI、食品傾向分析API、摂食傾向タブ、在庫バーグラフ</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4 bg-green-50 -mx-4 px-4 py-3 rounded-r-lg mt-6">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800 flex items-center gap-2">
-                                デモショーケース実装
-                                <span class="bg-green-600 text-white text-xs px-2 py-0.5 rounded">完了</span>
-                            </span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-600 mt-1">家族向け特化リデザイン、6ステップガイドツアー（家族視点）、シードデータ、書き込み安全対策</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 10: 間食記録連携</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">スタッフ食事入力×家族品物管理連携、AIサジェスト（提供数・期限警告）、E2Eテスト117件</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 11: FoodMaster食品マスタ</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">AI提案キャッシュ（FoodMaster）、自動蓄積有効化（Phase 11.1）、APIコスト削減・応答速度向上</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 12.0: FIFO（先入れ先出し）対応</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">品物提供時のFIFO自動選択、期限が近い品物を優先表示、在庫管理の最適化</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 12.1: 手動登録時プリセット保存提案</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">AI提案以外の手動品物登録時にもプリセット保存を提案、「いつもの指示」学習機能の拡充</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 13.0: 品物起点の間食記録</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">品物詳細から直接間食記録、Sheet B書き込み、タイムラインへの記録反映</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 13.1: スケジュール拡張機能</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">毎日/曜日別/複数日の柔軟なスケジュール設定、タイムスロット選択、スケジュール判定ユーティリティ</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 13.2: スタッフ向けスケジュール表示強化</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">曜日バッジ・今日ハイライト・次回予定日・タイムスロット表示、ScheduleDisplay/WeekdayBadgesコンポーネント</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 14: スタッフ用デモページ</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">スタッフ用デモホーム・ガイドツアー、ルート有効化、フッター・ヘッダーナビ調整、E2Eテスト17件追加</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 15: スタッフ記録入力フォーム統一</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">タブ削除、StaffRecordDialog統一、家族連絡詳細対応、E2Eテスト22件追加</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 15.6: 摂食割合の数値入力</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">絵文字→0-10数値入力、残り対応フィールド（破棄/保存/その他）</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 15.7: 残り対応による在庫・統計分離</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">破棄=全量控除、保存=食べた分控除、wastedQuantity追加</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 15.8: ベースページ簡素化</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">MealInputPage 407行→122行、品物リスト表示に特化</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4 bg-green-50 -mx-4 px-4 py-3 rounded-r-lg">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800 flex items-center gap-2">
-                                Phase 15.9: 写真アップロードUI
-                                <span class="bg-green-600 text-white px-2 py-0.5 rounded text-xs">NEW</span>
-                            </span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-600 mt-1">StaffRecordDialog写真添付、Firebase Storage連携、Webhook写真送信</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4 mt-6">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 16: 写真エビデンス表示</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">スタッフ写真を家族向けエビデンス画面で表示、EvidenceMonitor実画像対応</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 17: Firebase Storage 写真連携</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">Google Drive → Firebase Storage 移行、getCarePhotos API、Webhook写真対応</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 18: チャット連携機能</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">品物起点のスタッフ⇔家族チャット、フッター通知バッジ、E2Eテスト+8件</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4 mt-6">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 19: 記録のチャット連携</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-600 mt-1">記録入力時の自動通知、ホーム通知セクション、E2Eテスト合計225件</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 20-21: デモ環境最適化</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">デモ環境完結・離脱防止、API 500エラー修正、チャット機能一時非表示</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 22: 品物編集機能</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">品物編集UI、タイムスタンプ表示、編集履歴タイムライン</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 23-28: UX/UI改善</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">日時ソート改善、カラムリサイズ、全文検索、レイアウト修正、提供方法選択肢整理</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 29: 水分記録機能</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">タブ式UI（食事🍪/水分💧）、水分量自動計算、スプレッドシート連携、残り対応機能</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 30: 家族操作・入力無し通知</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">品物登録/編集時通知、毎日16時入力チェック、Cloud Scheduler連携</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 37: プリセット管理アクセス改善</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">品物管理ページに「いつもの指示」リンク追加、レスポンシブ対応（モバイル: ⭐のみ）</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 30.1: 通知機能拡張</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">品物削除通知追加、通知時刻を管理画面で設定可能（0-23時）、Cloud Scheduler毎時実行</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 31: カテゴリ簡素化 + タブ固定化</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">品物カテゴリ7→2簡素化（食べ物/飲み物）、スタッフ記録フォームタブ固定化、後方互換性対応</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 32: 統計ダッシュボード改善</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">カテゴリ別分布→品物別分布に変更、上位6品目の消費割合表示</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 33: 残ったものへの処置指示</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">家族が処置指示を事前設定（破棄/保存）、スタッフ記録時に自動選択・他選択肢非活性化</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 34: AI分析デモモード対応</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">統計ダッシュボードAI分析がデモモードで動作、モックデータで分析結果表示、E2Eテスト9件追加</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800">Phase 35: 同期間隔調整（1時間毎）</span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-1">差分同期間隔を15分→1時間に変更、GAS（スプレッドシート側）との整合性確保</p>
-                    </div>
-                    <div class="border-l-4 border-green-500 pl-4 bg-green-50 -mx-4 px-4 py-3 rounded-r-lg">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-semibold text-gray-800 flex items-center gap-2">
-                                Phase 36: スケジュール開始日対応
-                                <span class="bg-green-600 text-white text-xs px-2 py-0.5 rounded">最新</span>
-                            </span>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">100%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
-                        </div>
-                        <p class="text-sm text-gray-600 mt-1">毎日・曜日指定スケジュールに開始日追加、品物編集でスケジュール変更対応、タスク自動生成の構造化スケジュール対応</p>
-                    </div>
+                </div>
+
+                <!-- Detail Link -->
+                <div class="mt-6 pt-4 border-t border-gray-200">
+                    <p class="text-sm text-gray-500">
+                        詳細な開発履歴は <code class="bg-gray-100 px-2 py-0.5 rounded">git log</code> または
+                        <a href="https://github.com/yasushihonda-acg/facility-care-input-form/tree/main/docs/archive" target="_blank" class="text-blue-600 hover:underline">docs/archive/</a> を参照
+                    </p>
                 </div>
             </div>
         </div>
@@ -912,105 +558,58 @@ flowchart TB
         <!-- Tab: Documents -->
         <div id="tab-docs" class="tab-content">
             <div class="space-y-6">
-                <!-- Essential Docs -->
+                <!-- Active Docs -->
                 <div>
                     <h2 class="text-lg font-bold text-gray-700 mb-4 flex items-center gap-2">
-                        <span class="text-red-500">📍</span> 必読ドキュメント
+                        <span class="text-green-500">📄</span> アクティブドキュメント
                     </h2>
                     <div class="grid md:grid-cols-3 gap-4">
-                        <a href="https://github.com/yasushihonda-acg/facility-care-input-form/blob/main/docs/CURRENT_STATUS.md" target="_blank"
-                           class="bg-white rounded-lg shadow p-4 hover:shadow-lg transition border-l-4 border-red-500 group">
-                            <h3 class="font-semibold text-gray-800 group-hover:text-red-600">CURRENT_STATUS.md</h3>
-                            <p class="text-sm text-gray-600">現在の進捗・次のタスク</p>
-                        </a>
                         <a href="https://github.com/yasushihonda-acg/facility-care-input-form/blob/main/docs/HANDOVER.md" target="_blank"
-                           class="bg-white rounded-lg shadow p-4 hover:shadow-lg transition border-l-4 border-purple-500 group">
-                            <h3 class="font-semibold text-gray-800 group-hover:text-purple-600">HANDOVER.md</h3>
-                            <p class="text-sm text-gray-600">引き継ぎドキュメント</p>
+                           class="bg-white rounded-lg shadow p-4 hover:shadow-lg transition border-l-4 border-red-500 group">
+                            <h3 class="font-semibold text-gray-800 group-hover:text-red-600">HANDOVER.md</h3>
+                            <p class="text-sm text-gray-600">引き継ぎドキュメント（クイックスタート）</p>
                         </a>
-                        <a href="https://github.com/yasushihonda-acg/facility-care-input-form/blob/main/docs/ROADMAP.md" target="_blank"
-                           class="bg-white rounded-lg shadow p-4 hover:shadow-lg transition border-l-4 border-blue-500 group">
-                            <h3 class="font-semibold text-gray-800 group-hover:text-blue-600">ROADMAP.md</h3>
-                            <p class="text-sm text-gray-600">開発ロードマップ</p>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Architecture Docs -->
-                <div>
-                    <h2 class="text-lg font-bold text-gray-700 mb-4 flex items-center gap-2">
-                        <span class="text-green-500">🏗️</span> 設計・仕様
-                    </h2>
-                    <div class="grid md:grid-cols-3 gap-4">
                         <a href="https://github.com/yasushihonda-acg/facility-care-input-form/blob/main/docs/ARCHITECTURE.md" target="_blank"
-                           class="bg-white rounded-lg shadow p-4 hover:shadow-lg transition border-l-4 border-green-500 group">
-                            <h3 class="font-semibold text-gray-800 group-hover:text-green-600">ARCHITECTURE.md</h3>
-                            <p class="text-sm text-gray-600">システム設計</p>
+                           class="bg-white rounded-lg shadow p-4 hover:shadow-lg transition border-l-4 border-blue-500 group">
+                            <h3 class="font-semibold text-gray-800 group-hover:text-blue-600">ARCHITECTURE.md</h3>
+                            <p class="text-sm text-gray-600">システム設計・データフロー</p>
                         </a>
                         <a href="https://github.com/yasushihonda-acg/facility-care-input-form/blob/main/docs/API_SPEC.md" target="_blank"
                            class="bg-white rounded-lg shadow p-4 hover:shadow-lg transition border-l-4 border-orange-500 group">
                             <h3 class="font-semibold text-gray-800 group-hover:text-orange-600">API_SPEC.md</h3>
-                            <p class="text-sm text-gray-600">API仕様書</p>
+                            <p class="text-sm text-gray-600">API仕様書（全エンドポイント）</p>
                         </a>
                         <a href="https://github.com/yasushihonda-acg/facility-care-input-form/blob/main/docs/BUSINESS_RULES.md" target="_blank"
-                           class="bg-white rounded-lg shadow p-4 hover:shadow-lg transition border-l-4 border-red-500 group">
-                            <h3 class="font-semibold text-gray-800 group-hover:text-red-600">BUSINESS_RULES.md</h3>
-                            <p class="text-sm text-gray-600">業務ルール・データ仕様</p>
+                           class="bg-white rounded-lg shadow p-4 hover:shadow-lg transition border-l-4 border-purple-500 group">
+                            <h3 class="font-semibold text-gray-800 group-hover:text-purple-600">BUSINESS_RULES.md</h3>
+                            <p class="text-sm text-gray-600">業務ルール・投稿ID規則</p>
                         </a>
-                    </div>
-                </div>
-
-                <!-- Feature Docs -->
-                <div>
-                    <h2 class="text-lg font-bold text-gray-700 mb-4 flex items-center gap-2">
-                        <span class="text-blue-500">📝</span> 機能別仕様
-                    </h2>
-                    <div class="grid md:grid-cols-3 gap-4">
-                        <a href="https://github.com/yasushihonda-acg/facility-care-input-form/blob/main/docs/FAMILY_UX_DESIGN.md" target="_blank"
-                           class="bg-white rounded-lg shadow p-4 hover:shadow-lg transition border-l-4 border-pink-500 group">
-                            <h3 class="font-semibold text-gray-800 group-hover:text-pink-600">FAMILY_UX_DESIGN.md</h3>
-                            <p class="text-sm text-gray-600">家族向けUX設計</p>
-                        </a>
-                        <a href="https://github.com/yasushihonda-acg/facility-care-input-form/blob/main/docs/SETTINGS_MODAL_UI_SPEC.md" target="_blank"
-                           class="bg-white rounded-lg shadow p-4 hover:shadow-lg transition border-l-4 border-yellow-500 group">
-                            <h3 class="font-semibold text-gray-800 group-hover:text-yellow-600">SETTINGS_MODAL_UI_SPEC.md</h3>
-                            <p class="text-sm text-gray-600">設定モーダルUI仕様</p>
-                        </a>
-                        <a href="https://github.com/yasushihonda-acg/facility-care-input-form/blob/main/docs/FOOTER_NAVIGATION_SPEC.md" target="_blank"
-                           class="bg-white rounded-lg shadow p-4 hover:shadow-lg transition border-l-4 border-cyan-500 group">
-                            <h3 class="font-semibold text-gray-800 group-hover:text-cyan-600">FOOTER_NAVIGATION_SPEC.md</h3>
-                            <p class="text-sm text-gray-600">フッターナビ仕様</p>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Phase 8 Docs -->
-                <div>
-                    <h2 class="text-lg font-bold text-gray-700 mb-4 flex items-center gap-2">
-                        <span class="text-purple-500">🆕</span> Phase 8 設計ドキュメント
-                    </h2>
-                    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <a href="https://github.com/yasushihonda-acg/facility-care-input-form/blob/main/docs/ITEM_MANAGEMENT_SPEC.md" target="_blank"
+                        <a href="https://github.com/yasushihonda-acg/facility-care-input-form/blob/main/docs/DATA_MODEL.md" target="_blank"
                            class="bg-white rounded-lg shadow p-4 hover:shadow-lg transition border-l-4 border-teal-500 group">
-                            <h3 class="font-semibold text-gray-800 group-hover:text-teal-600">ITEM_MANAGEMENT_SPEC.md</h3>
-                            <p class="text-sm text-gray-600">品物管理機能設計</p>
+                            <h3 class="font-semibold text-gray-800 group-hover:text-teal-600">DATA_MODEL.md</h3>
+                            <p class="text-sm text-gray-600">データモデル・Firestore構造</p>
                         </a>
-                        <a href="https://github.com/yasushihonda-acg/facility-care-input-form/blob/main/docs/TASK_MANAGEMENT_SPEC.md" target="_blank"
-                           class="bg-white rounded-lg shadow p-4 hover:shadow-lg transition border-l-4 border-indigo-500 group">
-                            <h3 class="font-semibold text-gray-800 group-hover:text-indigo-600">TASK_MANAGEMENT_SPEC.md</h3>
-                            <p class="text-sm text-gray-600">タスク管理機能設計</p>
-                        </a>
-                        <a href="https://github.com/yasushihonda-acg/facility-care-input-form/blob/main/docs/STATS_DASHBOARD_SPEC.md" target="_blank"
-                           class="bg-white rounded-lg shadow p-4 hover:shadow-lg transition border-l-4 border-cyan-500 group">
-                            <h3 class="font-semibold text-gray-800 group-hover:text-cyan-600">STATS_DASHBOARD_SPEC.md</h3>
-                            <p class="text-sm text-gray-600">統計ダッシュボード設計</p>
-                        </a>
-                        <a href="https://github.com/yasushihonda-acg/facility-care-input-form/blob/main/docs/AI_INTEGRATION_SPEC.md" target="_blank"
-                           class="bg-white rounded-lg shadow p-4 hover:shadow-lg transition border-l-4 border-violet-500 group">
-                            <h3 class="font-semibold text-gray-800 group-hover:text-violet-600">AI_INTEGRATION_SPEC.md</h3>
-                            <p class="text-sm text-gray-600">Gemini AI連携設計</p>
+                        <a href="https://github.com/yasushihonda-acg/facility-care-input-form/blob/main/docs/SETUP.md" target="_blank"
+                           class="bg-white rounded-lg shadow p-4 hover:shadow-lg transition border-l-4 border-green-500 group">
+                            <h3 class="font-semibold text-gray-800 group-hover:text-green-600">SETUP.md</h3>
+                            <p class="text-sm text-gray-600">環境構築ガイド</p>
                         </a>
                     </div>
+                </div>
+
+                <!-- Archive Info -->
+                <div class="bg-gray-100 rounded-lg p-4">
+                    <h2 class="text-lg font-bold text-gray-700 mb-2 flex items-center gap-2">
+                        <span class="text-gray-500">📁</span> アーカイブ
+                    </h2>
+                    <p class="text-sm text-gray-600 mb-3">
+                        完了済みPhase仕様書（40+ファイル）は <code class="bg-white px-2 py-0.5 rounded">docs/archive/</code> に保存されています。
+                    </p>
+                    <a href="https://github.com/yasushihonda-acg/facility-care-input-form/tree/main/docs/archive" target="_blank"
+                       class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                        アーカイブを見る（GitHub）
+                    </a>
                 </div>
             </div>
         </div>
