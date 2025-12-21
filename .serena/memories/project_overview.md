@@ -534,6 +534,16 @@ StaffRecordDialog.tsxに写真アップロード機能を追加。Firebase Stora
 **E2Eテスト**: `schedule-start-date.spec.ts` (13件)
 **設計書**: `docs/ITEM_BASED_SNACK_RECORD_SPEC.md` セクション5
 
+### Phase 30.1: 通知機能拡張 (2025-12-21 完了)
+品物削除時のGoogle Chat通知追加、記録チェック通知時間の管理画面設定対応。
+
+**主な変更**:
+- `deleteCareItemHandler`: 削除成功時にGoogle Chat通知を送信（#品物削除🗑️）
+- `checkDailyRecords`: Cloud Schedulerを毎時0分実行に変更、Firestore設定の`recordCheckHour`と現在時刻を比較
+- 管理画面に通知時間セレクトボックス追加（0-23時）
+
+**設計書**: FAMILY_NOTIFY_SPEC.md
+
 ### Phase 31: カテゴリ簡素化 + タブ固定化 (2025-12-21 完了)
 品物カテゴリを7種類から2種類に簡素化し、スタッフ記録フォームのタブ切替を廃止。
 
