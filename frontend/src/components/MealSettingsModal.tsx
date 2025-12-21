@@ -89,10 +89,12 @@ export function MealSettingsModal({
   }, [isOpen, settings]); // isOpenがtrueになった時、またはsettingsが変わった時にリセット
 
   // Webhookテスト関数
+  // webhookType: 'familyNotify' の場合は品物登録形式でテスト送信
   const handleTestWebhook = useCallback(async (
     url: string,
     setTestState: React.Dispatch<React.SetStateAction<TestState>>,
-    setCooldown: React.Dispatch<React.SetStateAction<boolean>>
+    setCooldown: React.Dispatch<React.SetStateAction<boolean>>,
+    webhookType?: 'normal' | 'familyNotify'
   ) => {
     if (!url) {
       setTestState({
@@ -116,7 +118,7 @@ export function MealSettingsModal({
     setTestState({ isLoading: true, result: null, message: '' });
 
     try {
-      const response = await testWebhook(url);
+      const response = await testWebhook(url, webhookType);
       if (response.success) {
         setTestState({
           isLoading: false,
@@ -471,7 +473,8 @@ export function MealSettingsModal({
                 onClick={() => handleTestWebhook(
                   localSettings.familyNotifyWebhookUrl || '',
                   setFamilyNotifyWebhookTestState,
-                  setFamilyNotifyWebhookCooldown
+                  setFamilyNotifyWebhookCooldown,
+                  'familyNotify' // 品物登録形式でテスト送信
                 )}
                 disabled={familyNotifyWebhookTestState.isLoading || familyNotifyWebhookCooldown || !localSettings.familyNotifyWebhookUrl}
                 className="px-3 py-2 text-xs bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors whitespace-nowrap"

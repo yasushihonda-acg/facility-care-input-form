@@ -109,12 +109,16 @@ export interface TestWebhookResponse {
 /**
  * Webhook URLのテスト送信
  * 指定されたURLにテストメッセージを送信
+ * @param webhookType - 'familyNotify' の場合は品物登録形式、それ以外は食事記録形式
  */
-export async function testWebhook(webhookUrl: string): Promise<TestWebhookResponse> {
+export async function testWebhook(
+  webhookUrl: string,
+  webhookType?: 'normal' | 'familyNotify'
+): Promise<TestWebhookResponse> {
   const response = await fetch(`${API_BASE}/testWebhook`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ webhookUrl }),
+    body: JSON.stringify({ webhookUrl, webhookType }),
   });
 
   const data = await response.json();

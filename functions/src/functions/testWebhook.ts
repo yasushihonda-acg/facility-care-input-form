@@ -3,15 +3,21 @@
  *
  * 管理者設定画面から、Webhook URLの動作確認を行うためのAPI
  * v1.1: 本番形式のテストメッセージを送信するよう改善
+ * v1.2: webhookType対応（familyNotify→品物登録形式）
  *
- * 設計書: docs/ADMIN_TEST_FEATURE_SPEC.md
+ * 設計書: docs/ADMIN_TEST_FEATURE_SPEC.md, docs/FAMILY_NOTIFY_SPEC.md
  */
 
 import * as functions from "firebase-functions";
-import {sendToGoogleChat, formatMealRecordMessage} from "../services/googleChatService";
+import {
+  sendToGoogleChat,
+  formatMealRecordMessage,
+  formatCareItemNotification,
+} from "../services/googleChatService";
 
 interface TestWebhookRequest {
   webhookUrl: string;
+  webhookType?: "normal" | "familyNotify";
 }
 
 interface TestWebhookResponse {
@@ -45,7 +51,7 @@ export const testWebhook = functions
     }
 
     const body = req.body as TestWebhookRequest;
-    const {webhookUrl} = body;
+    const {webhookUrl, webhookType} = body;
 
     // バリデーション: URL必須
     if (!webhookUrl) {
@@ -70,25 +76,43 @@ export const testWebhook = functions
 
     // 本番形式のテストメッセージを生成
     // v1.1: 実際の通知と同じ形式でテストメッセージを送信
+    // v1.2: webhookType対応（familyNotify→品物登録形式）
     const timestamp = new Date().toLocaleString("ja-JP", {
       timeZone: "Asia/Tokyo",
     });
-    const testRecord = {
-      facility: "テスト施設",
-      residentName: "テスト利用者",
-      staffName: "テスト太郎",
-      mealTime: "昼",
-      mainDishRatio: "10割",
-      sideDishRatio: "10割",
-      injectionType: undefined, // 経口
-      injectionAmount: undefined,
-      note: `【テスト送信】\nこのメッセージが表示されれば設定は正常です。\n送信時刻: ${timestamp}`,
-      postId: `TEST-${new Date().toISOString().replace(/[-:T.Z]/g, "").slice(0, 14)}`,
-    };
-    const testMessage = formatMealRecordMessage(testRecord);
+
+    let testMessage: string;
+
+    if (webhookType === "familyNotify") {
+      // 監視通知Webhook用: 品物登録形式
+      const testItem = {
+        itemName: "テスト品物",
+        category: "snack" as const,
+        quantity: 1,
+        unit: "個",
+        expirationDate: undefined,
+        noteToStaff: `【テスト送信】このメッセージが表示されれば設定は正常です。\n送信時刻: ${timestamp}`,
+      };
+      testMessage = formatCareItemNotification("register", testItem, "テスト");
+    } else {
+      // 通常/重要Webhook用: 食事記録形式
+      const testRecord = {
+        facility: "テスト施設",
+        residentName: "テスト利用者",
+        staffName: "テスト太郎",
+        mealTime: "昼",
+        mainDishRatio: "10割",
+        sideDishRatio: "10割",
+        injectionType: undefined, // 経口
+        injectionAmount: undefined,
+        note: `【テスト送信】\nこのメッセージが表示されれば設定は正常です。\n送信時刻: ${timestamp}`,
+        postId: `TEST-${new Date().toISOString().replace(/[-:T.Z]/g, "").slice(0, 14)}`,
+      };
+      testMessage = formatMealRecordMessage(testRecord);
+    }
 
     // Webhook送信
-    functions.logger.info("[testWebhook] Testing webhook URL:", webhookUrl);
+    functions.logger.info("[testWebhook] Testing webhook URL:", webhookUrl, "type:", webhookType || "normal");
     const result = await sendToGoogleChat(webhookUrl, testMessage);
 
     if (result) {

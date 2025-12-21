@@ -44,6 +44,27 @@
 - プレフィックスチェック: `https://chat.googleapis.com/` で始まる必要あり
 - 保存: 他の設定と同時に保存
 
+### テスト送信メッセージ
+
+監視通知Webhookのテスト送信は、実際の通知と同じ「品物登録」形式で送信する。
+
+```
+#品物登録📦
+
+【テスト品物】
+カテゴリ: テスト
+数量: 1個
+賞味期限: (なし)
+スタッフへの伝達事項: 【テスト送信】このメッセージが表示されれば設定は正常です。
+
+登録者: テスト
+時刻: 2025/12/21 14:30:00
+```
+
+**実装**: `testWebhook` APIに `webhookType` パラメータを追加
+- `webhookType: "familyNotify"` → 品物登録形式
+- `webhookType: undefined` または `"normal"` → 従来の食事記録形式
+
 ---
 
 ## データ構造
@@ -158,11 +179,12 @@ interface DailyRecordLog {
 
 | ファイル | 変更内容 |
 |----------|----------|
-| `functions/src/types/index.ts` | 型拡張（familyNotifyWebhookUrl, DailyRecordLog） |
+| `functions/src/types/index.ts` | 型拡張（familyNotifyWebhookUrl, DailyRecordLog, TestWebhookRequest） |
 | `functions/src/functions/careItems.ts` | 通知追加 |
 | `functions/src/functions/submitMealRecord.ts` | ログ更新追加 |
 | `functions/src/functions/submitHydrationRecord.ts` | ログ更新追加 |
 | `functions/src/functions/mealFormSettings.ts` | 設定対応 |
+| `functions/src/functions/testWebhook.ts` | webhookType対応（品物登録形式テスト） |
 | `functions/src/services/googleChatService.ts` | フォーマット関数追加 |
 | `functions/src/index.ts` | エクスポート追加 |
 
