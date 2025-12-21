@@ -111,6 +111,47 @@ export const COLLECTIONS = {
 } as const;
 
 /**
+ * Sheet H: 水分摂取量（Phase 29: Water Intake Records）
+ * - 水分記録専用シート
+ * - 操作: 追記のみ
+ */
+export const SHEET_HYDRATION = {
+  id: "1su5K9TjmzMfKc8OIK2aZYXCfuDrNeIRM0a3LUCFcct4",
+  name: "水分摂取量シート",
+  url: "https://docs.google.com/spreadsheets/d/1su5K9TjmzMfKc8OIK2aZYXCfuDrNeIRM0a3LUCFcct4/edit",
+  permissions: {
+    read: false,
+    write: false,
+    append: true,
+    update: false,
+    delete: false,
+  },
+} as const;
+
+/**
+ * Sheet H のシート名
+ */
+export const SHEET_HYDRATION_SHEET_NAME = "フォームの回答 1";
+
+/**
+ * Sheet H の列定義（Phase 29）
+ * 水分摂取量記録用シートの構造
+ */
+export const SHEET_HYDRATION_COLUMNS = {
+  TIMESTAMP: 0, // A列: タイムスタンプ
+  STAFF_NAME: 1, // B列: スタッフ名
+  RESIDENT_NAME: 2, // C列: 利用者名
+  HYDRATION_AMOUNT: 3, // D列: 水分量(cc)
+  SPECIAL_NOTES: 4, // E列: 特記事項
+  IS_IMPORTANT: 5, // F列: 重要フラグ
+  FACILITY: 6, // G列: 施設
+  DAY_SERVICE_USAGE: 7, // H列: デイ利用有無
+  POST_ID: 8, // I列: 投稿ID
+  DAY_SERVICE_NAME: 9, // J列: デイサービス名
+  ITEM_NAME: 10, // K列: 品物名（オプション）
+} as const;
+
+/**
  * Cloud Functions 共通設定
  */
 export const FUNCTIONS_CONFIG = {

@@ -91,6 +91,27 @@ export interface SubmitMealRecordRequest {
 }
 
 /**
+ * Phase 29: 水分記録リクエスト
+ * docs/STAFF_RECORD_FORM_SPEC.md セクション7.3
+ */
+export interface SubmitHydrationRecordRequest {
+  staffName: string; // スタッフ名
+  residentName: string; // 利用者名
+  residentId?: string; // 利用者ID（品物連携用）
+  hydrationAmount: number; // 水分量(cc)
+  note?: string; // 特記事項
+  isImportant: "重要" | "重要ではない";
+  facility: string; // 施設
+  dayServiceUsage: "利用中" | "利用中ではない";
+  dayServiceName?: string; // デイサービス名
+  // 品物連携用（オプション）
+  itemId?: string;
+  itemName?: string;
+  servedQuantity?: number;
+  unit?: string;
+}
+
+/**
  * @deprecated 旧型定義（後方互換性のため残存）
  */
 export interface SubmitCareRecordRequest {

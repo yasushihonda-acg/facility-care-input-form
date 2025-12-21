@@ -4,8 +4,18 @@
  */
 
 import {google, sheets_v4} from "googleapis";
-import {SHEET_A, SHEET_B, SHEET_B_SHEET_NAME} from "../config/sheets";
-import {SubmitMealRecordRequest, MealRecordRow} from "../types";
+import {
+  SHEET_A,
+  SHEET_B,
+  SHEET_B_SHEET_NAME,
+  SHEET_HYDRATION,
+  SHEET_HYDRATION_SHEET_NAME,
+} from "../config/sheets";
+import {
+  SubmitMealRecordRequest,
+  SubmitHydrationRecordRequest,
+  MealRecordRow,
+} from "../types";
 
 let sheetsClient: sheets_v4.Sheets | null = null;
 
@@ -217,4 +227,87 @@ export async function updateSheetB(): Promise<never> {
   throw new Error(
     "FORBIDDEN: Sheet B is append-only. Updating existing rows is not allowed. See BUSINESS_RULES.md"
   );
+}
+
+// =============================================================================
+// Sheet H: 水分摂取量 (Append Only) - Phase 29
+// =============================================================================
+
+/**
+ * 水分記録用の投稿IDを生成
+ * フォーマット: HYD{YYYYMMDDHHmmssSSS}{ランダム6桁}
+ */
+function generateHydrationPostId(): string {
+  const now = new Date();
+  const jstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  const dateStr = jstNow.toISOString()
+    .replace(/[-:T.Z]/g, "")
+    .slice(0, 17);
+  const random = Math.floor(Math.random() * 1000000).toString().padStart(6, "0");
+  return `HYD${dateStr}${random}`;
+}
+
+/**
+ * 水分記録用の行データを構築
+ * docs/STAFF_RECORD_FORM_SPEC.md セクション7.3に基づく
+ */
+function buildHydrationRecordRow(request: SubmitHydrationRecordRequest): Record<string, string> {
+  const now = new Date();
+  const timestamp = now.toLocaleString("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).replace(/\//g, "/");
+  const postId = generateHydrationPostId();
+  const isImportantValue = request.isImportant === "重要" ? "はい" : "いいえ";
+
+  return {
+    timestamp: timestamp, // A列: タイムスタンプ
+    staffName: request.staffName, // B列: スタッフ名
+    residentName: request.residentName, // C列: 利用者名
+    hydrationAmount: String(request.hydrationAmount), // D列: 水分量(cc)
+    specialNotes: request.note || "", // E列: 特記事項
+    isImportant: isImportantValue, // F列: 重要フラグ
+    facility: request.facility, // G列: 施設
+    dayServiceUsage: request.dayServiceUsage, // H列: デイ利用有無
+    postId: postId, // I列: 投稿ID
+    dayServiceName: request.dayServiceName || "", // J列: デイサービス名
+    itemName: request.itemName || "", // K列: 品物名
+  };
+}
+
+/**
+ * 水分摂取量シートに記録を追記
+ * Phase 29: 水分記録機能
+ *
+ * @param request 水分記録リクエスト
+ * @return 追記された行番号と投稿ID
+ */
+export async function appendHydrationRecordToSheet(
+  request: SubmitHydrationRecordRequest
+): Promise<{ sheetRow: number; postId: string }> {
+  const client = await getSheetsClient();
+
+  const row = buildHydrationRecordRow(request);
+
+  const response = await client.spreadsheets.values.append({
+    spreadsheetId: SHEET_HYDRATION.id,
+    range: `'${SHEET_HYDRATION_SHEET_NAME}'!A:K`, // 11カラム（A〜K列）
+    valueInputOption: "USER_ENTERED",
+    insertDataOption: "INSERT_ROWS",
+    requestBody: {
+      values: [Object.values(row)],
+    },
+  });
+
+  const updatedRange = response.data.updates?.updatedRange || "";
+  const rowMatch = updatedRange.match(/(\d+)$/);
+  const sheetRow = rowMatch ? parseInt(rowMatch[1], 10) : 0;
+
+  return {sheetRow, postId: row.postId};
 }

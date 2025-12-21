@@ -1197,3 +1197,55 @@ export async function getActiveChatItems(
 
   return response.json();
 }
+
+// =============================================================================
+// Phase 29: 水分記録 API
+// =============================================================================
+
+/**
+ * 水分記録リクエスト
+ * @see docs/STAFF_RECORD_FORM_SPEC.md セクション13
+ */
+export interface SubmitHydrationRecordRequest {
+  staffName: string;
+  residentName: string;
+  residentId: string;
+  hydrationAmount: number;  // cc
+  note?: string;
+  isImportant: '重要' | '重要ではない';
+  facility: string;
+  dayServiceUsage: '利用中' | '利用中ではない';
+  dayServiceName?: string;
+  // 品物連携（任意）
+  itemId?: string;
+  itemName?: string;
+  servedQuantity?: number;
+  unit?: string;
+}
+
+export interface SubmitHydrationRecordResponse {
+  postId: string;
+  sheetRow: number;
+  webhookSent: boolean;
+}
+
+/**
+ * 水分記録を送信
+ * 水分摂取量スプレッドシートに記録＋Google Chat通知
+ */
+export async function submitHydrationRecord(
+  data: SubmitHydrationRecordRequest
+): Promise<ApiResponse<SubmitHydrationRecordResponse>> {
+  const response = await fetch(`${API_BASE}/submitHydrationRecord`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Submit hydration record failed: ${response.statusText}`);
+  }
+
+  return response.json();
+}

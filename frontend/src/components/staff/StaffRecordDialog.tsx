@@ -2,20 +2,57 @@
  * StaffRecordDialog - 統一された提供・摂食記録ダイアログ
  * Phase 15.3: 家族連絡詳細からのダイアログ表示
  * Phase 15.9: 写真アップロード機能追加
- * 設計書: docs/STAFF_RECORD_FORM_SPEC.md セクション4.2, 12
+ * Phase 29: タブ式UI（食事/水分）、水分記録機能
+ * 設計書: docs/STAFF_RECORD_FORM_SPEC.md セクション4.2, 12, 13
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import type { CareItem } from '../../types/careItem';
+import type { CareItem, ItemCategory } from '../../types/careItem';
 import type { RemainingHandling } from '../../types/consumptionLog';
 import { getCategoryIcon } from '../../types/careItem';
 import { determineConsumptionStatus, REMAINING_HANDLING_OPTIONS } from '../../types/consumptionLog';
 import { useRecordConsumptionLog } from '../../hooks/useConsumptionLogs';
-import { submitMealRecord, uploadCareImage } from '../../api';
+import { submitMealRecord, uploadCareImage, submitHydrationRecord } from '../../api';
 import { useMealFormSettings } from '../../hooks/useMealFormSettings';
 import { DAY_SERVICE_OPTIONS } from '../../types/mealForm';
 import type { SnackRecord } from '../../types/mealForm';
 import { calculateConsumptionAmounts } from '../../utils/consumptionCalc';
+
+// Phase 29: タブ種別
+type RecordTab = 'meal' | 'hydration';
+
+// Phase 29: 特記事項のデフォルト値
+const DEFAULT_NOTE = '【ケアに関すること】\n\n【ACPiece】';
+
+/**
+ * Phase 29: カテゴリに基づくデフォルトタブを決定
+ * drink → hydration（水分）、それ以外 → meal（食事）
+ */
+function getDefaultTab(category: ItemCategory): RecordTab {
+  return category === 'drink' ? 'hydration' : 'meal';
+}
+
+/**
+ * Phase 29: 品物の数量・単位から水分量(cc)を計算
+ */
+function calculateHydrationAmount(
+  quantity: number,
+  unit: string
+): number | null {
+  const normalizedUnit = unit.toLowerCase().trim();
+  switch (normalizedUnit) {
+    case 'ml':
+    case 'cc':
+      return quantity;
+    case 'l':
+      return quantity * 1000;
+    case 'コップ':
+    case '杯':
+      return quantity * 200; // 1杯 ≈ 200cc
+    default:
+      return null; // 手動入力が必要
+  }
+}
 
 interface StaffRecordDialogProps {
   isOpen: boolean;
@@ -41,6 +78,8 @@ export function StaffRecordDialog({
 
   // フォーム状態
   const [formData, setFormData] = useState({
+    // Phase 29: タブ選択
+    activeTab: 'meal' as RecordTab,
     // 共通項目
     staffName: '',
     dayServiceUsage: '利用中ではない' as '利用中' | '利用中ではない',
@@ -57,11 +96,13 @@ export function StaffRecordDialog({
     remainingHandlingOther: '',
     // 共通項目（下部）
     snack: '',
-    note: '',
+    note: DEFAULT_NOTE, // Phase 29: placeholderからdefaultValueに変更
     isImportant: '重要ではない' as '重要' | '重要ではない',
     // Phase 15.9: 写真アップロード
     photo: null as File | null,
     photoPreview: '',
+    // Phase 29: 水分記録
+    hydrationAmount: null as number | null,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -71,12 +112,23 @@ export function StaffRecordDialog({
     if (isOpen) {
       // 家族の指示から推奨提供数を計算
       const suggestedQuantity = getSuggestedQuantity(item);
+      const servedQty = Math.min(suggestedQuantity, currentQuantity);
+
+      // Phase 29: カテゴリに基づくデフォルトタブ決定
+      const defaultTab = getDefaultTab(item.category);
+
+      // Phase 29: 飲み物の場合、水分量を自動計算
+      const autoHydrationAmount = item.category === 'drink'
+        ? calculateHydrationAmount(servedQty, item.unit)
+        : null;
 
       setFormData({
+        // Phase 29: タブ選択
+        activeTab: defaultTab,
         staffName: '',
         dayServiceUsage: '利用中ではない',
         dayServiceName: '',
-        servedQuantity: Math.min(suggestedQuantity, currentQuantity),
+        servedQuantity: servedQty,
         consumptionRateInput: 10,  // Phase 15.6: デフォルト完食
         consumptionNote: '',
         noteToFamily: '',
@@ -84,11 +136,13 @@ export function StaffRecordDialog({
         remainingHandling: '',
         remainingHandlingOther: '',
         snack: '',
-        note: '',
+        note: DEFAULT_NOTE, // Phase 29: placeholderからdefaultValueに変更
         isImportant: '重要ではない',
         // Phase 15.9: 写真リセット
         photo: null,
         photoPreview: '',
+        // Phase 29: 水分量
+        hydrationAmount: autoHydrationAmount,
       });
       setErrors({});
     }
@@ -109,6 +163,7 @@ export function StaffRecordDialog({
   const validate = useCallback((): boolean => {
     const newErrors: Record<string, string> = {};
 
+    // 共通バリデーション
     if (!formData.staffName.trim()) {
       newErrors.staffName = '入力者名を入力してください。';
     }
@@ -121,13 +176,23 @@ export function StaffRecordDialog({
     if (formData.servedQuantity > currentQuantity) {
       newErrors.servedQuantity = `提供数量が残量(${currentQuantity}${item.unit})を超えています`;
     }
-    // Phase 15.6: 残った分がある場合は対応を必須に
-    if (formData.consumptionRateInput < 10 && !formData.remainingHandling) {
-      newErrors.remainingHandling = '残った分への対応を選択してください。';
-    }
-    // Phase 15.6: その他を選択した場合は詳細を必須に
-    if (formData.remainingHandling === 'other' && !formData.remainingHandlingOther.trim()) {
-      newErrors.remainingHandlingOther = '対応の詳細を入力してください。';
+
+    // Phase 29: タブ別バリデーション
+    if (formData.activeTab === 'meal') {
+      // 食事タブ: 残り対応バリデーション
+      // Phase 15.6: 残った分がある場合は対応を必須に
+      if (formData.consumptionRateInput < 10 && !formData.remainingHandling) {
+        newErrors.remainingHandling = '残った分への対応を選択してください。';
+      }
+      // Phase 15.6: その他を選択した場合は詳細を必須に
+      if (formData.remainingHandling === 'other' && !formData.remainingHandlingOther.trim()) {
+        newErrors.remainingHandlingOther = '対応の詳細を入力してください。';
+      }
+    } else {
+      // 水分タブ: 水分量バリデーション
+      if (formData.hydrationAmount === null || formData.hydrationAmount <= 0) {
+        newErrors.hydrationAmount = '水分量を入力してください。';
+      }
     }
 
     setErrors(newErrors);
@@ -137,11 +202,6 @@ export function StaffRecordDialog({
   // 送信ハンドラ
   const handleSubmit = useCallback(async () => {
     if (!validate()) return;
-
-    // Phase 15.6: 0-10入力 → 0-100スケール変換
-    const consumptionRate = formData.consumptionRateInput * 10;
-    const consumedQuantity = (consumptionRate / 100) * formData.servedQuantity;
-    const consumptionStatus = determineConsumptionStatus(consumptionRate);
 
     try {
       // Phase 15.9: 写真がある場合は先にアップロードしてURLを取得
@@ -158,12 +218,19 @@ export function StaffRecordDialog({
         photoUrl = uploadResult.data?.photoUrl;
       }
 
-      // 1. consumption_log に記録
+      // 1. consumption_log に記録（在庫更新）
+      // Phase 29: 水分タブの場合は消費率を100%として記録
+      const consumptionRate = formData.activeTab === 'meal'
+        ? formData.consumptionRateInput * 10
+        : 100; // 水分は全量消費として扱う
+      const consumedQuantity = (consumptionRate / 100) * formData.servedQuantity;
+      const consumptionStatus = determineConsumptionStatus(consumptionRate);
+
       await recordMutation.mutateAsync({
         itemId: item.id,
         servedDate: new Date().toISOString().split('T')[0],
         servedTime: new Date().toTimeString().slice(0, 5),
-        mealTime: 'snack',
+        mealTime: 'snack', // 品物ベースの記録はすべて間食として消費ログに記録
         servedQuantity: formData.servedQuantity,
         servedBy: formData.staffName,
         consumedQuantity: consumedQuantity,
@@ -171,43 +238,66 @@ export function StaffRecordDialog({
         consumptionNote: formData.consumptionNote || undefined,
         noteToFamily: formData.noteToFamily || undefined,
         recordedBy: formData.staffName,
-        // Phase 15.7: 残り対応をAPIに送信
-        remainingHandling: formData.remainingHandling || undefined,
-        remainingHandlingOther: formData.remainingHandlingOther || undefined,
+        // Phase 15.7: 残り対応をAPIに送信（食事タブのみ）
+        ...(formData.activeTab === 'meal' && formData.remainingHandling && {
+          remainingHandling: formData.remainingHandling,
+          remainingHandlingOther: formData.remainingHandlingOther || undefined,
+        }),
       });
 
-      // 2. Sheet B に記録
-      const snackRecord: SnackRecord = {
-        itemId: item.id,
-        itemName: item.itemName,
-        servedQuantity: formData.servedQuantity,
-        unit: item.unit,
-        consumptionStatus: consumptionStatus,
-        consumptionRate: consumptionRate,
-        followedInstruction: formData.followedFamilyInstructions,
-        instructionNote: item.noteToStaff || undefined,
-        note: formData.consumptionNote || undefined,
-        noteToFamily: formData.noteToFamily || undefined,
-        // Phase 15.6: 残り対応
-        ...(formData.remainingHandling && { remainingHandling: formData.remainingHandling as RemainingHandling }),
-        ...(formData.remainingHandlingOther && { remainingHandlingOther: formData.remainingHandlingOther }),
-      };
+      // Phase 29: タブ別にシート記録APIを呼び出し
+      if (formData.activeTab === 'meal') {
+        // 2a. 食事タブ: Sheet B に記録
+        const snackRecord: SnackRecord = {
+          itemId: item.id,
+          itemName: item.itemName,
+          servedQuantity: formData.servedQuantity,
+          unit: item.unit,
+          consumptionStatus: consumptionStatus,
+          consumptionRate: consumptionRate,
+          followedInstruction: formData.followedFamilyInstructions,
+          instructionNote: item.noteToStaff || undefined,
+          note: formData.consumptionNote || undefined,
+          noteToFamily: formData.noteToFamily || undefined,
+          // Phase 15.6: 残り対応
+          ...(formData.remainingHandling && { remainingHandling: formData.remainingHandling as RemainingHandling }),
+          ...(formData.remainingHandlingOther && { remainingHandlingOther: formData.remainingHandlingOther }),
+        };
 
-      await submitMealRecord({
-        recordMode: 'snack_only',
-        staffName: formData.staffName,
-        facility: settings.defaultFacility || '',
-        residentName: settings.defaultResidentName || '',
-        dayServiceUsage: formData.dayServiceUsage,
-        isImportant: formData.isImportant,
-        ...(formData.dayServiceName && { dayServiceName: formData.dayServiceName }),
-        ...(formData.snack && { snack: formData.snack }),
-        ...(formData.note && { note: formData.note }),
-        snackRecords: [snackRecord],
-        residentId: item.residentId,
-        // Phase 15.9: 写真URLを渡す（Google Chat Webhook連携用）
-        ...(photoUrl && { photoUrl }),
-      });
+        await submitMealRecord({
+          recordMode: 'snack_only',
+          staffName: formData.staffName,
+          facility: settings.defaultFacility || '',
+          residentName: settings.defaultResidentName || '',
+          dayServiceUsage: formData.dayServiceUsage,
+          isImportant: formData.isImportant,
+          ...(formData.dayServiceName && { dayServiceName: formData.dayServiceName }),
+          ...(formData.snack && { snack: formData.snack }),
+          ...(formData.note && { note: formData.note }),
+          snackRecords: [snackRecord],
+          residentId: item.residentId,
+          // Phase 15.9: 写真URLを渡す（Google Chat Webhook連携用）
+          ...(photoUrl && { photoUrl }),
+        });
+      } else {
+        // 2b. 水分タブ: 水分摂取量シートに記録
+        await submitHydrationRecord({
+          staffName: formData.staffName,
+          residentName: settings.defaultResidentName || '',
+          residentId: item.residentId,
+          hydrationAmount: formData.hydrationAmount || 0,
+          note: formData.note || undefined,
+          isImportant: formData.isImportant,
+          facility: settings.defaultFacility || '',
+          dayServiceUsage: formData.dayServiceUsage,
+          ...(formData.dayServiceName && { dayServiceName: formData.dayServiceName }),
+          // 品物連携情報
+          itemId: item.id,
+          itemName: item.itemName,
+          servedQuantity: formData.servedQuantity,
+          unit: item.unit,
+        });
+      }
 
       onSuccess?.();
       onClose();
@@ -245,6 +335,34 @@ export function StaffRecordDialog({
         </div>
 
         <div className="p-4 space-y-4">
+          {/* Phase 29: タブUI */}
+          <div role="tablist" className="flex border-b">
+            <button
+              role="tab"
+              aria-selected={formData.activeTab === 'meal'}
+              onClick={() => setFormData(prev => ({ ...prev, activeTab: 'meal' }))}
+              className={`flex-1 py-2 px-4 text-center font-medium border-b-2 transition-colors ${
+                formData.activeTab === 'meal'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              🍪 食事
+            </button>
+            <button
+              role="tab"
+              aria-selected={formData.activeTab === 'hydration'}
+              onClick={() => setFormData(prev => ({ ...prev, activeTab: 'hydration' }))}
+              className={`flex-1 py-2 px-4 text-center font-medium border-b-2 transition-colors ${
+                formData.activeTab === 'hydration'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              💧 水分
+            </button>
+          </div>
+
           {/* 品物情報 */}
           <div className="bg-gray-50 rounded-lg p-3">
             <div className="flex items-center gap-2">
@@ -370,48 +488,85 @@ export function StaffRecordDialog({
             )}
           </div>
 
-          {/* Phase 15.6: 摂食した割合（0-10数値入力） */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              摂食した割合 <span className="text-red-500">*</span>
-            </label>
-            <div className="flex items-center gap-3">
+          {/* Phase 29: 水分タブ - 水分量入力 */}
+          {formData.activeTab === 'hydration' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                水分量（cc） <span className="text-red-500">*</span>
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="0"
+                  step="10"
+                  value={formData.hydrationAmount ?? ''}
+                  onChange={(e) => {
+                    const value = e.target.value === '' ? null : parseInt(e.target.value) || 0;
+                    setFormData(prev => ({ ...prev, hydrationAmount: value }));
+                  }}
+                  data-testid="hydration-amount"
+                  className={`w-32 border rounded-lg px-3 py-2 text-lg font-semibold ${
+                    errors.hydrationAmount ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="200"
+                />
+                <span className="text-gray-600">cc</span>
+              </div>
+              {formData.hydrationAmount !== null && item.category === 'drink' && (
+                <p className="text-xs text-blue-600 mt-1">
+                  💡 提供数から自動計算されました
+                </p>
+              )}
+              {errors.hydrationAmount && (
+                <p className="mt-1 text-sm text-red-500">{errors.hydrationAmount}</p>
+              )}
+            </div>
+          )}
+
+          {/* Phase 15.6: 摂食した割合（0-10数値入力）- 食事タブのみ */}
+          {formData.activeTab === 'meal' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                摂食した割合 <span className="text-red-500">*</span>
+              </label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="number"
+                  min="0"
+                  max="10"
+                  step="1"
+                  value={formData.consumptionRateInput}
+                  onChange={(e) => {
+                    const value = Math.min(10, Math.max(0, parseInt(e.target.value) || 0));
+                    setFormData(prev => ({ ...prev, consumptionRateInput: value }));
+                  }}
+                  className="w-20 border border-gray-300 rounded-lg px-3 py-2 text-center text-lg font-semibold"
+                />
+                <span className="text-gray-600 font-medium">/ 10</span>
+                <span className="text-sm text-gray-500 ml-2">
+                  （{formData.consumptionRateInput * 10}%）
+                </span>
+              </div>
+              {/* スライダー補助（視覚的なフィードバック） */}
               <input
-                type="number"
+                type="range"
                 min="0"
                 max="10"
                 step="1"
                 value={formData.consumptionRateInput}
-                onChange={(e) => {
-                  const value = Math.min(10, Math.max(0, parseInt(e.target.value) || 0));
-                  setFormData(prev => ({ ...prev, consumptionRateInput: value }));
-                }}
-                className="w-20 border border-gray-300 rounded-lg px-3 py-2 text-center text-lg font-semibold"
+                onChange={(e) => setFormData(prev => ({ ...prev, consumptionRateInput: parseInt(e.target.value) }))}
+                className="w-full mt-2 accent-primary"
               />
-              <span className="text-gray-600 font-medium">/ 10</span>
-              <span className="text-sm text-gray-500 ml-2">
-                （{formData.consumptionRateInput * 10}%）
-              </span>
+              <div className="flex justify-between text-xs text-gray-400 mt-1">
+                <span>0（食べず）</span>
+                <span>5（半分）</span>
+                <span>10（完食）</span>
+              </div>
             </div>
-            {/* スライダー補助（視覚的なフィードバック） */}
-            <input
-              type="range"
-              min="0"
-              max="10"
-              step="1"
-              value={formData.consumptionRateInput}
-              onChange={(e) => setFormData(prev => ({ ...prev, consumptionRateInput: parseInt(e.target.value) }))}
-              className="w-full mt-2 accent-primary"
-            />
-            <div className="flex justify-between text-xs text-gray-400 mt-1">
-              <span>0（食べず）</span>
-              <span>5（半分）</span>
-              <span>10（完食）</span>
-            </div>
-          </div>
+          )}
 
-          {/* Phase 15.6: 残った分への対応（摂食割合 < 10の場合のみ） */}
-          {formData.consumptionRateInput < 10 && (
+          {/* Phase 15.6: 残った分への対応（摂食割合 < 10の場合のみ）- 食事タブのみ */}
+          {formData.activeTab === 'meal' && formData.consumptionRateInput < 10 && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 残った分への対応 <span className="text-red-500">*</span>
@@ -462,39 +617,43 @@ export function StaffRecordDialog({
             </div>
           )}
 
-          {/* メモ */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">メモ（任意）</label>
-            <textarea
-              value={formData.consumptionNote}
-              onChange={(e) => setFormData(prev => ({ ...prev, consumptionNote: e.target.value }))}
-              placeholder="おいしそうに召し上がりました"
-              rows={2}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none"
-            />
-          </div>
+          {/* メモ（食事タブのみ） */}
+          {formData.activeTab === 'meal' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">メモ（任意）</label>
+              <textarea
+                value={formData.consumptionNote}
+                onChange={(e) => setFormData(prev => ({ ...prev, consumptionNote: e.target.value }))}
+                placeholder="おいしそうに召し上がりました"
+                rows={2}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none"
+              />
+            </div>
+          )}
 
-          {/* 間食について補足 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              間食について補足（自由記入）
-            </label>
-            <textarea
-              value={formData.snack}
-              onChange={(e) => setFormData(prev => ({ ...prev, snack: e.target.value }))}
-              placeholder="施設のおやつも召し上がりました など"
-              rows={2}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none"
-            />
-          </div>
+          {/* 間食について補足（食事タブのみ） */}
+          {formData.activeTab === 'meal' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                間食について補足（自由記入）
+              </label>
+              <textarea
+                value={formData.snack}
+                onChange={(e) => setFormData(prev => ({ ...prev, snack: e.target.value }))}
+                placeholder="施設のおやつも召し上がりました など"
+                rows={2}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none"
+              />
+            </div>
+          )}
 
-          {/* 特記事項 */}
+          {/* 特記事項（両タブ共通） */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">特記事項</label>
             <textarea
               value={formData.note}
               onChange={(e) => setFormData(prev => ({ ...prev, note: e.target.value }))}
-              placeholder="【ケアに関すること】&#10;&#10;【ACPiece】"
+              data-testid="note-field"
               rows={3}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none"
             />
