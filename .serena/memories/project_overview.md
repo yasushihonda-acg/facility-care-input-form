@@ -511,7 +511,22 @@ StaffRecordDialog.tsxに写真アップロード機能を追加。Firebase Stora
 **設計書**: `docs/CHAT_FEATURE_HIDE_SPEC.md`
 **復元手順**: CHAT_FEATURE_HIDE_SPEC.md セクション6を参照
 
-### E2Eテスト（233件パス + 16件スキップ、Phase 21でチャットテストをスキップ）
+### Phase 31: カテゴリ簡素化 + タブ固定化 (2025-12-21 完了)
+品物カテゴリを7種類から2種類に簡素化し、スタッフ記録フォームのタブ切替を廃止。
+
+**カテゴリ変更**:
+- 変更前（7種類）: fruit, snack, drink, dairy, prepared, supplement, other
+- 変更後（2種類）: food（食べ物）, drink（飲み物）
+
+**スタッフ記録フォーム**:
+- 食べ物カテゴリ → 食事フォーム（摂食割合入力）固定、タブ切替不可
+- 飲み物カテゴリ → 水分フォーム（cc入力）固定、タブ切替不可
+
+**後方互換性**: `migrateCategory()` 関数で旧カテゴリを自動変換
+
+**設計書**: ITEM_MANAGEMENT_SPEC.md セクション2.2, STAFF_RECORD_FORM_SPEC.md タブ固定動作
+
+### E2Eテスト（309件パス + 16件スキップ、Phase 21でチャットテストをスキップ）
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |
