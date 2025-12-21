@@ -6,7 +6,7 @@
  */
 
 import * as functions from "firebase-functions";
-import {MealRecordForChat} from "../types";
+import {MealRecordForChat, ItemCategory} from "../types";
 
 /**
  * 食事記録をGoogle Chat形式のメッセージに変換
@@ -151,4 +151,112 @@ export async function notifyMealRecord(
     const importantResult = await sendToGoogleChat(importantWebhookUrl, message);
     functions.logger.info("[GoogleChat] Important webhook result:", importantResult);
   }
+}
+
+// =============================================================================
+// Phase 30: 家族操作・入力無し通知
+// =============================================================================
+
+/** カテゴリラベルマッピング */
+const CATEGORY_LABELS: Record<ItemCategory, string> = {
+  fruit: "果物",
+  snack: "お菓子・間食",
+  drink: "飲み物",
+  dairy: "乳製品",
+  prepared: "調理済み食品",
+  supplement: "栄養補助食品",
+  other: "その他",
+};
+
+/**
+ * 品物操作データ型
+ */
+export interface CareItemNotifyData {
+  itemName: string;
+  category: ItemCategory;
+  quantity: number;
+  unit: string;
+  expirationDate?: string;
+  noteToStaff?: string;
+}
+
+/**
+ * 品物操作通知メッセージを生成
+ *
+ * @param action - 操作種別 ('register' | 'update')
+ * @param item - 品物データ
+ * @param userId - 操作者ID
+ */
+export function formatCareItemNotification(
+  action: "register" | "update",
+  item: CareItemNotifyData,
+  userId: string
+): string {
+  const actionLabel = action === "register" ? "品物登録📦" : "品物編集✏️";
+  const categoryLabel = CATEGORY_LABELS[item.category] || item.category;
+
+  const now = new Date();
+  const jstTime = now.toLocaleString("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+
+  const lines = [
+    `#${actionLabel}`,
+    "",
+    `【${item.itemName}】`,
+    `カテゴリ: ${categoryLabel}`,
+    `数量: ${item.quantity}${item.unit}`,
+  ];
+
+  if (item.expirationDate) {
+    lines.push(`賞味期限: ${item.expirationDate}`);
+  }
+
+  if (item.noteToStaff) {
+    lines.push(`スタッフへの伝達事項: ${item.noteToStaff}`);
+  }
+
+  lines.push("");
+  lines.push(`登録者: ${userId}`);
+  lines.push(`時刻: ${jstTime}`);
+
+  return lines.join("\n");
+}
+
+/**
+ * 入力無し通知メッセージを生成
+ *
+ * @param date - 対象日付 (YYYY-MM-DD)
+ * @param hasMealRecord - 食事記録があるか
+ * @param hasHydrationRecord - 水分記録があるか
+ */
+export function formatNoRecordNotification(
+  date: string,
+  hasMealRecord: boolean,
+  hasHydrationRecord: boolean
+): string {
+  const lines = [
+    "#入力無し警告⚠️",
+    "",
+    `【${date}】の記録が未入力です`,
+    "",
+  ];
+
+  if (!hasMealRecord) {
+    lines.push("- 食事記録: 未入力");
+  }
+  if (!hasHydrationRecord) {
+    lines.push("- 水分記録: 未入力");
+  }
+
+  lines.push("");
+  lines.push("※ 16:00時点の確認");
+
+  return lines.join("\n");
 }

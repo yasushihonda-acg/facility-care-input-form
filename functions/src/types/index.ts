@@ -425,6 +425,8 @@ export interface MealFormSettings {
   webhookUrl?: string;
   /** 重要Webhook URL（重要記録のみ追加通知先） */
   importantWebhookUrl?: string;
+  /** 家族操作・入力無し通知用Webhook URL (Phase 30) */
+  familyNotifyWebhookUrl?: string;
   /** 最終更新日時 */
   updatedAt: string;
 }
@@ -439,6 +441,31 @@ export interface UpdateMealFormSettingsRequest {
   defaultDayServiceName?: string;
   webhookUrl?: string;
   importantWebhookUrl?: string;
+  familyNotifyWebhookUrl?: string;
+}
+
+// =============================================================================
+// 日次記録ログ Types (Phase 30)
+// =============================================================================
+
+/**
+ * 日次記録ログ
+ * Firestore: daily_record_logs/{YYYY-MM-DD}
+ * 16時入力無し通知判定用
+ */
+export interface DailyRecordLog {
+  /** 日付 (YYYY-MM-DD) */
+  date: string;
+  /** 食事記録があるか */
+  hasMealRecord: boolean;
+  /** 水分記録があるか */
+  hasHydrationRecord: boolean;
+  /** 最終食事記録タイムスタンプ */
+  lastMealAt?: string;
+  /** 最終水分記録タイムスタンプ */
+  lastHydrationAt?: string;
+  /** 更新日時 */
+  updatedAt: string;
 }
 
 /**

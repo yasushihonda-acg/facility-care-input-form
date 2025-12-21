@@ -26,6 +26,7 @@ const DEFAULT_SETTINGS: MealFormSettings = {
   defaultDayServiceName: "",
   webhookUrl: "",
   importantWebhookUrl: "",
+  familyNotifyWebhookUrl: "",
   updatedAt: new Date().toISOString(),
 };
 
@@ -161,6 +162,7 @@ async function updateMealFormSettingsHandler(
       defaultDayServiceName: body.defaultDayServiceName ?? currentSettings.defaultDayServiceName,
       webhookUrl: body.webhookUrl ?? currentSettings.webhookUrl ?? "",
       importantWebhookUrl: body.importantWebhookUrl ?? currentSettings.importantWebhookUrl ?? "",
+      familyNotifyWebhookUrl: body.familyNotifyWebhookUrl ?? currentSettings.familyNotifyWebhookUrl ?? "",
       updatedAt: new Date().toISOString(),
     };
 

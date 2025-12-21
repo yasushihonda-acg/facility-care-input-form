@@ -25,6 +25,7 @@ import {
   createConsumptionLogsFromSnackRecords,
   generateSnackTextFromRecords,
 } from "../services/consumptionLogService";
+import {updateDailyRecordLog} from "../services/dailyRecordLogService";
 
 /**
  * 食事記録レスポンス型
@@ -466,6 +467,11 @@ async function submitMealRecordHandler(
       postId,
       sheetRow,
       residentName: mealRecord.residentName,
+    });
+
+    // Phase 30: 日次記録ログ更新（非同期・エラーでも処理続行）
+    updateDailyRecordLog("meal").catch((err) => {
+      functions.logger.warn("submitMealRecord daily log update failed:", err);
     });
 
     res.status(200).json(response);

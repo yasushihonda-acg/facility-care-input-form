@@ -23,7 +23,13 @@ import {
   GetCareItemsResponse,
   ItemStatus,
   ItemCategory,
+  MealFormSettings,
 } from "../types";
+import {
+  sendToGoogleChat,
+  formatCareItemNotification,
+  CareItemNotifyData,
+} from "../services/googleChatService";
 
 // Firestoreコレクション名
 const CARE_ITEMS_COLLECTION = "care_items";
@@ -210,6 +216,29 @@ async function submitCareItemHandler(
       itemId: docRef.id,
       itemName: item.itemName,
     });
+
+    // Phase 30: 家族操作通知（非同期・エラーでも処理続行）
+    try {
+      const settingsDoc = await db.collection("settings").doc("mealFormDefaults").get();
+      const settings = settingsDoc.exists ? (settingsDoc.data() as MealFormSettings) : null;
+
+      if (settings?.familyNotifyWebhookUrl) {
+        const notifyData: CareItemNotifyData = {
+          itemName: item.itemName,
+          category: item.category,
+          quantity: item.quantity,
+          unit: item.unit,
+          expirationDate: item.expirationDate,
+          noteToStaff: item.noteToStaff,
+        };
+        const message = formatCareItemNotification("register", notifyData, userId);
+        sendToGoogleChat(settings.familyNotifyWebhookUrl, message).catch((err) => {
+          functions.logger.warn("submitCareItem notification failed:", err);
+        });
+      }
+    } catch (notifyError) {
+      functions.logger.warn("submitCareItem notification setup failed:", notifyError);
+    }
 
     const responseData: SubmitCareItemResponse = {
       itemId: docRef.id,
@@ -553,6 +582,33 @@ async function updateCareItemHandler(
     await docRef.update(updateData);
 
     functions.logger.info("updateCareItem success", {itemId});
+
+    // Phase 30: 家族操作通知（非同期・エラーでも処理続行）
+    try {
+      const settingsDocRef = db.collection("settings").doc("mealFormDefaults");
+      const settingsDoc = await settingsDocRef.get();
+      const settings = settingsDoc.exists ? (settingsDoc.data() as MealFormSettings) : null;
+
+      if (settings?.familyNotifyWebhookUrl) {
+        // 更新後のデータを取得
+        const updatedDoc = await docRef.get();
+        const updatedItem = updatedDoc.data() as CareItem;
+        const notifyData: CareItemNotifyData = {
+          itemName: updatedItem.itemName,
+          category: updatedItem.category,
+          quantity: updatedItem.quantity,
+          unit: updatedItem.unit,
+          expirationDate: updatedItem.expirationDate,
+          noteToStaff: updatedItem.noteToStaff,
+        };
+        const message = formatCareItemNotification("update", notifyData, updatedItem.userId);
+        sendToGoogleChat(settings.familyNotifyWebhookUrl, message).catch((err) => {
+          functions.logger.warn("updateCareItem notification failed:", err);
+        });
+      }
+    } catch (notifyError) {
+      functions.logger.warn("updateCareItem notification setup failed:", notifyError);
+    }
 
     const response: ApiResponse<{itemId: string; updatedAt: string}> = {
       success: true,

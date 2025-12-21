@@ -183,3 +183,9 @@ export {
   getNotifications,
   getActiveChatItems,
 } from "./functions/chat";
+
+// =============================================================================
+// 家族操作・入力無し通知（Phase 30）
+// =============================================================================
+
+export {checkDailyRecords} from "./functions/checkDailyRecords";

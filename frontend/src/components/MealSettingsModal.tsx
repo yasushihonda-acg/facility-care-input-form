@@ -38,6 +38,7 @@ export function MealSettingsModal({
     defaultDayServiceName: settings.defaultDayServiceName,
     webhookUrl: settings.webhookUrl || '',
     importantWebhookUrl: settings.importantWebhookUrl || '',
+    familyNotifyWebhookUrl: settings.familyNotifyWebhookUrl || '',
   });
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -46,10 +47,12 @@ export function MealSettingsModal({
   // テスト状態
   const [webhookTestState, setWebhookTestState] = useState<TestState>(initialTestState);
   const [importantWebhookTestState, setImportantWebhookTestState] = useState<TestState>(initialTestState);
+  const [familyNotifyWebhookTestState, setFamilyNotifyWebhookTestState] = useState<TestState>(initialTestState);
 
   // クールダウン状態
   const [webhookCooldown, setWebhookCooldown] = useState(false);
   const [importantWebhookCooldown, setImportantWebhookCooldown] = useState(false);
+  const [familyNotifyWebhookCooldown, setFamilyNotifyWebhookCooldown] = useState(false);
 
   // 全状態をリセットする関数
   const resetAllStates = useCallback(() => {
@@ -59,10 +62,12 @@ export function MealSettingsModal({
       defaultDayServiceName: settings.defaultDayServiceName,
       webhookUrl: settings.webhookUrl || '',
       importantWebhookUrl: settings.importantWebhookUrl || '',
+      familyNotifyWebhookUrl: settings.familyNotifyWebhookUrl || '',
     });
     // テスト状態をリセット
     setWebhookTestState(initialTestState);
     setImportantWebhookTestState(initialTestState);
+    setFamilyNotifyWebhookTestState(initialTestState);
     // 保存メッセージをリセット
     setSaveMessage(null);
     // クリア確認ダイアログを閉じる
@@ -170,6 +175,7 @@ export function MealSettingsModal({
         defaultDayServiceName: '',
         webhookUrl: '',
         importantWebhookUrl: '',
+        familyNotifyWebhookUrl: '',
       });
       if (success) {
         setSaveMessage({ type: 'success', text: '設定をクリアしました' });
@@ -428,6 +434,53 @@ export function MealSettingsModal({
             </div>
             <p className="mt-1 text-xs text-gray-500">「重要」選択時のみ追加通知</p>
             <TestResultDisplay state={importantWebhookTestState} />
+          </div>
+
+          {/* セパレーター - 家族・入力監視 */}
+          <div className="border-t border-gray-200 pt-4">
+            <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+              <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              家族・入力監視 通知設定
+            </h3>
+          </div>
+
+          {/* 家族操作・入力無し通知用Webhook URL */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              監視通知Webhook URL
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={localSettings.familyNotifyWebhookUrl || ''}
+                onChange={(e) => {
+                  setLocalSettings((prev) => ({
+                    ...prev,
+                    familyNotifyWebhookUrl: e.target.value,
+                  }));
+                  // 入力が変わったらテスト結果をリセット
+                  setFamilyNotifyWebhookTestState(initialTestState);
+                }}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+                placeholder="https://chat.googleapis.com/v1/spaces/..."
+              />
+              <button
+                type="button"
+                onClick={() => handleTestWebhook(
+                  localSettings.familyNotifyWebhookUrl || '',
+                  setFamilyNotifyWebhookTestState,
+                  setFamilyNotifyWebhookCooldown
+                )}
+                disabled={familyNotifyWebhookTestState.isLoading || familyNotifyWebhookCooldown || !localSettings.familyNotifyWebhookUrl}
+                className="px-3 py-2 text-xs bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+              >
+                テスト送信
+              </button>
+            </div>
+            <p className="mt-1 text-xs text-gray-500">品物登録・編集時、16時入力無し時に通知</p>
+            <TestResultDisplay state={familyNotifyWebhookTestState} />
           </div>
 
           {/* 写真保存について */}

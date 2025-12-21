@@ -15,6 +15,7 @@ import {
   MealFormSettings,
   ErrorCodes,
 } from "../types";
+import {updateDailyRecordLog} from "../services/dailyRecordLogService";
 
 /**
  * 水分記録レスポンス型
@@ -249,6 +250,11 @@ async function submitHydrationRecordHandler(
       postId,
       sheetRow,
       residentName: hydrationRecord.residentName,
+    });
+
+    // Phase 30: 日次記録ログ更新（非同期・エラーでも処理続行）
+    updateDailyRecordLog("hydration").catch((err) => {
+      functions.logger.warn("submitHydrationRecord daily log update failed:", err);
     });
 
     res.status(200).json(response);
