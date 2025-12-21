@@ -1700,7 +1700,7 @@ interface Task {
 
 **実装ファイル（フロントエンド）**:
 - `frontend/src/hooks/useProhibitions.ts` - 禁止ルールフック
-- `frontend/src/pages/family/ResidentSettings.tsx` - 入居者設定画面
+- ~~`frontend/src/pages/family/ResidentSettings.tsx`~~ - ※Phase 26で削除
 - `frontend/src/components/staff/ProhibitionWarning.tsx` - 禁止警告
 - `frontend/src/components/staff/ProhibitionBadge.tsx` - 禁止バッジ
 
@@ -1741,13 +1741,12 @@ interface Task {
 | Phase 4 | ショーケース（DemoShowcase完成） | ✅ 完了 |
 | Phase 5 | **家族向け特化リデザイン** | ✅ 完了 |
 
-**家族視点6ステップツアー**:
+**家族視点5ステップツアー**（※Phase 26で入居者設定削除）:
 1. 品物を登録する → `/demo/family/items/new`
 2. 登録した品物を確認 → `/demo/family/items`
 3. いつもの指示を設定 → `/demo/family/presets`
-4. 入居者設定を確認 → `/demo/family/settings/resident`
-5. 今日の様子を確認 → `/demo/family`
-6. 傾向を分析する → `/demo/stats`
+4. 今日の様子を確認 → `/demo/family`
+5. 傾向を分析する → `/demo/stats`
 
 > **注**: `/demo/staff/*` ルートは無効化（将来 `/demo/staff-app` として復活予定）
 

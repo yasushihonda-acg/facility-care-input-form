@@ -147,7 +147,7 @@ export function FamilyDashboard() {
             </div>
           </Link>
 
-          {/* 入居者設定 */}
+          {/* Phase 26: 入居者設定削除
           <Link
             to={`${pathPrefix}/family/settings/resident`}
             className="block bg-white rounded-lg shadow-card p-3 hover:shadow-md transition"
@@ -160,6 +160,7 @@ export function FamilyDashboard() {
               </div>
             </div>
           </Link>
+          */}
         </div>
 
         {/* Phase 21: チャット機能一時非表示

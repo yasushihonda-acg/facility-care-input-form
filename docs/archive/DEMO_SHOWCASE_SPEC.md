@@ -15,6 +15,9 @@ last_reviewed: 2025-12-20
 >
 > **重要**: 2025-12-17に家族向け特化リデザインを実施。
 > 詳細は [DEMO_FAMILY_REDESIGN.md](./DEMO_FAMILY_REDESIGN.md) を参照。
+>
+> **Phase 26更新** (2025-12-21): 入居者設定画面（`/demo/family/settings/resident`）は削除されました。
+> ショーケースステップは6→5ステップに変更。禁止ルールUIは将来的にプリセット管理に統合予定。
 
 ---
 

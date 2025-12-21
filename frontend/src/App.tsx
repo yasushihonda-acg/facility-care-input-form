@@ -24,7 +24,8 @@ import { ItemDetail } from './pages/family/ItemDetail';
 import { ItemEditPage } from './pages/family/ItemEditPage';
 import { TaskList } from './pages/family/TaskList';
 import { PresetManagement } from './pages/family/PresetManagement';
-import { ResidentSettings } from './pages/family/ResidentSettings';
+// Phase 26: 入居者設定削除
+// import { ResidentSettings } from './pages/family/ResidentSettings';
 
 // デモショーケース
 import { DemoHome } from './pages/demo/DemoHome';
@@ -89,8 +90,9 @@ function App() {
       {/* プリセット管理 */}
       <Route path="/family/presets" element={<PresetManagement />} />
 
-      {/* 入居者設定（禁止ルール等） */}
+      {/* Phase 26: 入居者設定削除
       <Route path="/family/settings/resident" element={<ResidentSettings />} />
+      */}
 
       {/* タスク一覧 */}
       <Route path="/family/tasks" element={<TaskList />} />
@@ -126,7 +128,9 @@ function App() {
       <Route path="/demo/family/items/:id/edit" element={<ItemEditPage />} />
       <Route path="/demo/family/tasks" element={<TaskList />} />
       <Route path="/demo/family/presets" element={<PresetManagement />} />
+      {/* Phase 26: 入居者設定削除
       <Route path="/demo/family/settings/resident" element={<ResidentSettings />} />
+      */}
       <Route path="/demo/family/evidence/:date" element={<EvidenceMonitor />} />
       {/* Phase 21: チャット機能一時非表示
       <Route path="/demo/family/chats" element={<ChatListPage userType="family" />} />

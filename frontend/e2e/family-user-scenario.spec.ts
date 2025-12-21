@@ -132,7 +132,8 @@ test.describe('【デモ】家族ユーザーシナリオ（6ステップ）', (
     });
   });
 
-  test.describe('Step 4: 入居者設定を確認', () => {
+  // Phase 26: 入居者設定削除
+  test.describe.skip('Step 4: 入居者設定を確認', () => {
     test('SCENARIO-D10: 入居者設定画面にアクセスできる', async ({ page }) => {
       await page.goto('/demo/family/settings/resident');
       await waitForSpaLoad(page);
@@ -273,7 +274,8 @@ test.describe('【対応確認】デモ→本番の機能一致', () => {
     expect(demoTitle).toBe(prodTitle);
   });
 
-  test('PARITY-04: 入居者設定ページ（デモ↔本番）', async ({ page }) => {
+  // Phase 26: 入居者設定削除
+  test.skip('PARITY-04: 入居者設定ページ（デモ↔本番）', async ({ page }) => {
     // デモ版
     await page.goto('/demo/family/settings/resident');
     await waitForSpaLoad(page);
@@ -441,7 +443,8 @@ test.describe('【本番準備】家族用ページの本番利用可能性', ()
     await expect(page.getByRole('heading', { name: /いつもの指示/ }).first()).toBeVisible();
   });
 
-  test('PROD-05: 本番入居者設定が正常に表示される', async ({ page }) => {
+  // Phase 26: 入居者設定削除
+  test.skip('PROD-05: 本番入居者設定が正常に表示される', async ({ page }) => {
     await page.goto('/family/settings/resident');
     await waitForSpaLoad(page);
 

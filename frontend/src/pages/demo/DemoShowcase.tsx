@@ -60,21 +60,22 @@ const SHOWCASE_STEPS: ShowcaseStep[] = [
       '次回からの入力がラクラク',
     ],
   },
+  // Phase 26: 入居者設定削除
+  // {
+  //   id: 4,
+  //   title: '入居者設定を確認',
+  //   description: '禁止品目などを設定します',
+  //   story: 'お母さんは甘すぎるお菓子が苦手なので、禁止設定をしておきます',
+  //   icon: '⚙️',
+  //   path: '/demo/family/settings/resident',
+  //   highlights: [
+  //     '禁止品目の登録',
+  //     'スタッフに自動で警告表示',
+  //     '家族の希望を確実に伝える',
+  //   ],
+  // },
   {
     id: 4,
-    title: '入居者設定を確認',
-    description: '禁止品目などを設定します',
-    story: 'お母さんは甘すぎるお菓子が苦手なので、禁止設定をしておきます',
-    icon: '⚙️',
-    path: '/demo/family/settings/resident',
-    highlights: [
-      '禁止品目の登録',
-      'スタッフに自動で警告表示',
-      '家族の希望を確実に伝える',
-    ],
-  },
-  {
-    id: 5,
     title: '今日の様子を確認',
     description: 'タイムラインで食事状況を確認',
     story: '今日の食事はどうだったかな？離れていても様子がわかります',
@@ -87,7 +88,7 @@ const SHOWCASE_STEPS: ShowcaseStep[] = [
     ],
   },
   {
-    id: 6,
+    id: 5,
     title: '傾向を分析する',
     description: '統計で摂食傾向を確認します',
     story: '最近の傾向を見て、次回持っていくものを決めましょう',

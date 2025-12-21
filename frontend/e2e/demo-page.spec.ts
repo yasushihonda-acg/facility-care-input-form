@@ -55,8 +55,8 @@ test.describe('デモホーム基本動作', () => {
     // いつもの指示を設定カード
     await expect(page.locator('text=いつもの指示を設定')).toBeVisible({ timeout: 10000 });
 
-    // 入居者設定カード
-    await expect(page.locator('text=入居者設定')).toBeVisible({ timeout: 10000 });
+    // Phase 26: 入居者設定削除
+    // await expect(page.locator('text=入居者設定')).toBeVisible({ timeout: 10000 });
 
     // 傾向を分析カード
     await expect(page.locator('text=傾向を分析')).toBeVisible({ timeout: 10000 });
@@ -221,7 +221,8 @@ test.describe('デモ機能ページ', () => {
     await expect(page).toHaveURL(/\/demo\/family\/presets/);
   });
 
-  test('DEMO-026: デモ入居者設定にアクセスできる', async ({ page }) => {
+  // Phase 26: 入居者設定削除
+  test.skip('DEMO-026: デモ入居者設定にアクセスできる', async ({ page }) => {
     await page.goto('/demo/family/settings/resident', { waitUntil: 'networkidle' });
     await waitForSpaLoad(page);
 

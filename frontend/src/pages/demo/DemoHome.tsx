@@ -86,12 +86,14 @@ export function DemoHome() {
             to="/demo/family/presets"
           />
 
+          {/* Phase 26: 入居者設定削除
           <DemoCard
             title="入居者設定"
             description="禁止品目などを設定"
             icon="⚙️"
             to="/demo/family/settings/resident"
           />
+          */}
 
           <DemoCard
             title="傾向を分析"
