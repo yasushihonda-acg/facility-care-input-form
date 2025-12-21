@@ -360,7 +360,7 @@ service cloud.firestore {
 | 機能 | デモ版 | 将来版 |
 |------|--------|--------|
 | シート閲覧（全11シート） | ✅ | ✅ |
-| 15分ごと自動同期 | ✅ | ✅ |
+| 1時間ごと自動同期 | ✅ | ✅ |
 | 手動同期 | ✅ | ✅ |
 | 実績入力（Sheet B書き込み） | ❌ | ✅ |
 | 画像アップロード | ❌ | ✅ |
@@ -370,7 +370,7 @@ service cloud.firestore {
 
 | 項目 | 仕様 |
 |------|------|
-| 差分同期 | 15分ごと（Cloud Scheduler）- 新規レコードのみ追加 |
+| 差分同期 | 1時間ごと（Cloud Scheduler）- 新規レコードのみ追加 |
 | 完全同期 | 日次 午前3時（Cloud Scheduler）- 洗い替え |
 | 手動更新 | Firestoreキャッシュ再取得のみ（**同期は行わない**） |
 | 同期対象 | Sheet A 全11シート（13,603件） |
@@ -378,7 +378,7 @@ service cloud.firestore {
 | 重複防止 | **決定論的ドキュメントID**により原理的に排除 |
 
 > **重要**: 同期処理の競合防止のため、`syncPlanData`はCloud Schedulerからのみ呼び出されます。
-> - **差分同期**（15分）: 新規レコードのみ追加、削除なし
+> - **差分同期**（1時間ごと）: 新規レコードのみ追加、削除なし（GASの更新間隔と整合）
 > - **完全同期**（日次）: 洗い替えでデータ整合性担保
 > - **コスト削減**: 月$144 → $5-15（90%以上削減）
 > 詳細は [SYNC_CONCURRENCY.md](./archive/SYNC_CONCURRENCY.md) を参照。
@@ -388,7 +388,7 @@ service cloud.firestore {
 ```mermaid
 graph LR
     subgraph "Scheduler"
-        CS[Cloud Scheduler<br/>15分間隔]
+        CS[Cloud Scheduler<br/>1時間間隔]
     end
 
     subgraph "Client"
@@ -405,7 +405,7 @@ graph LR
         FS[(Firestore)]
     end
 
-    CS -->|"15分ごと"| CF_SYNC
+    CS -->|"1時間ごと"| CF_SYNC
     CF_SYNC -->|"Read"| SA
     CF_SYNC -->|"Write"| FS
     PWA -->|"表示用"| CF_GET

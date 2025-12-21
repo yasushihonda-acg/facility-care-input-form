@@ -52,7 +52,7 @@ links:
 
 | 同期種別 | トリガー | 方式 | 目的 |
 |----------|----------|------|------|
-| **自動同期** | 15分ごと | 差分同期 | 通常運用時のリアルタイム性確保 |
+| **自動同期** | 1時間ごと | 差分同期 | 通常運用時のデータ更新（GASと同期） |
 | **手動同期** | ユーザー操作 | 完全洗い替え | データ整合性の保証 |
 
 ### 2.2 差分同期（自動同期用）
@@ -90,7 +90,7 @@ links:
 
 ## 3. フロントエンド同期フロー
 
-### 3.1 自動同期（15分ごと）
+### 3.1 自動同期（1時間ごと）
 
 ```mermaid
 sequenceDiagram
@@ -99,7 +99,7 @@ sequenceDiagram
     participant CF as Cloud Functions
     participant FS as Firestore
 
-    Note over PWA,SW: 15分経過
+    Note over PWA,SW: 1時間経過
     SW->>CF: POST /syncPlanData (incremental: true)
     CF->>CF: 差分データのみ取得
     CF->>FS: 差分のみ Upsert
@@ -270,7 +270,7 @@ interface SheetRecord {
 | 1日あたりのリクエスト数 | 500リクエスト/日/プロジェクト（無料枠） |
 | 1リクエストあたりのセル数 | 制限なし（実用上は数万セル） |
 
-15分ごとの自動同期 = 96回/日 → 十分余裕あり
+1時間ごとの自動同期 = 24回/日 → 十分余裕あり
 
 ### 8.2 Firestore の制限
 
@@ -349,7 +349,7 @@ async function syncSheetData(records: PlanDataRecord[]): Promise<void> {
 
 | 同期種別 | 実行 | 頻度 |
 |----------|------|------|
-| 差分同期 | Cloud Scheduler | 15分ごと |
+| 差分同期 | Cloud Scheduler | 1時間ごと |
 | 完全同期 | Cloud Scheduler | 日次午前3時 |
 | 手動同期 | ユーザー操作 | 任意 |
 
@@ -386,5 +386,6 @@ interface SyncMetadata {
 
 | 日付 | 変更内容 |
 |------|----------|
+| 2025-12-21 | Phase 35: 同期間隔を15分→1時間に変更（GAS整合） |
 | 2025-12-20 | SYNC_CONCURRENCY.md を統合 |
 | 2025-12-13 | 初版作成 |
