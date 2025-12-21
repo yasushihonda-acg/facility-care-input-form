@@ -511,6 +511,29 @@ StaffRecordDialog.tsxに写真アップロード機能を追加。Firebase Stora
 **設計書**: `docs/CHAT_FEATURE_HIDE_SPEC.md`
 **復元手順**: CHAT_FEATURE_HIDE_SPEC.md セクション6を参照
 
+### Phase 36: スケジュール開始日対応 (2025-12-21 完了)
+毎日・曜日指定スケジュールに開始日（startDate）フィールドを追加。
+
+**主な機能**:
+- `ServingSchedule`に`startDate?: string`追加（daily/weeklyタイプ）
+- フロントエンド/バックエンド両方で判定ロジック対応
+- 品物編集画面でスケジュール変更対応（ItemEditPage.tsx）
+- タスク自動生成がservingScheduleを解釈（ハイブリッドアプローチ）
+- 開始日が未来の場合「⏳{日付}から開始」表示
+
+**実装ファイル**:
+- `frontend/src/types/careItem.ts`: startDate追加
+- `functions/src/types/index.ts`: startDate追加
+- `frontend/src/utils/scheduleUtils.ts`: 判定ロジック修正
+- `functions/src/utils/scheduleUtils.ts`: 新規作成
+- `functions/src/functions/taskGenerator.ts`: 構造化スケジュール対応
+- `frontend/src/components/family/ServingScheduleInput.tsx`: 開始日UI
+- `frontend/src/pages/family/ItemEditPage.tsx`: スケジュール編集対応
+- `frontend/src/components/meal/ScheduleDisplay.tsx`: 開始日表示
+
+**E2Eテスト**: `schedule-start-date.spec.ts` (13件)
+**設計書**: `docs/ITEM_BASED_SNACK_RECORD_SPEC.md` セクション5
+
 ### Phase 31: カテゴリ簡素化 + タブ固定化 (2025-12-21 完了)
 品物カテゴリを7種類から2種類に簡素化し、スタッフ記録フォームのタブ切替を廃止。
 
@@ -526,7 +549,7 @@ StaffRecordDialog.tsxに写真アップロード機能を追加。Firebase Stora
 
 **設計書**: ITEM_MANAGEMENT_SPEC.md セクション2.2, STAFF_RECORD_FORM_SPEC.md タブ固定動作
 
-### E2Eテスト（309件パス + 16件スキップ、Phase 21でチャットテストをスキップ）
+### E2Eテスト（323件パス + 16件スキップ、Phase 21でチャットテストをスキップ）
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |
@@ -544,6 +567,7 @@ StaffRecordDialog.tsxに写真アップロード機能を追加。Firebase Stora
 | `record-chat-integration.spec.ts` | 8件 | Phase 19 記録のチャット連携 |
 | `demo-staff-containment.spec.ts` | 15件 | Phase 20 デモ環境完結・離脱防止 |
 | `footer-nav-demo.spec.ts` | 9件 | Phase 20.1 デモモードAPI 500修正 |
+| `schedule-start-date.spec.ts` | 13件 | Phase 36 スケジュール開始日対応 |
 
 - **パリティテスト**: デモと本番で同じUIが表示されることを検証
 - **実行**: `cd frontend && npx playwright test`

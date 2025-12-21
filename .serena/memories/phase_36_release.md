@@ -44,6 +44,15 @@
 - `schedule-start-date.spec.ts`新規追加（13テスト）
 - 開始日UI表示、品物編集、プレビュー表示のテスト
 
+## テスト結果
+- 13/13テスト成功（1件スキップ：テストデータ依存）
+- 本番デプロイ済み
+
+## ドキュメント更新
+- `docs/ITEM_BASED_SNACK_RECORD_SPEC.md`: Phase 36セクション追加（5.1-5.8）
+- `gh-pages/index.html`: Phase 36開発進捗追加
+- Serenaメモリ: phase_36_release作成
+
 ## ファイル変更一覧
 - `frontend/src/types/careItem.ts` - startDate追加
 - `functions/src/types/index.ts` - startDate追加
