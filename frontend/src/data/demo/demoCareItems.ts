@@ -25,13 +25,13 @@ function getDateTimeString(daysFromToday: number, hour = 12): string {
 // ===== デモ品物データ =====
 
 export const DEMO_CARE_ITEMS: CareItem[] = [
-  // ===== 果物カテゴリ (fruit) =====
+  // ===== 食べ物カテゴリ (food) =====
   {
     id: 'demo-item-001',
     residentId: 'resident-001',
     userId: 'family-001',
     itemName: 'バナナ',
-    category: 'fruit' as ItemCategory,
+    category: 'food' as ItemCategory,
     sentDate: getDateString(-5),
     initialQuantity: 4,
     currentQuantity: 1.5,
@@ -58,7 +58,7 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     residentId: 'resident-001',
     userId: 'family-001',
     itemName: 'キウイ',
-    category: 'fruit' as ItemCategory,
+    category: 'food' as ItemCategory,
     sentDate: getDateString(-7),
     initialQuantity: 3,
     currentQuantity: 0,
@@ -86,7 +86,7 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     residentId: 'resident-001',
     userId: 'family-001',
     itemName: 'りんご',
-    category: 'fruit' as ItemCategory,
+    category: 'food' as ItemCategory,
     sentDate: getDateString(-3),
     initialQuantity: 2,
     currentQuantity: 1.5,
@@ -114,7 +114,7 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     residentId: 'resident-001',
     userId: 'family-001',
     itemName: 'みかん',
-    category: 'fruit' as ItemCategory,
+    category: 'food' as ItemCategory,
     sentDate: getDateString(-4),
     initialQuantity: 5,
     currentQuantity: 3,
@@ -141,7 +141,7 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     residentId: 'resident-001',
     userId: 'family-001',
     itemName: '柿（熟し）',
-    category: 'fruit' as ItemCategory,
+    category: 'food' as ItemCategory,
     sentDate: getDateString(-1),
     initialQuantity: 2,
     currentQuantity: 2,
@@ -157,13 +157,13 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     updatedAt: getDateTimeString(-1),
   },
 
-  // ===== おやつカテゴリ (snack) =====
+  // ===== 食べ物（おやつ系）=====
   {
     id: 'demo-item-006',
     residentId: 'resident-001',
     userId: 'family-001',
     itemName: 'プリン',
-    category: 'snack' as ItemCategory,
+    category: 'food' as ItemCategory,
     sentDate: getDateString(-4),
     initialQuantity: 6,
     currentQuantity: 2,
@@ -191,7 +191,7 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     residentId: 'resident-001',
     userId: 'family-001',
     itemName: 'カステラ',
-    category: 'snack' as ItemCategory,
+    category: 'food' as ItemCategory,
     sentDate: getDateString(-2),
     initialQuantity: 8,
     currentQuantity: 5,
@@ -223,7 +223,7 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     residentId: 'resident-001',
     userId: 'family-001',
     itemName: '羊羹',
-    category: 'snack' as ItemCategory,
+    category: 'food' as ItemCategory,
     sentDate: getDateString(0),
     initialQuantity: 4,
     currentQuantity: 4,
@@ -276,13 +276,13 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     updatedAt: getDateTimeString(0),
   },
 
-  // ===== その他カテゴリ (other) =====
+  // ===== 食べ物（その他）=====
   {
     id: 'demo-item-010',
     residentId: 'resident-001',
     userId: 'family-001',
     itemName: 'らっきょう',
-    category: 'other' as ItemCategory,
+    category: 'food' as ItemCategory,
     sentDate: getDateString(-10),
     initialQuantity: 1,
     currentQuantity: 0.7,
@@ -309,7 +309,7 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     residentId: 'resident-001',
     userId: 'family-001',
     itemName: '黒豆',
-    category: 'other' as ItemCategory,
+    category: 'food' as ItemCategory,
     sentDate: getDateString(-8),
     initialQuantity: 200,
     currentQuantity: 120,
@@ -339,7 +339,7 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     residentId: 'resident-001',
     userId: 'family-001',
     itemName: 'ヨーグルト',
-    category: 'snack' as ItemCategory,
+    category: 'food' as ItemCategory,
     sentDate: getDateString(-10),
     initialQuantity: 4,
     currentQuantity: 1,
@@ -368,7 +368,7 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     residentId: 'resident-001',
     userId: 'family-001',
     itemName: 'りんご',
-    category: 'fruit' as ItemCategory,
+    category: 'food' as ItemCategory,
     sentDate: getDateString(-10),
     initialQuantity: 3,
     currentQuantity: 2,
@@ -388,7 +388,7 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     residentId: 'resident-001',
     userId: 'family-001',
     itemName: 'バナナ',
-    category: 'fruit' as ItemCategory,
+    category: 'food' as ItemCategory,
     sentDate: getDateString(-10),
     initialQuantity: 3,
     currentQuantity: 1,

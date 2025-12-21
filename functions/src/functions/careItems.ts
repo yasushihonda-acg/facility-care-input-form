@@ -68,12 +68,13 @@ function validateCareItemInput(
     return {valid: false, error: "item.itemName is required"};
   }
 
-  // item.category
-  const validCategories: ItemCategory[] = [
-    "fruit", "snack", "drink", "dairy", "prepared", "supplement", "other",
+  // item.category（Phase 31: 新2カテゴリ + 旧カテゴリも後方互換性のため許可）
+  const validCategories = [
+    "food", "drink", // 新カテゴリ
+    "fruit", "snack", "dairy", "prepared", "supplement", "other", // 旧カテゴリ（後方互換）
   ];
-  if (!item.category || !validCategories.includes(item.category as ItemCategory)) {
-    return {valid: false, error: "item.category must be one of: " + validCategories.join(", ")};
+  if (!item.category || !validCategories.includes(item.category as string)) {
+    return {valid: false, error: "item.category must be one of: food, drink"};
   }
 
   // item.sentDate

@@ -111,7 +111,7 @@ export const DEMO_PROHIBITIONS: ProhibitionRule[] = [
     id: 'prohibition-001',
     residentId: 'resident-001',
     itemName: '七福のお菓子',
-    category: 'snack',
+    category: 'food',
     reason: 'ご家族の希望（FAX指示）',
     createdBy: 'family-001',
     createdAt: '2024-12-01T00:00:00',

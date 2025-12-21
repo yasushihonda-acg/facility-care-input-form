@@ -147,25 +147,21 @@ interface CareItem {
 ### 2.2 列挙型定義
 
 ```typescript
-// カテゴリ
-type ItemCategory =
-  | 'fruit'       // 果物
-  | 'snack'       // お菓子・間食
-  | 'drink'       // 飲み物
-  | 'dairy'       // 乳製品
-  | 'prepared'    // 調理済み食品
-  | 'supplement'  // 栄養補助食品
-  | 'other';      // その他
+// カテゴリ（Phase 31: 7→2に簡素化）
+type ItemCategory = 'food' | 'drink';
 
-const ITEM_CATEGORIES: { value: ItemCategory; label: string }[] = [
-  { value: 'fruit', label: '果物' },
-  { value: 'snack', label: 'お菓子・間食' },
-  { value: 'drink', label: '飲み物' },
-  { value: 'dairy', label: '乳製品' },
-  { value: 'prepared', label: '調理済み食品' },
-  { value: 'supplement', label: '栄養補助食品' },
-  { value: 'other', label: 'その他' },
+const ITEM_CATEGORIES: { value: ItemCategory; label: string; icon: string }[] = [
+  { value: 'food', label: '食べ物', icon: '🍽️' },
+  { value: 'drink', label: '飲み物', icon: '🥤' },
 ];
+
+// 旧カテゴリからの移行ヘルパー
+// fruit, snack, dairy, prepared, supplement, other → food
+// drink → drink
+function migrateCategory(oldCategory: string): ItemCategory {
+  if (oldCategory === 'drink') return 'drink';
+  return 'food';
+}
 
 // 保存方法
 type StorageMethod =

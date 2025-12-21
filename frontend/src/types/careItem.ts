@@ -5,25 +5,27 @@
 
 // === 列挙型 ===
 
-// カテゴリ
-export type ItemCategory =
-  | 'fruit'       // 果物
-  | 'snack'       // お菓子・間食
-  | 'drink'       // 飲み物
-  | 'dairy'       // 乳製品
-  | 'prepared'    // 調理済み食品
-  | 'supplement'  // 栄養補助食品
-  | 'other';      // その他
+// カテゴリ（Phase 31: 7→2に簡素化）
+export type ItemCategory = 'food' | 'drink';
 
 export const ITEM_CATEGORIES: { value: ItemCategory; label: string; icon: string }[] = [
-  { value: 'fruit', label: '果物', icon: '🍎' },
-  { value: 'snack', label: 'お菓子・間食', icon: '🍪' },
+  { value: 'food', label: '食べ物', icon: '🍽️' },
   { value: 'drink', label: '飲み物', icon: '🥤' },
-  { value: 'dairy', label: '乳製品', icon: '🥛' },
-  { value: 'prepared', label: '調理済み食品', icon: '🍱' },
-  { value: 'supplement', label: '栄養補助食品', icon: '💊' },
-  { value: 'other', label: 'その他', icon: '📦' },
 ];
+
+// 旧カテゴリ（後方互換性のため参考コメント）
+// LegacyItemCategory = 'fruit' | 'snack' | 'dairy' | 'prepared' | 'supplement' | 'other'
+
+/**
+ * 旧カテゴリから新カテゴリへの変換（後方互換性）
+ * Phase 31: fruit, snack, dairy, prepared, supplement, other → food
+ */
+export function migrateCategory(oldCategory: string): ItemCategory {
+  if (oldCategory === 'drink') return 'drink';
+  if (oldCategory === 'food') return 'food';
+  // 旧カテゴリは全て food に変換
+  return 'food';
+}
 
 // 保存方法
 export type StorageMethod =
@@ -279,17 +281,21 @@ export interface DeleteCareItemResponse {
 // === ユーティリティ関数 ===
 
 /**
- * カテゴリのラベルを取得
+ * カテゴリのラベルを取得（旧カテゴリにも対応）
+ * Phase 31: 後方互換性のため、旧カテゴリは「食べ物」として扱う
  */
-export function getCategoryLabel(category: ItemCategory): string {
-  return ITEM_CATEGORIES.find(c => c.value === category)?.label ?? category;
+export function getCategoryLabel(category: string): string {
+  const migrated = migrateCategory(category);
+  return ITEM_CATEGORIES.find(c => c.value === migrated)?.label ?? '食べ物';
 }
 
 /**
- * カテゴリのアイコンを取得
+ * カテゴリのアイコンを取得（旧カテゴリにも対応）
+ * Phase 31: 後方互換性のため、旧カテゴリは食べ物アイコンを返す
  */
-export function getCategoryIcon(category: ItemCategory): string {
-  return ITEM_CATEGORIES.find(c => c.value === category)?.icon ?? '📦';
+export function getCategoryIcon(category: string): string {
+  const migrated = migrateCategory(category);
+  return ITEM_CATEGORIES.find(c => c.value === migrated)?.icon ?? '🍽️';
 }
 
 /**
@@ -522,15 +528,10 @@ export interface CareItemInputExtended extends CareItemInput {
   instructionSource?: InstructionSource;
 }
 
-/** カテゴリラベルマップ（プリセットマッチ理由表示用） */
+/** カテゴリラベルマップ（Phase 31: 2カテゴリに簡素化） */
 export const CATEGORY_LABELS: Record<ItemCategory, string> = {
-  fruit: '果物',
-  snack: 'お菓子・間食',
+  food: '食べ物',
   drink: '飲み物',
-  dairy: '乳製品',
-  prepared: '調理済み食品',
-  supplement: '栄養補助食品',
-  other: 'その他',
 };
 
 // =============================================================================

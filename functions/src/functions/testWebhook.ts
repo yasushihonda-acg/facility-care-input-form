@@ -87,7 +87,7 @@ export const testWebhook = functions
       // 監視通知Webhook用: 品物登録形式
       const testItem = {
         itemName: "テスト品物",
-        category: "snack" as const,
+        category: "food" as const,
         quantity: 1,
         unit: "個",
         expirationDate: undefined,

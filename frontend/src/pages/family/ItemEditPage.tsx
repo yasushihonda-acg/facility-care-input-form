@@ -15,6 +15,7 @@ import {
   SERVING_METHODS,
   ITEM_UNITS,
   formatDate,
+  migrateCategory,
 } from '../../types/careItem';
 import type {
   ItemCategory,
@@ -52,10 +53,10 @@ export function ItemEditPage() {
   const updateItem = useUpdateCareItem();
   const item = data?.items.find((i) => i.id === id);
 
-  // フォーム状態
+  // フォーム状態（Phase 31: デフォルトカテゴリを food に変更）
   const [formData, setFormData] = useState<EditFormData>({
     itemName: '',
-    category: 'fruit',
+    category: 'food',
     quantity: 1,
     unit: '個',
     expirationDate: '',
@@ -69,12 +70,12 @@ export function ItemEditPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 品物データが取得できたらフォームにセット
+  // 品物データが取得できたらフォームにセット（旧カテゴリは自動変換）
   useEffect(() => {
     if (item) {
       setFormData({
         itemName: item.itemName || '',
-        category: item.category || 'fruit',
+        category: migrateCategory(item.category || 'food'),
         quantity: item.quantity || 1,
         unit: item.unit || '個',
         expirationDate: item.expirationDate || '',
@@ -214,16 +215,16 @@ export function ItemEditPage() {
           )}
         </div>
 
-        {/* カテゴリ */}
+        {/* カテゴリ（Phase 31: 2カテゴリに簡素化） */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             カテゴリ <span className="text-red-500">*</span>
           </label>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             {ITEM_CATEGORIES.map((cat) => (
               <label
                 key={cat.value}
-                className={`flex items-center justify-center px-4 py-2 border rounded-lg cursor-pointer transition ${
+                className={`flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition ${
                   formData.category === cat.value
                     ? 'bg-primary text-white border-primary'
                     : 'bg-white border-gray-300 hover:bg-gray-50'
@@ -237,7 +238,8 @@ export function ItemEditPage() {
                   onChange={handleChange}
                   className="sr-only"
                 />
-                {cat.label}
+                <span className="text-2xl">{cat.icon}</span>
+                <span className="text-base font-medium">{cat.label}</span>
               </label>
             ))}
           </div>

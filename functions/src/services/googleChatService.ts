@@ -157,16 +157,17 @@ export async function notifyMealRecord(
 // Phase 30: 家族操作・入力無し通知
 // =============================================================================
 
-/** カテゴリラベルマッピング */
+/** カテゴリラベルマッピング（Phase 31: 2カテゴリに簡素化） */
 const CATEGORY_LABELS: Record<ItemCategory, string> = {
-  fruit: "果物",
-  snack: "お菓子・間食",
+  food: "食べ物",
   drink: "飲み物",
-  dairy: "乳製品",
-  prepared: "調理済み食品",
-  supplement: "栄養補助食品",
-  other: "その他",
 };
+
+/** 旧カテゴリを新カテゴリに変換 */
+function migrateCategory(category: string): ItemCategory {
+  if (category === "drink") return "drink";
+  return "food";
+}
 
 /**
  * 品物操作データ型
@@ -193,7 +194,7 @@ export function formatCareItemNotification(
   userId: string
 ): string {
   const actionLabel = action === "register" ? "品物登録📦" : "品物編集✏️";
-  const categoryLabel = CATEGORY_LABELS[item.category] || item.category;
+  const categoryLabel = CATEGORY_LABELS[migrateCategory(item.category)] || item.category;
 
   const now = new Date();
   const jstTime = now.toLocaleString("ja-JP", {

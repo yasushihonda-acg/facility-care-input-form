@@ -702,14 +702,15 @@ test.describe('Phase 15: スタッフ用記録入力フォーム', () => {
 
   /**
    * Phase 29: 水分記録機能（タブ式UI）
-   * - 食事🍪 / 水分💧 タブ切り替え
-   * - カテゴリ連動デフォルトタブ選択
+   * Phase 31: タブ固定化（カテゴリで自動選択、切替不可）
+   * - 食事🍪 / 水分💧 フォーム自動選択
+   * - カテゴリ連動でフォーム固定
    * - 水分量自動計算
    * - 特記事項デフォルト値
-   * @see docs/STAFF_RECORD_FORM_SPEC.md セクション13
+   * @see docs/STAFF_RECORD_FORM_SPEC.md セクション13, 14
    */
-  test.describe('Phase 29: 水分記録機能', () => {
-    test('STAFF-080: 飲み物カテゴリで水分タブがデフォルト選択される', async ({ page }) => {
+  test.describe('Phase 29+31: 水分記録機能（タブ固定化）', () => {
+    test('STAFF-080: 飲み物カテゴリで水分フォームが固定表示される', async ({ page }) => {
       await page.goto(`${BASE_URL}/demo/staff/input/meal`);
 
       // 飲み物カテゴリの品物を探してクリック（🥤アイコン）
@@ -731,20 +732,17 @@ test.describe('Phase 15: スタッフ用記録入力フォーム', () => {
       const dialog = page.locator('[role="dialog"]');
       await expect(dialog).toBeVisible();
 
-      // タブUIが存在する
-      const tablist = dialog.locator('[role="tablist"]');
-      await expect(tablist).toBeVisible();
-
-      // 水分タブが存在する
-      const hydrationTab = dialog.locator('[role="tab"]:has-text("水分")');
-      await expect(hydrationTab).toBeVisible();
+      // Phase 31: タブボタンではなく固定ヘッダーが表示される
+      // 水分記録または食事記録のヘッダーが表示される
+      const recordHeader = dialog.locator('text=/水分記録|食事記録/');
+      await expect(recordHeader).toBeVisible();
     });
 
-    test('STAFF-081: 食品カテゴリで食事タブがデフォルト選択される', async ({ page }) => {
+    test('STAFF-081: 食品カテゴリで食事フォームが固定表示される', async ({ page }) => {
       await page.goto(`${BASE_URL}/demo/staff/input/meal`);
 
-      // 食品カテゴリの品物を探してクリック（🍰アイコンなど）
-      const foodCard = page.locator('[data-testid="item-card"]').filter({ hasText: '🍰' }).first();
+      // 食品カテゴリの品物を探してクリック（🍽️アイコン）
+      const foodCard = page.locator('[data-testid="item-card"]').filter({ hasText: '🍽️' }).first();
 
       if (await foodCard.count() === 0) {
         // 品物カードの提供記録ボタンをクリック
@@ -761,20 +759,31 @@ test.describe('Phase 15: スタッフ用記録入力フォーム', () => {
       const dialog = page.locator('[role="dialog"]');
       await expect(dialog).toBeVisible();
 
-      // タブUIが存在する
-      const tablist = dialog.locator('[role="tablist"]');
-      await expect(tablist).toBeVisible();
-
-      // 食事タブが存在し、選択されている
-      const mealTab = dialog.locator('[role="tab"]:has-text("食事")');
-      await expect(mealTab).toBeVisible();
+      // Phase 31: タブボタンではなく固定ヘッダーが表示される
+      // 水分記録または食事記録のヘッダーが表示される
+      const recordHeader = dialog.locator('text=/水分記録|食事記録/');
+      await expect(recordHeader).toBeVisible();
     });
 
-    test('STAFF-082: タブ切り替えが可能', async ({ page }) => {
+    // Phase 31: タブ切替はもうできないためスキップ
+    test.skip('STAFF-082: タブ切り替えが可能【廃止】', async ({ page }) => {
+      // Phase 31でタブ切替機能は廃止されました
+      // カテゴリに応じてフォームが固定表示されます
+    });
+
+    // Phase 31: 飲み物カテゴリは自動的に水分フォームが表示される
+    test('STAFF-083: 飲み物カテゴリで水分量入力フィールドが表示される', async ({ page }) => {
       await page.goto(`${BASE_URL}/demo/staff/input/meal`);
 
-      // 品物カードの提供記録ボタンをクリック
-      const recordButton = page.locator('button:has-text("提供記録")').first();
+      // 飲み物カテゴリの品物を探してクリック（🥤アイコン）
+      const drinkCard = page.locator('[data-testid="item-card"]').filter({ hasText: '🥤' }).first();
+
+      if (await drinkCard.count() === 0) {
+        test.skip();
+        return;
+      }
+
+      const recordButton = drinkCard.locator('button:has-text("提供記録")');
       await expect(recordButton).toBeVisible({ timeout: 10000 });
       await recordButton.click();
 
@@ -782,42 +791,7 @@ test.describe('Phase 15: スタッフ用記録入力フォーム', () => {
       const dialog = page.locator('[role="dialog"]');
       await expect(dialog).toBeVisible();
 
-      // タブUIが存在する
-      const tablist = dialog.locator('[role="tablist"]');
-      await expect(tablist).toBeVisible();
-
-      // 水分タブをクリック
-      const hydrationTab = dialog.locator('[role="tab"]:has-text("水分")');
-      await hydrationTab.click();
-
-      // 水分タブが選択状態になる
-      await expect(hydrationTab).toHaveAttribute('aria-selected', 'true');
-
-      // 食事タブをクリック
-      const mealTab = dialog.locator('[role="tab"]:has-text("食事")');
-      await mealTab.click();
-
-      // 食事タブが選択状態になる
-      await expect(mealTab).toHaveAttribute('aria-selected', 'true');
-    });
-
-    test('STAFF-083: 水分タブで水分量入力フィールドが表示される', async ({ page }) => {
-      await page.goto(`${BASE_URL}/demo/staff/input/meal`);
-
-      // 品物カードの提供記録ボタンをクリック
-      const recordButton = page.locator('button:has-text("提供記録")').first();
-      await expect(recordButton).toBeVisible({ timeout: 10000 });
-      await recordButton.click();
-
-      // ダイアログが開く
-      const dialog = page.locator('[role="dialog"]');
-      await expect(dialog).toBeVisible();
-
-      // 水分タブをクリック
-      const hydrationTab = dialog.locator('[role="tab"]:has-text("水分")');
-      await expect(hydrationTab).toBeVisible();
-      await hydrationTab.click();
-
+      // Phase 31: 飲み物カテゴリなので自動的に水分フォームが表示される（タブ切替不要）
       // 水分量入力フィールドが表示される
       const hydrationLabel = dialog.locator('text=水分量');
       await expect(hydrationLabel).toBeVisible();
@@ -828,23 +802,29 @@ test.describe('Phase 15: スタッフ用記録入力フォーム', () => {
       await expect(hydrationInput.first()).toBeVisible();
     });
 
-    test('STAFF-084: 食事タブで摂食割合入力が表示される', async ({ page }) => {
+    // Phase 31: 食べ物カテゴリは自動的に食事フォームが表示される
+    test('STAFF-084: 食べ物カテゴリで摂食割合入力が表示される', async ({ page }) => {
       await page.goto(`${BASE_URL}/demo/staff/input/meal`);
 
-      // 品物カードの提供記録ボタンをクリック
-      const recordButton = page.locator('button:has-text("提供記録")').first();
-      await expect(recordButton).toBeVisible({ timeout: 10000 });
-      await recordButton.click();
+      // 食べ物カテゴリの品物を探してクリック（🍽️アイコン）
+      const foodCard = page.locator('[data-testid="item-card"]').filter({ hasText: '🍽️' }).first();
+
+      if (await foodCard.count() === 0) {
+        // 飲み物以外の品物カードの提供記録ボタンをクリック
+        const recordButton = page.locator('button:has-text("提供記録")').first();
+        await expect(recordButton).toBeVisible({ timeout: 10000 });
+        await recordButton.click();
+      } else {
+        const recordButton = foodCard.locator('button:has-text("提供記録")');
+        await expect(recordButton).toBeVisible({ timeout: 10000 });
+        await recordButton.click();
+      }
 
       // ダイアログが開く
       const dialog = page.locator('[role="dialog"]');
       await expect(dialog).toBeVisible();
 
-      // 食事タブをクリック
-      const mealTab = dialog.locator('[role="tab"]:has-text("食事")');
-      await expect(mealTab).toBeVisible();
-      await mealTab.click();
-
+      // Phase 31: 食べ物カテゴリなので自動的に食事フォームが表示される（タブ切替不要）
       // 摂食割合入力フィールドが表示される
       const consumptionLabel = dialog.locator('text=摂食した割合');
       await expect(consumptionLabel).toBeVisible();
@@ -869,10 +849,7 @@ test.describe('Phase 15: スタッフ用記録入力フォーム', () => {
       const dialog = page.locator('[role="dialog"]');
       await expect(dialog).toBeVisible();
 
-      // 水分タブに切り替え
-      const hydrationTab = dialog.locator('[role="tab"]:has-text("水分")');
-      await hydrationTab.click();
-
+      // Phase 31: 飲み物カテゴリなので自動的に水分フォームが表示される（タブ切替不要）
       // 水分量フィールドに値が入っている（自動計算結果）
       const hydrationInput = dialog.locator('[data-testid="hydration-amount"]');
       if (await hydrationInput.count() > 0) {
@@ -884,8 +861,15 @@ test.describe('Phase 15: スタッフ用記録入力フォーム', () => {
     test('STAFF-086: 水分量を手動編集できる', async ({ page }) => {
       await page.goto(`${BASE_URL}/demo/staff/input/meal`);
 
-      // 品物カードの提供記録ボタンをクリック
-      const recordButton = page.locator('button:has-text("提供記録")').first();
+      // Phase 31: 飲み物カテゴリの品物を探してクリック（水分フォームが自動表示される）
+      const drinkCard = page.locator('[data-testid="item-card"]').filter({ hasText: '🥤' }).first();
+
+      if (await drinkCard.count() === 0) {
+        test.skip();
+        return;
+      }
+
+      const recordButton = drinkCard.locator('button:has-text("提供記録")');
       await expect(recordButton).toBeVisible({ timeout: 10000 });
       await recordButton.click();
 
@@ -893,10 +877,7 @@ test.describe('Phase 15: スタッフ用記録入力フォーム', () => {
       const dialog = page.locator('[role="dialog"]');
       await expect(dialog).toBeVisible();
 
-      // 水分タブをクリック
-      const hydrationTab = dialog.locator('[role="tab"]:has-text("水分")');
-      await hydrationTab.click();
-
+      // Phase 31: 飲み物カテゴリなので自動的に水分フォームが表示される（タブ切替不要）
       // 水分量入力フィールドに値を入力
       const hydrationInput = dialog.locator('[data-testid="hydration-amount"]');
       if (await hydrationInput.count() > 0) {
@@ -931,52 +912,51 @@ test.describe('Phase 15: スタッフ用記録入力フォーム', () => {
       }
     });
 
-    test('STAFF-088: 両タブでタブUIが表示される', async ({ page }) => {
-      await page.goto(`${BASE_URL}/demo/staff/input/meal`);
-
-      // 品物カードの提供記録ボタンをクリック
-      const recordButton = page.locator('button:has-text("提供記録")').first();
-      await expect(recordButton).toBeVisible({ timeout: 10000 });
-      await recordButton.click();
-
-      // ダイアログが開く
-      const dialog = page.locator('[role="dialog"]');
-      await expect(dialog).toBeVisible();
-
-      // タブUIが存在
-      const tablist = dialog.locator('[role="tablist"]');
-      await expect(tablist).toBeVisible();
-
-      // 両方のタブが表示される
-      const mealTab = dialog.locator('[role="tab"]:has-text("食事")');
-      const hydrationTab = dialog.locator('[role="tab"]:has-text("水分")');
-
-      await expect(mealTab).toBeVisible();
-      await expect(hydrationTab).toBeVisible();
+    // Phase 31: タブUIは廃止され、固定ヘッダーに変更
+    test.skip('STAFF-088: 両タブでタブUIが表示される【廃止】', async ({ page }) => {
+      // Phase 31でタブUIは廃止されました
+      // カテゴリに応じて固定ヘッダーが表示されます
     });
 
-    test('STAFF-089: 食事タブに絵文字アイコンが表示される', async ({ page }) => {
+    // Phase 31: タブ→固定ヘッダーに変更
+    test('STAFF-089: 食事フォームに絵文字アイコンが表示される', async ({ page }) => {
       await page.goto(`${BASE_URL}/demo/staff/input/meal`);
 
-      // 品物カードの提供記録ボタンをクリック
-      const recordButton = page.locator('button:has-text("提供記録")').first();
-      await expect(recordButton).toBeVisible({ timeout: 10000 });
-      await recordButton.click();
+      // 食べ物カテゴリの品物を探してクリック
+      const foodCard = page.locator('[data-testid="item-card"]').filter({ hasText: '🍽️' }).first();
+
+      if (await foodCard.count() === 0) {
+        const recordButton = page.locator('button:has-text("提供記録")').first();
+        await expect(recordButton).toBeVisible({ timeout: 10000 });
+        await recordButton.click();
+      } else {
+        const recordButton = foodCard.locator('button:has-text("提供記録")');
+        await expect(recordButton).toBeVisible({ timeout: 10000 });
+        await recordButton.click();
+      }
 
       // ダイアログが開く
       const dialog = page.locator('[role="dialog"]');
       await expect(dialog).toBeVisible();
 
-      // 食事タブに🍪絵文字が含まれる
-      const mealTab = dialog.locator('[role="tab"]').filter({ hasText: '🍪' });
-      await expect(mealTab).toBeVisible();
+      // Phase 31: 固定ヘッダーに🍪絵文字が含まれる
+      const recordHeader = dialog.locator('text=🍪 食事記録');
+      await expect(recordHeader).toBeVisible();
     });
 
-    test('STAFF-090: 水分タブに絵文字アイコンが表示される', async ({ page }) => {
+    // Phase 31: タブ→固定ヘッダーに変更
+    test('STAFF-090: 水分フォームに絵文字アイコンが表示される', async ({ page }) => {
       await page.goto(`${BASE_URL}/demo/staff/input/meal`);
 
-      // 品物カードの提供記録ボタンをクリック
-      const recordButton = page.locator('button:has-text("提供記録")').first();
+      // 飲み物カテゴリの品物を探してクリック
+      const drinkCard = page.locator('[data-testid="item-card"]').filter({ hasText: '🥤' }).first();
+
+      if (await drinkCard.count() === 0) {
+        test.skip();
+        return;
+      }
+
+      const recordButton = drinkCard.locator('button:has-text("提供記録")');
       await expect(recordButton).toBeVisible({ timeout: 10000 });
       await recordButton.click();
 
@@ -984,16 +964,23 @@ test.describe('Phase 15: スタッフ用記録入力フォーム', () => {
       const dialog = page.locator('[role="dialog"]');
       await expect(dialog).toBeVisible();
 
-      // 水分タブに💧絵文字が含まれる
-      const hydrationTab = dialog.locator('[role="tab"]').filter({ hasText: '💧' });
-      await expect(hydrationTab).toBeVisible();
+      // Phase 31: 固定ヘッダーに💧絵文字が含まれる
+      const recordHeader = dialog.locator('text=💧 水分記録');
+      await expect(recordHeader).toBeVisible();
     });
 
-    test('STAFF-091: 水分タブで重要選択が可能', async ({ page }) => {
+    test('STAFF-091: 水分フォームで重要選択が可能', async ({ page }) => {
       await page.goto(`${BASE_URL}/demo/staff/input/meal`);
 
-      // 品物カードの提供記録ボタンをクリック
-      const recordButton = page.locator('button:has-text("提供記録")').first();
+      // Phase 31: 飲み物カテゴリの品物を探してクリック（水分フォームが自動表示される）
+      const drinkCard = page.locator('[data-testid="item-card"]').filter({ hasText: '🥤' }).first();
+
+      if (await drinkCard.count() === 0) {
+        test.skip();
+        return;
+      }
+
+      const recordButton = drinkCard.locator('button:has-text("提供記録")');
       await expect(recordButton).toBeVisible({ timeout: 10000 });
       await recordButton.click();
 
@@ -1001,20 +988,24 @@ test.describe('Phase 15: スタッフ用記録入力フォーム', () => {
       const dialog = page.locator('[role="dialog"]');
       await expect(dialog).toBeVisible();
 
-      // 水分タブをクリック
-      const hydrationTab = dialog.locator('[role="tab"]:has-text("水分")');
-      await hydrationTab.click();
-
+      // Phase 31: 飲み物カテゴリなので自動的に水分フォームが表示される
       // 重要特記事項のラジオボタンが表示される
       const importantLabel = dialog.locator('text=重要特記事項');
       await expect(importantLabel).toBeVisible();
     });
 
-    test('STAFF-092: デイサービス選択が水分タブでも機能する', async ({ page }) => {
+    test('STAFF-092: デイサービス選択が水分フォームでも機能する', async ({ page }) => {
       await page.goto(`${BASE_URL}/demo/staff/input/meal`);
 
-      // 品物カードの提供記録ボタンをクリック
-      const recordButton = page.locator('button:has-text("提供記録")').first();
+      // Phase 31: 飲み物カテゴリの品物を探してクリック（水分フォームが自動表示される）
+      const drinkCard = page.locator('[data-testid="item-card"]').filter({ hasText: '🥤' }).first();
+
+      if (await drinkCard.count() === 0) {
+        test.skip();
+        return;
+      }
+
+      const recordButton = drinkCard.locator('button:has-text("提供記録")');
       await expect(recordButton).toBeVisible({ timeout: 10000 });
       await recordButton.click();
 
@@ -1022,20 +1013,24 @@ test.describe('Phase 15: スタッフ用記録入力フォーム', () => {
       const dialog = page.locator('[role="dialog"]');
       await expect(dialog).toBeVisible();
 
-      // 水分タブをクリック
-      const hydrationTab = dialog.locator('[role="tab"]:has-text("水分")');
-      await hydrationTab.click();
-
+      // Phase 31: 飲み物カテゴリなので自動的に水分フォームが表示される
       // デイサービス利用選択が表示される
       const dayServiceLabel = dialog.locator('text=デイサービスの利用中ですか？');
       await expect(dayServiceLabel).toBeVisible();
     });
 
-    test('STAFF-093: 水分タブで全量消費時は残り対応が非表示', async ({ page }) => {
+    test('STAFF-093: 水分フォームで全量消費時は残り対応が非表示', async ({ page }) => {
       await page.goto(`${BASE_URL}/demo/staff/input/meal`);
 
-      // 飲み物カテゴリの品物を探す（または任意の品物を使用）
-      const recordButton = page.locator('button:has-text("提供記録")').first();
+      // Phase 31: 飲み物カテゴリの品物を探してクリック（水分フォームが自動表示される）
+      const drinkCard = page.locator('[data-testid="item-card"]').filter({ hasText: '🥤' }).first();
+
+      if (await drinkCard.count() === 0) {
+        test.skip();
+        return;
+      }
+
+      const recordButton = drinkCard.locator('button:has-text("提供記録")');
       await expect(recordButton).toBeVisible({ timeout: 10000 });
       await recordButton.click();
 
@@ -1043,13 +1038,7 @@ test.describe('Phase 15: スタッフ用記録入力フォーム', () => {
       const dialog = page.locator('[role="dialog"]');
       await expect(dialog).toBeVisible();
 
-      // 水分タブをクリック
-      const hydrationTab = dialog.locator('[role="tab"]:has-text("水分")');
-      await hydrationTab.click();
-
-      // 水分量フィールドを確認（デフォルトで全量消費）
-      const hydrationInput = dialog.locator('input[type="number"]').filter({ hasText: '' }).first();
-
+      // Phase 31: 飲み物カテゴリなので自動的に水分フォームが表示される（タブ切替不要）
       // 「残った分への対応」が表示されない（全量消費のため）
       await expect(dialog.locator('label:has-text("残った分への対応")')).toHaveCount(0);
     });

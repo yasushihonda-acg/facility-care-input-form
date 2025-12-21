@@ -28,7 +28,7 @@ export const DEMO_INVENTORY_SUMMARY: GetInventorySummaryResponse = {
     {
       itemId: 'demo-item-005',
       itemName: '柿（熟し）',
-      category: 'fruit' as ItemCategory,
+      category: 'food' as ItemCategory,
       initialQuantity: 2,
       currentQuantity: 2,
       unit: '個',
@@ -45,7 +45,7 @@ export const DEMO_INVENTORY_SUMMARY: GetInventorySummaryResponse = {
     {
       itemId: 'demo-item-006',
       itemName: 'プリン',
-      category: 'snack' as ItemCategory,
+      category: 'food' as ItemCategory,
       initialQuantity: 6,
       currentQuantity: 2,
       unit: '個',
@@ -63,7 +63,7 @@ export const DEMO_INVENTORY_SUMMARY: GetInventorySummaryResponse = {
     {
       itemId: 'demo-item-001',
       itemName: 'バナナ',
-      category: 'fruit' as ItemCategory,
+      category: 'food' as ItemCategory,
       initialQuantity: 4,
       currentQuantity: 1.5,
       unit: '房',
@@ -97,7 +97,7 @@ export const DEMO_INVENTORY_SUMMARY: GetInventorySummaryResponse = {
     {
       itemId: 'demo-item-003',
       itemName: 'りんご',
-      category: 'fruit' as ItemCategory,
+      category: 'food' as ItemCategory,
       initialQuantity: 2,
       currentQuantity: 1.5,
       unit: '個',
@@ -115,7 +115,7 @@ export const DEMO_INVENTORY_SUMMARY: GetInventorySummaryResponse = {
     {
       itemId: 'demo-item-004',
       itemName: 'みかん',
-      category: 'fruit' as ItemCategory,
+      category: 'food' as ItemCategory,
       initialQuantity: 5,
       currentQuantity: 3,
       unit: '個',
@@ -132,7 +132,7 @@ export const DEMO_INVENTORY_SUMMARY: GetInventorySummaryResponse = {
     {
       itemId: 'demo-item-007',
       itemName: 'カステラ',
-      category: 'snack' as ItemCategory,
+      category: 'food' as ItemCategory,
       initialQuantity: 8,
       currentQuantity: 5,
       unit: '切れ',
@@ -149,7 +149,7 @@ export const DEMO_INVENTORY_SUMMARY: GetInventorySummaryResponse = {
     {
       itemId: 'demo-item-011',
       itemName: '黒豆',
-      category: 'other' as ItemCategory,
+      category: 'food' as ItemCategory,
       initialQuantity: 200,
       currentQuantity: 120,
       unit: 'g',
@@ -167,7 +167,7 @@ export const DEMO_INVENTORY_SUMMARY: GetInventorySummaryResponse = {
     {
       itemId: 'demo-item-008',
       itemName: '羊羹',
-      category: 'snack' as ItemCategory,
+      category: 'food' as ItemCategory,
       initialQuantity: 4,
       currentQuantity: 4,
       unit: '切れ',
@@ -184,7 +184,7 @@ export const DEMO_INVENTORY_SUMMARY: GetInventorySummaryResponse = {
     {
       itemId: 'demo-item-010',
       itemName: 'らっきょう',
-      category: 'other' as ItemCategory,
+      category: 'food' as ItemCategory,
       initialQuantity: 1,
       currentQuantity: 0.7,
       unit: '瓶',
@@ -201,7 +201,7 @@ export const DEMO_INVENTORY_SUMMARY: GetInventorySummaryResponse = {
     {
       itemId: 'demo-item-002',
       itemName: 'キウイ',
-      category: 'fruit' as ItemCategory,
+      category: 'food' as ItemCategory,
       initialQuantity: 3,
       currentQuantity: 0,
       unit: '個',
@@ -217,7 +217,7 @@ export const DEMO_INVENTORY_SUMMARY: GetInventorySummaryResponse = {
     {
       itemId: 'demo-item-012',
       itemName: 'ヨーグルト',
-      category: 'snack' as ItemCategory,
+      category: 'food' as ItemCategory,
       initialQuantity: 4,
       currentQuantity: 1,
       unit: '個',
@@ -258,10 +258,8 @@ export const DEMO_FOOD_STATS: GetFoodStatsResponse = {
     { foodName: 'バナナ', avgConsumptionRate: 75, totalServings: 5 },
   ],
   categoryStats: [
-    { category: 'snack' as ItemCategory, avgConsumptionRate: 88, totalItems: 4, totalServings: 10 },
+    { category: 'food' as ItemCategory, avgConsumptionRate: 75, totalItems: 11, totalServings: 29 },
     { category: 'drink' as ItemCategory, avgConsumptionRate: 90, totalItems: 1, totalServings: 5 },
-    { category: 'fruit' as ItemCategory, avgConsumptionRate: 71, totalItems: 5, totalServings: 12 },
-    { category: 'other' as ItemCategory, avgConsumptionRate: 60, totalItems: 2, totalServings: 7 },
   ],
 };
 
@@ -277,9 +275,7 @@ export const DEMO_ITEM_STATS: ItemStatsData = {
     expiringIn3Days: 4,
   },
   categoryDistribution: [
-    { category: 'fruit' as ItemCategory, count: 5, percentage: 42 },
-    { category: 'snack' as ItemCategory, count: 4, percentage: 33 },
-    { category: 'other' as ItemCategory, count: 2, percentage: 17 },
+    { category: 'food' as ItemCategory, count: 11, percentage: 92 },
     { category: 'drink' as ItemCategory, count: 1, percentage: 8 },
   ],
   expirationCalendar: [

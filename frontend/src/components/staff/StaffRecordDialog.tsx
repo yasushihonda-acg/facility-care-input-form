@@ -7,9 +7,9 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import type { CareItem, ItemCategory } from '../../types/careItem';
+import type { CareItem } from '../../types/careItem';
 import type { RemainingHandling } from '../../types/consumptionLog';
-import { getCategoryIcon } from '../../types/careItem';
+import { getCategoryIcon, migrateCategory } from '../../types/careItem';
 import { determineConsumptionStatus, REMAINING_HANDLING_OPTIONS } from '../../types/consumptionLog';
 import { useRecordConsumptionLog } from '../../hooks/useConsumptionLogs';
 import { submitMealRecord, uploadCareImage, submitHydrationRecord } from '../../api';
@@ -25,11 +25,13 @@ type RecordTab = 'meal' | 'hydration';
 const DEFAULT_NOTE = '【ケアに関すること】\n\n【ACPiece】';
 
 /**
- * Phase 29: カテゴリに基づくデフォルトタブを決定
- * drink → hydration（水分）、それ以外 → meal（食事）
+ * Phase 29/31: カテゴリに基づくタブを決定（タブ固定化）
+ * drink → hydration（水分）、food/その他 → meal（食事）
+ * Phase 31: 旧カテゴリにも対応（migrateCategory経由）
  */
-function getDefaultTab(category: ItemCategory): RecordTab {
-  return category === 'drink' ? 'hydration' : 'meal';
+function getDefaultTab(category: string): RecordTab {
+  const migratedCategory = migrateCategory(category);
+  return migratedCategory === 'drink' ? 'hydration' : 'meal';
 }
 
 /**
@@ -114,11 +116,12 @@ export function StaffRecordDialog({
       const suggestedQuantity = getSuggestedQuantity(item);
       const servedQty = Math.min(suggestedQuantity, currentQuantity);
 
-      // Phase 29: カテゴリに基づくデフォルトタブ決定
+      // Phase 29/31: カテゴリに基づくタブ決定（旧カテゴリも自動変換）
       const defaultTab = getDefaultTab(item.category);
 
-      // Phase 29: 飲み物の場合、水分量を自動計算
-      const autoHydrationAmount = item.category === 'drink'
+      // Phase 29/31: 飲み物カテゴリの場合、水分量を自動計算
+      const migratedCategory = migrateCategory(item.category);
+      const autoHydrationAmount = migratedCategory === 'drink'
         ? calculateHydrationAmount(servedQty, item.unit)
         : null;
 
@@ -412,32 +415,9 @@ export function StaffRecordDialog({
         </div>
 
         <div className="p-4 space-y-4">
-          {/* Phase 29: タブUI */}
-          <div role="tablist" className="flex border-b">
-            <button
-              role="tab"
-              aria-selected={formData.activeTab === 'meal'}
-              onClick={() => setFormData(prev => ({ ...prev, activeTab: 'meal' }))}
-              className={`flex-1 py-2 px-4 text-center font-medium border-b-2 transition-colors ${
-                formData.activeTab === 'meal'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              🍪 食事
-            </button>
-            <button
-              role="tab"
-              aria-selected={formData.activeTab === 'hydration'}
-              onClick={() => setFormData(prev => ({ ...prev, activeTab: 'hydration' }))}
-              className={`flex-1 py-2 px-4 text-center font-medium border-b-2 transition-colors ${
-                formData.activeTab === 'hydration'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              💧 水分
-            </button>
+          {/* Phase 31: タブ固定（カテゴリに応じて自動選択、切替不可） */}
+          <div className="text-center py-2 px-4 font-medium border-b-2 border-primary text-primary bg-primary/5 rounded-t-lg">
+            {formData.activeTab === 'meal' ? '🍪 食事記録' : '💧 水分記録'}
           </div>
 
           {/* 品物情報 */}
@@ -589,7 +569,7 @@ export function StaffRecordDialog({
                 />
                 <span className="text-gray-600">cc</span>
               </div>
-              {formData.hydrationAmount !== null && item.category === 'drink' && (
+              {formData.hydrationAmount !== null && migrateCategory(item.category) === 'drink' && (
                 <p className="text-xs text-blue-600 mt-1">
                   💡 提供数から自動計算されました
                 </p>

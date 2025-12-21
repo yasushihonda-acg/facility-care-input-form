@@ -44,10 +44,10 @@ export function ItemForm() {
   const isDemo = useDemoMode();
   const submitItem = useSubmitCareItem();
 
-  // フォーム状態
+  // フォーム状態（Phase 31: デフォルトカテゴリを food に変更）
   const [formData, setFormData] = useState<CareItemInput>({
     itemName: '',
-    category: 'fruit',
+    category: 'food',
     sentDate: getTodayString(),
     quantity: 1,
     unit: '個',
@@ -325,25 +325,25 @@ export function ItemForm() {
             />
           </div>
 
-          {/* カテゴリ */}
+          {/* カテゴリ（Phase 31: 2カテゴリに簡素化） */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               カテゴリ <span className="text-red-500">*</span>
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               {ITEM_CATEGORIES.map((cat) => (
                 <button
                   key={cat.value}
                   type="button"
                   onClick={() => updateField('category', cat.value as ItemCategory)}
-                  className={`flex items-center gap-2 p-3 rounded-lg border transition-colors ${
+                  className={`flex items-center justify-center gap-2 p-4 rounded-lg border-2 transition-colors ${
                     formData.category === cat.value
                       ? 'border-primary bg-primary/5 text-primary'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  <span className="text-xl">{cat.icon}</span>
-                  <span className="text-sm">{cat.label}</span>
+                  <span className="text-2xl">{cat.icon}</span>
+                  <span className="text-base font-medium">{cat.label}</span>
                 </button>
               ))}
             </div>

@@ -493,15 +493,8 @@ export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
 // docs/ITEM_MANAGEMENT_SPEC.md に基づく型定義
 // =============================================================================
 
-/** カテゴリ */
-export type ItemCategory =
-  | "fruit" // 果物
-  | "snack" // お菓子・間食
-  | "drink" // 飲み物
-  | "dairy" // 乳製品
-  | "prepared" // 調理済み食品
-  | "supplement" // 栄養補助食品
-  | "other"; // その他
+/** カテゴリ（Phase 31: 7→2に簡素化） */
+export type ItemCategory = "food" | "drink";
 
 /** 保存方法 */
 export type StorageMethod =
@@ -1209,16 +1202,23 @@ export interface GetPresetSuggestionsResponse {
   suggestions: PresetSuggestion[];
 }
 
-/** カテゴリラベル（マッチ理由表示用） */
+/** カテゴリラベル（Phase 31: 2カテゴリに簡素化） */
 export const CATEGORY_LABELS: Record<ItemCategory, string> = {
-  fruit: "果物",
-  snack: "お菓子・間食",
+  food: "食べ物",
   drink: "飲み物",
-  dairy: "乳製品",
-  prepared: "調理済み食品",
-  supplement: "栄養補助食品",
-  other: "その他",
 };
+
+/** 旧カテゴリを新カテゴリに変換（後方互換性用） */
+export function migrateCategory(category: string): ItemCategory {
+  if (category === "drink") return "drink";
+  return "food";
+}
+
+/** カテゴリラベルを取得（旧カテゴリも対応） */
+export function getCategoryLabel(category: string): string {
+  const migrated = migrateCategory(category);
+  return CATEGORY_LABELS[migrated];
+}
 
 // =============================================================================
 // プリセット管理 Types (Phase 8.6)

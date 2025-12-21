@@ -54,6 +54,14 @@ interface DailyRecordLog {
 ### 設定拡張
 - `settings/mealFormDefaults.familyNotifyWebhookUrl`
 
+## テスト送信メッセージ
+
+監視通知Webhookのテスト送信は、食事記録形式（#食事 🍚）ではなく品物登録形式（#品物登録📦）で送信される。
+
+**実装**: `testWebhook` APIに `webhookType` パラメータを追加
+- `webhookType: "familyNotify"` → 品物登録形式
+- `webhookType: undefined` または `"normal"` → 従来の食事記録形式
+
 ## E2Eテスト
 - family-notify.spec.ts: 7件（5件パス、2件スキップ=API依存）
 - 総テスト数: 309件（28件スキップ含む）

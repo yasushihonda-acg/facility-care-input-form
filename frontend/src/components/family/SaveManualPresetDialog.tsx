@@ -7,15 +7,10 @@ import { useState, useMemo } from 'react';
 import { useCreatePreset, PRESET_CATEGORY_LABELS, PRESET_CATEGORY_ICONS } from '../../hooks/usePresets';
 import type { CareItemInput, PresetCategory, ItemCategory } from '../../types/careItem';
 
-// カテゴリラベル
+// カテゴリラベル（Phase 31: 2カテゴリに簡素化）
 const ITEM_CATEGORY_LABELS: Record<ItemCategory, string> = {
-  fruit: '果物',
-  snack: 'お菓子・間食',
+  food: '食べ物',
   drink: '飲み物',
-  dairy: '乳製品',
-  prepared: '調理済み食品',
-  supplement: '栄養補助食品',
-  other: 'その他',
 };
 
 // 提供方法ラベル
