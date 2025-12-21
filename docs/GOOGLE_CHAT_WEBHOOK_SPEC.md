@@ -650,6 +650,10 @@ export function formatHydrationRecordMessage(record: HydrationRecordForChat): st
     tags.push('#重要⚠️');
   }
 
+  // 特記事項のデフォルト値（フロントエンドで初期値として設定済み）
+  const defaultNote = '【ケアに関すること】\n\n【ACPiece】';
+  const note = record.note || defaultNote;
+
   const lines = [
     header,
     ...tags,
@@ -658,9 +662,7 @@ export function formatHydrationRecordMessage(record: HydrationRecordForChat): st
     '',
     `摂取量：${record.hydrationAmount}cc`,
     '',
-    `特記事項：${record.note || '【ケアに関すること】'}`,
-    '',
-    '【ACPiece】',
+    `特記事項：${note}`,
     '',
     '',
     `【投稿ID】：${record.postId}`,
@@ -718,6 +720,7 @@ if (hydrationAmount && settings.webhookUrl) {
 
 | 日付 | 内容 |
 |------|------|
+| 2025-12-21 | Phase 29: 特記事項デフォルト値を実装コード例に反映 |
 | 2025-12-21 | Phase 29: タブ式UI連携説明追加、水分摂取量シート情報追加 |
 | 2025-12-21 | Phase 29: 水分記録Webhook通知仕様を追加、タグ仕様を定義 |
 | 2025-12-15 | 初版作成（Google Chat Webhook連携設計書） |
