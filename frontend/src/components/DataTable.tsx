@@ -117,13 +117,22 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
     return columnWidths[column.originalHeader] || parseWidth(column.width) || 'auto';
   }, [columnWidths]);
 
-  // フィルタリング（スタッフ名で検索）
+  // フィルタリング（全文検索 - Phase 25）
+  // スタッフ名、タイムスタンプ、全データカラム値を検索対象とする
   const filteredRecords = useMemo(() => {
     if (!searchQuery.trim()) return records;
     const query = searchQuery.toLowerCase();
-    return records.filter(record =>
-      record.staffName?.toLowerCase().includes(query)
-    );
+    return records.filter(record => {
+      // スタッフ名で検索
+      if (record.staffName?.toLowerCase().includes(query)) return true;
+      // タイムスタンプで検索
+      if (record.timestamp?.toLowerCase().includes(query)) return true;
+      // 全データカラム値で検索
+      for (const value of Object.values(record.data)) {
+        if (value?.toLowerCase().includes(query)) return true;
+      }
+      return false;
+    });
   }, [records, searchQuery]);
 
   // 現在のソートカラムの設定を取得
@@ -330,7 +339,7 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
               type="text"
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
-              placeholder="キーワードで検索..."
+              placeholder="内容・担当者で検索..."
               autoFocus
               className="w-full pl-9 pr-10 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
