@@ -85,8 +85,8 @@ function validateCareItemInput(
     return {valid: false, error: "item.unit is required"};
   }
 
-  // item.servingMethod
-  const validServingMethods = ["as_is", "cut", "peeled", "heated", "cooled", "blended", "other"];
+  // item.servingMethod（Phase 28で整理: cooled/blended削除）
+  const validServingMethods = ["as_is", "cut", "peeled", "heated", "other"];
   if (!item.servingMethod || !validServingMethods.includes(item.servingMethod as string)) {
     return {valid: false, error: "item.servingMethod must be one of: " + validServingMethods.join(", ")};
   }
@@ -115,7 +115,7 @@ function validateCareItemInput(
         unit: item.unit as string,
         expirationDate: item.expirationDate as string | undefined,
         storageMethod: item.storageMethod as "room_temp" | "refrigerated" | "frozen" | undefined,
-        servingMethod: item.servingMethod as "as_is" | "cut" | "peeled" | "heated" | "cooled" | "blended" | "other",
+        servingMethod: item.servingMethod as "as_is" | "cut" | "peeled" | "heated" | "other",
         servingMethodDetail: item.servingMethodDetail as string | undefined,
         plannedServeDate: item.plannedServeDate as string | undefined,
         noteToStaff: item.noteToStaff as string | undefined,

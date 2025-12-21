@@ -277,10 +277,11 @@ export const aiSuggest = functions
           .includes(suggestion.storageMethod) ?
           suggestion.storageMethod :
           DEFAULT_AI_SUGGESTION.storageMethod,
+        // Phase 28で整理: cooled/blended削除
         servingMethods: Array.isArray(suggestion.servingMethods) &&
           suggestion.servingMethods.length > 0 ?
           suggestion.servingMethods.filter((m) =>
-            ["as_is", "cut", "peeled", "heated", "cooled", "blended"]
+            ["as_is", "cut", "peeled", "heated", "other"]
               .includes(m)
           ) :
           DEFAULT_AI_SUGGESTION.servingMethods,

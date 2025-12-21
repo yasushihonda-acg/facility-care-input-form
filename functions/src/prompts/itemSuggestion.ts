@@ -19,7 +19,7 @@ ${category ? `カテゴリ: ${category}` : ""}
 以下の情報をJSON形式で回答してください：
 1. expirationDays: 賞味期限の目安（日数、整数）
 2. storageMethod: 保存方法（"room_temp", "refrigerated", "frozen" のいずれか）
-3. servingMethods: 高齢者に適した提供方法の配列（"as_is", "cut", "peeled", "heated", "cooled", "blended" から選択）
+3. servingMethods: 高齢者に適した提供方法の配列（"as_is", "cut", "peeled", "heated", "other" から選択）
 4. notes: 高齢者が食べる際の注意点（任意、50文字以内）
 
 回答例:

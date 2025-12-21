@@ -212,13 +212,12 @@ async function generateServeReminders(
   let createdCount = 0;
 
   // 提供方法のラベルマッピング
+  // Phase 28で整理: cooled/blended削除
   const servingMethodLabels: Record<string, string> = {
     as_is: "そのまま",
     cut: "カット",
     peeled: "皮むき",
     heated: "温める",
-    cooled: "冷やす",
-    blended: "ミキサー",
     other: "その他",
   };
 
