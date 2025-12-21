@@ -95,14 +95,52 @@ test.describe('Phase 33: 残ったものへの処置指示', () => {
       }
     });
 
-    test.skip('RHI-008: 家族指示がある場合、指示バナーが表示される（デモデータ依存）', async ({ page }) => {
-      // このテストは家族指示付きの品物がデモデータに存在する場合に有効
-      // 現時点ではデモデータにremainingHandlingInstructionが設定されていないためスキップ
+    test('RHI-008: 家族指示がある場合、指示バナーが表示される', async ({ page }) => {
+      // デモデータ: demo-item-003 (りんご) に 'discarded' 指示あり
+      // りんごカードをクリックしてダイアログを開く
+      const appleCard = page.locator('[data-testid="item-card"]').filter({ hasText: 'りんご' }).first();
+      if (await appleCard.isVisible()) {
+        await appleCard.click();
+
+        // ダイアログが開くまで待機
+        const dialog = page.getByRole('dialog');
+        await expect(dialog).toBeVisible({ timeout: 5000 });
+
+        // 家族指示バナーが表示されることを確認
+        await expect(page.getByText('ご家族からの指示があります')).toBeVisible();
+        await expect(page.getByText('破棄してください')).toBeVisible();
+      }
     });
 
-    test.skip('RHI-009: 家族指示がある場合、他の選択肢が非活性化される（デモデータ依存）', async ({ page }) => {
-      // このテストは家族指示付きの品物がデモデータに存在する場合に有効
-      // 現時点ではデモデータにremainingHandlingInstructionが設定されていないためスキップ
+    test('RHI-009: 家族指示がある場合、他の選択肢が非活性化される', async ({ page }) => {
+      // デモデータ: demo-item-001 (バナナ) に 'stored' 指示あり
+      // バナナカードをクリックしてダイアログを開く
+      const bananaCard = page.locator('[data-testid="item-card"]').filter({ hasText: 'バナナ' }).first();
+      if (await bananaCard.isVisible()) {
+        await bananaCard.click();
+
+        // ダイアログが開くまで待機
+        const dialog = page.getByRole('dialog');
+        await expect(dialog).toBeVisible({ timeout: 5000 });
+
+        // 摂食割合を下げて残り対応セクションを表示させる
+        const consumptionRateInput = page.locator('input#consumptionRateInput');
+        if (await consumptionRateInput.isVisible()) {
+          await consumptionRateInput.fill('5');
+
+          // 残り対応セクションが表示されるまで待機
+          await expect(page.getByText('残った分への対応')).toBeVisible({ timeout: 3000 });
+
+          // 「保存した」以外の選択肢が非活性化されていることを確認
+          const discardedRadio = page.getByLabel('破棄した');
+          const storedRadio = page.getByLabel('保存した');
+
+          // 保存した は有効
+          await expect(storedRadio).toBeEnabled();
+          // 破棄した は無効
+          await expect(discardedRadio).toBeDisabled();
+        }
+      }
     });
   });
 

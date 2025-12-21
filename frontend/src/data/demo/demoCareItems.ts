@@ -5,7 +5,7 @@
  * 統計・在庫サマリーが見栄えするよう、様々なステータス・期限・カテゴリのデータを用意
  */
 
-import type { CareItem, ItemStatus, ItemCategory, ServingMethod, ServingSchedule } from '../../types/careItem';
+import type { CareItem, ItemStatus, ItemCategory, ServingMethod, ServingSchedule, RemainingHandlingInstruction } from '../../types/careItem';
 
 // ===== 日付ヘルパー =====
 
@@ -50,6 +50,7 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
       avgConsumptionRate: 75,
     },
     consumptionRate: 75,
+    remainingHandlingInstruction: 'stored' as RemainingHandlingInstruction, // Phase 33: 残ったら保存
     createdAt: getDateTimeString(-5),
     updatedAt: getDateTimeString(-1),
   },
@@ -105,6 +106,7 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
       avgConsumptionRate: 25,
     },
     consumptionRate: 25,
+    remainingHandlingInstruction: 'discarded' as RemainingHandlingInstruction, // Phase 33: 残ったら破棄
     noteToFamily: '食べ残しが多いようです',
     createdAt: getDateTimeString(-3),
     updatedAt: getDateTimeString(-1),
@@ -182,6 +184,7 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
       avgConsumptionRate: 95,
     },
     consumptionRate: 95,
+    remainingHandlingInstruction: 'discarded' as RemainingHandlingInstruction, // Phase 33: 冷蔵品なので残ったら破棄
     noteToFamily: '大好物のようです',
     createdAt: getDateTimeString(-4),
     updatedAt: getDateTimeString(0),
@@ -272,6 +275,7 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
       avgConsumptionRate: 90,
     },
     consumptionRate: 90,
+    remainingHandlingInstruction: 'stored' as RemainingHandlingInstruction, // Phase 33: 残ったら保存
     createdAt: getDateTimeString(-3),
     updatedAt: getDateTimeString(0),
   },
