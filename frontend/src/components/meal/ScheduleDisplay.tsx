@@ -8,6 +8,8 @@ import type { ServingSchedule } from '../../types/careItem';
 import { WEEKDAY_LABELS } from '../../types/careItem';
 import {
   formatScheduleDisplay,
+  formatDateString,
+  formatDateDisplay,
   isScheduledForToday,
   getTodayScheduleMessage,
   getNextScheduledDateDisplay,
@@ -31,6 +33,12 @@ export function ScheduleDisplay({ schedule, compact = false }: ScheduleDisplayPr
   const timeSlotLabel = getTimeSlotLabel(schedule);
   const weekdays = getScheduleWeekdays(schedule);
 
+  // Phase 36: 開始日が未来かどうかをチェック
+  const today = formatDateString(new Date());
+  const hasFutureStartDate = schedule.startDate &&
+    schedule.startDate > today &&
+    (schedule.type === 'daily' || schedule.type === 'weekly');
+
   // スケジュールタイプに応じた表示
   const scheduleLabel = getScheduleLabel(schedule);
 
@@ -49,6 +57,14 @@ export function ScheduleDisplay({ schedule, compact = false }: ScheduleDisplayPr
         {/* 曜日バッジ（weeklyの場合） */}
         {schedule.type === 'weekly' && weekdays.length > 0 && (
           <WeekdayBadges weekdays={weekdays} />
+        )}
+
+        {/* Phase 36: 開始日表示（未来の場合） */}
+        {hasFutureStartDate && (
+          <div className="flex items-center gap-1 text-orange-500 font-medium">
+            <span>⏳</span>
+            <span>{formatDateDisplay(schedule.startDate!)}から開始</span>
+          </div>
         )}
 
         {/* 今日/次回表示 */}
@@ -89,6 +105,14 @@ export function ScheduleDisplay({ schedule, compact = false }: ScheduleDisplayPr
       {schedule.type === 'weekly' && weekdays.length > 0 && (
         <div className="ml-6">
           <WeekdayBadges weekdays={weekdays} size="lg" />
+        </div>
+      )}
+
+      {/* Phase 36: 開始日表示（未来の場合） */}
+      {hasFutureStartDate && (
+        <div className="flex items-center gap-2 ml-6 text-orange-500 font-medium">
+          <span>⏳</span>
+          <span>{formatDateDisplay(schedule.startDate!)}から開始</span>
         </div>
       )}
 

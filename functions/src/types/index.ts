@@ -1728,6 +1728,9 @@ export interface ServingSchedule {
   /** type = 'specific_dates' の場合: 複数日付リスト (YYYY-MM-DD[]) */
   dates?: string[];
 
+  /** 共通: 開始日 (YYYY-MM-DD) - daily/weeklyタイプでのみ使用 */
+  startDate?: string;
+
   /** 共通: 提供タイミング */
   timeSlot?: ServingTimeSlot;
 

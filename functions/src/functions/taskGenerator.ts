@@ -14,6 +14,7 @@ import type {
   TaskType,
   TaskPriority,
 } from "../types";
+import {isScheduledForToday} from "../utils/scheduleUtils";
 
 // Firestoreコレクション名
 const TASKS_COLLECTION = "tasks";
@@ -192,25 +193,9 @@ async function generateExpirationWarnings(
 }
 
 /**
- * 提供リマインダータスク生成 (serve_reminder)
- * 提供予定日が今日の品物に対してタスク生成
+ * 提供リマインダータスク生成用の説明文を構築
  */
-async function generateServeReminders(
-  db: FirebaseFirestore.Firestore
-): Promise<number> {
-  const today = getTodayString();
-
-  functions.logger.info("generateServeReminders", {today});
-
-  // 提供予定日が今日で未提供の品物を取得
-  const snapshot = await db
-    .collection(CARE_ITEMS_COLLECTION)
-    .where("status", "==", "pending")
-    .where("plannedServeDate", "==", today)
-    .get();
-
-  let createdCount = 0;
-
+function buildServeReminderDescription(item: CareItem): string {
   // 提供方法のラベルマッピング
   // Phase 28で整理: cooled/blended削除
   const servingMethodLabels: Record<string, string> = {
@@ -221,19 +206,53 @@ async function generateServeReminders(
     other: "その他",
   };
 
-  for (const doc of snapshot.docs) {
+  const servingLabel = servingMethodLabels[item.servingMethod] || item.servingMethod;
+  let description = `提供方法: ${servingLabel}`;
+  if (item.servingMethodDetail) {
+    description += `\n詳細: ${item.servingMethodDetail}`;
+  }
+  if (item.noteToStaff) {
+    description += `\nスタッフへの申し送り: ${item.noteToStaff}`;
+  }
+  description += `\n数量: ${item.remainingQuantity}${item.unit}`;
+
+  return description;
+}
+
+/**
+ * 提供リマインダータスク生成 (serve_reminder)
+ * 提供予定日が今日の品物に対してタスク生成
+ *
+ * Phase 36: 構造化スケジュール（servingSchedule）対応
+ * - Phase 1: plannedServeDateが今日の品物（後方互換）
+ * - Phase 2: servingScheduleを持つ品物をサーバー側で判定
+ */
+async function generateServeReminders(
+  db: FirebaseFirestore.Firestore
+): Promise<number> {
+  const today = getTodayString();
+
+  functions.logger.info("generateServeReminders", {today});
+
+  let createdCount = 0;
+  const processedItemIds = new Set<string>();
+
+  // Phase 1: plannedServeDateが今日の品物（後方互換）
+  const legacySnapshot = await db
+    .collection(CARE_ITEMS_COLLECTION)
+    .where("status", "==", "pending")
+    .where("plannedServeDate", "==", today)
+    .get();
+
+  functions.logger.info("Phase 1: plannedServeDate query", {
+    count: legacySnapshot.size,
+  });
+
+  for (const doc of legacySnapshot.docs) {
     const item = doc.data() as CareItem;
+    processedItemIds.add(item.id);
 
-    const servingLabel = servingMethodLabels[item.servingMethod] || item.servingMethod;
-    let description = `提供方法: ${servingLabel}`;
-    if (item.servingMethodDetail) {
-      description += `\n詳細: ${item.servingMethodDetail}`;
-    }
-    if (item.noteToStaff) {
-      description += `\nスタッフへの申し送り: ${item.noteToStaff}`;
-    }
-    description += `\n数量: ${item.remainingQuantity}${item.unit}`;
-
+    const description = buildServeReminderDescription(item);
     const taskId = await createAutoTask(db, {
       residentId: item.residentId,
       title: `【提供予定】${item.itemName}を提供してください`,
@@ -246,7 +265,7 @@ async function generateServeReminders(
 
     if (taskId) {
       createdCount++;
-      functions.logger.info("Created serve reminder task", {
+      functions.logger.info("Created serve reminder task (legacy)", {
         taskId,
         itemId: item.id,
         itemName: item.itemName,
@@ -254,6 +273,61 @@ async function generateServeReminders(
       });
     }
   }
+
+  // Phase 2: 構造化スケジュールを持つ品物
+  // Firestoreでは servingSchedule != null のクエリができないため、
+  // status == pending の全品物を取得してサーバー側でフィルタリング
+  const allPendingSnapshot = await db
+    .collection(CARE_ITEMS_COLLECTION)
+    .where("status", "==", "pending")
+    .get();
+
+  functions.logger.info("Phase 2: all pending items query", {
+    count: allPendingSnapshot.size,
+  });
+
+  let scheduledCount = 0;
+  for (const doc of allPendingSnapshot.docs) {
+    const item = doc.data() as CareItem;
+
+    // Phase 1で既に処理済みならスキップ
+    if (processedItemIds.has(item.id)) continue;
+
+    // servingScheduleがない場合はスキップ
+    if (!item.servingSchedule) continue;
+
+    // スケジュール判定（開始日チェック含む）
+    if (isScheduledForToday(item.servingSchedule)) {
+      scheduledCount++;
+      const description = buildServeReminderDescription(item);
+      const taskId = await createAutoTask(db, {
+        residentId: item.residentId,
+        title: `【提供予定】${item.itemName}を提供してください`,
+        description,
+        taskType: "serve_reminder",
+        relatedItemId: item.id,
+        dueDate: today,
+        priority: "medium",
+      });
+
+      if (taskId) {
+        createdCount++;
+        functions.logger.info("Created serve reminder task (scheduled)", {
+          taskId,
+          itemId: item.id,
+          itemName: item.itemName,
+          scheduleType: item.servingSchedule.type,
+          startDate: item.servingSchedule.startDate,
+        });
+      }
+    }
+  }
+
+  functions.logger.info("generateServeReminders completed", {
+    legacyCount: legacySnapshot.size,
+    scheduledMatches: scheduledCount,
+    totalCreated: createdCount,
+  });
 
   return createdCount;
 }

@@ -11,7 +11,7 @@ links:
 
 # 現在のステータス
 
-> **最終更新**: 2025年12月21日 (Phase 35完了)
+> **最終更新**: 2025年12月21日 (Phase 36完了)
 >
 > このファイルは現在の進捗の**要約**です。詳細は週次ステータスを参照してください。
 
@@ -28,7 +28,7 @@ links:
 | **引き継ぎドキュメント** | [HANDOVER.md](./HANDOVER.md) |
 | **ロードマップ** | [ROADMAP.md](./ROADMAP.md) |
 | **ドキュメント目次** | [INDEX.md](./INDEX.md) |
-| **E2Eテスト** | 328件（259パス + 37スキップ + Phase 34: 9件）（2025-12-21時点）|
+| **E2Eテスト** | 341件（272パス + 38スキップ + Phase 36: 13件）（2025-12-21時点）|
 
 ---
 
@@ -40,7 +40,8 @@ links:
 
 | Phase | 内容 | 完了日 |
 |-------|------|--------|
-| **Phase 35** | **同期間隔調整（15分→1時間）** | 12/21 |
+| **Phase 36** | **スケジュール開始日・品物編集スケジュール対応** | 12/21 |
+| Phase 35 | 同期間隔調整（15分→1時間） | 12/21 |
 | Phase 34 | 統計AI分析デモモード対応 | 12/21 |
 | Phase 33 | 残ったものへの処置指示 | 12/21 |
 | Phase 32 | 統計: カテゴリ別→品物別分布 | 12/21 |
@@ -69,6 +70,18 @@ links:
 | Phase 9.x | 禁止ルール・統計拡張 | 12/17 |
 
 ### 本日の修正 (12/21)
+
+- **Phase 36完了**: スケジュール開始日・品物編集スケジュール対応
+  - ServingScheduleインターフェースに`startDate`フィールド追加（毎日・曜日指定タイプ用）
+  - 品物登録/編集画面で開始日入力UI表示（「⏳ X/Xから開始」表示）
+  - 品物編集ページ（ItemEditPage.tsx）にServingScheduleInput統合
+  - スケジュール判定ロジック（isScheduledForToday等）に開始日チェック追加
+  - サーバーサイド判定ロジック新規追加（functions/src/utils/scheduleUtils.ts）
+  - taskGenerator.ts: 構造化スケジュール対応（ハイブリッドアプローチ）
+    - Phase 1: plannedServeDate（後方互換）
+    - Phase 2: servingScheduleをサーバー側判定
+  - E2Eテスト13件追加（schedule-start-date.spec.ts）
+  - 設計書: [ITEM_BASED_SNACK_RECORD_SPEC.md](./ITEM_BASED_SNACK_RECORD_SPEC.md) セクション3.3
 
 - **Phase 35完了**: 同期間隔調整（15分→1時間）
   - Cloud Scheduler `sync-plan-data-incremental` のスケジュールを変更

@@ -87,6 +87,12 @@ export function ServingScheduleInput({
     onChange({ ...value, note: note || undefined });
   };
 
+  // 開始日変更（daily/weekly用）
+  const handleStartDateChange = (startDate: string) => {
+    if (!value) return;
+    onChange({ ...value, startDate: startDate || undefined });
+  };
+
   // スケジュールをクリア
   const handleClear = () => {
     onChange(undefined);
@@ -184,6 +190,26 @@ export function ServingScheduleInput({
             onChange={handleWeekdaysChange}
             disabled={disabled}
           />
+        )}
+
+        {/* 開始日（daily/weeklyの場合のみ） */}
+        {(value.type === 'daily' || value.type === 'weekly') && (
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-600">
+              開始日（任意）
+            </label>
+            <input
+              type="date"
+              value={value.startDate || ''}
+              onChange={(e) => handleStartDateChange(e.target.value)}
+              min={today}
+              disabled={disabled}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+            />
+            <p className="text-xs text-gray-500">
+              設定すると、この日以降からスケジュールが有効になります
+            </p>
+          </div>
         )}
 
         {/* 複数日指定 */}

@@ -23,7 +23,10 @@ import type {
   StorageMethod,
   ServingMethod,
   RemainingHandlingInstruction,
+  ServingSchedule,
 } from '../../types/careItem';
+import { ServingScheduleInput } from '../../components/family/ServingScheduleInput';
+import { scheduleToPlannedDate } from '../../utils/scheduleUtils';
 
 // デモ用の入居者ID（将来は認証から取得）
 const DEMO_RESIDENT_ID = 'resident-001';
@@ -41,6 +44,8 @@ interface EditFormData {
   noteToStaff: string;
   // Phase 33: 残った場合の処置指示
   remainingHandlingInstruction: RemainingHandlingInstruction;
+  // Phase 36: 構造化スケジュール
+  servingSchedule: ServingSchedule | undefined;
 }
 
 export function ItemEditPage() {
@@ -70,6 +75,7 @@ export function ItemEditPage() {
     plannedServeDate: '',
     noteToStaff: '',
     remainingHandlingInstruction: 'none',
+    servingSchedule: undefined,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -90,6 +96,8 @@ export function ItemEditPage() {
         plannedServeDate: item.plannedServeDate || '',
         noteToStaff: item.noteToStaff || '',
         remainingHandlingInstruction: item.remainingHandlingInstruction || 'none',
+        // Phase 36: 構造化スケジュール読み込み
+        servingSchedule: item.servingSchedule,
       });
     }
   }, [item]);
@@ -107,6 +115,16 @@ export function ItemEditPage() {
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }));
     }
+  };
+
+  // Phase 36: スケジュール変更ハンドラ
+  const handleScheduleChange = (schedule: ServingSchedule | undefined) => {
+    setFormData((prev) => ({
+      ...prev,
+      servingSchedule: schedule,
+      // 構造化スケジュールからplannedServeDateへの後方互換変換
+      plannedServeDate: scheduleToPlannedDate(schedule) || prev.plannedServeDate,
+    }));
   };
 
   // バリデーション
@@ -158,6 +176,8 @@ export function ItemEditPage() {
           noteToStaff: formData.noteToStaff || undefined,
           // Phase 33: 残った場合の処置指示
           remainingHandlingInstruction: formData.remainingHandlingInstruction,
+          // Phase 36: 構造化スケジュール
+          servingSchedule: formData.servingSchedule,
         },
       });
       navigate(`/family/items/${id}`);
@@ -403,20 +423,11 @@ export function ItemEditPage() {
           />
         </div>
 
-        {/* 提供予定日 */}
-        <div>
-          <label htmlFor="plannedServeDate" className="block text-sm font-medium text-gray-700 mb-1">
-            提供予定日
-          </label>
-          <input
-            type="date"
-            id="plannedServeDate"
-            name="plannedServeDate"
-            value={formData.plannedServeDate}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-          />
-        </div>
+        {/* Phase 36: 提供スケジュール（構造化） */}
+        <ServingScheduleInput
+          value={formData.servingSchedule}
+          onChange={handleScheduleChange}
+        />
 
         {/* スタッフへの申し送り */}
         <div>

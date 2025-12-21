@@ -36,6 +36,13 @@ export function isScheduledForToday(schedule: ServingSchedule | undefined): bool
   const todayStr = formatDateString(today);
   const todayWeekday = today.getDay(); // 0-6 (日曜始まり)
 
+  // 開始日チェック（daily/weeklyの場合のみ）
+  if (schedule.startDate && (schedule.type === 'daily' || schedule.type === 'weekly')) {
+    if (todayStr < schedule.startDate) {
+      return false; // 開始日より前は対象外
+    }
+  }
+
   switch (schedule.type) {
     case 'once':
       return schedule.date === todayStr;
@@ -65,6 +72,13 @@ export function isScheduledForTomorrow(schedule: ServingSchedule | undefined): b
   const tomorrowStr = formatDateString(tomorrow);
   const tomorrowWeekday = tomorrow.getDay();
 
+  // 開始日チェック（daily/weeklyの場合のみ）
+  if (schedule.startDate && (schedule.type === 'daily' || schedule.type === 'weekly')) {
+    if (tomorrowStr < schedule.startDate) {
+      return false; // 開始日より前は対象外
+    }
+  }
+
   switch (schedule.type) {
     case 'once':
       return schedule.date === tomorrowStr;
@@ -91,16 +105,27 @@ export function getNextScheduledDate(schedule: ServingSchedule | undefined): Dat
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const todayStr = formatDateString(today);
+
+  // 開始日が未来の場合は開始日から探索（daily/weeklyの場合のみ）
+  let startFrom = today;
+  if (schedule.startDate && (schedule.type === 'daily' || schedule.type === 'weekly')) {
+    const startDate = new Date(schedule.startDate);
+    startDate.setHours(0, 0, 0, 0);
+    if (startDate > today) {
+      startFrom = startDate;
+    }
+  }
 
   for (let i = 0; i < 30; i++) {
-    const checkDate = new Date(today);
+    const checkDate = new Date(startFrom);
     checkDate.setDate(checkDate.getDate() + i);
     const checkDateStr = formatDateString(checkDate);
     const checkWeekday = checkDate.getDay();
 
     switch (schedule.type) {
       case 'once':
-        if (schedule.date && schedule.date >= formatDateString(today)) {
+        if (schedule.date && schedule.date >= todayStr) {
           return new Date(schedule.date);
         }
         return null;
@@ -120,7 +145,7 @@ export function getNextScheduledDate(schedule: ServingSchedule | undefined): Dat
         }
         // 最も近い日付を探す
         const futureDates = schedule.dates
-          ?.filter(d => d >= formatDateString(today))
+          ?.filter(d => d >= todayStr)
           .sort();
         if (futureDates && futureDates.length > 0) {
           return new Date(futureDates[0]);
@@ -153,6 +178,10 @@ export function formatScheduleDisplay(schedule: ServingSchedule | undefined): st
 
     case 'daily':
       scheduleText = '毎日';
+      // 開始日があれば追加
+      if (schedule.startDate) {
+        scheduleText += `（${formatDateDisplay(schedule.startDate)}〜）`;
+      }
       break;
 
     case 'weekly':
@@ -160,6 +189,10 @@ export function formatScheduleDisplay(schedule: ServingSchedule | undefined): st
         // 曜日を日曜始まりでソート
         const sortedWeekdays = [...schedule.weekdays].sort((a, b) => a - b);
         scheduleText = sortedWeekdays.map(w => WEEKDAY_LABELS[w]).join('・');
+        // 開始日があれば追加
+        if (schedule.startDate) {
+          scheduleText += `（${formatDateDisplay(schedule.startDate)}〜）`;
+        }
       }
       break;
 
@@ -185,17 +218,24 @@ export function formatScheduleDisplay(schedule: ServingSchedule | undefined): st
 export function formatScheduleShort(schedule: ServingSchedule | undefined): string {
   if (!schedule) return '';
 
+  // 開始日が未来の場合のサフィックス
+  const today = formatDateString(new Date());
+  const startSuffix = (schedule.startDate && schedule.startDate > today &&
+    (schedule.type === 'daily' || schedule.type === 'weekly'))
+    ? ` (${formatDateDisplay(schedule.startDate)}〜)`
+    : '';
+
   switch (schedule.type) {
     case 'once':
       return schedule.date ? `📅 ${formatDateDisplay(schedule.date)}` : '';
 
     case 'daily':
-      return '📅 毎日';
+      return `📅 毎日${startSuffix}`;
 
     case 'weekly':
       if (schedule.weekdays && schedule.weekdays.length > 0) {
         const sortedWeekdays = [...schedule.weekdays].sort((a, b) => a - b);
-        return `📅 ${sortedWeekdays.map(w => WEEKDAY_LABELS[w]).join('・')}`;
+        return `📅 ${sortedWeekdays.map(w => WEEKDAY_LABELS[w]).join('・')}${startSuffix}`;
       }
       return '';
 
