@@ -123,6 +123,7 @@ last_reviewed: 2025-12-21
 | [CHAT_INTEGRATION_SPEC.md](./CHAT_INTEGRATION_SPEC.md) | チャット連携 | canonical |
 | [AI_INTEGRATION_SPEC.md](./AI_INTEGRATION_SPEC.md) | Gemini AI連携 | working |
 | [GOOGLE_CHAT_WEBHOOK_SPEC.md](./GOOGLE_CHAT_WEBHOOK_SPEC.md) | Google Chat Webhook | working |
+| [FAMILY_NOTIFY_SPEC.md](./FAMILY_NOTIFY_SPEC.md) | 家族操作・入力無し通知（Phase 30） | canonical |
 | [MOE_ANALYSIS_ITEM_CARE_INTEGRATION.md](./MOE_ANALYSIS_ITEM_CARE_INTEGRATION.md) | 品物×ケア統合分析 | working |
 
 ---
@@ -190,6 +191,7 @@ last_reviewed: 2025-12-21
 
 | 日付 | 変更内容 |
 |------|----------|
+| 2025-12-21 | FAMILY_NOTIFY_SPEC.md 追加（Phase 30） |
 | 2025-12-21 | CHAT_FEATURE_HIDE_SPEC.md 追加（Phase 21） |
 | 2025-12-20 | DEMO_STAFF_CONTAINMENT.md, FOOTERNAV_DEMO_FIX_SPEC.md 追加（Phase 20/20.1） |
 | 2025-12-20 | PHOTO_UPLOAD_SPEC.md を deprecated に変更（Phase 17移行済み） |

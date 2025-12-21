@@ -7,7 +7,7 @@ last_reviewed: 2025-12-21
 
 # 引き継ぎドキュメント
 
-> **最終更新**: 2025年12月21日（Phase 29完了・水分記録機能+残り対応）
+> **最終更新**: 2025年12月21日（Phase 30完了・家族操作・入力無し通知）
 >
 > 本ドキュメントは、開発を引き継ぐ際に必要な情報をまとめたものです。
 
@@ -116,6 +116,7 @@ cd frontend && npm install && npm run dev
 | **クイックアクセスレイアウト修正** | FamilyDashboardのレイアウト改善（Phase 27） | ✅ 完了 |
 | **提供方法選択肢整理** | 「冷やす」「ミキサー」を削除して選択肢簡素化（Phase 28） | ✅ 完了 |
 | **水分記録機能** | タブ式UI（食事🍪/水分💧）、水分量自動計算、スプレッドシート連携、残り対応（Phase 29） | ✅ 完了 |
+| **家族操作・入力無し通知** | 品物登録/編集通知、毎日16時の入力無し警告（Phase 30） | ✅ 完了 |
 
 ---
 
@@ -318,6 +319,9 @@ facility-care-input-form/
 | Phase 20.1 | デモモードAPI 500エラー修正（FooterNav・NotificationSection対応、E2Eテスト9件） | 2025-12-20 |
 | **Phase 21** | **チャット機能一時非表示**（内部チャット全非表示、E2Eテスト16件スキップ） | 2025-12-21 |
 | **Phase 22** | **品物編集機能**（編集UI・タイムスタンプ表示・タイムライン表示・編集履歴デモ、E2Eテスト23件） | 2025-12-21 |
+| **Phase 23-28** | UX/UI改善（日時ソート、カラムリサイズ、全文検索、レイアウト、提供方法整理） | 2025-12-21 |
+| **Phase 29** | 水分記録機能（タブ式UI、水分量自動計算、スプレッドシート連携） | 2025-12-21 |
+| **Phase 30** | **家族操作・入力無し通知**（品物登録/編集通知、16時入力チェック、E2Eテスト7件） | 2025-12-21 |
 
 ### 4.2 将来のタスク
 
@@ -655,6 +659,7 @@ StaffRecordDialog.tsx に写真アップロード機能を追加。Firebase Stor
 | `sync-plan-data-incremental` | 毎15分 (Asia/Tokyo) | 差分同期 |
 | `sync-plan-data-full` | 毎日3:00 AM (Asia/Tokyo) | 完全同期 |
 | `firebase-schedule-generateDailyTasks-asia-northeast1` | 毎日6:00 AM (Asia/Tokyo) | タスク自動生成 |
+| `firebase-schedule-checkDailyRecords-asia-northeast1` | 毎日4:00 PM (Asia/Tokyo) | 16時入力無しチェック（Phase 30） |
 
 ### 6.5 Firestoreインデックス
 
@@ -709,7 +714,7 @@ BASE_URL=https://facility-care-input-form.web.app npx playwright test
 - `frontend/playwright.config.ts` - Playwright設定
 - デフォルトbaseURL: `http://localhost:4173`（環境変数で上書き可能）
 
-**現在のテスト**: 全267件（16件スキップ含む）
+**現在のテスト**: 全309件（28件スキップ含む）
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |
@@ -973,6 +978,7 @@ docs/CURRENT_STATUS.md を読んで、次のタスクから再開してくださ
 
 | 日付 | 内容 |
 |------|------|
+| 2025-12-21 | **Phase 30: 家族操作・入力無し通知**（品物登録/編集通知、16時入力チェック、E2Eテスト7件追加）、全309件 |
 | 2025-12-21 | **UX改善: タイムラインリンク削除**（ItemDetail.tsx「タイムラインを見る」冗長リンク削除）|
 | 2025-12-21 | **Phase 22.3拡張: 編集履歴デモデータ**（demoItemEvents・useItemEvents・タイムライン統合表示・E2Eテスト+2件）、全267件 |
 | 2025-12-21 | **Phase 22: 品物編集機能**（編集UI・タイムスタンプ表示・タイムライン表示・E2Eテスト23件） |
