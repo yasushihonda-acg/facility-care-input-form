@@ -11,7 +11,7 @@ links:
 
 # 現在のステータス
 
-> **最終更新**: 2025年12月21日 (Phase 29設計中)
+> **最終更新**: 2025年12月21日 (Phase 29完了)
 >
 > このファイルは現在の進捗の**要約**です。詳細は週次ステータスを参照してください。
 
@@ -28,7 +28,7 @@ links:
 | **引き継ぎドキュメント** | [HANDOVER.md](./HANDOVER.md) |
 | **ロードマップ** | [ROADMAP.md](./ROADMAP.md) |
 | **ドキュメント目次** | [INDEX.md](./INDEX.md) |
-| **E2Eテスト** | 285件（24件スキップ含む）（2025-12-21時点、Phase 26でスキップ+5件）|
+| **E2Eテスト** | 298件（25件スキップ含む）（2025-12-21時点、Phase 29追加+13件）|
 
 ---
 
@@ -40,7 +40,8 @@ links:
 
 | Phase | 内容 | 完了日 |
 |-------|------|--------|
-| **Phase 28** | **提供方法選択肢整理** | 12/21 |
+| **Phase 29** | **水分記録機能（タブ式UI）** | 12/21 |
+| Phase 28 | 提供方法選択肢整理 | 12/21 |
 | Phase 27 | クイックアクセスレイアウト修正 | 12/21 |
 | Phase 26 | 入居者設定削除 | 12/21 |
 | Phase 25 | 全文検索機能 | 12/21 |
@@ -63,21 +64,19 @@ links:
 
 ### 進行中
 
-| Phase | 内容 | 状態 |
-|-------|------|------|
-| **Phase 29** | **水分記録機能** | 設計完了・実装待ち |
+現在進行中のPhaseはありません。
 
 ### 本日の修正 (12/21)
 
-- **Phase 29設計完了**: 水分記録機能（タブ式UI）
+- **Phase 29完了**: 水分記録機能（タブ式UI）
   - StaffRecordDialogをタブ式UIに変更（食事🍪 / 水分💧）
   - カテゴリ連動デフォルトタブ選択（drink→水分タブ、その他→食事タブ）
-  - 任意でタブ切り替え可能（乳製品を水分として記録等）
-  - 水分摂取量シート: 別スプレッドシート（`1su5K9TjmzMfKc8OIK2aZYXCfuDrNeIRM0a3LUCFcct4`）
-  - Google Chat Webhookタグ仕様: `#水分摂取💧`, `#食事🍚`, `#デイ利用中[X]`, `#重要⚠️`
-  - **特記事項の初期値**: `【ケアに関すること】\n\n【ACPiece】`（placeholder→defaultValueに変更）
-  - 設計書: [STAFF_RECORD_FORM_SPEC.md](./STAFF_RECORD_FORM_SPEC.md) セクション13
-  - Webhook仕様: [GOOGLE_CHAT_WEBHOOK_SPEC.md](./GOOGLE_CHAT_WEBHOOK_SPEC.md) Phase 29セクション
+  - 水分量自動計算（ml/cc/l/コップ対応）
+  - 水分摂取量シート連携: `1su5K9TjmzMfKc8OIK2aZYXCfuDrNeIRM0a3LUCFcct4`
+  - submitHydrationRecord Cloud Function新規追加
+  - Google Chat Webhook通知（#水分摂取💧タグ）
+  - E2Eテスト13件追加（12/13パス）
+  - 本番デプロイ完了・動作確認済み
   - テスト書き込み確認済（水分摂取量シートへの書き込みテスト成功）
 
 - **Phase 28完了**: 提供方法選択肢整理
