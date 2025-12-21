@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import type { PlanDataRecord } from '../types';
 import { DetailModal } from './DetailModal';
 import { getSheetColumns, type ColumnDef } from '../config/tableColumns';
@@ -12,6 +12,13 @@ interface DataTableProps {
 type SortDirection = 'asc' | 'desc';
 
 const ITEMS_PER_PAGE = 50;
+const DEFAULT_MIN_WIDTH = 50; // デフォルト最小幅 (px)
+
+// カラム幅設定から数値を取得
+function parseWidth(width: string | undefined): number {
+  if (!width || width === 'flex-1') return 0;
+  return parseInt(width, 10) || 0;
+}
 
 export function DataTable({ records, headers, sheetName }: DataTableProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -24,6 +31,91 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
 
   // シート別の表示カラム設定を取得
   const columnConfig = useMemo(() => getSheetColumns(sheetName), [sheetName]);
+
+  // カラム幅の状態管理（Phase 24: リサイズ機能）
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
+
+  // シート変更時にカラム幅をリセット
+  useEffect(() => {
+    const initialWidths: Record<string, number> = {};
+    columnConfig.forEach(col => {
+      const width = parseWidth(col.width);
+      if (width > 0) {
+        initialWidths[col.originalHeader] = width;
+      }
+    });
+    setColumnWidths(initialWidths);
+  }, [columnConfig]);
+
+  // リサイズ状態の追跡
+  const resizeRef = useRef<{
+    isResizing: boolean;
+    columnKey: string;
+    startX: number;
+    startWidth: number;
+    minWidth: number;
+  } | null>(null);
+
+  // リサイズ開始
+  const handleResizeStart = useCallback((
+    e: React.MouseEvent,
+    column: ColumnDef
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const startWidth = columnWidths[column.originalHeader] || parseWidth(column.width) || 100;
+    const minWidth = parseWidth(column.minWidth) || DEFAULT_MIN_WIDTH;
+
+    resizeRef.current = {
+      isResizing: true,
+      columnKey: column.originalHeader,
+      startX: e.clientX,
+      startWidth,
+      minWidth,
+    };
+
+    document.addEventListener('mousemove', handleResizeMove);
+    document.addEventListener('mouseup', handleResizeEnd);
+  }, [columnWidths]);
+
+  // リサイズ中
+  const handleResizeMove = useCallback((e: MouseEvent) => {
+    if (!resizeRef.current?.isResizing) return;
+
+    const { columnKey, startX, startWidth, minWidth } = resizeRef.current;
+    const diff = e.clientX - startX;
+    const newWidth = Math.max(minWidth, startWidth + diff);
+
+    setColumnWidths(prev => ({
+      ...prev,
+      [columnKey]: newWidth,
+    }));
+  }, []);
+
+  // リサイズ終了
+  const handleResizeEnd = useCallback(() => {
+    resizeRef.current = null;
+    document.removeEventListener('mousemove', handleResizeMove);
+    document.removeEventListener('mouseup', handleResizeEnd);
+  }, [handleResizeMove]);
+
+  // ダブルクリックでデフォルト幅にリセット
+  const handleResizeReset = useCallback((column: ColumnDef) => {
+    const defaultWidth = parseWidth(column.width);
+    if (defaultWidth > 0) {
+      setColumnWidths(prev => ({
+        ...prev,
+        [column.originalHeader]: defaultWidth,
+      }));
+    }
+  }, []);
+
+  // 実際の表示幅を取得
+  const getColumnWidth = useCallback((column: ColumnDef): string | number => {
+    if (column.width === 'flex-1') return 'auto';
+    return columnWidths[column.originalHeader] || parseWidth(column.width) || 'auto';
+  }, [columnWidths]);
 
   // フィルタリング（スタッフ名で検索）
   const filteredRecords = useMemo(() => {
@@ -293,24 +385,40 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
         <table className="w-full border-collapse table-fixed">
           <thead className="sticky top-0 z-10">
             <tr className="bg-gray-100">
-              {columnConfig.map((column) => (
-                <th
-                  key={column.originalHeader}
-                  className="px-3 py-2 text-left text-xs font-semibold text-gray-600 border-b border-gray-200 whitespace-nowrap"
-                  style={{
-                    width: column.width === 'flex-1' ? 'auto' : column.width,
-                    minWidth: column.width === 'flex-1' ? '120px' : column.width
-                  }}
-                >
-                  <button
-                    onClick={() => handleSort(column.originalHeader)}
-                    className="flex items-center gap-1 hover:text-blue-600"
+              {columnConfig.map((column, colIndex) => {
+                const currentWidth = getColumnWidth(column);
+                const isResizable = column.width !== 'flex-1';
+                const minWidth = parseWidth(column.minWidth) || DEFAULT_MIN_WIDTH;
+
+                return (
+                  <th
+                    key={column.originalHeader}
+                    className="relative px-3 py-2 text-left text-xs font-semibold text-gray-600 border-b border-gray-200 whitespace-nowrap group"
+                    style={{
+                      width: typeof currentWidth === 'number' ? `${currentWidth}px` : currentWidth,
+                      minWidth: column.width === 'flex-1' ? '120px' : `${minWidth}px`,
+                    }}
                   >
-                    {column.displayLabel}
-                    <span className="text-gray-400">{getSortIcon(column.originalHeader)}</span>
-                  </button>
-                </th>
-              ))}
+                    <button
+                      onClick={() => handleSort(column.originalHeader)}
+                      className="flex items-center gap-1 hover:text-blue-600"
+                    >
+                      {column.displayLabel}
+                      <span className="text-gray-400">{getSortIcon(column.originalHeader)}</span>
+                    </button>
+                    {/* リサイズハンドル (Phase 24) */}
+                    {isResizable && (
+                      <div
+                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 group-hover:bg-blue-200 transition-colors"
+                        onMouseDown={(e) => handleResizeStart(e, column)}
+                        onDoubleClick={() => handleResizeReset(column)}
+                        title="ドラッグで幅調整 / ダブルクリックでリセット"
+                        data-testid={`resize-handle-${colIndex}`}
+                      />
+                    )}
+                  </th>
+                );
+              })}
               <th
                 className="px-3 py-2 text-left text-xs font-semibold text-gray-600 border-b border-gray-200"
                 style={{ width: '50px' }}
@@ -333,14 +441,15 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
                   const value = getCellValue(record, column);
                   const badgeClass = getBadgeClass(value, column);
                   const displayValue = formatCellValue(value, column);
+                  const currentWidth = getColumnWidth(column);
 
                   return (
                     <td
                       key={column.originalHeader}
-                      className="px-3 py-2 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap"
+                      className="px-3 py-2 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap overflow-hidden"
                       style={{
-                        width: column.width === 'flex-1' ? 'auto' : column.width,
-                        maxWidth: column.width === 'flex-1' ? '300px' : column.width
+                        width: typeof currentWidth === 'number' ? `${currentWidth}px` : currentWidth,
+                        maxWidth: column.width === 'flex-1' ? '300px' : (typeof currentWidth === 'number' ? `${currentWidth}px` : currentWidth),
                       }}
                     >
                       {badgeClass ? (

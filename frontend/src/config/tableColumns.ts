@@ -21,8 +21,10 @@ export interface ColumnDef {
   originalHeader: string;
   /** 表示用ラベル */
   displayLabel: string;
-  /** カラム幅（例: "140px", "80px", "flex-1"） */
+  /** カラム幅（例: "165px", "80px", "flex-1"） */
   width?: string;
+  /** 最小カラム幅（リサイズ時の下限、例: "100px"）- Phase 24追加 */
+  minWidth?: string;
   /** 文字数制限（超過時は"..."で省略） */
   truncate?: number;
   /** バッジ表示設定 */
@@ -48,7 +50,7 @@ export const SHEET_COLUMNS: SheetColumnConfig[] = [
   {
     sheetName: '食事',
     columns: [
-      { originalHeader: 'タイムスタンプ', displayLabel: '日時', width: '140px', sortType: 'date' },
+      { originalHeader: 'タイムスタンプ', displayLabel: '日時', width: '165px', minWidth: '100px', sortType: 'date' },
       { originalHeader: '食事はいつのことですか？', displayLabel: '時間帯', width: '80px' },
       { originalHeader: '主食の摂取量は何割ですか？', displayLabel: '主食', width: '80px', sortType: 'number' },
       { originalHeader: '副食の摂取量は何割ですか？', displayLabel: '副食', width: '80px', sortType: 'number' },
@@ -58,7 +60,7 @@ export const SHEET_COLUMNS: SheetColumnConfig[] = [
   {
     sheetName: '水分摂取量',
     columns: [
-      { originalHeader: 'タイムスタンプ', displayLabel: '日時', width: '140px', sortType: 'date' },
+      { originalHeader: 'タイムスタンプ', displayLabel: '日時', width: '165px', minWidth: '100px', sortType: 'date' },
       { originalHeader: '水分量はいくらでしたか？', displayLabel: '水分量(cc)', width: '100px', sortType: 'number' },
       { originalHeader: 'あなたの名前は？', displayLabel: '担当', width: '100px' },
     ],
@@ -66,7 +68,7 @@ export const SHEET_COLUMNS: SheetColumnConfig[] = [
   {
     sheetName: '排便・排尿',
     columns: [
-      { originalHeader: 'タイムスタンプ', displayLabel: '日時', width: '140px', sortType: 'date' },
+      { originalHeader: 'タイムスタンプ', displayLabel: '日時', width: '165px', minWidth: '100px', sortType: 'date' },
       { originalHeader: '排便はありましたか？', displayLabel: '排便', width: '100px' },
       { originalHeader: '排尿はありましたか？', displayLabel: '排尿', width: '100px' },
       { originalHeader: '排尿量は何ccでしたか？', displayLabel: '排尿量(cc)', width: '100px', sortType: 'number' },
@@ -76,7 +78,7 @@ export const SHEET_COLUMNS: SheetColumnConfig[] = [
   {
     sheetName: 'バイタル',
     columns: [
-      { originalHeader: 'タイムスタンプ', displayLabel: '日時', width: '140px', sortType: 'date' },
+      { originalHeader: 'タイムスタンプ', displayLabel: '日時', width: '165px', minWidth: '100px', sortType: 'date' },
       { originalHeader: '体温（KT）はいくつでしたか？', displayLabel: '体温', width: '80px', sortType: 'number' },
       { originalHeader: '最高血圧（BP）はいくつでしたか？', displayLabel: '血圧(高)', width: '80px', sortType: 'number' },
       { originalHeader: '最低血圧（BP）はいくつでしたか？', displayLabel: '血圧(低)', width: '80px', sortType: 'number' },
@@ -87,7 +89,7 @@ export const SHEET_COLUMNS: SheetColumnConfig[] = [
   {
     sheetName: '口腔ケア',
     columns: [
-      { originalHeader: 'タイムスタンプ', displayLabel: '日時', width: '140px', sortType: 'date' },
+      { originalHeader: 'タイムスタンプ', displayLabel: '日時', width: '165px', minWidth: '100px', sortType: 'date' },
       { originalHeader: '口腔ケアはいつのことですか？', displayLabel: '時間帯', width: '80px' },
       { originalHeader: 'あなたの名前は？', displayLabel: '担当', width: '100px' },
     ],
@@ -95,7 +97,7 @@ export const SHEET_COLUMNS: SheetColumnConfig[] = [
   {
     sheetName: '内服',
     columns: [
-      { originalHeader: 'タイムスタンプ', displayLabel: '日時', width: '140px', sortType: 'date' },
+      { originalHeader: 'タイムスタンプ', displayLabel: '日時', width: '165px', minWidth: '100px', sortType: 'date' },
       { originalHeader: '内服はいつのことですか？', displayLabel: 'タイミング', width: '100px' },
       { originalHeader: '何時に頓服薬を飲まれましたか？', displayLabel: '頓服時刻', width: '100px' },
       { originalHeader: 'あなたの名前は？', displayLabel: '担当', width: '100px' },
@@ -104,7 +106,7 @@ export const SHEET_COLUMNS: SheetColumnConfig[] = [
   {
     sheetName: '特記事項',
     columns: [
-      { originalHeader: 'タイムスタンプ', displayLabel: '日時', width: '140px', sortType: 'date' },
+      { originalHeader: 'タイムスタンプ', displayLabel: '日時', width: '165px', minWidth: '100px', sortType: 'date' },
       {
         originalHeader: '重要特記事項集計表に反映させますか？',
         displayLabel: '重要度',
@@ -118,7 +120,7 @@ export const SHEET_COLUMNS: SheetColumnConfig[] = [
   {
     sheetName: '血糖値インスリン投与',
     columns: [
-      { originalHeader: 'タイムスタンプ', displayLabel: '日時', width: '140px', sortType: 'date' },
+      { originalHeader: 'タイムスタンプ', displayLabel: '日時', width: '165px', minWidth: '100px', sortType: 'date' },
       { originalHeader: '測定時間は？', displayLabel: '測定時間', width: '100px' },
       { originalHeader: '血糖値は？', displayLabel: '血糖値', width: '80px', sortType: 'number' },
       { originalHeader: 'インスリン投与時間は？', displayLabel: '投与時間', width: '100px' },
@@ -128,7 +130,7 @@ export const SHEET_COLUMNS: SheetColumnConfig[] = [
   {
     sheetName: '往診録',
     columns: [
-      { originalHeader: 'タイムスタンプ', displayLabel: '日時', width: '140px', sortType: 'date' },
+      { originalHeader: 'タイムスタンプ', displayLabel: '日時', width: '165px', minWidth: '100px', sortType: 'date' },
       { originalHeader: 'Drは誰ですか？', displayLabel: '担当医', width: '140px' },
       { originalHeader: '次回往診日はいつですか？', displayLabel: '次回往診', width: '120px', sortType: 'date' },
       {
@@ -142,7 +144,7 @@ export const SHEET_COLUMNS: SheetColumnConfig[] = [
   {
     sheetName: '体重',
     columns: [
-      { originalHeader: 'タイムスタンプ', displayLabel: '日時', width: '140px', sortType: 'date' },
+      { originalHeader: 'タイムスタンプ', displayLabel: '日時', width: '165px', minWidth: '100px', sortType: 'date' },
       { originalHeader: '何キロでしたか？', displayLabel: '体重(kg)', width: '100px', sortType: 'number' },
       { originalHeader: 'あなたの名前は？', displayLabel: '担当', width: '100px' },
     ],
@@ -150,7 +152,7 @@ export const SHEET_COLUMNS: SheetColumnConfig[] = [
   {
     sheetName: 'カンファレンス録',
     columns: [
-      { originalHeader: 'タイムスタンプ', displayLabel: '日時', width: '140px', sortType: 'date' },
+      { originalHeader: 'タイムスタンプ', displayLabel: '日時', width: '165px', minWidth: '100px', sortType: 'date' },
       { originalHeader: 'カンファレンス録', displayLabel: '内容', width: 'flex-1', truncate: 50 },
       { originalHeader: '自社で対応すべき事項は何ですか？', displayLabel: '対応事項', width: '200px', truncate: 30 },
       {
@@ -174,7 +176,7 @@ export function getSheetColumns(sheetName: string): ColumnDef[] {
 
   // 設定がない場合はデフォルト（日時 + 担当のみ）
   return [
-    { originalHeader: 'タイムスタンプ', displayLabel: '日時', width: '140px', sortType: 'date' },
-    { originalHeader: 'あなたの名前は？', displayLabel: '担当', width: '100px' },
+    { originalHeader: 'タイムスタンプ', displayLabel: '日時', width: '165px', minWidth: '100px', sortType: 'date' },
+    { originalHeader: 'あなたの名前は？', displayLabel: '担当', width: '100px', minWidth: '60px' },
   ];
 }
