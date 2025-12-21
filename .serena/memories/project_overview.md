@@ -544,6 +544,20 @@ StaffRecordDialog.tsxに写真アップロード機能を追加。Firebase Stora
 
 **設計書**: FAMILY_NOTIFY_SPEC.md
 
+### Phase 37: プリセット管理へのアクセス改善 (2025-12-22 完了)
+「いつもの指示」（プリセット管理）ページへのナビゲーションを改善。
+
+**主な変更**:
+- 品物管理ページのヘッダーに「⭐ いつもの指示」リンク追加
+- レスポンシブ対応: モバイルはアイコンのみ、タブレット以上でテキスト表示
+- デモ/本番両モード対応（pathPrefix使用）
+
+**実装ファイル**:
+- `frontend/src/pages/family/ItemManagement.tsx`: ヘッダーにリンク追加
+- `frontend/e2e/preset-navigation.spec.ts`: E2Eテスト5件
+
+**設計書**: PRESET_MANAGEMENT_SPEC.md セクション5.1
+
 ### Phase 31: カテゴリ簡素化 + タブ固定化 (2025-12-21 完了)
 品物カテゴリを7種類から2種類に簡素化し、スタッフ記録フォームのタブ切替を廃止。
 
@@ -559,7 +573,7 @@ StaffRecordDialog.tsxに写真アップロード機能を追加。Firebase Stora
 
 **設計書**: ITEM_MANAGEMENT_SPEC.md セクション2.2, STAFF_RECORD_FORM_SPEC.md タブ固定動作
 
-### E2Eテスト（323件パス + 16件スキップ、Phase 21でチャットテストをスキップ）
+### E2Eテスト（328件パス + 16件スキップ、Phase 21でチャットテストをスキップ）
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |
