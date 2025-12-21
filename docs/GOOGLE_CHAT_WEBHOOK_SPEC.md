@@ -485,6 +485,17 @@ export interface UpdateMealFormSettingsRequest {
 
 水分記録（`recordType: 'hydration'`）時にもGoogle Chat Webhookへ通知を送信する。
 
+**UIとの連携**: StaffRecordDialogはタブ式UIを採用し、「食事」タブと「水分」タブで
+記録種別が分かれる。タブ選択に応じて異なるメッセージ形式でWebhook送信される。
+
+| タブ | 記録先スプレッドシート | Webhookタグ |
+|------|----------------------|------------|
+| 🍪 食事 | Sheet B（実績入力） | `#食事🍚` |
+| 💧 水分 | 水分摂取量シート | `#水分摂取💧` |
+
+**デフォルトタブ選択**: 品物カテゴリが `drink` の場合は水分タブ、それ以外は食事タブがデフォルト。
+ただしユーザーはいつでもタブを切り替えて記録種別を変更可能。
+
 ### タグ仕様
 
 チャット投稿には以下のタグを含める:
@@ -567,6 +578,33 @@ export interface UpdateMealFormSettingsRequest {
 | meal | `MEL` | `MEL20251221094500123456` |
 | snack | `SNK` | `SNK20251221103000123456` |
 | hydration | `HYD` | `HYD20251221095450678429` |
+
+### 水分摂取量スプレッドシート情報
+
+水分記録は食事記録（Sheet B）とは**別のスプレッドシート**に書き込まれる。
+
+| 項目 | 値 |
+|------|-----|
+| スプレッドシートID | `1su5K9TjmzMfKc8OIK2aZYXCfuDrNeIRM0a3LUCFcct4` |
+| シート名 | `フォームの回答 1` |
+| GID | `238048496` |
+
+**列マッピング**:
+
+| 列 | ヘッダー | フィールド |
+|----|----------|-----------|
+| A | タイムスタンプ | timestamp |
+| B | あなたの名前は？ | staffName |
+| C | ご利用者様のお名前は？ | residentName |
+| D | 水分量はいくらでしたか？ | hydrationAmount (cc) |
+| E | 特記事項 | note |
+| F | 重要特記事項集計表に反映させますか？ | isImportant |
+| G | 施設 | facility |
+| H | デイ利用有無 | dayServiceUsage |
+| I | 投稿ID | postId (`HYD{timestamp}`) |
+| J | どこのデイサービスですか？ | dayServiceName |
+
+詳細は [STAFF_RECORD_FORM_SPEC.md](./STAFF_RECORD_FORM_SPEC.md) セクション13.6参照。
 
 ### 食事記録メッセージテンプレート（更新）
 
@@ -680,5 +718,6 @@ if (hydrationAmount && settings.webhookUrl) {
 
 | 日付 | 内容 |
 |------|------|
+| 2025-12-21 | Phase 29: タブ式UI連携説明追加、水分摂取量シート情報追加 |
 | 2025-12-21 | Phase 29: 水分記録Webhook通知仕様を追加、タグ仕様を定義 |
 | 2025-12-15 | 初版作成（Google Chat Webhook連携設計書） |

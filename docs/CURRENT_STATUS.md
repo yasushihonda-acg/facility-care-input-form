@@ -69,10 +69,12 @@ links:
 
 ### 本日の修正 (12/21)
 
-- **Phase 29設計完了**: 水分記録機能
-  - 飲み物提供時に水分量(cc)も記録可能に
-  - 水分摂取量シートへの記録を追加
-  - Google Chat Webhookタグ仕様追加: `#水分摂取💧`, `#デイ利用中[X]`, `#重要⚠️`
+- **Phase 29設計完了**: 水分記録機能（タブ式UI）
+  - StaffRecordDialogをタブ式UIに変更（食事🍪 / 水分💧）
+  - カテゴリ連動デフォルトタブ選択（drink→水分タブ、その他→食事タブ）
+  - 任意でタブ切り替え可能（乳製品を水分として記録等）
+  - 水分摂取量シート: 別スプレッドシート（`1su5K9TjmzMfKc8OIK2aZYXCfuDrNeIRM0a3LUCFcct4`）
+  - Google Chat Webhookタグ仕様: `#水分摂取💧`, `#食事🍚`, `#デイ利用中[X]`, `#重要⚠️`
   - 設計書: [STAFF_RECORD_FORM_SPEC.md](./STAFF_RECORD_FORM_SPEC.md) セクション13
   - Webhook仕様: [GOOGLE_CHAT_WEBHOOK_SPEC.md](./GOOGLE_CHAT_WEBHOOK_SPEC.md) Phase 29セクション
 
