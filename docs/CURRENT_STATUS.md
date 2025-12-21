@@ -75,8 +75,10 @@ links:
   - 任意でタブ切り替え可能（乳製品を水分として記録等）
   - 水分摂取量シート: 別スプレッドシート（`1su5K9TjmzMfKc8OIK2aZYXCfuDrNeIRM0a3LUCFcct4`）
   - Google Chat Webhookタグ仕様: `#水分摂取💧`, `#食事🍚`, `#デイ利用中[X]`, `#重要⚠️`
+  - **特記事項の初期値**: `【ケアに関すること】\n\n【ACPiece】`（placeholder→defaultValueに変更）
   - 設計書: [STAFF_RECORD_FORM_SPEC.md](./STAFF_RECORD_FORM_SPEC.md) セクション13
   - Webhook仕様: [GOOGLE_CHAT_WEBHOOK_SPEC.md](./GOOGLE_CHAT_WEBHOOK_SPEC.md) Phase 29セクション
+  - テスト書き込み確認済（水分摂取量シートへの書き込みテスト成功）
 
 - **Phase 28完了**: 提供方法選択肢整理
   - 品物登録の「提供方法」から「冷やす」「ミキサー」を削除
