@@ -80,70 +80,15 @@ gh run list --repo yasushihonda-acg/facility-care-input-form --workflow=gh-pages
 
 ### 主要ドキュメント
 
-#### 必読（再開時）
 | ファイル | 用途 |
 |----------|------|
-| `docs/CURRENT_STATUS.md` | **現在の進捗・次のタスク**（再開時に最初に読む） |
-| `docs/HANDOVER.md` | **引き継ぎドキュメント**（環境・設定・トラブルシューティング） |
-| `docs/ROADMAP.md` | 開発ロードマップ・Phase別手順 |
-
-#### 設計・仕様
-| ファイル | 用途 |
-|----------|------|
+| `docs/HANDOVER.md` | **引き継ぎドキュメント**（クイックスタート・環境設定） |
 | `docs/ARCHITECTURE.md` | システム全体設計・データフロー |
 | `docs/API_SPEC.md` | API仕様書（全エンドポイント） |
-| `docs/BUSINESS_RULES.md` | 業務ルール・Bot連携ハック・投稿IDルール |
-
-#### 機能別仕様
-| ファイル | 用途 |
-|----------|------|
-| `docs/FAMILY_UX_DESIGN.md` | 家族向けUX設計（Phase 7.0） |
-| `docs/PLAN_RESULT_MANAGEMENT.md` | 予実管理設計（Phase 7.1） |
-| `docs/USER_ROLE_SPEC.md` | ユーザータイプ別ページ・権限設計（Phase 8.0） |
-| `docs/ITEM_MANAGEMENT_SPEC.md` | 品物管理機能設計（Phase 8.0） |
-| `docs/TASK_MANAGEMENT_SPEC.md` | タスク管理機能設計（Phase 8.0） |
-| `docs/STATS_DASHBOARD_SPEC.md` | 統計ダッシュボード設計（Phase 8.0） |
-| `docs/AI_INTEGRATION_SPEC.md` | Gemini AI連携設計（Phase 8.0） |
-| `docs/MOE_ANALYSIS_ITEM_CARE_INTEGRATION.md` | 品物管理×ケア指示統合分析 |
-| `docs/PRESET_MANAGEMENT_SPEC.md` | プリセット管理機能設計（Phase 8.6/8.7） |
-| `docs/INVENTORY_CONSUMPTION_SPEC.md` | 在庫・消費追跡設計（Phase 9.0） |
-| `docs/SNACK_RECORD_INTEGRATION_SPEC.md` | 間食記録連携設計（スタッフ入力↔家族品物連携） |
-| `docs/VIEW_ARCHITECTURE_SPEC.md` | View構成・ルーティング設計（Phase 9.1） |
-| `docs/ADMIN_TEST_FEATURE_SPEC.md` | 管理設定テスト機能（Phase 5.8） |
-| `docs/MEAL_INPUT_FORM_SPEC.md` | 食事入力フォーム設計 |
-| `docs/GOOGLE_CHAT_WEBHOOK_SPEC.md` | Google Chat Webhook連携 |
-| `docs/PHOTO_UPLOAD_SPEC.md` | 写真アップロード・フォルダ設定 |
-| `docs/SETTINGS_MODAL_UI_SPEC.md` | 設定モーダルUI仕様 |
-| `docs/FOOTER_NAVIGATION_SPEC.md` | フッターナビゲーション仕様 |
-| `docs/DAY_SERVICE_OPTIONS_SPEC.md` | デイサービス選択肢固定リスト（Phase 5.9） |
-| `docs/DEMO_SHOWCASE_SPEC.md` | デモショーケース設計 |
-| `docs/DEMO_FAMILY_REDESIGN.md` | 家族向けデモ特化リデザイン設計 |
-| `docs/E2E_TEST_SPEC.md` | E2Eテスト仕様 |
-| `docs/API_TEST_PLAN.md` | APIテスト計画・Firestore修正記録 |
-| `docs/FIX_DEMO_NAVIGATION.md` | デモナビゲーション修正記録 |
-| `docs/FIFO_DESIGN_SPEC.md` | FIFO（先入れ先出し）対応設計（Phase 12.0） |
-| `docs/ITEM_BASED_SNACK_RECORD_SPEC.md` | 品物起点の間食記録・スケジュール拡張（Phase 13） |
-| `docs/DEMO_STAFF_SPEC.md` | スタッフ用デモページ設計（Phase 14） |
-| `docs/STAFF_RECORD_FORM_SPEC.md` | スタッフ記録入力フォーム設計（Phase 15） |
-| `docs/PHOTO_EVIDENCE_DISPLAY_SPEC.md` | 写真エビデンス表示機能設計（Phase 16） |
-| `docs/FIREBASE_STORAGE_MIGRATION_SPEC.md` | Firebase Storage 移行設計（Phase 17） |
-
-#### データ構造
-| ファイル | 用途 |
-|----------|------|
-| `docs/SHEET_A_STRUCTURE.md` | Sheet A（記録の結果/読み取り）構造 |
-| `docs/SHEET_B_STRUCTURE.md` | Sheet B（実績入力/書き込み）構造 |
-| `docs/TABLE_VIEW_COLUMNS.md` | テーブルビュー表示カラム設計 |
-
-#### その他
-| ファイル | 用途 |
-|----------|------|
-| `docs/DEMO_PWA_SPEC.md` | デモ版PWA仕様 |
-| `docs/DESIGN_GUIDELINES.md` | デザインガイドライン |
-| `docs/SYNC_STRATEGY.md` | 同期戦略設計 |
-| `docs/SYNC_CONCURRENCY.md` | 同期競合防止設計 |
+| `docs/BUSINESS_RULES.md` | 業務ルール・投稿IDルール |
+| `docs/DATA_MODEL.md` | データモデル定義 |
 | `docs/SETUP.md` | 環境セットアップガイド |
-| `docs/QUALITY_CHECK_DEMO_WRITE_OPS.md` | デモ書き込み操作品質チェック |
+| `docs/archive/` | 過去のPhase仕様書（参照用） |
 
 ---
 
