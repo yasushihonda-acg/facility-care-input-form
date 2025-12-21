@@ -274,9 +274,14 @@ export const DEMO_ITEM_STATS: ItemStatsData = {
     expiringToday: 0,
     expiringIn3Days: 4,
   },
-  categoryDistribution: [
-    { category: 'food' as ItemCategory, count: 11, percentage: 92 },
-    { category: 'drink' as ItemCategory, count: 1, percentage: 8 },
+  // Phase 32: カテゴリ別分布から品物別分布に変更
+  itemDistribution: [
+    { id: 'demo-item-006', itemName: 'プリン', unit: '個', consumedQuantity: 4, initialQuantity: 6, consumptionPercentage: 67 },
+    { id: 'demo-item-001', itemName: 'バナナ', unit: '房', consumedQuantity: 2.5, initialQuantity: 4, consumptionPercentage: 63 },
+    { id: 'demo-item-009', itemName: '麦茶', unit: 'L', consumedQuantity: 1, initialQuantity: 2, consumptionPercentage: 50 },
+    { id: 'demo-item-004', itemName: 'みかん', unit: '個', consumedQuantity: 2, initialQuantity: 5, consumptionPercentage: 40 },
+    { id: 'demo-item-011', itemName: '黒豆', unit: 'g', consumedQuantity: 80, initialQuantity: 200, consumptionPercentage: 40 },
+    { id: 'demo-item-007', itemName: 'カステラ', unit: '切れ', consumedQuantity: 3, initialQuantity: 8, consumptionPercentage: 38 },
   ],
   expirationCalendar: [
     {

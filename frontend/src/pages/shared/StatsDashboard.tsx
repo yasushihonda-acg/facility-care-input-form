@@ -15,7 +15,7 @@ import type {
   ItemStatsData,
   Alert,
   AlertSeverity,
-  CategoryDistribution,
+  ItemDistribution,
   ExpirationCalendarEntry,
   GetFoodStatsResponse,
   FoodRankingItem,
@@ -205,7 +205,7 @@ function ItemStatsTab({ data }: ItemStatsTabProps) {
     );
   }
 
-  const { summary, categoryDistribution, expirationCalendar } = data;
+  const { summary, itemDistribution, expirationCalendar } = data;
 
   return (
     <div className="space-y-4">
@@ -237,11 +237,11 @@ function ItemStatsTab({ data }: ItemStatsTabProps) {
         )}
       </div>
 
-      {/* カテゴリ別分布 */}
-      {categoryDistribution.length > 0 && (
+      {/* 品物別分布 (Phase 32) */}
+      {itemDistribution && itemDistribution.length > 0 && (
         <div className="bg-white rounded-lg shadow-card p-4">
-          <h3 className="text-sm font-medium text-gray-700 mb-3">カテゴリ別分布</h3>
-          <CategoryChart data={categoryDistribution} />
+          <h3 className="text-sm font-medium text-gray-700 mb-3">品物別分布</h3>
+          <ItemDistributionChart data={itemDistribution} />
         </div>
       )}
 
@@ -283,35 +283,43 @@ function SummaryCard({ label, value, color }: SummaryCardProps) {
 }
 
 // =============================================================================
-// カテゴリ別棒グラフ
+// 品物別分布チャート (Phase 32)
 // =============================================================================
 
-interface CategoryChartProps {
-  data: CategoryDistribution[];
+interface ItemDistributionChartProps {
+  data: ItemDistribution[];
 }
 
-function CategoryChart({ data }: CategoryChartProps) {
-  const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#6B7280'];
+function ItemDistributionChart({ data }: ItemDistributionChartProps) {
+  // 消費割合に応じた色を返す
+  const getBarColor = (percentage: number): string => {
+    if (percentage >= 60) return '#10B981'; // green
+    if (percentage >= 40) return '#3B82F6'; // blue
+    if (percentage >= 20) return '#F59E0B'; // yellow
+    return '#EF4444'; // red
+  };
 
   return (
     <div className="space-y-2">
-      {data.map((item, index) => (
-        <div key={item.category} className="flex items-center gap-2">
-          <span className="w-20 text-xs text-gray-600 truncate">
-            {getCategoryLabel(item.category)}
+      {data.map((item) => (
+        <div key={item.id} className="flex items-center gap-2">
+          <span className="w-20 text-xs text-gray-600 truncate" title={item.itemName}>
+            {item.itemName}
           </span>
           <div className="flex-1 bg-gray-100 rounded h-5 overflow-hidden">
             <div
               className="h-full rounded flex items-center justify-end pr-2 text-xs text-white font-medium"
               style={{
-                width: `${Math.max(item.percentage, 10)}%`,
-                backgroundColor: colors[index % colors.length],
+                width: `${Math.max(item.consumptionPercentage, 10)}%`,
+                backgroundColor: getBarColor(item.consumptionPercentage),
               }}
             >
-              {item.count}
+              {item.consumptionPercentage}%
             </div>
           </div>
-          <span className="w-10 text-xs text-gray-500 text-right">{item.percentage}%</span>
+          <span className="w-20 text-xs text-gray-500 text-right">
+            {item.consumedQuantity}/{item.initialQuantity}{item.unit}
+          </span>
         </div>
       ))}
     </div>

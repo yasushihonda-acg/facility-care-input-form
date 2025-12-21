@@ -204,12 +204,12 @@ test.describe('【デモ】家族ユーザーシナリオ（6ステップ）', (
       await expect(page.getByRole('button', { name: /摂食傾向/ })).toBeVisible();
     });
 
-    test('SCENARIO-D18: カテゴリ別グラフが表示される', async ({ page }) => {
+    test('SCENARIO-D18: 品物別分布が表示される', async ({ page }) => {
       await page.goto('/demo/stats');
       await waitForSpaLoad(page);
 
-      // カテゴリ別分布が表示される
-      await expect(page.locator('text=カテゴリ別分布')).toBeVisible();
+      // 品物別分布が表示される (Phase 32: カテゴリ別分布から変更)
+      await expect(page.locator('text=品物別分布')).toBeVisible();
     });
   });
 });

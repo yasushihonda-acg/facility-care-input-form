@@ -46,11 +46,21 @@ export interface ItemStatsSummary {
   expiringIn3Days: number;
 }
 
-/** カテゴリ別分布 */
+/** カテゴリ別分布 @deprecated Phase 32で品物別分布に変更 */
 export interface CategoryDistribution {
   category: ItemCategory;
   count: number;
   percentage: number;
+}
+
+/** 品物別分布 (Phase 32) */
+export interface ItemDistribution {
+  id: string;
+  itemName: string;
+  unit: string;
+  consumedQuantity: number;
+  initialQuantity: number;
+  consumptionPercentage: number;
 }
 
 /** 賞味期限カレンダーエントリ */
@@ -66,7 +76,10 @@ export interface ExpirationCalendarEntry {
 /** 品物統計データ */
 export interface ItemStatsData {
   summary: ItemStatsSummary;
-  categoryDistribution: CategoryDistribution[];
+  /** @deprecated Phase 32で itemDistribution に変更 */
+  categoryDistribution?: CategoryDistribution[];
+  /** 品物別分布 (Phase 32) */
+  itemDistribution?: ItemDistribution[];
   expirationCalendar: ExpirationCalendarEntry[];
 }
 
