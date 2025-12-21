@@ -209,6 +209,7 @@ firebase use facility-care-input-form
 |------|----------|------|
 | Sheet A（記録の結果） | `facility-care-sa@facility-care-input-form.iam.gserviceaccount.com` | 閲覧者 |
 | Sheet B（実績入力先） | `facility-care-sa@facility-care-input-form.iam.gserviceaccount.com` | 編集者 |
+| 水分摂取量シート | `facility-care-sa@facility-care-input-form.iam.gserviceaccount.com` | 編集者 |
 | Firebase Storage | 同一プロジェクト内のため共有設定不要 | 自動 |
 
 ### GCP自動作成サービスアカウント（参考）
@@ -265,8 +266,10 @@ gcloud functions describe <関数名> --region=asia-northeast1 | grep serviceAcc
 |------|----------|----------|
 | Sheet A（記録の結果） | `1Gf8QTbGyKB7rn5QQa5cYOg1NNYWMV8lzqySdbDkfG-w` | ✅ 閲覧者で共有済み |
 | Sheet B（実績入力先） | `1OrpUVoDfUECXCTrKOGKLwN_4OQ9dlg7cUTCPGLDGHV0` | ✅ 編集者で共有済み |
+| 水分摂取量シート | `1su5K9TjmzMfKc8OIK2aZYXCfuDrNeIRM0a3LUCFcct4` | ✅ 編集者で共有済み |
 
 ※ 共有先SAは「サービスアカウント」セクション参照
+※ 水分摂取量シートのシート名: `フォームの回答 1`
 
 ---
 
