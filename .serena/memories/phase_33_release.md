@@ -37,8 +37,21 @@
 - docs/REMAINING_HANDLING_INSTRUCTION_SPEC.md
 
 ## テスト結果
-- 全E2Eテスト: 319件（248パス、39スキップ）
-- Phase 33テスト: 10件（6パス、4スキップ）
+- 全E2Eテスト: 319件（250パス、37スキップ）
+- Phase 33テスト: 10件（8パス、2スキップ）- デモデータ追加により改善
+
+## デモデータ更新
+- demoCareItems.ts: 4品目にremainingHandlingInstructionを追加
+  - バナナ (demo-item-001): 'stored' - 保存してください
+  - りんご (demo-item-003): 'discarded' - 破棄してください
+  - プリン (demo-item-006): 'discarded' - 冷蔵品なので破棄
+  - 麦茶 (demo-item-009): 'stored' - 保存してください
+
+## デモツアー更新
+- DemoShowcase.tsx (家族用): 品物登録ステップに「残った場合の処置を事前指示」追加
+- DemoStaffShowcase.tsx (スタッフ用):
+  - 品物詳細ステップに「残り対応の指示（破棄/保存）を確認」追加
+  - 食事記録ステップに「家族の指示に従った残り対応を記録」追加
 
 ## 後方互換性
 - 既存の品物データには `remainingHandlingInstruction` フィールドがない

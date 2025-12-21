@@ -31,6 +31,7 @@ const SHOWCASE_STEPS: ShowcaseStep[] = [
     highlights: [
       '品物名・カテゴリ・数量を入力',
       '賞味期限・保存方法を指定',
+      '残った場合の処置を事前指示',
       'AIが入力をサポート',
     ],
   },

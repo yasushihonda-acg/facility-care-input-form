@@ -44,6 +44,7 @@ const SHOWCASE_STEPS: ShowcaseStep[] = [
     highlights: [
       '品物の賞味期限・保存方法を確認',
       '家族からの提供指示を把握',
+      '残り対応の指示（破棄/保存）を確認',
       '過去の提供履歴をタイムラインで確認',
     ],
   },
@@ -56,7 +57,8 @@ const SHOWCASE_STEPS: ShowcaseStep[] = [
     path: '/demo/staff/input/meal',
     highlights: [
       '朝食・昼食・夕食・間食を記録',
-      '摂食状況（完食/半分/残した）を選択',
+      '摂食状況（0-10割）を入力',
+      '家族の指示に従った残り対応を記録',
       '家族が送った品物を選んで記録',
     ],
   },
