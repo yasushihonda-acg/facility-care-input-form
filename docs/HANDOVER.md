@@ -592,7 +592,7 @@ StaffRecordDialog.tsx に写真アップロード機能を追加。Firebase Stor
 │  Sheet A（記録の結果）           Sheet B（実績入力）          │
 │  読み取り専用                    書き込み専用                 │
 └──────────────┬────────────────────────────┬─────────────────┘
-               │ 15分毎同期                  │ 入力時書き込み
+               │ 1時間毎同期                 │ 入力時書き込み
                ▼                            ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                       Firestore                             │
@@ -615,7 +615,7 @@ StaffRecordDialog.tsx に写真アップロード機能を追加。Firebase Stor
 ### 5.2 家族ビュー予実管理フロー
 
 ```
-[食事入力(スタッフ)] → [Sheet B] → [15分同期] → [Firestore plan_data/]
+[食事入力(スタッフ)] → [Sheet B] → [1時間同期] → [Firestore plan_data/]
                                                       ↓
 [家族ビュー] → [useFamilyMealRecords] → [日付+食事時間フィルタ] → [表示]
                                                       ↑
@@ -664,7 +664,7 @@ StaffRecordDialog.tsx に写真アップロード機能を追加。Firebase Stor
 
 | ジョブ名 | スケジュール | 用途 |
 |---------|-------------|------|
-| `sync-plan-data-incremental` | 毎15分 (Asia/Tokyo) | 差分同期 |
+| `sync-plan-data-incremental` | 毎時0分 (Asia/Tokyo) | 差分同期 |
 | `sync-plan-data-full` | 毎日3:00 AM (Asia/Tokyo) | 完全同期 |
 | `firebase-schedule-generateDailyTasks-asia-northeast1` | 毎日6:00 AM (Asia/Tokyo) | タスク自動生成 |
 | `firebase-schedule-checkDailyRecords-asia-northeast1` | 毎日4:00 PM (Asia/Tokyo) | 16時入力無しチェック（Phase 30） |

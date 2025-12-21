@@ -84,7 +84,7 @@ flowchart TB
         <!-- Data Flow - Flow A -->
         <section class="mb-12">
             <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-indigo-500 pb-2">Flow A: データ同期（読み取り）</h2>
-            <p class="text-gray-600 mb-4">スプレッドシートからFirestoreへの15分毎の自動同期フロー</p>
+            <p class="text-gray-600 mb-4">スプレッドシートからFirestoreへの1時間毎の自動同期フロー</p>
             <div class="bg-white rounded-lg shadow-md p-6 overflow-x-auto">
                 <div class="mermaid">
 sequenceDiagram
@@ -93,7 +93,7 @@ sequenceDiagram
     participant Sheets as Sheet A
     participant FS as Firestore
 
-    Scheduler->>Func: 15分毎にトリガー
+    Scheduler->>Func: 1時間毎にトリガー
     Func->>Sheets: シートデータ取得
     Sheets-->>Func: 全シートの行データ
 
@@ -108,7 +108,7 @@ sequenceDiagram
             <div class="mt-4 bg-blue-50 rounded-lg p-4">
                 <h3 class="font-semibold text-blue-800 mb-2">ポイント</h3>
                 <ul class="text-sm text-blue-700 list-disc list-inside space-y-1">
-                    <li>Cloud Schedulerで15分毎に自動実行</li>
+                    <li>Cloud Schedulerで1時間毎に自動実行</li>
                     <li>決定論的IDで重複防止（同期競合対策）</li>
                     <li>汎用データモデルで全シートに対応</li>
                 </ul>
@@ -457,7 +457,7 @@ graph LR
             Firestore["Firestore<br/>データストア"]
         end
 
-        Scheduler["Cloud Scheduler<br/>15分毎同期"]
+        Scheduler["Cloud Scheduler<br/>1時間毎同期"]
         SA["Service Account<br/>facility-care-sa"]
     end
 

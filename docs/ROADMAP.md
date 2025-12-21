@@ -348,7 +348,7 @@ npx tailwindcss init -p
 
 | 機能 | 実装 |
 |------|------|
-| 自動同期 | 15分ごと（setInterval / React Query refetchInterval） |
+| 自動同期 | 1時間ごと（Cloud Scheduler） |
 | 手動同期 | ボタンクリックで即座にAPI呼び出し |
 | 同期状態表示 | 最終同期日時、同期中インジケータ |
 
@@ -357,7 +357,7 @@ npx tailwindcss init -p
 const { data, refetch, isFetching } = useQuery({
   queryKey: ['planData'],
   queryFn: fetchPlanData,
-  refetchInterval: 15 * 60 * 1000, // 15分
+  refetchInterval: 60 * 60 * 1000, // 1時間
   staleTime: 5 * 60 * 1000, // 5分間はキャッシュ使用
 });
 ```
@@ -389,7 +389,7 @@ firebase deploy --only hosting
 | シート一覧表示 | 全11シートが表示される |
 | データ閲覧 | 各シートのデータが正しく表示 |
 | 手動同期 | ボタンタップで同期実行 |
-| 自動同期 | 15分後にデータ更新 |
+| 自動同期 | 1時間後にデータ更新 |
 | オフライン | 最終取得データが表示 |
 
 **成果物**: テスト結果レポート
@@ -398,7 +398,7 @@ firebase deploy --only hosting
 
 - [ ] PWAがFirebase Hostingにデプロイ済み
 - [ ] 全11シートのデータが閲覧可能
-- [ ] 15分ごと自動同期が動作
+- [ ] 1時間ごと自動同期が動作
 - [ ] 手動同期ボタンが動作
 - [ ] モバイルでホーム画面に追加可能
 - [ ] 関係者へURL共有・デモ実施完了
@@ -410,7 +410,7 @@ firebase deploy --only hosting
 | 1 | アプリ起動 | PWA URLにアクセス | シート一覧が表示 |
 | 2 | シート選択 | 「食事」をタップ | 食事データ一覧表示 |
 | 3 | 手動同期 | 同期ボタンをタップ | 最新データに更新 |
-| 4 | 自動同期確認 | 15分待機 | 自動的にデータ更新 |
+| 4 | 自動同期確認 | 1時間待機 | 自動的にデータ更新 |
 | 5 | ホーム画面追加 | ブラウザメニュー | アプリとしてインストール |
 
 ---
@@ -784,7 +784,7 @@ Accent: #14B8A6 (Teal)
 ### 4.5-5. 差分同期実装（コスト最適化）
 
 **現状の問題**:
-- SYNC_STRATEGY.md では15分自動同期は「差分同期」と定義
+- SYNC_STRATEGY.md では1時間自動同期は「差分同期」と定義
 - しかし現在の実装は自動・手動ともに「完全洗い替え」
 - 月間コスト: 現状 ~$144/月 → 差分同期実装後 ~$5-15/月 (90%以上削減)
 
@@ -796,7 +796,7 @@ Accent: #14B8A6 (Teal)
    - 既存データは削除せず、新規追加のみ
 
 2. **フロントエンド修正**
-   - 自動同期（15分ごと）: `incremental: true` で呼び出し
+   - 自動同期（1時間ごと）: `incremental: true` で呼び出し
    - 手動同期（ボタン）: `incremental: false` で完全洗い替え
 
 3. **差分検出ロジック**
@@ -821,7 +821,7 @@ Accent: #14B8A6 (Teal)
 
 - [ ] DESIGN_GUIDELINES.md に基づくUI実装
 - [ ] 高優先度項目の実装完了
-- [ ] 差分同期実装（15分自動同期がincremental）
+- [ ] 差分同期実装（1時間自動同期がincremental）
 - [ ] Firebase Hostingへ再デプロイ
 - [ ] モバイル実機での見た目確認
 
@@ -1422,7 +1422,7 @@ interface CareInstruction {
 **方針B「読み取り時JOIN」を採用**:
 - バックエンド修正ゼロ（既存API `getPlanData` を活用）
 - Firestoreトリガー不要 → コスト増なし
-- 15分同期ラグ許容（安定運用優先）
+- 1時間同期ラグ許容（安定運用優先・GAS整合）
 
 ### 7.1-2. 実装内容
 
@@ -1438,7 +1438,7 @@ interface CareInstruction {
 ### 7.1-3. データフロー
 
 ```
-食事入力(スタッフ) → Sheet B → 同期(15分毎) → Firestore plan_data/
+食事入力(スタッフ) → Sheet B → 同期(1時間毎) → Firestore plan_data/
                                                     ↓
 家族ビュー → useFamilyMealRecords → 日付+食事時間でフィルタ → 表示
                                                     ↑

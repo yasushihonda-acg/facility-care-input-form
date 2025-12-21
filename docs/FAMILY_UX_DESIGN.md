@@ -525,7 +525,7 @@ export const DEMO_CARE_INSTRUCTIONS: CareInstruction[] = [
 
 **予実管理データフロー**:
 ```
-食事入力(スタッフ) → Sheet B → 同期(15分毎) → Firestore plan_data/
+食事入力(スタッフ) → Sheet B → 同期(1時間毎) → Firestore plan_data/
                                                     ↓
 家族ビュー → useFamilyMealRecords → 日付+食事時間でフィルタ → 表示
                                                     ↑
