@@ -56,20 +56,28 @@ npx playwright test e2e/demo-page.spec.ts
 # 本番環境でテスト
 BASE_URL=https://facility-care-input-form.web.app npx playwright test
 
-# テスト件数: 225件 (Phase 15.9まで)
+# テスト件数: 328件定義・275件パス・39件スキップ（Phase 37まで）
+# 主要テストファイル:
 # - demo-page: 43件
 # - family-user-scenario: 34件
-# - staff-record-form: 34件 (Phase 15.7-15.9追加)
+# - staff-record-form: 34件
 # - family-page: 21件
+# - item-edit: 23件
 # - demo-staff: 17件
-# - chat-integration: 16件
+# - demo-staff-containment: 15件
 # - item-based-snack: 13件
+# - schedule-start-date: 13件
+# - remaining-handling: 10件
+# - demo-stats-ai: 9件
+# - footer-nav-demo: 9件
 # - snack-record: 11件
 # - fifo: 8件
-# - record-chat-integration: 8件
 # - schedule-extension: 7件
+# - family-notify: 7件
 # - schedule-display: 7件
 # - photo-evidence: 5件
+# - preset-navigation: 5件
+# ※ chat-integration/record-chat-integration は Phase 21 で非表示中（スキップ）
 ```
 
 ## デプロイ

@@ -573,7 +573,7 @@ StaffRecordDialog.tsxに写真アップロード機能を追加。Firebase Stora
 
 **設計書**: ITEM_MANAGEMENT_SPEC.md セクション2.2, STAFF_RECORD_FORM_SPEC.md タブ固定動作
 
-### E2Eテスト（328件パス + 16件スキップ、Phase 21でチャットテストをスキップ）
+### E2Eテスト（328件定義・275件パス・39件スキップ + 16件スキップ、Phase 21でチャットテストをスキップ）
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |

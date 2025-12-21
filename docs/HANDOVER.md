@@ -331,6 +331,9 @@ facility-care-input-form/
 | **Phase 32** | **統計ダッシュボード品物別分布**（カテゴリ別→品物別、具体的な消費傾向可視化） | 2025-12-21 |
 | **Phase 33** | **残ったものへの処置指示**（remainingHandlingInstruction、家族バナー表示、スタッフガイド、E2Eテスト10件） | 2025-12-21 |
 | **Phase 34** | **AI分析デモモード対応**（AIAnalysis.tsx デモ分岐、DEMO_AI_ANALYSISモック、E2Eテスト9件） | 2025-12-21 |
+| **Phase 35** | **同期間隔調整**（15分→1時間、GASとの整合性確保） | 2025-12-21 |
+| **Phase 36** | **スケジュール開始日対応**（startDateフィールド、品物編集画面スケジュール統合、E2Eテスト13件） | 2025-12-21 |
+| **Phase 37** | **プリセット管理アクセス改善**（品物管理→「いつもの指示」リンク、レスポンシブ対応、E2Eテスト5件） | 2025-12-22 |
 
 ### 4.2 将来のタスク
 
@@ -723,27 +726,36 @@ BASE_URL=https://facility-care-input-form.web.app npx playwright test
 - `frontend/playwright.config.ts` - Playwright設定
 - デフォルトbaseURL: `http://localhost:4173`（環境変数で上書き可能）
 
-**現在のテスト**: 全328件（37件スキップ含む）
+**現在のテスト**: 全328件定義・275件パス・39件スキップ（2025-12-22時点）
 | ファイル | 件数 | 内容 |
 |----------|------|------|
 | `demo-page.spec.ts` | 43件 | デモページ基本動作・ナビゲーション |
 | `family-user-scenario.spec.ts` | 34件 | 家族シナリオ・パリティ・本番準備 |
 | `staff-record-form.spec.ts` | 34件 | スタッフ記録入力フォーム統一（Phase 15・15.7-15.9含む） |
+| `item-edit.spec.ts` | 23件 | 品物編集・タイムスタンプ・編集履歴タイムライン（Phase 22） |
 | `family-page.spec.ts` | 21件 | 家族ページ（品物詳細・消費ログ等） |
 | `demo-staff.spec.ts` | 17件 | スタッフ用デモ（Phase 14） |
-| `chat-integration.spec.ts` | 16件 | チャット連携基本動作（Phase 18） |
-| `item-based-snack-record.spec.ts` | 13件 | 品物起点の間食記録（Phase 13.0） |
-| `snack-record.spec.ts` | 11件 | 間食記録連携（品物リスト・サジェスト） |
-| `record-chat-integration.spec.ts` | 8件 | 記録のチャット連携（Phase 19） |
+| `chat-integration.spec.ts` | 16件 | チャット連携基本動作（Phase 18）**※スキップ中** |
 | `demo-staff-containment.spec.ts` | 15件 | デモ環境完結・離脱防止（Phase 20） |
+| `item-based-snack-record.spec.ts` | 13件 | 品物起点の間食記録（Phase 13.0） |
+| `schedule-start-date.spec.ts` | 13件 | スケジュール開始日対応（Phase 36） |
+| `snack-record.spec.ts` | 11件 | 間食記録連携（品物リスト・サジェスト） |
+| `remaining-handling-instruction.spec.ts` | 10件 | 残ったものへの処置指示（Phase 33） |
+| `demo-stats-ai.spec.ts` | 9件 | デモ統計AI分析（Phase 34） |
 | `footer-nav-demo.spec.ts` | 9件 | デモモードフッターナビ・API 500修正（Phase 20.1） |
+| `record-chat-integration.spec.ts` | 8件 | 記録のチャット連携（Phase 19）**※スキップ中** |
 | `fifo.spec.ts` | 8件 | FIFO機能（期限順ソート・推奨表示） |
 | `schedule-extension.spec.ts` | 7件 | スケジュール拡張（Phase 13.1） |
 | `schedule-display.spec.ts` | 7件 | スケジュール表示強化（Phase 13.2） |
+| `family-notify.spec.ts` | 7件 | 家族操作・入力無し通知（Phase 30） |
 | `photo-evidence.spec.ts` | 5件 | 写真エビデンス表示（Phase 16） |
-| `item-edit.spec.ts` | 23件 | 品物編集・タイムスタンプ・編集履歴タイムライン（Phase 22） |
-| `remaining-handling-instruction.spec.ts` | 10件 | 残ったものへの処置指示（Phase 33） |
-| `demo-stats-ai.spec.ts` | 9件 | デモ統計AI分析（Phase 34） |
+| `preset-navigation.spec.ts` | 5件 | プリセット管理ナビゲーション（Phase 37） |
+| `view-page-sort.spec.ts` | 4件 | 記録閲覧ソート機能（Phase 23） |
+
+**スキップ中のテスト（Phase 21でチャット機能一時非表示）**:
+- `chat-integration.spec.ts`: 16件
+- `record-chat-integration.spec.ts`: 8件
+- その他条件付きスキップ: 15件
 
 **パリティテスト**: デモと本番で同じUIが表示されることを検証
 - デモツアー完了 = 本番利用スキル習得
@@ -989,7 +1001,10 @@ docs/CURRENT_STATUS.md を読んで、次のタスクから再開してくださ
 
 | 日付 | 内容 |
 |------|------|
-| 2025-12-21 | **Phase 34: AI分析デモモード対応**（AIAnalysis.tsx デモ分岐、DEMO_AI_ANALYSISモック、E2Eテスト9件追加）、全328件 |
+| 2025-12-22 | **Phase 37: プリセット管理アクセス改善**（品物管理→「いつもの指示」リンク、レスポンシブ対応、E2Eテスト5件追加）、全328件 |
+| 2025-12-21 | **Phase 36: スケジュール開始日対応**（startDateフィールド追加、品物編集スケジュール統合、E2Eテスト13件追加）、全323件 |
+| 2025-12-21 | **Phase 35: 同期間隔調整**（Cloud Scheduler 15分→1時間、GASとの整合性確保） |
+| 2025-12-21 | **Phase 34: AI分析デモモード対応**（AIAnalysis.tsx デモ分岐、DEMO_AI_ANALYSISモック、E2Eテスト9件追加） |
 | 2025-12-21 | **Phase 33: 残ったものへの処置指示**（remainingHandlingInstruction、家族バナー表示、スタッフガイド、E2Eテスト10件追加）、全319件 |
 | 2025-12-21 | **Phase 32: 統計ダッシュボード品物別分布**（カテゴリ別→品物別に変更、具体的な消費傾向可視化） |
 | 2025-12-21 | **Phase 31: カテゴリ簡素化**（7→2カテゴリ、スタッフ記録タブ固定化、migrateCategory後方互換、統計・デモデータ・通知対応） |
