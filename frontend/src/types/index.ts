@@ -114,6 +114,8 @@ export interface MealFormSettings {
   importantWebhookUrl?: string;
   /** 家族操作・入力無し通知用Webhook URL (Phase 30) */
   familyNotifyWebhookUrl?: string;
+  /** 記録チェック通知時間（0-23、デフォルト16）(Phase 30.1) */
+  recordCheckHour?: number;
   updatedAt: string;
 }
 
@@ -125,6 +127,7 @@ export interface UpdateMealFormSettingsRequest {
   webhookUrl?: string;
   importantWebhookUrl?: string;
   familyNotifyWebhookUrl?: string;
+  recordCheckHour?: number;
 }
 
 // =============================================================================

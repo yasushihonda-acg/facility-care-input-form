@@ -39,6 +39,7 @@ export function MealSettingsModal({
     webhookUrl: settings.webhookUrl || '',
     importantWebhookUrl: settings.importantWebhookUrl || '',
     familyNotifyWebhookUrl: settings.familyNotifyWebhookUrl || '',
+    recordCheckHour: settings.recordCheckHour ?? 16,
   });
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -63,6 +64,7 @@ export function MealSettingsModal({
       webhookUrl: settings.webhookUrl || '',
       importantWebhookUrl: settings.importantWebhookUrl || '',
       familyNotifyWebhookUrl: settings.familyNotifyWebhookUrl || '',
+      recordCheckHour: settings.recordCheckHour ?? 16,
     });
     // テスト状態をリセット
     setWebhookTestState(initialTestState);
@@ -178,6 +180,7 @@ export function MealSettingsModal({
         webhookUrl: '',
         importantWebhookUrl: '',
         familyNotifyWebhookUrl: '',
+        recordCheckHour: 16, // デフォルト値にリセット
       });
       if (success) {
         setSaveMessage({ type: 'success', text: '設定をクリアしました' });
@@ -482,8 +485,35 @@ export function MealSettingsModal({
                 テスト送信
               </button>
             </div>
-            <p className="mt-1 text-xs text-gray-500">品物登録・編集時、16時入力無し時に通知</p>
+            <p className="mt-1 text-xs text-gray-500">品物登録・編集・削除時、設定時刻の入力無し時に通知</p>
             <TestResultDisplay state={familyNotifyWebhookTestState} />
+          </div>
+
+          {/* 記録チェック通知時間 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              記録チェック通知時間
+            </label>
+            <div className="flex items-center gap-2">
+              <select
+                value={localSettings.recordCheckHour ?? 16}
+                onChange={(e) => {
+                  setLocalSettings((prev) => ({
+                    ...prev,
+                    recordCheckHour: parseInt(e.target.value, 10),
+                  }));
+                }}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+              >
+                {Array.from({ length: 24 }, (_, i) => (
+                  <option key={i} value={i}>
+                    {i}時
+                  </option>
+                ))}
+              </select>
+              <span className="text-sm text-gray-600">に確認</span>
+            </div>
+            <p className="mt-1 text-xs text-gray-500">食事・水分記録が未入力の場合に通知する時刻</p>
           </div>
 
           {/* 写真保存について */}

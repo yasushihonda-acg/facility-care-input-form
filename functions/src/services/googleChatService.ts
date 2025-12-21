@@ -184,16 +184,27 @@ export interface CareItemNotifyData {
 /**
  * 品物操作通知メッセージを生成
  *
- * @param action - 操作種別 ('register' | 'update')
+ * @param action - 操作種別 ('register' | 'update' | 'delete')
  * @param item - 品物データ
  * @param userId - 操作者ID
  */
 export function formatCareItemNotification(
-  action: "register" | "update",
+  action: "register" | "update" | "delete",
   item: CareItemNotifyData,
   userId: string
 ): string {
-  const actionLabel = action === "register" ? "品物登録📦" : "品物編集✏️";
+  const actionLabels = {
+    register: "品物登録📦",
+    update: "品物編集✏️",
+    delete: "品物削除🗑️",
+  };
+  const userLabels = {
+    register: "登録者",
+    update: "編集者",
+    delete: "削除者",
+  };
+  const actionLabel = actionLabels[action];
+  const userLabel = userLabels[action];
   const categoryLabel = CATEGORY_LABELS[migrateCategory(item.category)] || item.category;
 
   const now = new Date();
@@ -215,16 +226,19 @@ export function formatCareItemNotification(
     `数量: ${item.quantity}${item.unit}`,
   ];
 
-  if (item.expirationDate) {
-    lines.push(`賞味期限: ${item.expirationDate}`);
-  }
+  // 削除時は賞味期限・伝達事項は表示しない
+  if (action !== "delete") {
+    if (item.expirationDate) {
+      lines.push(`賞味期限: ${item.expirationDate}`);
+    }
 
-  if (item.noteToStaff) {
-    lines.push(`スタッフへの伝達事項: ${item.noteToStaff}`);
+    if (item.noteToStaff) {
+      lines.push(`スタッフへの伝達事項: ${item.noteToStaff}`);
+    }
   }
 
   lines.push("");
-  lines.push(`登録者: ${userId}`);
+  lines.push(`${userLabel}: ${userId}`);
   lines.push(`時刻: ${jstTime}`);
 
   return lines.join("\n");
@@ -236,11 +250,13 @@ export function formatCareItemNotification(
  * @param date - 対象日付 (YYYY-MM-DD)
  * @param hasMealRecord - 食事記録があるか
  * @param hasHydrationRecord - 水分記録があるか
+ * @param checkHour - チェック時刻（0-23、デフォルト16）(Phase 30.1で追加)
  */
 export function formatNoRecordNotification(
   date: string,
   hasMealRecord: boolean,
-  hasHydrationRecord: boolean
+  hasHydrationRecord: boolean,
+  checkHour: number = 16
 ): string {
   const lines = [
     "#入力無し警告⚠️",
@@ -257,7 +273,7 @@ export function formatNoRecordNotification(
   }
 
   lines.push("");
-  lines.push("※ 16:00時点の確認");
+  lines.push(`※ ${checkHour}:00時点の確認`);
 
   return lines.join("\n");
 }

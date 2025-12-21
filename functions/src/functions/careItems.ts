@@ -687,7 +687,7 @@ async function deleteCareItemHandler(
     const db = getFirestore();
     const docRef = db.collection(CARE_ITEMS_COLLECTION).doc(itemId);
 
-    // ドキュメント存在確認
+    // ドキュメント存在確認（通知用に品物情報も取得）
     const docSnapshot = await docRef.get();
     if (!docSnapshot.exists) {
       const response: ApiResponse<null> = {
@@ -702,9 +702,34 @@ async function deleteCareItemHandler(
       return;
     }
 
+    // 通知用に削除前の品物情報を保持
+    const deletedItem = docSnapshot.data() as CareItem;
+
     await docRef.delete();
 
     functions.logger.info("deleteCareItem success", {itemId});
+
+    // Phase 30.1: 削除通知を非同期で送信
+    try {
+      const settingsDoc = await db.collection("settings").doc("mealFormDefaults").get();
+      const settings = settingsDoc.exists ?
+        (settingsDoc.data() as MealFormSettings) : null;
+
+      if (settings?.familyNotifyWebhookUrl) {
+        const notifyData: CareItemNotifyData = {
+          itemName: deletedItem.itemName,
+          category: deletedItem.category,
+          quantity: deletedItem.quantity,
+          unit: deletedItem.unit,
+        };
+        const message = formatCareItemNotification("delete", notifyData, deletedItem.userId);
+        sendToGoogleChat(settings.familyNotifyWebhookUrl, message).catch((err) => {
+          functions.logger.warn("deleteCareItem notification failed:", err);
+        });
+      }
+    } catch (notifyError) {
+      functions.logger.warn("deleteCareItem notification error:", notifyError);
+    }
 
     const response: ApiResponse<null> = {
       success: true,

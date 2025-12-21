@@ -4,9 +4,9 @@
 
 | 項目 | 値 |
 |------|-----|
-| Phase番号 | Phase 30 |
+| Phase番号 | Phase 30 / 30.1 |
 | 機能名 | 家族操作・入力無し通知 |
-| 目的 | 品物登録/編集時の即座通知、16時入力無し警告通知 |
+| 目的 | 品物登録/編集/削除時の即座通知、設定時刻での入力無し警告通知 |
 | Webhook URL | 1個（共通）: `familyNotifyWebhookUrl` |
 
 ---
@@ -17,7 +17,8 @@
 |----------|------------|------|
 | 品物登録 | submitCareItem成功時 | 即座 |
 | 品物編集 | updateCareItem成功時 | 即座 |
-| 入力無し警告 | 毎日16:00 JST | その日の食事記録または水分記録が未入力 |
+| 品物削除 | deleteCareItem成功時 | 即座（Phase 30.1で追加） |
+| 入力無し警告 | 設定時刻（デフォルト16:00 JST） | その日の食事記録または水分記録が未入力 |
 
 ---
 
@@ -34,9 +35,12 @@
 | 要素 | 説明 |
 |------|------|
 | ラベル | 監視通知Webhook URL |
-| 説明文 | 品物登録・編集時、16時入力無し時に通知 |
+| 説明文 | 品物登録・編集・削除時、入力無し時に通知 |
 | 入力欄 | `https://chat.googleapis.com/...` |
 | テスト送信ボタン | 設定したURLへテストメッセージ送信 |
+| ラベル | 記録チェック通知時間（Phase 30.1で追加） |
+| 説明文 | 食事・水分記録が未入力の場合に通知する時刻 |
+| 入力欄 | セレクトボックス（0〜23時、デフォルト16時） |
 
 ### バリデーション
 
@@ -80,6 +84,7 @@ interface MealFormSettings {
   webhookUrl: string;
   importantWebhookUrl: string;
   familyNotifyWebhookUrl: string;  // Phase 30で追加
+  recordCheckHour: number;         // Phase 30.1で追加（0-23、デフォルト16）
 }
 ```
 
@@ -132,7 +137,20 @@ interface DailyRecordLog {
 時刻: 2025/12/21 15:00:00
 ```
 
-### 16時入力無し通知
+### 品物削除通知（Phase 30.1で追加）
+
+```
+#品物削除🗑️
+
+【せんべい】
+カテゴリ: 食べ物
+数量: 2袋
+
+削除者: family_user_001
+時刻: 2025/12/21 16:00:00
+```
+
+### 入力無し通知
 
 ```
 #入力無し警告⚠️
@@ -142,34 +160,40 @@ interface DailyRecordLog {
 - 食事記録: 未入力
 - 水分記録: 入力済み
 
-※ 16:00時点の確認
+※ {設定時刻}時点の確認
 ```
+
+**注記**: `{設定時刻}` は `recordCheckHour` の値に置き換わる（例: 16:00時点の確認）
 
 ---
 
 ## API
 
-### 品物登録・編集（既存API拡張）
+### 品物登録・編集・削除（既存API拡張）
 
 **エンドポイント**:
 - `POST /submitCareItem` - 登録時に通知
 - `POST /updateCareItem` - 編集時に通知
+- `DELETE /deleteCareItem` - 削除時に通知（Phase 30.1で追加）
 
 **通知処理**:
 - 非同期（メイン処理をブロックしない）
 - エラー時はログ記録のみ、API自体は成功扱い
 
-### 16時定時チェック（新規）
+### 定時チェック
 
 **関数名**: `checkDailyRecords`
 **トリガー**: Cloud Scheduler (Pub/Sub)
-**スケジュール**: `0 16 * * *` (毎日16:00 JST)
+**スケジュール**: `0 * * * *` (毎時0分、Phase 30.1で変更)
 
 **処理フロー**:
-1. 当日の日次記録ログを取得
-2. 食事記録・水分記録の有無を確認
-3. どちらかが未入力の場合、Webhook通知送信
-4. 両方入力済みの場合、通知なし
+1. 設定から `recordCheckHour` を取得（デフォルト: 16）
+2. 現在時刻（JST）が設定時刻と一致するか確認
+3. 一致しない場合はスキップ
+4. 当日の日次記録ログを取得
+5. 食事記録・水分記録の有無を確認
+6. どちらかが未入力の場合、Webhook通知送信
+7. 両方入力済みの場合、通知なし
 
 ---
 
@@ -179,21 +203,22 @@ interface DailyRecordLog {
 
 | ファイル | 変更内容 |
 |----------|----------|
-| `functions/src/types/index.ts` | 型拡張（familyNotifyWebhookUrl, DailyRecordLog, TestWebhookRequest） |
-| `functions/src/functions/careItems.ts` | 通知追加 |
+| `functions/src/types/index.ts` | 型拡張（familyNotifyWebhookUrl, DailyRecordLog, TestWebhookRequest, recordCheckHour） |
+| `functions/src/functions/careItems.ts` | 登録・編集・削除時の通知追加 |
 | `functions/src/functions/submitMealRecord.ts` | ログ更新追加 |
 | `functions/src/functions/submitHydrationRecord.ts` | ログ更新追加 |
 | `functions/src/functions/mealFormSettings.ts` | 設定対応 |
 | `functions/src/functions/testWebhook.ts` | webhookType対応（品物登録形式テスト） |
-| `functions/src/services/googleChatService.ts` | フォーマット関数追加 |
+| `functions/src/functions/checkDailyRecords.ts` | 毎時実行＋時間比較ロジック（Phase 30.1で変更） |
+| `functions/src/services/googleChatService.ts` | フォーマット関数追加（formatItemDeleteNotification） |
 | `functions/src/index.ts` | エクスポート追加 |
 
 ### フロントエンド
 
 | ファイル | 変更内容 |
 |----------|----------|
-| `frontend/src/types/index.ts` | 型拡張 |
-| `frontend/src/components/MealSettingsModal.tsx` | 設定UI追加 |
+| `frontend/src/types/index.ts` | 型拡張（recordCheckHour追加） |
+| `frontend/src/components/MealSettingsModal.tsx` | 設定UI追加（通知時間セレクトボックス） |
 
 ### 新規ファイル
 
@@ -234,16 +259,19 @@ interface DailyRecordLog {
 
 ## Cloud Scheduler設定
 
-16時チェック関数のスケジュール設定:
+定時チェック関数のスケジュール設定:
 
 ```
 名前: checkDailyRecords
-スケジュール: 0 16 * * * (毎日16:00)
+スケジュール: 0 * * * * (毎時0分)
 タイムゾーン: Asia/Tokyo
 ターゲット: Pub/Sub
 ```
 
-**注意**: Cloud Functions v1のPub/Subスケジュール関数は、デプロイ時に自動でCloud Schedulerジョブが作成される。
+**注意**:
+- Cloud Functions v1のPub/Subスケジュール関数は、デプロイ時に自動でCloud Schedulerジョブが作成される
+- 毎時実行し、設定された`recordCheckHour`と現在時刻を比較して通知するか判断（Phase 30.1）
+- デフォルトは16時だが、管理画面から0〜23時の任意の時刻に変更可能
 
 ---
 
