@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
-/* Design System - DESIGN_GUIDELINES.md に基づく */
+/* Design System - ロール別テーマカラー対応 */
 @theme {
-  /* Primary Colors */
-  --color-primary: #2563EB;
-  --color-primary-light: #3B82F6;
-  --color-primary-dark: #1D4ED8;
+  /* Primary Colors - デフォルト: スタッフ（Green） */
+  --color-primary: #22C55E;
+  --color-primary-light: #4ADE80;
+  --color-primary-dark: #16A34A;
 
   /* Secondary Colors */
   --color-secondary: #10B981;
@@ -20,6 +20,22 @@
   --shadow-card: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
   --shadow-card-hover: 0 4px 6px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
   --shadow-header: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* ロール別テーマカラー上書き */
+
+/* 家族ロール - Orange */
+:root[data-role="family"] {
+  --color-primary: #F97316;
+  --color-primary-light: #FB923C;
+  --color-primary-dark: #EA580C;
+}
+
+/* 管理者ロール - Blue */
+:root[data-role="admin"] {
+  --color-primary: #2563EB;
+  --color-primary-light: #3B82F6;
+  --color-primary-dark: #1D4ED8;
 }
 
 /* Base styles */

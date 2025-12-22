@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useRoleTheme } from './hooks/useRoleTheme';
 
 // 共有ビュー
 import { ViewPage } from './pages/ViewPage';
@@ -37,6 +38,9 @@ import { DemoStaffShowcase } from './pages/demo/DemoStaffShowcase';
 import { SheetDetailPage } from './pages/SheetDetailPage';
 
 function App() {
+  // ロール別テーマカラーを自動適用
+  useRoleTheme();
+
   return (
     <Routes>
       {/* デフォルト: /view へリダイレクト */}
