@@ -1,6 +1,26 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useRoleTheme } from './hooks/useRoleTheme';
 
+/**
+ * ロールに応じたリダイレクトコンポーネント
+ * localStorage の userRole に基づいて初期表示ページを決定
+ * - staff → /staff/notes（注意事項）
+ * - family → /family（家族ホーム）
+ * - 未設定 → /view（記録閲覧）
+ */
+function RoleBasedRedirect() {
+  const savedRole = localStorage.getItem('userRole');
+
+  if (savedRole === 'staff') {
+    return <Navigate to="/staff/notes" replace />;
+  }
+  if (savedRole === 'family') {
+    return <Navigate to="/family" replace />;
+  }
+  // デフォルト: 記録閲覧（初回アクセス時）
+  return <Navigate to="/view" replace />;
+}
+
 // 共有ビュー
 import { ViewPage } from './pages/ViewPage';
 import { StatsDashboard } from './pages/shared/StatsDashboard';
@@ -46,8 +66,8 @@ function App() {
 
   return (
     <Routes>
-      {/* デフォルト: /view へリダイレクト */}
-      <Route path="/" element={<Navigate to="/view" replace />} />
+      {/* デフォルト: ロールに応じてリダイレクト */}
+      <Route path="/" element={<RoleBasedRedirect />} />
 
       {/* ========== 共有ビュー ========== */}
       {/* 記録閲覧（スタッフ・家族共通） */}
