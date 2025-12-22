@@ -189,21 +189,36 @@ frontend/src/
 │   │   ├── ItemDetail       # 品物詳細
 │   │   ├── ItemForm         # 品物登録・編集
 │   │   └── PresetManagement # プリセット管理
+│   ├── staff/               # スタッフ向けページ（Phase 40）
+│   │   └── StaffNotesPage   # 注意事項・家族依頼
 │   ├── MealInputPage        # 食事入力フォーム
 │   ├── ViewPage             # 記録閲覧
-│   └── StatsPage            # 統計
+│   ├── StatsPage            # 統計
+│   └── SettingsPage         # 設定（独立ページ）
 ├── components/
 │   ├── family/              # 家族用コンポーネント
-│   │   ├── DateNavigator    # 日付ナビゲーション
-│   │   ├── ExpirationAlert  # 期限切れ警告
-│   │   └── UnscheduledDatesBanner
+│   ├── staff/               # スタッフ用コンポーネント（Phase 40）
+│   │   ├── StaffNoteCard    # 注意事項カード
+│   │   └── StaffNoteModal   # 注意事項モーダル
+│   ├── FooterNav            # ロール別フッター
 │   └── Layout               # 共通レイアウト
 ├── hooks/                   # カスタムフック
 │   ├── useCareItems         # 品物CRUD
-│   └── useDemoMode          # デモモード判定
+│   ├── useStaffNotes        # 注意事項CRUD（Phase 40）
+│   └── useRoleTheme         # ロール別テーマ（Phase 39）
+├── utils/
+│   └── roleTheme.ts         # ロール判定・テーマ適用
 └── types/                   # TypeScript型定義
-    └── careItem.ts          # 品物・ステータス型
 ```
+
+### ロール別テーマ（Phase 39）
+
+| ロール | ベースカラー | 判定パス |
+|--------|-------------|----------|
+| 家族 | Orange | `/family/*`, `/demo`, `/demo/family/*` |
+| スタッフ | Green | `/staff/*`, `/demo/staff/*` |
+| 共有ページ | 直前ロール維持 | `/view`, `/stats`, `/demo/view`, `/demo/stats` |
+| 設定 | なし | `/settings`（フッターなし） |
 
 ---
 

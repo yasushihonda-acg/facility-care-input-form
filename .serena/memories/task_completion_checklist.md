@@ -56,7 +56,7 @@ npx playwright test e2e/demo-page.spec.ts
 # 本番環境でテスト
 BASE_URL=https://facility-care-input-form.web.app npx playwright test
 
-# テスト件数: 328件定義・275件パス・39件スキップ（Phase 37まで）
+# テスト件数: 343件定義・290件パス・39件スキップ（Phase 40まで）
 # 主要テストファイル:
 # - demo-page: 43件
 # - family-user-scenario: 34件
