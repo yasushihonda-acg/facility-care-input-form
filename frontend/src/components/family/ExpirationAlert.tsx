@@ -30,9 +30,23 @@ export function ExpirationAlert({ expiredItems, isLoading }: ExpirationAlertProp
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [discardingId, setDiscardingId] = useState<string | null>(null);
 
-  // 読み込み中または期限切れ品物がない場合は非表示
-  if (isLoading || expiredItems.length === 0) {
+  // 読み込み中は非表示
+  if (isLoading) {
     return null;
+  }
+
+  // 0件の場合は緑色の「期限切れなし」バナーを表示
+  if (expiredItems.length === 0) {
+    return (
+      <div className="mx-4 mt-3">
+        <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+          <div className="flex items-center gap-2 text-green-700">
+            <span className="text-lg">✅</span>
+            <span className="text-sm font-medium">期限切れなし</span>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // 廃棄処理

@@ -476,17 +476,25 @@ export function isScheduledForDate(schedule: ServingSchedule | undefined, date: 
   }
 }
 
+/** スケジュールタイプ除外オプション */
+export type ScheduleTypeExclusion = {
+  excludeDaily?: boolean;
+  excludeWeekly?: boolean;
+};
+
 /**
  * 品物リストから指定範囲内のスケジュール日をSetで取得
  * @param items 品物リスト
  * @param startDate 開始日
  * @param endDate 終了日
+ * @param exclusion スケジュールタイプ除外オプション
  * @returns スケジュールされた日付のSet (YYYY-MM-DD)
  */
 export function getScheduledDatesForItems(
   items: CareItem[],
   startDate: Date,
-  endDate: Date
+  endDate: Date,
+  exclusion?: ScheduleTypeExclusion
 ): Set<string> {
   const scheduledDates = new Set<string>();
 
@@ -503,6 +511,10 @@ export function getScheduledDatesForItems(
     for (const item of items) {
       if (item.status !== 'pending' && item.status !== 'in_progress') continue;
       if (!item.servingSchedule) continue;
+
+      // スケジュールタイプ除外チェック
+      if (exclusion?.excludeDaily && item.servingSchedule.type === 'daily') continue;
+      if (exclusion?.excludeWeekly && item.servingSchedule.type === 'weekly') continue;
 
       if (isScheduledForDate(item.servingSchedule, current)) {
         scheduledDates.add(dateStr);
@@ -521,12 +533,14 @@ export function getScheduledDatesForItems(
  * @param items 品物リスト
  * @param skipDates スキップ日リスト (YYYY-MM-DD[])
  * @param months 何ヶ月先まで検索するか（デフォルト: 2）
+ * @param exclusion スケジュールタイプ除外オプション
  * @returns 未設定日リスト
  */
 export function getUnscheduledDates(
   items: CareItem[],
   skipDates: string[],
-  months: number = 2
+  months: number = 2,
+  exclusion?: ScheduleTypeExclusion
 ): UnscheduledDate[] {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -534,7 +548,7 @@ export function getUnscheduledDates(
   const endDate = new Date(today);
   endDate.setMonth(endDate.getMonth() + months);
 
-  const scheduledSet = getScheduledDatesForItems(items, today, endDate);
+  const scheduledSet = getScheduledDatesForItems(items, today, endDate, exclusion);
   const skipSet = new Set(skipDates);
 
   const result: UnscheduledDate[] = [];

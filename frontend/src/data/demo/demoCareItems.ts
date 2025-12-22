@@ -337,7 +337,8 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     updatedAt: getDateTimeString(-2),
   },
 
-  // ===== 期限切れサンプル =====
+  // ===== 期限切れサンプル（期限切れアラート表示用） =====
+  // Phase 38.3: status: 'in_progress' かつ expirationDate < 今日 で期限切れアラートに表示
   {
     id: 'demo-item-012',
     residentId: 'resident-001',
@@ -350,8 +351,8 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     remainingQuantity: 1,
     quantity: 4,
     unit: '個',
-    status: 'expired' as ItemStatus,
-    expirationDate: getDateString(-2),
+    status: 'in_progress' as ItemStatus, // 期限切れアラートに表示するためin_progress
+    expirationDate: getDateString(-1), // 昨日 → 期限切れ
     storageMethod: 'refrigerated',
     servingMethod: 'as_is' as ServingMethod,
     consumptionSummary: {

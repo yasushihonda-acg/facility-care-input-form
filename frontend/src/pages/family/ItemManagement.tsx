@@ -32,7 +32,7 @@ import { ExpirationAlert } from '../../components/family/ExpirationAlert';
 import { DateNavigator, type DateViewMode } from '../../components/family/DateNavigator';
 import { UnscheduledDatesBanner } from '../../components/family/UnscheduledDatesBanner';
 import { UnscheduledDatesModal } from '../../components/family/UnscheduledDatesModal';
-import { getUnscheduledDates, isScheduledForDate } from '../../utils/scheduleUtils';
+import { getUnscheduledDates, isScheduledForDate, type ScheduleTypeExclusion } from '../../utils/scheduleUtils';
 
 // デモ用の入居者ID・ユーザーID（将来は認証から取得）
 const DEMO_RESIDENT_ID = 'resident-001';
@@ -90,6 +90,9 @@ export function ItemManagement() {
   const [unscheduledPeriod, setUnscheduledPeriod] = useState(2);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [showUnscheduledModal, setShowUnscheduledModal] = useState(false);
+  // スケジュールタイプ除外トグル（デフォルト: 両方OFF）
+  const [excludeDaily, setExcludeDaily] = useState(false);
+  const [excludeWeekly, setExcludeWeekly] = useState(false);
   const isDemo = useDemoMode();
   const navigate = useNavigate();
 
@@ -119,14 +122,20 @@ export function ItemManagement() {
     return filterItemsByDateRange(data.items, selectedDate, viewMode);
   }, [data?.items, selectedDate, viewMode]);
 
+  // スケジュールタイプ除外オプション
+  const scheduleExclusion: ScheduleTypeExclusion = useMemo(() => ({
+    excludeDaily,
+    excludeWeekly,
+  }), [excludeDaily, excludeWeekly]);
+
   // 未設定日を算出（アクティブな品物のみ対象）
   const unscheduledDates = useMemo(() => {
     if (!data?.items) return [];
     const activeItems = data.items.filter(
       (item) => item.status === 'pending' || item.status === 'in_progress'
     );
-    return getUnscheduledDates(activeItems, skipDateStrings, unscheduledPeriod);
-  }, [data?.items, skipDateStrings, unscheduledPeriod]);
+    return getUnscheduledDates(activeItems, skipDateStrings, unscheduledPeriod, scheduleExclusion);
+  }, [data?.items, skipDateStrings, unscheduledPeriod, scheduleExclusion]);
 
   // 未設定日クリック → 品物登録画面へ
   const handleUnscheduledDateClick = (date: string) => {
@@ -202,6 +211,10 @@ export function ItemManagement() {
         onShowAll={() => setShowUnscheduledModal(true)}
         onPeriodChange={setUnscheduledPeriod}
         currentPeriod={unscheduledPeriod}
+        excludeDaily={excludeDaily}
+        excludeWeekly={excludeWeekly}
+        onExcludeDailyChange={setExcludeDaily}
+        onExcludeWeeklyChange={setExcludeWeekly}
       />
 
       {/* 日付ナビゲーション */}
