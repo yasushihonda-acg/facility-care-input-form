@@ -49,16 +49,16 @@ facility-care-input-form/
 - **Sheet B（書込）**: `1OrpUVoDfUECXCTrKOGKLwN_4OQ9dlg7cUTCPGLDGHV0`
 
 ## 開発履歴
-Phase 1〜39完了。詳細は `git log` を参照。
+Phase 1〜40完了。詳細は `git log` を参照。
 
 主要機能:
 - 家族向け品物管理・プリセット管理
-- スタッフ向け記録入力フォーム・家族連絡閲覧
+- スタッフ向け記録入力フォーム・注意事項管理
 - Google Chat Webhook連携
 
 フッター構成（並び順統一）:
 - 家族用: ホーム → 品物管理 → 記録閲覧 → 統計
-- スタッフ用: 家族連絡 → 記録入力 → 記録閲覧 → 統計
+- スタッフ用: 注意事項 → 記録入力 → 記録閲覧 → 統計
 - Firebase Storage写真連携
 - 統計ダッシュボード・AI分析
 
