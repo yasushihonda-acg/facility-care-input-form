@@ -8,7 +8,7 @@
  */
 
 import { useMemo, useState } from 'react';
-import { useCareItems } from '../../hooks/useCareItems';
+import { useCareItems, useDiscardItem } from '../../hooks/useCareItems';
 import type { CareItem, ItemStatus } from '../../types/careItem';
 import { StaffRecordDialog } from '../staff/StaffRecordDialog';
 import {
@@ -16,6 +16,9 @@ import {
   isScheduledForTomorrow as checkScheduledForTomorrow,
 } from '../../utils/scheduleUtils';
 import { ScheduleDisplay } from './ScheduleDisplay';
+
+// タブの種類
+type TabType = 'today' | 'expiration';
 
 interface ItemBasedSnackRecordProps {
   residentId: string;
@@ -49,10 +52,14 @@ function isScheduledForTomorrow(item: CareItem): boolean {
 
 function isExpiringSoon(item: CareItem): boolean {
   if (!item.expirationDate) return false;
-  const today = new Date();
-  const expDate = new Date(item.expirationDate);
-  const diffDays = Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  return diffDays <= 3 && diffDays >= 0;
+  const days = getDaysUntilExpiration(item);
+  return days !== null && days >= 0 && days <= 3;
+}
+
+function isExpired(item: CareItem): boolean {
+  if (!item.expirationDate) return false;
+  const days = getDaysUntilExpiration(item);
+  return days !== null && days < 0;
 }
 
 function getDaysUntilExpiration(item: CareItem): number | null {
@@ -64,19 +71,35 @@ function getDaysUntilExpiration(item: CareItem): number | null {
   return Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-// グループ分類
-type ItemGroup = 'today' | 'expiring' | 'other';
+// 今日提供予定タブ用グループ
+type TodayGroup = 'scheduledToday' | 'other';
 
-function classifyItem(item: CareItem): ItemGroup {
-  if (isScheduledForToday(item)) return 'today';
-  if (isExpiringSoon(item)) return 'expiring';
+function classifyForTodayTab(item: CareItem): TodayGroup {
+  if (isScheduledForToday(item)) return 'scheduledToday';
   return 'other';
 }
 
+// 賞味期限タブ用グループ
+type ExpirationGroup = 'expired' | 'expiringSoon' | 'hasExpiration' | 'noExpiration';
+
+function classifyForExpirationTab(item: CareItem): ExpirationGroup {
+  if (isExpired(item)) return 'expired';
+  if (isExpiringSoon(item)) return 'expiringSoon';
+  if (item.expirationDate) return 'hasExpiration';
+  return 'noExpiration';
+}
+
 export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBasedSnackRecordProps) {
+  // タブ状態（初期: 今日提供予定）
+  const [activeTab, setActiveTab] = useState<TabType>('today');
+
   // モーダル状態
   const [selectedItem, setSelectedItem] = useState<CareItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // 廃棄確認ダイアログ
+  const [discardTarget, setDiscardTarget] = useState<CareItem | null>(null);
+  const discardMutation = useDiscardItem();
 
   // 在庫あり品物のみ取得（pending/in_progress のみ）
   const { data, isLoading, error, refetch } = useCareItems({
@@ -85,36 +108,64 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
   });
   const items = data?.items ?? [];
 
-  // グループ分けとソート
-  const groupedItems = useMemo(() => {
-    const groups: Record<ItemGroup, CareItem[]> = {
-      today: [],
-      expiring: [],
+  // 共通ソート関数
+  const sortByExpirationAndSentDate = (a: CareItem, b: CareItem) => {
+    // 期限ありを優先
+    if (a.expirationDate && !b.expirationDate) return -1;
+    if (!a.expirationDate && b.expirationDate) return 1;
+    // 期限順
+    if (a.expirationDate && b.expirationDate) {
+      const diff = new Date(a.expirationDate).getTime() - new Date(b.expirationDate).getTime();
+      if (diff !== 0) return diff;
+    }
+    // 送付日順（古い順）
+    return new Date(a.sentDate).getTime() - new Date(b.sentDate).getTime();
+  };
+
+  // 今日提供予定タブ用グループ
+  const todayGroups = useMemo(() => {
+    const groups: Record<TodayGroup, CareItem[]> = {
+      scheduledToday: [],
       other: [],
     };
 
     items.forEach((item) => {
-      const group = classifyItem(item);
+      const group = classifyForTodayTab(item);
       groups[group].push(item);
     });
 
-    // 各グループ内でソート（期限順 → 送付日順）
-    const sortByExpirationAndSentDate = (a: CareItem, b: CareItem) => {
-      // 期限ありを優先
-      if (a.expirationDate && !b.expirationDate) return -1;
-      if (!a.expirationDate && b.expirationDate) return 1;
-      // 期限順
-      if (a.expirationDate && b.expirationDate) {
-        const diff = new Date(a.expirationDate).getTime() - new Date(b.expirationDate).getTime();
-        if (diff !== 0) return diff;
-      }
-      // 送付日順（古い順）
-      return new Date(a.sentDate).getTime() - new Date(b.sentDate).getTime();
+    Object.keys(groups).forEach((key) => {
+      groups[key as TodayGroup].sort(sortByExpirationAndSentDate);
+    });
+
+    return groups;
+  }, [items]);
+
+  // 賞味期限タブ用グループ
+  const expirationGroups = useMemo(() => {
+    const groups: Record<ExpirationGroup, CareItem[]> = {
+      expired: [],
+      expiringSoon: [],
+      hasExpiration: [],
+      noExpiration: [],
     };
 
-    Object.keys(groups).forEach((key) => {
-      groups[key as ItemGroup].sort(sortByExpirationAndSentDate);
+    items.forEach((item) => {
+      const group = classifyForExpirationTab(item);
+      groups[group].push(item);
     });
+
+    // 期限切れは古い順（早く対処が必要）
+    groups.expired.sort((a, b) => {
+      const daysA = getDaysUntilExpiration(a) ?? 0;
+      const daysB = getDaysUntilExpiration(b) ?? 0;
+      return daysA - daysB;
+    });
+
+    // その他は期限順
+    groups.expiringSoon.sort(sortByExpirationAndSentDate);
+    groups.hasExpiration.sort(sortByExpirationAndSentDate);
+    groups.noExpiration.sort(sortByExpirationAndSentDate);
 
     return groups;
   }, [items]);
@@ -160,69 +211,243 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
     onRecordComplete?.();
   };
 
+  const handleDiscard = async (item: CareItem) => {
+    try {
+      await discardMutation.mutateAsync({
+        itemId: item.id,
+        reason: 'スタッフにより廃棄（期限切れ）',
+      });
+      setDiscardTarget(null);
+      refetch();
+    } catch (error) {
+      console.error('廃棄処理に失敗しました:', error);
+    }
+  };
+
   return (
-    <div className="p-4 space-y-6">
-      <div className="text-center mb-4">
-        <h2 className="text-lg font-bold text-gray-800">📦 品物から間食記録</h2>
-        <p className="text-sm text-gray-500 mt-1">品物を選んで提供記録を入力</p>
+    <div className="p-4 space-y-4">
+      {/* タブUI */}
+      <div className="flex border-b border-gray-200">
+        <button
+          onClick={() => setActiveTab('today')}
+          className={`flex-1 py-3 text-sm font-medium transition-colors ${
+            activeTab === 'today'
+              ? 'text-primary border-b-2 border-primary'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          📅 今日提供予定
+          {todayGroups.scheduledToday.length > 0 && (
+            <span className="ml-1 px-1.5 py-0.5 text-xs bg-amber-100 text-amber-700 rounded-full">
+              {todayGroups.scheduledToday.length}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab('expiration')}
+          className={`flex-1 py-3 text-sm font-medium transition-colors ${
+            activeTab === 'expiration'
+              ? 'text-primary border-b-2 border-primary'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          ⚠️ 賞味期限
+          {expirationGroups.expired.length > 0 && (
+            <span className="ml-1 px-1.5 py-0.5 text-xs bg-red-100 text-red-700 rounded-full">
+              {expirationGroups.expired.length}
+            </span>
+          )}
+        </button>
       </div>
 
-      {/* 今日提供予定 */}
-      {groupedItems.today.length > 0 && (
-        <div>
-          <h3 className="text-sm font-bold text-amber-700 mb-2 flex items-center gap-2">
-            <span>⭐</span>
-            今日提供予定
-          </h3>
-          <div className="space-y-3">
-            {groupedItems.today.map((item) => (
-              <ItemCard
-                key={item.id}
-                item={item}
-                highlight="today"
-                onRecordClick={() => handleRecordClick(item)}
-              />
-            ))}
-          </div>
+      {/* 今日提供予定タブ */}
+      {activeTab === 'today' && (
+        <div className="space-y-6">
+          {/* 今日提供予定 */}
+          {todayGroups.scheduledToday.length > 0 && (
+            <div>
+              <h3 className="text-sm font-bold text-amber-700 mb-2 flex items-center gap-2">
+                <span>⭐</span>
+                今日提供予定
+              </h3>
+              <div className="space-y-3">
+                {todayGroups.scheduledToday.map((item) => (
+                  <ItemCard
+                    key={item.id}
+                    item={item}
+                    highlight="today"
+                    onRecordClick={() => handleRecordClick(item)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* その他の品物 */}
+          {todayGroups.other.length > 0 && (
+            <div>
+              <h3 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                <span>🟢</span>
+                その他の品物
+              </h3>
+              <div className="space-y-3">
+                {todayGroups.other.map((item) => (
+                  <ItemCard
+                    key={item.id}
+                    item={item}
+                    highlight="none"
+                    onRecordClick={() => handleRecordClick(item)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {todayGroups.scheduledToday.length === 0 && todayGroups.other.length === 0 && (
+            <div className="p-8 text-center text-gray-500">
+              <div className="text-4xl mb-4">📦</div>
+              <p className="font-medium">在庫のある品物がありません</p>
+            </div>
+          )}
         </div>
       )}
 
-      {/* 期限が近い */}
-      {groupedItems.expiring.length > 0 && (
-        <div>
-          <h3 className="text-sm font-bold text-orange-700 mb-2 flex items-center gap-2">
-            <span>⚠️</span>
-            期限が近い
-          </h3>
-          <div className="space-y-3">
-            {groupedItems.expiring.map((item) => (
-              <ItemCard
-                key={item.id}
-                item={item}
-                highlight="expiring"
-                onRecordClick={() => handleRecordClick(item)}
-              />
-            ))}
-          </div>
+      {/* 賞味期限タブ */}
+      {activeTab === 'expiration' && (
+        <div className="space-y-6">
+          {/* 期限切れアラート */}
+          {expirationGroups.expired.length > 0 && (
+            <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">❌</span>
+                <div className="flex-1">
+                  <p className="font-bold text-red-800">
+                    期限切れが {expirationGroups.expired.length}件 あります
+                  </p>
+                  <p className="text-sm text-red-600 mt-1">
+                    廃棄または対応が必要です
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 期限切れ */}
+          {expirationGroups.expired.length > 0 && (
+            <div>
+              <h3 className="text-sm font-bold text-red-700 mb-2 flex items-center gap-2">
+                <span>❌</span>
+                期限切れ
+              </h3>
+              <div className="space-y-3">
+                {expirationGroups.expired.map((item) => (
+                  <ItemCard
+                    key={item.id}
+                    item={item}
+                    highlight="expired"
+                    onRecordClick={() => handleRecordClick(item)}
+                    onDiscardClick={() => setDiscardTarget(item)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 期限間近 */}
+          {expirationGroups.expiringSoon.length > 0 && (
+            <div>
+              <h3 className="text-sm font-bold text-orange-700 mb-2 flex items-center gap-2">
+                <span>⚠️</span>
+                期限間近（3日以内）
+              </h3>
+              <div className="space-y-3">
+                {expirationGroups.expiringSoon.map((item) => (
+                  <ItemCard
+                    key={item.id}
+                    item={item}
+                    highlight="expiring"
+                    onRecordClick={() => handleRecordClick(item)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 期限あり */}
+          {expirationGroups.hasExpiration.length > 0 && (
+            <div>
+              <h3 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                <span>🟢</span>
+                期限あり
+              </h3>
+              <div className="space-y-3">
+                {expirationGroups.hasExpiration.map((item) => (
+                  <ItemCard
+                    key={item.id}
+                    item={item}
+                    highlight="none"
+                    onRecordClick={() => handleRecordClick(item)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 期限設定なし */}
+          {expirationGroups.noExpiration.length > 0 && (
+            <div>
+              <h3 className="text-sm font-bold text-gray-500 mb-2 flex items-center gap-2">
+                <span>⚪</span>
+                期限設定なし
+              </h3>
+              <div className="space-y-3">
+                {expirationGroups.noExpiration.map((item) => (
+                  <ItemCard
+                    key={item.id}
+                    item={item}
+                    highlight="none"
+                    onRecordClick={() => handleRecordClick(item)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {expirationGroups.expired.length === 0 &&
+            expirationGroups.expiringSoon.length === 0 &&
+            expirationGroups.hasExpiration.length === 0 &&
+            expirationGroups.noExpiration.length === 0 && (
+              <div className="p-8 text-center text-gray-500">
+                <div className="text-4xl mb-4">📦</div>
+                <p className="font-medium">在庫のある品物がありません</p>
+              </div>
+            )}
         </div>
       )}
 
-      {/* その他の品物 */}
-      {groupedItems.other.length > 0 && (
-        <div>
-          <h3 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-            <span>🟢</span>
-            その他の品物
-          </h3>
-          <div className="space-y-3">
-            {groupedItems.other.map((item) => (
-              <ItemCard
-                key={item.id}
-                item={item}
-                highlight="none"
-                onRecordClick={() => handleRecordClick(item)}
-              />
-            ))}
+      {/* 廃棄確認ダイアログ */}
+      {discardTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg p-6 mx-4 max-w-sm w-full shadow-xl">
+            <h3 className="text-lg font-bold text-gray-800 mb-2">廃棄確認</h3>
+            <p className="text-gray-600 mb-4">
+              「{discardTarget.itemName}」を廃棄しますか？
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDiscardTarget(null)}
+                className="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={() => handleDiscard(discardTarget)}
+                disabled={discardMutation.isPending}
+                className="flex-1 py-2 px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition disabled:opacity-50"
+              >
+                {discardMutation.isPending ? '処理中...' : '廃棄する'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -243,17 +468,19 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
 // 品物カードコンポーネント
 interface ItemCardProps {
   item: CareItem;
-  highlight: 'today' | 'expiring' | 'none';
+  highlight: 'today' | 'expiring' | 'expired' | 'none';
   onRecordClick: () => void;
+  onDiscardClick?: () => void;
 }
 
-function ItemCard({ item, highlight, onRecordClick }: ItemCardProps) {
+function ItemCard({ item, highlight, onRecordClick, onDiscardClick }: ItemCardProps) {
   const daysUntil = getDaysUntilExpiration(item);
   const remainingQty = item.currentQuantity ?? item.remainingQuantity ?? item.quantity;
 
   const borderColor = {
     today: 'border-amber-400 bg-amber-50',
     expiring: 'border-orange-400 bg-orange-50',
+    expired: 'border-red-400 bg-red-50',
     none: 'border-gray-200 bg-white',
   }[highlight];
 
@@ -264,6 +491,7 @@ function ItemCard({ item, highlight, onRecordClick }: ItemCardProps) {
           <div className="flex items-center gap-2">
             {highlight === 'today' && <span className="text-amber-500">⭐</span>}
             {highlight === 'expiring' && <span className="text-orange-500">⚠️</span>}
+            {highlight === 'expired' && <span className="text-red-500">❌</span>}
             {highlight === 'none' && <span className="text-green-500">🟢</span>}
             <span className="font-bold text-gray-800">{item.itemName}</span>
           </div>
@@ -273,9 +501,16 @@ function ItemCard({ item, highlight, onRecordClick }: ItemCardProps) {
               <span>残り {remainingQty}{item.unit}</span>
               <span className="text-gray-300">┃</span>
               {item.expirationDate ? (
-                <span className={daysUntil !== null && daysUntil <= 3 ? 'text-orange-600 font-medium' : ''}>
+                <span className={
+                  daysUntil !== null && daysUntil < 0
+                    ? 'text-red-600 font-medium'
+                    : daysUntil !== null && daysUntil <= 3
+                      ? 'text-orange-600 font-medium'
+                      : ''
+                }>
                   期限 {new Date(item.expirationDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}
-                  {daysUntil !== null && daysUntil <= 3 && ` (あと${daysUntil}日)`}
+                  {daysUntil !== null && daysUntil < 0 && ` (${Math.abs(daysUntil)}日超過)`}
+                  {daysUntil !== null && daysUntil >= 0 && daysUntil <= 3 && ` (あと${daysUntil}日)`}
                 </span>
               ) : (
                 <span className="text-gray-400">期限なし</span>
@@ -307,13 +542,24 @@ function ItemCard({ item, highlight, onRecordClick }: ItemCardProps) {
           </div>
         </div>
 
-        <button
-          onClick={onRecordClick}
-          className="ml-4 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-1"
-        >
-          <span>🍪</span>
-          <span>提供記録</span>
-        </button>
+        <div className="flex flex-col gap-2 ml-4">
+          <button
+            onClick={onRecordClick}
+            className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-1"
+          >
+            <span>🍪</span>
+            <span>提供記録</span>
+          </button>
+          {onDiscardClick && (
+            <button
+              onClick={onDiscardClick}
+              className="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-600 transition-colors flex items-center gap-1"
+            >
+              <span>🗑️</span>
+              <span>廃棄</span>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
