@@ -11,7 +11,7 @@ if [[ "$COMMAND" == *"git commit"* ]] || [[ "$COMMAND" == *"git add"* ]]; then
     # ステージングされたファイルをチェック
     STAGED=$(git diff --cached --name-only 2>/dev/null)
 
-    # 新規docs/ファイル（archive/以外）をチェック
+    # 1. 新規docs/ファイル（archive/以外）をチェック
     NEW_DOCS=$(echo "$STAGED" | grep -E '^docs/[^/]+\.md$' | grep -v 'HANDOVER\|ARCHITECTURE\|API_SPEC\|BUSINESS_RULES\|DATA_MODEL\|SETUP')
 
     if [ -n "$NEW_DOCS" ]; then
@@ -24,7 +24,21 @@ if [[ "$COMMAND" == *"git commit"* ]] || [[ "$COMMAND" == *"git add"* ]]; then
         echo "   - 既存の6ファイルにセクション追加してください"
         echo "   - 詳細: CLAUDE.md「ドキュメント更新ルール」参照"
         echo ""
-        # 警告のみ（ブロックしない）
+    fi
+
+    # 2. archive/への新規追加をチェック
+    NEW_ARCHIVE=$(echo "$STAGED" | grep -E '^docs/archive/.*\.md$')
+
+    if [ -n "$NEW_ARCHIVE" ]; then
+        echo ""
+        echo "⚠️  docs/archive/ への新規ファイル追加が検出されました:"
+        echo "$NEW_ARCHIVE"
+        echo ""
+        echo "📋 アーカイブルール:"
+        echo "   - archive/への新規追加は禁止"
+        echo "   - 設計メモはコミットメッセージに記載"
+        echo "   - 本当に必要な場合のみ追加（シート構造等の参照用）"
+        echo ""
     fi
 fi
 
