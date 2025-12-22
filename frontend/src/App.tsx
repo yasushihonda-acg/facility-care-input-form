@@ -10,7 +10,6 @@ import { ItemTimeline } from './pages/shared/ItemTimeline';
 // import { ItemChatPage } from './pages/shared/ItemChatPage';
 
 // スタッフ専用
-import { StaffHome } from './pages/staff/StaffHome';
 import { MealInputPage } from './pages/MealInputPage';
 import { FamilyMessages } from './pages/staff/FamilyMessages';
 import { FamilyMessageDetail } from './pages/staff/FamilyMessageDetail';
@@ -61,8 +60,8 @@ function App() {
       <Route path="/items/:id/timeline" element={<ItemTimeline />} />
 
       {/* ========== スタッフ専用 ========== */}
-      {/* スタッフホーム */}
-      <Route path="/staff" element={<StaffHome />} />
+      {/* スタッフホーム → 注意事項ページへリダイレクト（Phase 40） */}
+      <Route path="/staff" element={<Navigate to="/staff/notes" replace />} />
 
       {/* 食事記録入力 */}
       <Route path="/staff/input/meal" element={<MealInputPage />} />
