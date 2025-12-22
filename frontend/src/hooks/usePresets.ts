@@ -12,7 +12,6 @@ import {
   saveAISuggestionAsPreset,
 } from '../api';
 import type {
-  PresetCategory,
   PresetSource,
   GetPresetsRequest,
   CreatePresetRequest,
@@ -119,21 +118,6 @@ export function useSaveAISuggestionAsPreset() {
     },
   });
 }
-
-// カテゴリラベル
-// 注: 'ban'（禁止・制限）は ProhibitionRule として別管理
-export const PRESET_CATEGORY_LABELS: Record<PresetCategory, string> = {
-  cut: 'カット・調理',
-  serve: '提供方法',
-  condition: '条件付き',
-};
-
-// カテゴリアイコン
-export const PRESET_CATEGORY_ICONS: Record<PresetCategory, string> = {
-  cut: '✂️',
-  serve: '🍽️',
-  condition: '🔀',
-};
 
 // 出所ラベル
 export const PRESET_SOURCE_LABELS: Record<PresetSource, string> = {

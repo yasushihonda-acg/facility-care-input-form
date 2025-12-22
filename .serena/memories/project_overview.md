@@ -48,6 +48,21 @@ facility-care-input-form/
 - **Sheet A（読取）**: `1Gf8QTbGyKB7rn5QQa5cYOg1NNYWMV8lzqySdbDkfG-w`
 - **Sheet B（書込）**: `1OrpUVoDfUECXCTrKOGKLwN_4OQ9dlg7cUTCPGLDGHV0`
 
+## プリセット型定義（2025-12-23統一）
+
+```typescript
+// 正規フィールド（ItemFormに適用）
+processingDetail: string;
+
+// @deprecated 後方互換性のため保持
+instruction?: { content: string; };
+```
+
+データフロー:
+1. PresetFormModal → processingDetailで保存
+2. Backend API → processingDetailを保存・返却
+3. ItemForm.handleApplyPreset → processingDetailを読んでservingMethodDetailに設定
+
 ## 開発履歴
 Phase 1〜40完了。詳細は `git log` を参照。
 

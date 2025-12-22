@@ -734,7 +734,8 @@ export interface SaveAISuggestionAsPresetRequest {
   userId: string;
   itemName: string;
   presetName: string;
-  category: PresetCategory;
+  /** @deprecated カテゴリは廃止（後方互換性のため保持） */
+  category?: PresetCategory;
   icon?: string;
   aiSuggestion: AISuggestResponse;
   keywords?: string[];

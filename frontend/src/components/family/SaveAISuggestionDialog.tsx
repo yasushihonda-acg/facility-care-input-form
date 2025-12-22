@@ -4,8 +4,8 @@
  */
 
 import { useState } from 'react';
-import { useSaveAISuggestionAsPreset, PRESET_CATEGORY_LABELS, PRESET_CATEGORY_ICONS } from '../../hooks/usePresets';
-import type { AISuggestResponse, PresetCategory, ItemCategory } from '../../types/careItem';
+import { useSaveAISuggestionAsPreset } from '../../hooks/usePresets';
+import type { AISuggestResponse, ItemCategory } from '../../types/careItem';
 
 // 保存方法ラベル
 const STORAGE_METHOD_LABELS: Record<string, string> = {
@@ -48,7 +48,6 @@ export function SaveAISuggestionDialog({
   const [presetName, setPresetName] = useState(
     `${itemName}（${aiSuggestion.servingMethods?.map((m) => SERVING_METHOD_LABELS[m] || m).join('・') || 'そのまま'}）`
   );
-  const [presetCategory, setPresetCategory] = useState<PresetCategory>('cut');
 
   const saveMutation = useSaveAISuggestionAsPreset();
 
@@ -61,7 +60,6 @@ export function SaveAISuggestionDialog({
         userId,
         itemName,
         presetName,
-        category: presetCategory,
         icon: '🤖',
         aiSuggestion,
         keywords: [itemName],
@@ -110,36 +108,17 @@ export function SaveAISuggestionDialog({
         </div>
 
         {/* プリセット名入力 */}
-        <div className="px-4 pb-4 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              プリセット名
-            </label>
-            <input
-              type="text"
-              value={presetName}
-              onChange={(e) => setPresetName(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg text-sm"
-              placeholder="例: りんご（カット・皮むき）"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              カテゴリ
-            </label>
-            <select
-              value={presetCategory}
-              onChange={(e) => setPresetCategory(e.target.value as PresetCategory)}
-              className="w-full px-4 py-2 border rounded-lg text-sm"
-            >
-              {Object.entries(PRESET_CATEGORY_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {PRESET_CATEGORY_ICONS[value as PresetCategory]} {label}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div className="px-4 pb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            プリセット名
+          </label>
+          <input
+            type="text"
+            value={presetName}
+            onChange={(e) => setPresetName(e.target.value)}
+            className="w-full px-4 py-2 border rounded-lg text-sm"
+            placeholder="例: りんご（カット・皮むき）"
+          />
         </div>
 
         {/* アクションボタン */}

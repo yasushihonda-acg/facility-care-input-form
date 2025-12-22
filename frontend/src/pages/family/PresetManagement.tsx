@@ -11,8 +11,6 @@ import {
   useCreatePreset,
   useUpdatePreset,
   useDeletePreset,
-  PRESET_CATEGORY_LABELS,
-  PRESET_CATEGORY_ICONS,
   PRESET_SOURCE_LABELS,
   PRESET_SOURCE_ICONS,
 } from '../../hooks/usePresets';
@@ -20,7 +18,6 @@ import { useDemoMode } from '../../hooks/useDemoMode';
 import type {
   CarePreset,
   CarePresetInput,
-  PresetCategory,
 } from '../../types/careItem';
 
 // デモ用の入居者ID・ユーザーID（将来は認証から取得）
@@ -31,7 +28,6 @@ const DEMO_USER_ID = 'family-001';
 const ICON_OPTIONS = ['🥝', '🍎', '🍊', '🍑', '🧅', '⚫', '🈲', '⚠️', '🔀', '🍽️', '✂️', '🍰', '🥛', '🍚'];
 
 export function PresetManagement() {
-  const [categoryFilter, setCategoryFilter] = useState<PresetCategory | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [editingPreset, setEditingPreset] = useState<CarePreset | null>(null);
@@ -41,7 +37,6 @@ export function PresetManagement() {
   // プリセット一覧を取得
   const { data, isLoading, error } = usePresets({
     residentId: DEMO_RESIDENT_ID,
-    category: categoryFilter === 'all' ? undefined : categoryFilter,
   });
 
   const createPresetMutation = useCreatePreset();
@@ -82,15 +77,6 @@ export function PresetManagement() {
     }
   };
 
-  // フィルタタブ
-  // 注: '禁止' カテゴリは ProhibitionRule として別画面（入居者設定）で管理
-  const filterTabs: { value: PresetCategory | 'all'; label: string; icon: string }[] = [
-    { value: 'all', label: '全て', icon: '' },
-    { value: 'cut', label: 'カット', icon: PRESET_CATEGORY_ICONS.cut },
-    { value: 'serve', label: '提供', icon: PRESET_CATEGORY_ICONS.serve },
-    { value: 'condition', label: '条件', icon: PRESET_CATEGORY_ICONS.condition },
-  ];
-
   return (
     <Layout title="いつもの指示" showBackButton>
       {/* ヘッダー */}
@@ -119,22 +105,6 @@ export function PresetManagement() {
           />
         </div>
 
-        {/* フィルタタブ */}
-        <div className="flex gap-2 px-4 pb-3 overflow-x-auto">
-          {filterTabs.map((tab) => (
-            <button
-              key={tab.value}
-              onClick={() => setCategoryFilter(tab.value)}
-              className={`px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${
-                categoryFilter === tab.value
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              {tab.icon} {tab.label}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* コンテンツ */}
@@ -319,7 +289,6 @@ function PresetFormModal({
   isSaving: boolean;
 }) {
   const [name, setName] = useState(preset?.name || '');
-  const [category, setCategory] = useState<PresetCategory>(preset?.category || 'cut');
   const [icon, setIcon] = useState(preset?.icon || '📋');
   // processingDetail を優先、旧形式 instruction.content もフォールバック
   const [processingDetail, setProcessingDetail] = useState(
@@ -337,7 +306,6 @@ function PresetFormModal({
 
     const input: CarePresetInput = {
       name: name.trim(),
-      category,
       icon,
       processingDetail: processingDetail.trim(),
       matchConfig: {
@@ -384,24 +352,6 @@ function PresetFormModal({
               className="w-full px-4 py-2 border rounded-lg"
               required
             />
-          </div>
-
-          {/* カテゴリ */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              カテゴリ <span className="text-red-500">*</span>
-            </label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value as PresetCategory)}
-              className="w-full px-4 py-2 border rounded-lg"
-            >
-              {Object.entries(PRESET_CATEGORY_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {PRESET_CATEGORY_ICONS[value as PresetCategory]} {label}
-                </option>
-              ))}
-            </select>
           </div>
 
           {/* アイコン */}

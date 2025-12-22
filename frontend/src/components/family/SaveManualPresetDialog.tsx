@@ -4,8 +4,8 @@
  */
 
 import { useState, useMemo } from 'react';
-import { useCreatePreset, PRESET_CATEGORY_LABELS, PRESET_CATEGORY_ICONS } from '../../hooks/usePresets';
-import type { CareItemInput, PresetCategory, ItemCategory } from '../../types/careItem';
+import { useCreatePreset } from '../../hooks/usePresets';
+import type { CareItemInput, ItemCategory } from '../../types/careItem';
 
 // カテゴリラベル（Phase 31: 2カテゴリに簡素化）
 const ITEM_CATEGORY_LABELS: Record<ItemCategory, string> = {
@@ -51,7 +51,6 @@ export function SaveManualPresetDialog({
 
   // ユーザーがプリセット名を編集したかどうか
   const [customPresetName, setCustomPresetName] = useState<string | null>(null);
-  const [presetCategory, setPresetCategory] = useState<PresetCategory>('cut');
 
   // 表示用のプリセット名（カスタム入力があればそれを優先）
   const presetName = customPresetName ?? defaultPresetName;
@@ -67,7 +66,6 @@ export function SaveManualPresetDialog({
         userId,
         preset: {
           name: presetName,
-          category: presetCategory,
           icon: '📌',
           // 品物登録フォームのservingMethodDetailをprocessingDetailとして保存
           processingDetail: formData.servingMethodDetail || '',
@@ -127,36 +125,17 @@ export function SaveManualPresetDialog({
         </div>
 
         {/* プリセット名入力 */}
-        <div className="px-4 pb-4 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              プリセット名
-            </label>
-            <input
-              type="text"
-              value={presetName}
-              onChange={(e) => setCustomPresetName(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg text-sm"
-              placeholder="例: キウイ（カット）"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              カテゴリ
-            </label>
-            <select
-              value={presetCategory}
-              onChange={(e) => setPresetCategory(e.target.value as PresetCategory)}
-              className="w-full px-4 py-2 border rounded-lg text-sm"
-            >
-              {Object.entries(PRESET_CATEGORY_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {PRESET_CATEGORY_ICONS[value as PresetCategory]} {label}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div className="px-4 pb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            プリセット名
+          </label>
+          <input
+            type="text"
+            value={presetName}
+            onChange={(e) => setCustomPresetName(e.target.value)}
+            className="w-full px-4 py-2 border rounded-lg text-sm"
+            placeholder="例: キウイ（カット）"
+          />
         </div>
 
         {/* アクションボタン */}
