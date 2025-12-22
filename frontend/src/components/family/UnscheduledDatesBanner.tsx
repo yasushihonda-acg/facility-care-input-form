@@ -98,7 +98,7 @@ export function UnscheduledDatesBanner({
                 {currentPeriod}ヶ月 ▼
               </button>
               {showPeriodSelect && (
-                <div className="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                <div className="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[80px]">
                   {periodOptions.map((opt) => (
                     <button
                       key={opt.value}
@@ -106,8 +106,8 @@ export function UnscheduledDatesBanner({
                         onPeriodChange?.(opt.value);
                         setShowPeriodSelect(false);
                       }}
-                      className={`block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 ${
-                        currentPeriod === opt.value ? 'bg-amber-50 text-amber-700' : 'text-gray-700'
+                      className={`block w-full px-4 py-2 text-left text-sm whitespace-nowrap hover:bg-gray-100 ${
+                        currentPeriod === opt.value ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
                       }`}
                     >
                       {opt.label}
@@ -129,16 +129,17 @@ export function UnscheduledDatesBanner({
           </div>
         </div>
 
-        {/* スケジュール除外トグル */}
-        <div className="flex gap-2 mt-2">
-          <span className="text-xs text-gray-500 self-center">除外:</span>
+        {/* スケジュールフィルター: 青=対象（計算に含む）、グレー+取消線=除外 */}
+        <div className="flex items-center gap-2 mt-2">
+          <span className="text-xs text-gray-500">対象:</span>
           <button
             onClick={() => onExcludeDailyChange?.(!excludeDaily)}
             className={`px-2 py-1 text-xs rounded transition-colors ${
               excludeDaily
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-gray-200 text-gray-400 line-through'
+                : 'bg-blue-500 text-white'
             }`}
+            title={excludeDaily ? '毎日スケジュールを計算に含める' : '毎日スケジュールを除外する'}
           >
             毎日
           </button>
@@ -146,9 +147,10 @@ export function UnscheduledDatesBanner({
             onClick={() => onExcludeWeeklyChange?.(!excludeWeekly)}
             className={`px-2 py-1 text-xs rounded transition-colors ${
               excludeWeekly
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-gray-200 text-gray-400 line-through'
+                : 'bg-blue-500 text-white'
             }`}
+            title={excludeWeekly ? '週ごとスケジュールを計算に含める' : '週ごとスケジュールを除外する'}
           >
             週ごと
           </button>
