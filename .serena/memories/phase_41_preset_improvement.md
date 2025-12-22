@@ -22,10 +22,13 @@ instructions: {
 
 ## 実装計画
 
-### Phase 41.1: 型定義・後方互換性（Day 1）
-- [ ] `frontend/src/types/careItem.ts`: CarePresetに`instructions`フィールド追加
-- [ ] `functions/src/types/index.ts`: バックエンド型も同様に更新
-- [ ] 既存`category`/`instruction`は残す（後方互換性）
+### Phase 41.1: 型定義・後方互換性（Day 1） ✅ 完了
+- [x] `frontend/src/types/careItem.ts`: CarePresetに`instructions`フィールド追加
+- [x] `functions/src/types/index.ts`: バックエンド型も同様に更新
+- [x] 既存`category`/`instruction`は残す（後方互換性）
+- [x] 既存コードのnull check追加（PresetManagement.tsx, getPresetSuggestions.ts）
+- [x] ビルド確認（フロントエンド・バックエンド両方成功）
+- コミット: d4d5167
 
 ### Phase 41.2: バックエンドAPI改修（Day 1-2）
 - [ ] `functions/src/functions/presets.ts`: CRUD対応
