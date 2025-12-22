@@ -69,7 +69,7 @@ export function UnscheduledDatesBanner({
   const hasUnscheduledDates = unscheduledDates.length > 0;
 
   return (
-    <div className={`mx-4 mb-3 ${hasUnscheduledDates ? 'bg-amber-50 border-amber-200' : 'bg-green-50 border-green-200'} border rounded-lg overflow-hidden`}>
+    <div className={`mx-4 mb-3 ${hasUnscheduledDates ? 'bg-amber-50 border-amber-200' : 'bg-green-50 border-green-200'} border rounded-lg overflow-visible`}>
       {/* ヘッダー */}
       <div className="px-4 py-3">
         <div className="flex items-start justify-between gap-2">
@@ -98,7 +98,7 @@ export function UnscheduledDatesBanner({
                 {currentPeriod}ヶ月 ▼
               </button>
               {showPeriodSelect && (
-                <div className="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[80px]">
+                <div className="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 overflow-hidden">
                   {periodOptions.map((opt) => (
                     <button
                       key={opt.value}
@@ -109,6 +109,7 @@ export function UnscheduledDatesBanner({
                       className={`block w-full px-4 py-2 text-left text-sm whitespace-nowrap hover:bg-gray-100 ${
                         currentPeriod === opt.value ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
                       }`}
+                      style={{ minWidth: '5rem' }}
                     >
                       {opt.label}
                     </button>
