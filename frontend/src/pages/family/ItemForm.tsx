@@ -517,6 +517,9 @@ export function ItemForm() {
               rows={3}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary resize-y"
             />
+            <p className="mt-1 text-xs text-gray-500">
+              ※ 特別な条件（体調不良時は除外など）もここに記載してください
+            </p>
           </div>
 
           {/* Phase 33: 残った場合の処置指示 */}
