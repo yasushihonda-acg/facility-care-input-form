@@ -1911,9 +1911,9 @@ export const STAFF_NOTE_PRIORITIES: {
   color: string;
   bgColor: string;
 }[] = [
-  { value: "critical", label: "重要", icon: "🔴", color: "text-red-700", bgColor: "bg-red-50" },
-  { value: "warning", label: "注意", icon: "⚠️", color: "text-yellow-700", bgColor: "bg-yellow-50" },
-  { value: "normal", label: "通常", icon: "○", color: "text-green-700", bgColor: "bg-green-50" },
+  {value: "critical", label: "重要", icon: "🔴", color: "text-red-700", bgColor: "bg-red-50"},
+  {value: "warning", label: "注意", icon: "⚠️", color: "text-yellow-700", bgColor: "bg-yellow-50"},
+  {value: "normal", label: "通常", icon: "○", color: "text-green-700", bgColor: "bg-green-50"},
 ];
 
 /**
