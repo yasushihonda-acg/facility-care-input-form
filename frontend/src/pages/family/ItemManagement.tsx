@@ -1,13 +1,15 @@
 /**
  * 品物管理ページ（家族用）
  * @see docs/ITEM_MANAGEMENT_SPEC.md
+ * Phase 38: 日付範囲タブ・未設定日通知追加
  */
 
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import { useCareItems, useDeleteCareItem } from '../../hooks/useCareItems';
 import { useDemoMode } from '../../hooks/useDemoMode';
+import { useSkipDateManager } from '../../hooks/useSkipDates';
 import {
   getCategoryIcon,
   getStatusLabel,
@@ -17,25 +19,70 @@ import {
   getDaysUntilExpiration,
 } from '../../types/careItem';
 import type { CareItem, ItemStatus } from '../../types/careItem';
+import type { DateRangeType, SchedulePatternType } from '../../types/skipDate';
+import { DateRangeTabs } from '../../components/family/DateRangeTabs';
+import { UnscheduledDatesBanner } from '../../components/family/UnscheduledDatesBanner';
+import { UnscheduledDatesModal } from '../../components/family/UnscheduledDatesModal';
+import {
+  getUnscheduledDates,
+  filterItemsByDateRangeAndPattern,
+} from '../../utils/scheduleUtils';
 
 // デモ用の入居者ID・ユーザーID（将来は認証から取得）
 const DEMO_RESIDENT_ID = 'resident-001';
 
 export function ItemManagement() {
   const [statusFilter, setStatusFilter] = useState<ItemStatus | 'all'>('all');
+  const [dateRange, setDateRange] = useState<DateRangeType>('all');
+  const [schedulePattern, setSchedulePattern] = useState<SchedulePatternType>('all');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [showUnscheduledModal, setShowUnscheduledModal] = useState(false);
   const isDemo = useDemoMode();
+  const navigate = useNavigate();
 
   // デモモード対応: リンク先プレフィックス
   const pathPrefix = isDemo ? '/demo' : '';
 
-  // 品物一覧を取得
+  // 品物一覧を取得（ステータスフィルタはAPI側で処理）
   const { data, isLoading, error } = useCareItems({
     residentId: DEMO_RESIDENT_ID,
     status: statusFilter === 'all' ? undefined : statusFilter,
   });
 
+  // スキップ日管理
+  const {
+    skipDateStrings,
+    addSkipDate,
+    isAdding: isSkipDateAdding,
+  } = useSkipDateManager(DEMO_RESIDENT_ID);
+
   const deleteItem = useDeleteCareItem();
+
+  // 日付範囲・パターンでフィルタリング
+  const filteredItems = useMemo(() => {
+    if (!data?.items) return [];
+    return filterItemsByDateRangeAndPattern(data.items, dateRange, schedulePattern);
+  }, [data?.items, dateRange, schedulePattern]);
+
+  // 未設定日を算出（アクティブな品物のみ対象）
+  const unscheduledDates = useMemo(() => {
+    if (!data?.items) return [];
+    const activeItems = data.items.filter(
+      (item) => item.status === 'pending' || item.status === 'in_progress'
+    );
+    return getUnscheduledDates(activeItems, skipDateStrings, 2);
+  }, [data?.items, skipDateStrings]);
+
+  // 未設定日クリック → 品物登録画面へ
+  const handleUnscheduledDateClick = (date: string) => {
+    navigate(`${pathPrefix}/family/items/new?date=${date}`);
+    setShowUnscheduledModal(false);
+  };
+
+  // 「提供なし」設定
+  const handleMarkAsSkip = async (date: string) => {
+    await addSkipDate(date, '家族により提供なしに設定');
+  };
 
   // 削除確認
   const handleDeleteConfirm = (itemId: string) => {
@@ -98,7 +145,7 @@ export function ItemManagement() {
           </div>
         </div>
 
-        {/* フィルタタブ */}
+        {/* ステータスフィルタタブ */}
         <div className="flex gap-2 px-4 pb-3 overflow-x-auto">
           {filterTabs.map((tab) => (
             <button
@@ -116,6 +163,22 @@ export function ItemManagement() {
         </div>
       </div>
 
+      {/* 日付範囲 + パターン フィルタ */}
+      <DateRangeTabs
+        dateRange={dateRange}
+        schedulePattern={schedulePattern}
+        onDateRangeChange={setDateRange}
+        onSchedulePatternChange={setSchedulePattern}
+      />
+
+      {/* 未設定日サジェスト通知 */}
+      <UnscheduledDatesBanner
+        unscheduledDates={unscheduledDates}
+        onDateClick={handleUnscheduledDateClick}
+        onMarkAsSkip={handleMarkAsSkip}
+        onShowAll={() => setShowUnscheduledModal(true)}
+      />
+
       {/* コンテンツ */}
       <div className="flex-1 overflow-y-auto p-4 pb-24">
         {isLoading ? (
@@ -126,24 +189,38 @@ export function ItemManagement() {
           <div className="bg-red-50 text-red-600 p-4 rounded-lg">
             エラーが発生しました: {error instanceof Error ? error.message : 'Unknown error'}
           </div>
-        ) : data?.items.length === 0 ? (
+        ) : filteredItems.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">📦</div>
             <p className="text-gray-500 mb-4">
-              {statusFilter === 'all'
-                ? '登録された品物はありません'
-                : `${filterTabs.find(t => t.value === statusFilter)?.label}の品物はありません`}
+              {dateRange !== 'all' || schedulePattern !== 'all'
+                ? '該当する品物はありません'
+                : statusFilter === 'all'
+                  ? '登録された品物はありません'
+                  : `${filterTabs.find(t => t.value === statusFilter)?.label}の品物はありません`}
             </p>
-            <Link
-              to={`${pathPrefix}/family/items/new`}
-              className="inline-block px-6 py-3 bg-primary text-white rounded-lg font-medium"
-            >
-              品物を登録する
-            </Link>
+            {dateRange !== 'all' || schedulePattern !== 'all' ? (
+              <button
+                onClick={() => {
+                  setDateRange('all');
+                  setSchedulePattern('all');
+                }}
+                className="inline-block px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-medium"
+              >
+                フィルタをリセット
+              </button>
+            ) : (
+              <Link
+                to={`${pathPrefix}/family/items/new`}
+                className="inline-block px-6 py-3 bg-primary text-white rounded-lg font-medium"
+              >
+                品物を登録する
+              </Link>
+            )}
           </div>
         ) : (
           <div className="space-y-3">
-            {data?.items.map((item) => (
+            {filteredItems.map((item) => (
               <ItemCard
                 key={item.id}
                 item={item}
@@ -178,6 +255,16 @@ export function ItemManagement() {
           </div>
         </div>
       )}
+
+      {/* 未設定日一覧モーダル */}
+      <UnscheduledDatesModal
+        isOpen={showUnscheduledModal}
+        onClose={() => setShowUnscheduledModal(false)}
+        unscheduledDates={unscheduledDates}
+        onDateClick={handleUnscheduledDateClick}
+        onMarkAsSkip={handleMarkAsSkip}
+        isSkipping={isSkipDateAdding}
+      />
     </Layout>
   );
 }

@@ -4,8 +4,9 @@
  * @see docs/ITEM_BASED_SNACK_RECORD_SPEC.md セクション3.5
  */
 
-import type { ServingSchedule, ServingTimeSlot } from '../types/careItem';
+import type { ServingSchedule, ServingTimeSlot, CareItem } from '../types/careItem';
 import { SERVING_TIME_SLOT_LABELS, WEEKDAY_LABELS } from '../types/careItem';
+import type { UnscheduledDate, DateRangeType, SchedulePatternType } from '../types/skipDate';
 
 /**
  * 日付を YYYY-MM-DD 形式でフォーマット
@@ -434,4 +435,241 @@ export function getScheduleWeekdays(schedule: ServingSchedule | undefined): numb
 export function getTimeSlotLabel(schedule: ServingSchedule | undefined): string {
   if (!schedule || !schedule.timeSlot) return '';
   return SERVING_TIME_SLOT_LABELS[schedule.timeSlot];
+}
+
+// =============================================================================
+// Phase 38: 日付範囲フィルタ・未設定日算出
+// =============================================================================
+
+/**
+ * 特定の日がスケジュール対象かどうかを判定
+ * isScheduledForTodayの汎用版
+ */
+export function isScheduledForDate(schedule: ServingSchedule | undefined, date: Date): boolean {
+  if (!schedule) return false;
+
+  const dateStr = formatDateString(date);
+  const weekday = date.getDay(); // 0-6 (日曜始まり)
+
+  // 開始日チェック（daily/weeklyの場合のみ）
+  if (schedule.startDate && (schedule.type === 'daily' || schedule.type === 'weekly')) {
+    if (dateStr < schedule.startDate) {
+      return false; // 開始日より前は対象外
+    }
+  }
+
+  switch (schedule.type) {
+    case 'once':
+      return schedule.date === dateStr;
+
+    case 'daily':
+      return true;
+
+    case 'weekly':
+      return schedule.weekdays?.includes(weekday) ?? false;
+
+    case 'specific_dates':
+      return schedule.dates?.includes(dateStr) ?? false;
+
+    default:
+      return false;
+  }
+}
+
+/**
+ * 品物リストから指定範囲内のスケジュール日をSetで取得
+ * @param items 品物リスト
+ * @param startDate 開始日
+ * @param endDate 終了日
+ * @returns スケジュールされた日付のSet (YYYY-MM-DD)
+ */
+export function getScheduledDatesForItems(
+  items: CareItem[],
+  startDate: Date,
+  endDate: Date
+): Set<string> {
+  const scheduledDates = new Set<string>();
+
+  // 各日付をチェック
+  const current = new Date(startDate);
+  current.setHours(0, 0, 0, 0);
+  const end = new Date(endDate);
+  end.setHours(0, 0, 0, 0);
+
+  while (current <= end) {
+    const dateStr = formatDateString(current);
+
+    // アクティブな品物（pending または in_progress）のスケジュールをチェック
+    for (const item of items) {
+      if (item.status !== 'pending' && item.status !== 'in_progress') continue;
+      if (!item.servingSchedule) continue;
+
+      if (isScheduledForDate(item.servingSchedule, current)) {
+        scheduledDates.add(dateStr);
+        break; // この日は少なくとも1つの品物がスケジュールされている
+      }
+    }
+
+    current.setDate(current.getDate() + 1);
+  }
+
+  return scheduledDates;
+}
+
+/**
+ * 未設定日（スケジュールもスキップもない日）を取得
+ * @param items 品物リスト
+ * @param skipDates スキップ日リスト (YYYY-MM-DD[])
+ * @param months 何ヶ月先まで検索するか（デフォルト: 2）
+ * @returns 未設定日リスト
+ */
+export function getUnscheduledDates(
+  items: CareItem[],
+  skipDates: string[],
+  months: number = 2
+): UnscheduledDate[] {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const endDate = new Date(today);
+  endDate.setMonth(endDate.getMonth() + months);
+
+  const scheduledSet = getScheduledDatesForItems(items, today, endDate);
+  const skipSet = new Set(skipDates);
+
+  const result: UnscheduledDate[] = [];
+  const current = new Date(today);
+
+  while (current <= endDate) {
+    const dateStr = formatDateString(current);
+    const dayOfWeek = current.getDay();
+
+    if (!scheduledSet.has(dateStr) && !skipSet.has(dateStr)) {
+      result.push({
+        date: dateStr,
+        dayOfWeek,
+        isWeekend: dayOfWeek === 0 || dayOfWeek === 6,
+      });
+    }
+
+    current.setDate(current.getDate() + 1);
+  }
+
+  return result;
+}
+
+/**
+ * 日付範囲で品物をフィルタリング
+ * @param items 品物リスト
+ * @param range 日付範囲タイプ
+ * @returns フィルタリングされた品物リスト
+ */
+export function filterItemsByDateRange(
+  items: CareItem[],
+  range: DateRangeType
+): CareItem[] {
+  if (range === 'all') return items;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // 範囲の開始日と終了日を計算
+  let startDate: Date;
+  let endDate: Date;
+
+  switch (range) {
+    case 'today':
+      startDate = today;
+      endDate = today;
+      break;
+
+    case 'this_week': {
+      // 今週（日曜始まり）
+      startDate = new Date(today);
+      startDate.setDate(today.getDate() - today.getDay()); // 今週の日曜
+      endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + 6); // 今週の土曜
+      break;
+    }
+
+    case 'this_month': {
+      // 今月
+      startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+      endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      break;
+    }
+
+    default:
+      return items;
+  }
+
+  // 範囲内にスケジュールがある品物をフィルタ
+  return items.filter(item => {
+    if (!item.servingSchedule) return false;
+
+    // 範囲内の各日をチェック
+    const current = new Date(startDate);
+    while (current <= endDate) {
+      if (isScheduledForDate(item.servingSchedule, current)) {
+        return true;
+      }
+      current.setDate(current.getDate() + 1);
+    }
+
+    return false;
+  });
+}
+
+/**
+ * スケジュールパターンで品物をフィルタリング
+ * @param items 品物リスト
+ * @param pattern スケジュールパターンタイプ
+ * @returns フィルタリングされた品物リスト
+ */
+export function filterItemsBySchedulePattern(
+  items: CareItem[],
+  pattern: SchedulePatternType
+): CareItem[] {
+  if (pattern === 'all') return items;
+
+  return items.filter(item => {
+    if (!item.servingSchedule) return false;
+
+    switch (pattern) {
+      case 'daily':
+        return item.servingSchedule.type === 'daily';
+
+      case 'weekly':
+        return item.servingSchedule.type === 'weekly';
+
+      case 'monthly':
+        // specific_datesとonceを「月」として扱う
+        return item.servingSchedule.type === 'specific_dates' ||
+               item.servingSchedule.type === 'once';
+
+      default:
+        return true;
+    }
+  });
+}
+
+/**
+ * 日付範囲とパターンの複合フィルタ
+ */
+export function filterItemsByDateRangeAndPattern(
+  items: CareItem[],
+  range: DateRangeType,
+  pattern: SchedulePatternType
+): CareItem[] {
+  let filtered = items;
+
+  if (range !== 'all') {
+    filtered = filterItemsByDateRange(filtered, range);
+  }
+
+  if (pattern !== 'all') {
+    filtered = filterItemsBySchedulePattern(filtered, pattern);
+  }
+
+  return filtered;
 }
