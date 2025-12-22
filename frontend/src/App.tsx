@@ -37,6 +37,9 @@ import { DemoStaffShowcase } from './pages/demo/DemoStaffShowcase';
 // レガシー
 import { SheetDetailPage } from './pages/SheetDetailPage';
 
+// 設定ページ（独立）
+import { SettingsPage } from './pages/SettingsPage';
+
 function App() {
   // ロール別テーマカラーを自動適用
   useRoleTheme();
@@ -114,8 +117,11 @@ function App() {
 
       {/* レガシーパス（後方互換） */}
       <Route path="/input/meal" element={<Navigate to="/staff/input/meal" replace />} />
-      <Route path="/settings" element={<Navigate to="/staff/input/meal?admin=true" replace />} />
       <Route path="/sheet/:sheetName" element={<SheetDetailPage />} />
+
+      {/* ========== 設定ページ（独立） ========== */}
+      {/* フッターなし・戻るボタンなし・単独リンクからのアクセス */}
+      <Route path="/settings" element={<SettingsPage />} />
 
       {/* ========== デモショーケース ========== */}
       {/* デモホーム */}

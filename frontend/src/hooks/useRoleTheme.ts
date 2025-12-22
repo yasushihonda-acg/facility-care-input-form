@@ -5,17 +5,17 @@ import { detectRole, applyRoleTheme } from '../utils/roleTheme';
 /**
  * 現在のパスに基づいてテーマカラーを自動適用するフック
  *
+ * 4パターンに対応:
  * - /family/*, /demo/family/* → Orange（家族）
  * - /staff/*, /demo/staff/* → Green（スタッフ）
- * - ?admin=true → Blue（管理者）
  * - /view, /stats等 → 直前のロールを維持
+ * - /settings → テーマ適用なし
  */
 export function useRoleTheme(): void {
   const location = useLocation();
 
   useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const role = detectRole(location.pathname, searchParams);
+    const role = detectRole(location.pathname);
     applyRoleTheme(role);
-  }, [location.pathname, location.search]);
+  }, [location.pathname]);
 }

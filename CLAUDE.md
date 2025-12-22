@@ -94,7 +94,7 @@ gh run list --repo yasushihonda-acg/facility-care-input-form --workflow=gh-pages
 | **スタッフデモ** | `/demo/staff` | スタッフ向けデモホーム（NEW） |
 | スタッフ用 | `/staff/input/meal` | 食事記録入力 |
 | 家族用 | `/family` | 家族ダッシュボード |
-| **管理者設定** | `/settings` または `/staff/input/meal?admin=true` | 設定モーダル表示 |
+| **設定** | `/settings` | グローバル初期値設定（独立ページ） |
 | 統計 | `/stats` | 統計ダッシュボード |
 
 ### 主要ドキュメント

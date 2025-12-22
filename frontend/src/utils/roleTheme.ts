@@ -1,8 +1,14 @@
 /**
  * ロール別テーマカラー管理ユーティリティ
+ *
+ * 4パターンに対応:
+ * - staff: スタッフ本番・スタッフデモ
+ * - family: 家族本番・家族デモ
+ *
+ * 設定ページ（/settings）はロール対象外
  */
 
-export type UserRole = 'staff' | 'family' | 'admin';
+export type UserRole = 'staff' | 'family';
 
 const USER_ROLE_KEY = 'userRole';
 
@@ -18,20 +24,17 @@ const ROLE_COLORS: Record<UserRole, { primary: string; primaryLight: string; pri
     primaryLight: '#FB923C', // orange-400
     primaryDark: '#EA580C',  // orange-600
   },
-  admin: {
-    primary: '#2563EB',      // blue-600
-    primaryLight: '#3B82F6', // blue-500
-    primaryDark: '#1D4ED8',  // blue-700
-  },
 };
 
 /**
- * パスとクエリパラメータからロールを判定
+ * パスからロールを判定
+ *
+ * @returns ロール、または設定ページなど対象外の場合はnull
  */
-export function detectRole(pathname: string, searchParams: URLSearchParams): UserRole {
-  // 管理者判定（?admin=true）
-  if (searchParams.get('admin') === 'true') {
-    return 'admin';
+export function detectRole(pathname: string): UserRole | null {
+  // 設定ページはロール対象外
+  if (pathname === '/settings') {
+    return null;
   }
 
   // 家族判定（/family/* または /demo/family/*）
@@ -52,8 +55,15 @@ export function detectRole(pathname: string, searchParams: URLSearchParams): Use
 /**
  * HTML要素にdata-role属性を設定し、CSS変数でテーマカラーを適用
  */
-export function applyRoleTheme(role: UserRole): void {
+export function applyRoleTheme(role: UserRole | null): void {
   const root = document.documentElement;
+
+  // ロール対象外の場合は何もしない（デフォルトテーマ維持）
+  if (role === null) {
+    root.removeAttribute('data-role');
+    return;
+  }
+
   const colors = ROLE_COLORS[role];
 
   // data-role属性を設定（デバッグ・CSS参照用）
@@ -64,9 +74,6 @@ export function applyRoleTheme(role: UserRole): void {
   root.style.setProperty('--color-primary-light', colors.primaryLight);
   root.style.setProperty('--color-primary-dark', colors.primaryDark);
 
-  // ロール限定パスの場合はlocalStorageに保存（共有ページでの復元用）
-  // 管理者は一時的なモードなので保存しない
-  if (role !== 'admin') {
-    localStorage.setItem(USER_ROLE_KEY, role);
-  }
+  // ロールをlocalStorageに保存（共有ページでの復元用）
+  localStorage.setItem(USER_ROLE_KEY, role);
 }

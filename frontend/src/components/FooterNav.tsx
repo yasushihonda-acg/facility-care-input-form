@@ -35,6 +35,10 @@ export function FooterNav({ className = '' }: FooterNavProps) {
   // const [familyUnreadCount, setFamilyUnreadCount] = useState(0);
   // const [staffUnreadCount, setStaffUnreadCount] = useState(0);
 
+  // 設定ページ判定（フッター非表示用）
+  // @see docs/ROLE_THEME_DESIGN.md
+  const isSettingsPage = location.pathname === '/settings';
+
   // デモモード判定
   // 明確にパスで判定し、共有ページはどちらでもない状態に
   const isDemoMode = location.pathname.startsWith('/demo');
@@ -53,13 +57,16 @@ export function FooterNav({ className = '' }: FooterNavProps) {
 
   // ロールを保存・取得
   useEffect(() => {
+    // 設定ページではロール保存しない
+    if (isSettingsPage) return;
+
     if (isFamilyPath) {
       localStorage.setItem(USER_ROLE_KEY, 'family');
     } else if (isStaffPath) {
       localStorage.setItem(USER_ROLE_KEY, 'staff');
     }
     // 共有パスの場合は保存しない（既存のロールを維持）
-  }, [isFamilyPath, isStaffPath]);
+  }, [isFamilyPath, isStaffPath, isSettingsPage]);
 
   // 表示するフッターを決定
   // デモ家族モードでは家族フッター、デモスタッフモードではスタッフフッターを表示
@@ -91,6 +98,11 @@ export function FooterNav({ className = '' }: FooterNavProps) {
     staffFamilyMessages: isDemoMode ? '/demo/staff/family-messages' : '/staff/family-messages',
     staffStats: isDemoMode ? '/demo/staff/stats' : '/staff/stats',
   }), [isDemoMode]);
+
+  // 設定ページではフッターを非表示
+  if (isSettingsPage) {
+    return null;
+  }
 
   // Phase 21: チャット機能一時非表示
   // 未読チャット数の取得（コメントアウト）
@@ -510,39 +522,52 @@ export function FooterNav({ className = '' }: FooterNavProps) {
         </NavLink>
 
         {/* 統計タブ */}
+        {/* Note: /staff/stats → /stats, /demo/staff/stats → /demo/stats にリダイレクトされるため、
+            リダイレクト先のパスもアクティブ判定に含める */}
         <NavLink
           to={paths.staffStats}
-          className={({ isActive }) => `
-            flex-1 flex flex-col items-center justify-center gap-1 relative transition-all duration-200
-            ${isActive
-              ? 'bg-primary text-white'
-              : 'bg-white text-gray-500 hover:bg-gray-50'
-            }
-          `}
+          className={({ isActive }) => {
+            // リダイレクト先のパスもアクティブ判定に含める
+            const isStatsPage = isActive ||
+              location.pathname === '/stats' ||
+              location.pathname === '/demo/stats';
+            return `
+              flex-1 flex flex-col items-center justify-center gap-1 relative transition-all duration-200
+              ${isStatsPage
+                ? 'bg-primary text-white'
+                : 'bg-white text-gray-500 hover:bg-gray-50'
+              }
+            `;
+          }}
         >
-          {({ isActive }) => (
-            <>
-              {isActive && (
-                <div className="absolute top-0 left-0 right-0 h-1 bg-white/30" />
-              )}
-              <svg
-                className="w-6 h-6"
-                fill={isActive ? 'currentColor' : 'none'}
-                stroke="currentColor"
-                strokeWidth={isActive ? 0 : 1.5}
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
-                />
-              </svg>
-              <span className={`text-xs font-bold ${isActive ? 'text-white' : 'text-gray-600'}`}>
-                統計
-              </span>
-            </>
-          )}
+          {({ isActive }) => {
+            const isStatsPage = isActive ||
+              location.pathname === '/stats' ||
+              location.pathname === '/demo/stats';
+            return (
+              <>
+                {isStatsPage && (
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-white/30" />
+                )}
+                <svg
+                  className="w-6 h-6"
+                  fill={isStatsPage ? 'currentColor' : 'none'}
+                  stroke="currentColor"
+                  strokeWidth={isStatsPage ? 0 : 1.5}
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
+                  />
+                </svg>
+                <span className={`text-xs font-bold ${isStatsPage ? 'text-white' : 'text-gray-600'}`}>
+                  統計
+                </span>
+              </>
+            );
+          }}
         </NavLink>
       </div>
     </nav>
