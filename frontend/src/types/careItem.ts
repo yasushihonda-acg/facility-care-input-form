@@ -188,6 +188,11 @@ export interface CareItem {
   remainingQuantity: number;     // 旧: 互換性のため残す（currentQuantityと同期）
   createdAt: string;             // ISO8601
   updatedAt: string;             // ISO8601
+
+  // Phase 38.2: 廃棄関連（オプション）
+  discardedAt?: string;          // 廃棄日時（ISO8601）
+  discardedBy?: string;          // 廃棄実行者
+  discardReason?: string;        // 廃棄理由
 }
 
 // 家族が入力する登録フォーム

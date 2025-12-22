@@ -1,16 +1,22 @@
 /**
  * 品物管理ページ（家族用）
- * @see docs/ITEM_MANAGEMENT_SPEC.md
- * Phase 38.1: 確認優先UIリデザイン
- * - 今日のサマリーカードを上部に配置
- * - 詳細フィルタは折りたたみ式（デフォルト非表示）
- * - 未設定日通知を維持
+ * Phase 38.2: 日付ナビゲーション中心UIリデザイン
+ *
+ * 構造:
+ * 1. 期限切れアラート（常時表示・廃棄アクション付き）
+ * 2. 未設定日通知（期間変更・除外フィルタ付き）
+ * 3. 日付ナビゲーション（日/週/月 + カレンダー）
+ * 4. 品物リスト
+ *
+ * ※ ステータスフィルタタブは削除
+ *
+ * @see docs/archive/PHASE_38_2_ITEM_MANAGEMENT_REDESIGN.md
  */
 
 import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
-import { useCareItems, useDeleteCareItem } from '../../hooks/useCareItems';
+import { useCareItems, useDeleteCareItem, useExpiredItems } from '../../hooks/useCareItems';
 import { useDemoMode } from '../../hooks/useDemoMode';
 import { useSkipDateManager } from '../../hooks/useSkipDates';
 import {
@@ -21,25 +27,67 @@ import {
   getExpirationDisplayText,
   getDaysUntilExpiration,
 } from '../../types/careItem';
-import type { CareItem, ItemStatus } from '../../types/careItem';
-import type { DateRangeType, SchedulePatternType } from '../../types/skipDate';
-import { TodaySummaryCard } from '../../components/family/TodaySummaryCard';
-import { DateRangeTabs } from '../../components/family/DateRangeTabs';
+import type { CareItem } from '../../types/careItem';
+import { ExpirationAlert } from '../../components/family/ExpirationAlert';
+import { DateNavigator, type DateViewMode } from '../../components/family/DateNavigator';
 import { UnscheduledDatesBanner } from '../../components/family/UnscheduledDatesBanner';
 import { UnscheduledDatesModal } from '../../components/family/UnscheduledDatesModal';
-import {
-  getUnscheduledDates,
-  filterItemsByDateRangeAndPattern,
-} from '../../utils/scheduleUtils';
+import { getUnscheduledDates, isScheduledForDate } from '../../utils/scheduleUtils';
 
 // デモ用の入居者ID・ユーザーID（将来は認証から取得）
 const DEMO_RESIDENT_ID = 'resident-001';
 
+/**
+ * 日付範囲に基づいてアイテムをフィルタリング
+ */
+function filterItemsByDateRange(
+  items: CareItem[],
+  selectedDate: Date,
+  viewMode: DateViewMode
+): CareItem[] {
+  const start = new Date(selectedDate);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(selectedDate);
+  end.setHours(23, 59, 59, 999);
+
+  // 週・月の範囲を設定
+  if (viewMode === 'week') {
+    const day = start.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    start.setDate(start.getDate() + diff);
+    end.setDate(start.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+  } else if (viewMode === 'month') {
+    start.setDate(1);
+    end.setMonth(end.getMonth() + 1);
+    end.setDate(0);
+    end.setHours(23, 59, 59, 999);
+  }
+
+  return items.filter((item) => {
+    // スケジュールがある場合はスケジュールでチェック
+    if (item.servingSchedule) {
+      // 範囲内の日付をチェック
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        if (isScheduledForDate(item.servingSchedule, d)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    // スケジュールがない場合は送付日でチェック
+    const sentDate = new Date(item.sentDate);
+    sentDate.setHours(0, 0, 0, 0);
+    return sentDate >= start && sentDate <= end;
+  });
+}
+
 export function ItemManagement() {
-  const [statusFilter, setStatusFilter] = useState<ItemStatus | 'all'>('all');
-  const [dateRange, setDateRange] = useState<DateRangeType>('all');
-  const [schedulePattern, setSchedulePattern] = useState<SchedulePatternType>('all');
-  const [isFilterCollapsed, setIsFilterCollapsed] = useState(true);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [viewMode, setViewMode] = useState<DateViewMode>('day');
+  const [unscheduledPeriod, setUnscheduledPeriod] = useState(2);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [showUnscheduledModal, setShowUnscheduledModal] = useState(false);
   const isDemo = useDemoMode();
@@ -48,11 +96,13 @@ export function ItemManagement() {
   // デモモード対応: リンク先プレフィックス
   const pathPrefix = isDemo ? '/demo' : '';
 
-  // 品物一覧を取得（ステータスフィルタはAPI側で処理）
+  // 品物一覧を取得
   const { data, isLoading, error } = useCareItems({
     residentId: DEMO_RESIDENT_ID,
-    status: statusFilter === 'all' ? undefined : statusFilter,
   });
+
+  // 期限切れ品物を取得
+  const { expiredItems, isLoading: isExpiredLoading } = useExpiredItems(DEMO_RESIDENT_ID);
 
   // スキップ日管理
   const {
@@ -63,11 +113,11 @@ export function ItemManagement() {
 
   const deleteItem = useDeleteCareItem();
 
-  // 日付範囲・パターンでフィルタリング
+  // 日付範囲でフィルタリング
   const filteredItems = useMemo(() => {
     if (!data?.items) return [];
-    return filterItemsByDateRangeAndPattern(data.items, dateRange, schedulePattern);
-  }, [data?.items, dateRange, schedulePattern]);
+    return filterItemsByDateRange(data.items, selectedDate, viewMode);
+  }, [data?.items, selectedDate, viewMode]);
 
   // 未設定日を算出（アクティブな品物のみ対象）
   const unscheduledDates = useMemo(() => {
@@ -75,8 +125,8 @@ export function ItemManagement() {
     const activeItems = data.items.filter(
       (item) => item.status === 'pending' || item.status === 'in_progress'
     );
-    return getUnscheduledDates(activeItems, skipDateStrings, 2);
-  }, [data?.items, skipDateStrings]);
+    return getUnscheduledDates(activeItems, skipDateStrings, unscheduledPeriod);
+  }, [data?.items, skipDateStrings, unscheduledPeriod]);
 
   // 未設定日クリック → 品物登録画面へ
   const handleUnscheduledDateClick = (date: string) => {
@@ -89,44 +139,19 @@ export function ItemManagement() {
     await addSkipDate(date, '家族により提供なしに設定');
   };
 
-  // サマリーカードからのフィルタ: 今日
-  const handleTodayClick = () => {
-    setDateRange('today');
-    setStatusFilter('all');
-    setIsFilterCollapsed(false);
-  };
-
-  // サマリーカードからのフィルタ: 確認待ち
-  const handleAwaitingClick = () => {
-    setStatusFilter('served');
-    setDateRange('all');
-    setIsFilterCollapsed(true);
-  };
-
-  // サマリーカードからのフィルタ: 期限間近/期限切れ
-  const handleExpiringSoonClick = () => {
-    // 期限関連は既存フィルタでは対応できないため、全表示してカード内で確認
-    setStatusFilter('all');
-    setDateRange('all');
-    setIsFilterCollapsed(true);
-  };
-
   // 削除確認
   const handleDeleteConfirm = (itemId: string) => {
     setShowDeleteConfirm(itemId);
   };
 
   // 削除処理
-  // @see docs/DEMO_SHOWCASE_SPEC.md セクション11 - デモモードでの書き込み操作
   const handleDelete = async (itemId: string) => {
-    // デモモードの場合: APIを呼ばず、成功メッセージを表示
     if (isDemo) {
       alert('削除しました（デモモード - 実際には削除されません）');
       setShowDeleteConfirm(null);
       return;
     }
 
-    // 本番モードの場合: 通常通りAPI呼び出し
     try {
       await deleteItem.mutateAsync(itemId);
       setShowDeleteConfirm(null);
@@ -135,14 +160,6 @@ export function ItemManagement() {
       alert('削除に失敗しました');
     }
   };
-
-  // フィルタタブ
-  const filterTabs: { value: ItemStatus | 'all'; label: string }[] = [
-    { value: 'all', label: '全て' },
-    { value: 'pending', label: '未提供' },
-    { value: 'served', label: '提供済み' },
-    { value: 'consumed', label: '消費済み' },
-  ];
 
   return (
     <Layout title="品物管理" showBackButton>
@@ -154,7 +171,6 @@ export function ItemManagement() {
             品物管理
           </h1>
           <div className="flex items-center gap-2">
-            {/* いつもの指示ボタン: モバイルではアイコンのみ */}
             <Link
               to={`${pathPrefix}/family/presets`}
               className="px-3 py-2 border border-primary text-primary rounded-lg font-medium text-sm flex items-center gap-1 hover:bg-primary/5 transition-colors"
@@ -162,7 +178,6 @@ export function ItemManagement() {
               <span>⭐</span>
               <span className="hidden sm:inline">いつもの指示</span>
             </Link>
-            {/* 新規登録ボタン */}
             <Link
               to={`${pathPrefix}/family/items/new`}
               className="px-4 py-2 bg-primary text-white rounded-lg font-medium text-sm"
@@ -171,43 +186,12 @@ export function ItemManagement() {
             </Link>
           </div>
         </div>
-
-        {/* ステータスフィルタタブ */}
-        <div className="flex gap-2 px-4 pb-3 overflow-x-auto">
-          {filterTabs.map((tab) => (
-            <button
-              key={tab.value}
-              onClick={() => setStatusFilter(tab.value)}
-              className={`px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${
-                statusFilter === tab.value
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
       </div>
 
-      {/* 今日のサマリーカード（確認優先UI） */}
-      {!isLoading && data?.items && (
-        <TodaySummaryCard
-          items={data.items}
-          onTodayClick={handleTodayClick}
-          onAwaitingClick={handleAwaitingClick}
-          onExpiringSoonClick={handleExpiringSoonClick}
-        />
-      )}
-
-      {/* 詳細フィルタ（折りたたみ式） */}
-      <DateRangeTabs
-        dateRange={dateRange}
-        schedulePattern={schedulePattern}
-        onDateRangeChange={setDateRange}
-        onSchedulePatternChange={setSchedulePattern}
-        isCollapsed={isFilterCollapsed}
-        onToggleCollapse={() => setIsFilterCollapsed(!isFilterCollapsed)}
+      {/* 期限切れアラート */}
+      <ExpirationAlert
+        expiredItems={expiredItems}
+        isLoading={isExpiredLoading}
       />
 
       {/* 未設定日サジェスト通知 */}
@@ -216,6 +200,16 @@ export function ItemManagement() {
         onDateClick={handleUnscheduledDateClick}
         onMarkAsSkip={handleMarkAsSkip}
         onShowAll={() => setShowUnscheduledModal(true)}
+        onPeriodChange={setUnscheduledPeriod}
+        currentPeriod={unscheduledPeriod}
+      />
+
+      {/* 日付ナビゲーション */}
+      <DateNavigator
+        selectedDate={selectedDate}
+        onDateChange={setSelectedDate}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
 
       {/* コンテンツ */}
@@ -232,30 +226,14 @@ export function ItemManagement() {
           <div className="text-center py-12">
             <div className="text-6xl mb-4">📦</div>
             <p className="text-gray-500 mb-4">
-              {dateRange !== 'all' || schedulePattern !== 'all'
-                ? '該当する品物はありません'
-                : statusFilter === 'all'
-                  ? '登録された品物はありません'
-                  : `${filterTabs.find(t => t.value === statusFilter)?.label}の品物はありません`}
+              この期間に該当する品物はありません
             </p>
-            {dateRange !== 'all' || schedulePattern !== 'all' ? (
-              <button
-                onClick={() => {
-                  setDateRange('all');
-                  setSchedulePattern('all');
-                }}
-                className="inline-block px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-medium"
-              >
-                フィルタをリセット
-              </button>
-            ) : (
-              <Link
-                to={`${pathPrefix}/family/items/new`}
-                className="inline-block px-6 py-3 bg-primary text-white rounded-lg font-medium"
-              >
-                品物を登録する
-              </Link>
-            )}
+            <Link
+              to={`${pathPrefix}/family/items/new`}
+              className="inline-block px-6 py-3 bg-primary text-white rounded-lg font-medium"
+            >
+              品物を登録する
+            </Link>
           </div>
         ) : (
           <div className="space-y-3">
@@ -327,10 +305,8 @@ function ItemCard({ item, onDelete }: { item: CareItem; onDelete: () => void }) 
       className="block bg-white rounded-lg shadow-sm border p-4 hover:shadow-md transition-shadow"
     >
       <div className="flex items-start gap-3">
-        {/* カテゴリアイコン */}
         <div className="text-3xl flex-shrink-0">{categoryIcon}</div>
 
-        {/* メイン情報 */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <h3 className="font-bold text-base truncate">{item.itemName}</h3>
@@ -361,7 +337,6 @@ function ItemCard({ item, onDelete }: { item: CareItem; onDelete: () => void }) 
             )}
           </div>
 
-          {/* 申し送り表示 */}
           {item.noteToFamily && (
             <div className="mt-2 p-2 bg-blue-50 rounded text-sm text-blue-700">
               <span className="font-medium">スタッフより:</span> {item.noteToFamily}
@@ -369,7 +344,6 @@ function ItemCard({ item, onDelete }: { item: CareItem; onDelete: () => void }) 
           )}
         </div>
 
-        {/* 削除ボタン */}
         <button
           onClick={(e) => {
             e.preventDefault();
@@ -383,7 +357,6 @@ function ItemCard({ item, onDelete }: { item: CareItem; onDelete: () => void }) 
         </button>
       </div>
 
-      {/* 摂食結果（消費済みの場合） */}
       {item.status === 'consumed' && item.consumptionRate !== undefined && (
         <div className="mt-3 pt-3 border-t">
           <div className="flex items-center gap-2">

@@ -252,7 +252,7 @@ export function useSameNameItems(residentId: string, itemName: string, excludeIt
 export function useExpiringItems(residentId?: string, daysThreshold = 3) {
   const { data, isLoading, error } = useCareItems({
     residentId,
-    status: ['pending', 'served'] as ItemStatus[],
+    status: ['pending', 'in_progress'] as ItemStatus[],
     limit: 100,
   });
 
@@ -268,4 +268,60 @@ export function useExpiringItems(residentId?: string, daysThreshold = 3) {
   }) ?? [];
 
   return { expiringItems, isLoading, error };
+}
+
+/**
+ * 期限切れ品物を取得するフック（Phase 38.2）
+ * 未提供・提供中のみ対象（提供済み・消費済み・廃棄済みは除外）
+ */
+export function useExpiredItems(residentId?: string) {
+  const { data, isLoading, error } = useCareItems({
+    residentId,
+    status: ['pending', 'in_progress'] as ItemStatus[],
+    limit: 100,
+  });
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const expiredItems = data?.items?.filter((item) => {
+    if (!item.expirationDate) return false;
+    const expDate = new Date(item.expirationDate);
+    expDate.setHours(0, 0, 0, 0);
+    return expDate < today;
+  }) ?? [];
+
+  return { expiredItems, isLoading, error };
+}
+
+/**
+ * 品物を廃棄するミューテーションフック（Phase 38.2）
+ * @see docs/archive/PHASE_38_2_ITEM_MANAGEMENT_REDESIGN.md
+ */
+export function useDiscardItem() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      itemId,
+      reason,
+    }: {
+      itemId: string;
+      reason?: string;
+    }) => {
+      const response = await updateCareItem(itemId, {
+        status: 'discarded',
+        discardedAt: new Date().toISOString(),
+        discardedBy: 'family_user',
+        discardReason: reason || '家族により廃棄',
+      } as Partial<CareItem>);
+      if (!response.success || !response.data) {
+        throw new Error(response.error?.message || 'Failed to discard care item');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [CARE_ITEMS_KEY] });
+    },
+  });
 }
