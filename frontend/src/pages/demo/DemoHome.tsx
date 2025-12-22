@@ -20,7 +20,7 @@ function DemoCard({ title, description, icon, to }: DemoCardProps) {
   return (
     <Link
       to={to}
-      className="block bg-white rounded-lg shadow-card p-4 border border-gray-100 hover:shadow-md hover:border-blue-200 transition"
+      className="block bg-white rounded-lg shadow-card p-4 border border-gray-100 hover:shadow-md hover:border-orange-200 transition"
     >
       <div className="flex items-center gap-3">
         <span className="text-3xl">{icon}</span>
@@ -44,8 +44,8 @@ export function DemoHome() {
       showBackButton={false}
     >
       <div className="pb-4 space-y-4">
-        {/* ヘッダーバナー */}
-        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg p-4 text-white">
+        {/* ヘッダーバナー - ロール別ベースカラー対応 */}
+        <div className="bg-primary rounded-lg p-4 text-white">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-2xl">👨‍👩‍👧</span>
             <h2 className="text-lg font-bold">ケアみまもりアプリ</h2>
@@ -56,7 +56,7 @@ export function DemoHome() {
           </p>
           <Link
             to="/demo/showcase"
-            className="inline-flex items-center px-4 py-2 bg-white text-blue-600 rounded-lg font-medium text-sm hover:bg-blue-50 transition"
+            className="inline-flex items-center px-4 py-2 bg-white text-primary rounded-lg font-medium text-sm hover:bg-orange-50 transition"
           >
             使い方ツアーを開始
             <span className="ml-1">→</span>
