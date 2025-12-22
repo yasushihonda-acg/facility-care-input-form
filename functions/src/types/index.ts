@@ -1231,14 +1231,6 @@ export function getCategoryLabel(category: string): string {
 // docs/PRESET_MANAGEMENT_SPEC.md に基づく型定義
 // =============================================================================
 
-/** プリセットカテゴリ */
-// 注: 'ban'（禁止・制限）はプリセットではなく ProhibitionRule として別管理
-// @see docs/ITEM_MANAGEMENT_SPEC.md セクション8
-export type PresetCategory =
-  | "cut" // カット・調理方法
-  | "serve" // 提供方法・温度
-  | "condition"; // 条件付き対応
-
 /** プリセット出所 */
 export type PresetSource = "manual" | "ai";
 
@@ -1266,7 +1258,7 @@ export interface CarePreset {
 
   // 基本情報
   name: string;
-  category?: PresetCategory;
+  category?: string;
   icon?: string;
 
   // 指示内容（品物登録フォームのservingMethodDetailに適用）
@@ -1304,7 +1296,7 @@ export interface CarePreset {
 /** プリセット作成入力 */
 export interface CarePresetInput {
   name: string;
-  category?: PresetCategory;
+  category?: string;
   icon?: string;
   // 指示内容（品物登録フォームのservingMethodDetailに適用）
   processingDetail?: string;
@@ -1326,7 +1318,7 @@ export interface CarePresetInput {
 /** プリセット一覧取得リクエスト */
 export interface GetPresetsRequest {
   residentId: string;
-  category?: PresetCategory;
+  category?: string;
   source?: PresetSource;
   activeOnly?: boolean;
 }
@@ -1379,7 +1371,7 @@ export interface SaveAISuggestionAsPresetRequest {
   itemName: string;
   presetName: string;
   /** @deprecated カテゴリは廃止（後方互換性のため保持） */
-  category?: PresetCategory;
+  category?: string;
   icon?: string;
   aiSuggestion: AISuggestResponse;
   keywords?: string[];

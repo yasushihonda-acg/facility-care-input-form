@@ -583,20 +583,6 @@ export const CATEGORY_LABELS: Record<ItemCategory, string> = {
 // @see docs/PRESET_MANAGEMENT_SPEC.md
 // =============================================================================
 
-/** プリセットカテゴリ */
-// 注: 'ban'（禁止・制限）はプリセットではなく ProhibitionRule として別管理
-// @see docs/ITEM_MANAGEMENT_SPEC.md セクション8
-export type PresetCategory =
-  | 'cut'        // カット・調理方法
-  | 'serve'      // 提供方法・温度
-  | 'condition'; // 条件付き対応
-
-export const PRESET_CATEGORIES: { value: PresetCategory; label: string; icon: string }[] = [
-  { value: 'cut', label: 'カット・調理', icon: '🔪' },
-  { value: 'serve', label: '提供方法', icon: '🍽️' },
-  { value: 'condition', label: '条件付き', icon: '⚠️' },
-];
-
 /** プリセット出所 */
 export type PresetSource = 'manual' | 'ai';
 
@@ -629,7 +615,7 @@ export interface CarePreset {
 
   // 基本情報
   name: string;
-  category?: PresetCategory;
+  category?: string;
   icon?: string;
 
   // 指示内容（品物登録フォームのservingMethodDetailに適用）
@@ -667,7 +653,7 @@ export interface CarePreset {
 /** プリセット作成入力 */
 export interface CarePresetInput {
   name: string;
-  category?: PresetCategory;
+  category?: string;
   icon?: string;
   // 指示内容（品物登録フォームのservingMethodDetailに適用）
   processingDetail: string;
@@ -688,7 +674,7 @@ export interface CarePresetInput {
 
 export interface GetPresetsRequest {
   residentId: string;
-  category?: PresetCategory;
+  category?: string;
   source?: PresetSource;
   activeOnly?: boolean;
 }
@@ -735,7 +721,7 @@ export interface SaveAISuggestionAsPresetRequest {
   itemName: string;
   presetName: string;
   /** @deprecated カテゴリは廃止（後方互換性のため保持） */
-  category?: PresetCategory;
+  category?: string;
   icon?: string;
   aiSuggestion: AISuggestResponse;
   keywords?: string[];
@@ -748,20 +734,6 @@ export interface SaveAISuggestionAsPresetResponse {
 }
 
 // === ユーティリティ関数 ===
-
-/**
- * プリセットカテゴリのラベルを取得
- */
-export function getPresetCategoryLabel(category: PresetCategory): string {
-  return PRESET_CATEGORIES.find(c => c.value === category)?.label ?? category;
-}
-
-/**
- * プリセットカテゴリのアイコンを取得
- */
-export function getPresetCategoryIcon(category: PresetCategory): string {
-  return PRESET_CATEGORIES.find(c => c.value === category)?.icon ?? '📋';
-}
 
 /**
  * プリセット出所のラベル情報を取得

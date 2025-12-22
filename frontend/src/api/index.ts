@@ -582,7 +582,6 @@ export async function getPresetSuggestions(
 import type {
   CarePreset,
   CarePresetInput,
-  PresetCategory,
   PresetSource,
   GetPresetsRequest,
   GetPresetsResponse,
@@ -597,7 +596,6 @@ import type {
 export type {
   CarePreset,
   CarePresetInput,
-  PresetCategory,
   PresetSource,
 };
 

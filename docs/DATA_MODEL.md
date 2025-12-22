@@ -146,7 +146,6 @@ gs://facility-care-input-form.appspot.com/
 
   // 基本情報
   name: string;                              // "キウイ8等分"
-  category: 'cut' | 'serve' | 'condition';   // 単一選択
   icon?: string;
 
   // 指示内容

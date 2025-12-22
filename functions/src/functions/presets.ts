@@ -11,7 +11,6 @@ import {
   UpdatePresetRequest,
   DeletePresetRequest,
   CarePreset,
-  PresetCategory,
   PresetSource,
   SaveAISuggestionAsPresetRequest,
 } from "../types";
@@ -169,7 +168,7 @@ export const createPreset = functions
       const presetData = {
         residentId,
         name: preset.name,
-        category: preset.category || "cut" as PresetCategory,
+        category: preset.category || "cut",
         icon: preset.icon || undefined,
         processingDetail,
         // 旧形式との後方互換性のため instruction も保存
@@ -459,7 +458,7 @@ export const saveAISuggestionAsPreset = functions
       const presetData = {
         residentId,
         name: presetName,
-        category: category || "other" as PresetCategory,
+        category: category || "other",
         icon: icon || "🤖",
         instruction: {
           content: instructionContent,
