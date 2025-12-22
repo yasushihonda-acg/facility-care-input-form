@@ -71,7 +71,7 @@ export function ScheduleDisplay({ schedule, compact = false }: ScheduleDisplayPr
         {isToday && todayMessage && (
           <div className="flex items-center gap-1 text-amber-600 font-medium">
             <span>↳</span>
-            <span>{todayMessage}</span>
+            <span>{formatDateDisplay(formatDateString(new Date()))} {todayMessage}</span>
           </div>
         )}
         {!isToday && nextDateDisplay && (
@@ -119,7 +119,7 @@ export function ScheduleDisplay({ schedule, compact = false }: ScheduleDisplayPr
       {isToday && todayMessage && (
         <div className="flex items-center gap-2 ml-6 text-amber-600 font-medium">
           <span>✓</span>
-          <span>{todayMessage}</span>
+          <span>{formatDateDisplay(formatDateString(new Date()))} {todayMessage}</span>
         </div>
       )}
 
