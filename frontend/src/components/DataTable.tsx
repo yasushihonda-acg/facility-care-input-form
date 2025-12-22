@@ -56,6 +56,42 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
     minWidth: number;
   } | null>(null);
 
+  // イベントハンドラをrefで保持（循環参照回避）
+  const handlersRef = useRef<{
+    move: ((e: MouseEvent) => void) | null;
+    end: (() => void) | null;
+  }>({ move: null, end: null });
+
+  // リサイズ中
+  const handleResizeMove = useCallback((e: MouseEvent) => {
+    if (!resizeRef.current?.isResizing) return;
+
+    const { columnKey, startX, startWidth, minWidth } = resizeRef.current;
+    const diff = e.clientX - startX;
+    const newWidth = Math.max(minWidth, startWidth + diff);
+
+    setColumnWidths(prev => ({
+      ...prev,
+      [columnKey]: newWidth,
+    }));
+  }, []);
+
+  // リサイズ終了
+  const handleResizeEnd = useCallback(() => {
+    resizeRef.current = null;
+    if (handlersRef.current.move) {
+      document.removeEventListener('mousemove', handlersRef.current.move);
+    }
+    if (handlersRef.current.end) {
+      document.removeEventListener('mouseup', handlersRef.current.end);
+    }
+  }, []);
+
+  // handlersRefを更新
+  useEffect(() => {
+    handlersRef.current = { move: handleResizeMove, end: handleResizeEnd };
+  }, [handleResizeMove, handleResizeEnd]);
+
   // リサイズ開始
   const handleResizeStart = useCallback((
     e: React.MouseEvent,
@@ -77,28 +113,7 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
 
     document.addEventListener('mousemove', handleResizeMove);
     document.addEventListener('mouseup', handleResizeEnd);
-  }, [columnWidths]);
-
-  // リサイズ中
-  const handleResizeMove = useCallback((e: MouseEvent) => {
-    if (!resizeRef.current?.isResizing) return;
-
-    const { columnKey, startX, startWidth, minWidth } = resizeRef.current;
-    const diff = e.clientX - startX;
-    const newWidth = Math.max(minWidth, startWidth + diff);
-
-    setColumnWidths(prev => ({
-      ...prev,
-      [columnKey]: newWidth,
-    }));
-  }, []);
-
-  // リサイズ終了
-  const handleResizeEnd = useCallback(() => {
-    resizeRef.current = null;
-    document.removeEventListener('mousemove', handleResizeMove);
-    document.removeEventListener('mouseup', handleResizeEnd);
-  }, [handleResizeMove]);
+  }, [columnWidths, handleResizeMove, handleResizeEnd]);
 
   // ダブルクリックでデフォルト幅にリセット
   const handleResizeReset = useCallback((column: ColumnDef) => {
