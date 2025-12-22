@@ -85,7 +85,7 @@ export function FooterNav({ className = '' }: FooterNavProps) {
     // familyChats: isDemoMode ? '/demo/family/chats' : '/family/chats',
     view: isDemoMode ? '/demo/view' : '/view',
     stats: isDemoMode ? '/demo/stats' : '/stats',
-    staffInput: isDemoMode ? '/demo/staff/input/meal' : '/input/meal',
+    staffInput: isDemoMode ? '/demo/staff/input/meal' : '/staff/input/meal',
     // Phase 21: チャット機能一時非表示
     // staffChats: isDemoMode ? '/demo/staff/chats' : '/staff/chats',
     staffFamilyMessages: isDemoMode ? '/demo/staff/family-messages' : '/staff/family-messages',
