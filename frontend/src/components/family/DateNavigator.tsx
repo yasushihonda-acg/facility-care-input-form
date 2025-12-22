@@ -1,6 +1,6 @@
 /**
  * 日付ナビゲーションコンポーネント
- * Phase 38.2: 今日/今週/今月の矢印ナビゲーション + カレンダー選択
+ * Phase 38.2.1: UX改善版 - 大きなタッチターゲット + セグメントコントロール
  *
  * @see docs/archive/PHASE_38_2_ITEM_MANAGEMENT_REDESIGN.md
  */
@@ -77,7 +77,7 @@ export function DateNavigator({
         const m = selectedDate.getMonth() + 1;
         const d = selectedDate.getDate();
         const weekday = WEEKDAY_LABELS[selectedDate.getDay()];
-        return isToday ? `今日 (${m}/${d} ${weekday})` : `${m}/${d} (${weekday})`;
+        return { main: `${m}月${d}日 (${weekday})`, sub: isToday ? '今日' : null };
       }
       case 'week': {
         const start = getWeekStart(selectedDate);
@@ -86,15 +86,15 @@ export function DateNavigator({
         const sd = start.getDate();
         const em = end.getMonth() + 1;
         const ed = end.getDate();
-        return `${sm}/${sd} - ${em}/${ed}`;
+        return { main: `${sm}/${sd} 〜 ${em}/${ed}`, sub: '週間表示' };
       }
       case 'month': {
         const y = selectedDate.getFullYear();
         const m = selectedDate.getMonth() + 1;
-        return `${y}年${m}月`;
+        return { main: `${y}年${m}月`, sub: '月間表示' };
       }
       default:
-        return '';
+        return { main: '', sub: null };
     }
   }, [selectedDate, viewMode, isToday]);
 
@@ -145,8 +145,8 @@ export function DateNavigator({
     }
   };
 
-  // カレンダーアイコンクリック
-  const handleCalendarClick = () => {
+  // 日付クリック → カレンダーを開く
+  const handleDateClick = () => {
     if (dateInputRef.current) {
       dateInputRef.current.showPicker?.();
     }
@@ -160,84 +160,84 @@ export function DateNavigator({
   ];
 
   return (
-    <div className="bg-white border-b px-4 py-3">
-      {/* ビューモード選択 */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex gap-1">
+    <div className="bg-white border-b relative">
+      {/* メインナビゲーション: 矢印 + 日付 */}
+      <div className="flex items-center justify-between px-2 py-4">
+        {/* 前へボタン */}
+        <button
+          onClick={handlePrev}
+          className="w-14 h-14 flex items-center justify-center text-gray-600 hover:bg-gray-100 active:bg-gray-200 rounded-xl transition-colors"
+          aria-label="前へ"
+        >
+          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        {/* 日付表示（タップでカレンダー） */}
+        <button
+          onClick={handleDateClick}
+          className="flex-1 mx-2 py-3 px-4 rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-colors text-center"
+        >
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-2xl">📅</span>
+            <span className="text-xl font-bold text-gray-800">{displayText.main}</span>
+          </div>
+          {displayText.sub && (
+            <div className="text-sm text-primary font-medium mt-1">{displayText.sub}</div>
+          )}
+        </button>
+
+        {/* Hidden date input - 中央配置でカレンダーが画面内に表示される */}
+        <input
+          ref={dateInputRef}
+          type="date"
+          value={formatDateString(selectedDate)}
+          onChange={handleCalendarChange}
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 pointer-events-none w-0 h-0"
+          tabIndex={-1}
+        />
+
+        {/* 次へボタン */}
+        <button
+          onClick={handleNext}
+          className="w-14 h-14 flex items-center justify-center text-gray-600 hover:bg-gray-100 active:bg-gray-200 rounded-xl transition-colors"
+          aria-label="次へ"
+        >
+          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+
+      {/* ビューモード選択 + 今日ボタン */}
+      <div className="px-4 pb-4">
+        {/* セグメントコントロール */}
+        <div className="flex rounded-xl bg-gray-100 p-1">
           {viewModes.map((mode) => (
             <button
               key={mode.value}
               onClick={() => onViewModeChange(mode.value)}
-              className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+              className={`flex-1 py-3 text-base font-semibold rounded-lg transition-all ${
                 viewMode === mode.value
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-white text-primary shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               {mode.label}
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2">
-          {!isToday && (
-            <button
-              onClick={handleToday}
-              className="px-3 py-1 text-sm text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
-            >
-              今日
-            </button>
-          )}
+
+        {/* 今日に戻るボタン（今日以外の時のみ） */}
+        {!isToday && (
           <button
-            onClick={handleCalendarClick}
-            className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
-            aria-label="カレンダーで選択"
+            onClick={handleToday}
+            className="w-full mt-3 py-3 text-base font-medium text-primary bg-primary/10 rounded-xl hover:bg-primary/20 active:bg-primary/30 transition-colors"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
+            今日に戻る
           </button>
-          {/* Hidden date input for calendar picker */}
-          <input
-            ref={dateInputRef}
-            type="date"
-            value={formatDateString(selectedDate)}
-            onChange={handleCalendarChange}
-            className="absolute opacity-0 pointer-events-none"
-            tabIndex={-1}
-          />
-        </div>
-      </div>
-
-      {/* 日付ナビゲーション */}
-      <div className="flex items-center justify-center gap-4">
-        <button
-          onClick={handlePrev}
-          className="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-          aria-label="前へ"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-
-        <div className="text-center min-w-[160px]">
-          <span className="text-lg font-semibold text-gray-800">{displayText}</span>
-        </div>
-
-        <button
-          onClick={handleNext}
-          className="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-          aria-label="次へ"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
+        )}
       </div>
     </div>
   );

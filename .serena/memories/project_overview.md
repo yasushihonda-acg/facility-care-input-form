@@ -49,7 +49,7 @@ facility-care-input-form/
 - **Sheet B（書込）**: `1OrpUVoDfUECXCTrKOGKLwN_4OQ9dlg7cUTCPGLDGHV0`
 
 ## 開発履歴
-Phase 1〜37完了。詳細は `git log` を参照。
+Phase 1〜38.2完了。詳細は `git log` を参照。
 
 主要機能:
 - 家族向け品物管理・プリセット管理
