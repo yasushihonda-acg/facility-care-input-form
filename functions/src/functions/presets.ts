@@ -153,26 +153,28 @@ export const createPreset = functions
         return;
       }
 
-      if (!preset || !preset.name || !preset.instruction?.content) {
+      // processingDetail優先、旧形式instruction.contentもフォールバック
+      const processingDetail = preset?.processingDetail || preset?.instruction?.content;
+      if (!preset || !preset.name || !processingDetail) {
         res.status(400).json({
           success: false,
-          error: "preset.name and preset.instruction.content are required",
+          error: "preset.name and preset.processingDetail are required",
         });
         return;
       }
 
       const now = Timestamp.now();
 
-      // Firestoreに保存
+      // Firestoreに保存（processingDetailを正規フィールドとして保存）
       const presetData = {
         residentId,
         name: preset.name,
-        category: preset.category || "other" as PresetCategory,
+        category: preset.category || "cut" as PresetCategory,
         icon: preset.icon || undefined,
+        processingDetail,
+        // 旧形式との後方互換性のため instruction も保存
         instruction: {
-          content: preset.instruction.content,
-          servingMethod: preset.instruction.servingMethod || undefined,
-          servingDetail: preset.instruction.servingDetail || undefined,
+          content: processingDetail,
         },
         matchConfig: {
           keywords: preset.matchConfig?.keywords || [],
@@ -277,8 +279,17 @@ export const updatePreset = functions
       if (updates.icon !== undefined) {
         updateData.icon = updates.icon;
       }
-      if (updates.instruction !== undefined) {
+      // processingDetailを優先、旧形式instructionも後方互換性のため対応
+      if (updates.processingDetail !== undefined) {
+        updateData.processingDetail = updates.processingDetail;
+        // 後方互換性のためinstructionも同期
+        updateData.instruction = {content: updates.processingDetail};
+      } else if (updates.instruction !== undefined) {
         updateData.instruction = updates.instruction;
+        // 新形式にも同期
+        if (updates.instruction.content) {
+          updateData.processingDetail = updates.instruction.content;
+        }
       }
       if (updates.matchConfig !== undefined) {
         updateData.matchConfig = updates.matchConfig;

@@ -18,7 +18,7 @@ const firestore = getFirestore();
 
 /**
  * プリセットをマッチングしてスコアリング
- * 新型定義（Phase 8.6）に対応
+ * processingDetail優先、旧形式instruction.contentもフォールバック
  */
 function matchPresets(
   presets: CarePreset[],
@@ -29,6 +29,9 @@ function matchPresets(
   const seenPresetIds = new Set<string>();
 
   for (const preset of presets) {
+    // processingDetail優先、旧形式instruction.contentもフォールバック
+    const processingDetail = preset.processingDetail || preset.instruction?.content || "";
+
     // 1. カテゴリマッチ（confidence: 0.8）
     if (category && preset.matchConfig.categories?.includes(category)) {
       if (!seenPresetIds.has(preset.id)) {
@@ -38,11 +41,12 @@ function matchPresets(
           matchReason: `カテゴリ「${CATEGORY_LABELS[category]}」`,
           matchType: "category",
           confidence: 0.8,
+          processingDetail,
           instruction: {
             title: preset.name,
-            content: preset.instruction.content,
-            servingMethod: preset.instruction.servingMethod,
-            servingDetail: preset.instruction.servingDetail,
+            content: processingDetail,
+            servingMethod: preset.instruction?.servingMethod,
+            servingDetail: preset.instruction?.servingDetail,
           },
           source: preset.source,
         });
@@ -63,11 +67,12 @@ function matchPresets(
           matchReason: `品物名「${itemName}」`,
           matchType: "itemName",
           confidence: 0.9,
+          processingDetail,
           instruction: {
             title: preset.name,
-            content: preset.instruction.content,
-            servingMethod: preset.instruction.servingMethod,
-            servingDetail: preset.instruction.servingDetail,
+            content: processingDetail,
+            servingMethod: preset.instruction?.servingMethod,
+            servingDetail: preset.instruction?.servingDetail,
           },
           source: preset.source,
         });
@@ -77,7 +82,7 @@ function matchPresets(
 
     // 3. コンテンツキーワードマッチ（confidence: 0.7）
     if (
-      preset.instruction.content.includes(itemName) &&
+      processingDetail.includes(itemName) &&
       !seenPresetIds.has(preset.id)
     ) {
       suggestions.push({
@@ -86,11 +91,12 @@ function matchPresets(
         matchReason: `指示内容に「${itemName}」を含む`,
         matchType: "keyword",
         confidence: 0.7,
+        processingDetail,
         instruction: {
           title: preset.name,
-          content: preset.instruction.content,
-          servingMethod: preset.instruction.servingMethod,
-          servingDetail: preset.instruction.servingDetail,
+          content: processingDetail,
+          servingMethod: preset.instruction?.servingMethod,
+          servingDetail: preset.instruction?.servingDetail,
         },
         source: preset.source,
       });

@@ -52,9 +52,11 @@ export function PresetManagement() {
   const filteredPresets = (data?.presets || []).filter((preset) => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
+      // processingDetail優先、旧形式 instruction.content もフォールバック
+      const detailText = preset.processingDetail || preset.instruction?.content || '';
       return (
         preset.name.toLowerCase().includes(query) ||
-        preset.instruction.content.toLowerCase().includes(query) ||
+        detailText.toLowerCase().includes(query) ||
         preset.matchConfig.keywords.some((kw) => kw.toLowerCase().includes(query))
       );
     }
@@ -267,7 +269,7 @@ function PresetCard({
         <div className="flex-1 min-w-0">
           <h3 className="font-bold text-gray-900 truncate">{preset.name}</h3>
           <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-            {preset.instruction.content}
+            {preset.processingDetail || preset.instruction?.content}
           </p>
 
           {/* メタ情報 */}
@@ -319,13 +321,16 @@ function PresetFormModal({
   const [name, setName] = useState(preset?.name || '');
   const [category, setCategory] = useState<PresetCategory>(preset?.category || 'cut');
   const [icon, setIcon] = useState(preset?.icon || '📋');
-  const [content, setContent] = useState(preset?.instruction.content || '');
+  // processingDetail を優先、旧形式 instruction.content もフォールバック
+  const [processingDetail, setProcessingDetail] = useState(
+    preset?.processingDetail || preset?.instruction?.content || ''
+  );
   const [keywords, setKeywords] = useState(preset?.matchConfig.keywords.join(', ') || '');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name.trim() || !content.trim()) {
+    if (!name.trim() || !processingDetail.trim()) {
       alert('プリセット名と詳細指示は必須です');
       return;
     }
@@ -334,9 +339,7 @@ function PresetFormModal({
       name: name.trim(),
       category,
       icon,
-      instruction: {
-        content: content.trim(),
-      },
+      processingDetail: processingDetail.trim(),
       matchConfig: {
         keywords: keywords
           .split(',')
@@ -430,8 +433,8 @@ function PresetFormModal({
               詳細指示 <span className="text-red-500">*</span>
             </label>
             <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
+              value={processingDetail}
+              onChange={(e) => setProcessingDetail(e.target.value)}
               placeholder="スタッフへの具体的な指示を入力してください"
               rows={4}
               className="w-full px-4 py-2 border rounded-lg resize-none"

@@ -90,14 +90,14 @@ export function PresetSuggestion({
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-800 truncate">
-                    {suggestion.instruction.title}
+                    {suggestion.presetName}
                   </p>
                   <p className="text-xs text-amber-600 mt-0.5">
                     {suggestion.matchReason}
                   </p>
-                  {suggestion.instruction.content && (
+                  {(suggestion.processingDetail || suggestion.instruction?.content) && (
                     <p className="text-xs text-gray-600 mt-1 line-clamp-2">
-                      {suggestion.instruction.content}
+                      {suggestion.processingDetail || suggestion.instruction?.content}
                     </p>
                   )}
                 </div>

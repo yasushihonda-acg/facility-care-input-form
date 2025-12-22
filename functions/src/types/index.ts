@@ -1191,7 +1191,10 @@ export interface PresetSuggestion {
   matchReason: string;
   matchType: PresetMatchType;
   confidence: number;
-  instruction: {
+  // 指示内容（品物登録フォームのservingMethodDetailに適用）
+  processingDetail: string;
+  // @deprecated 旧形式（後方互換性のため保持）
+  instruction?: {
     title: string;
     content: string;
     servingMethod?: ServingMethod;
@@ -1263,11 +1266,14 @@ export interface CarePreset {
 
   // 基本情報
   name: string;
-  category: PresetCategory;
+  category?: PresetCategory;
   icon?: string;
 
-  // 指示内容
-  instruction: {
+  // 指示内容（品物登録フォームのservingMethodDetailに適用）
+  processingDetail: string;
+
+  // @deprecated 旧形式（後方互換性のため保持）
+  instruction?: {
     content: string;
     servingMethod?: ServingMethod;
     servingDetail?: string;
@@ -1298,9 +1304,12 @@ export interface CarePreset {
 /** プリセット作成入力 */
 export interface CarePresetInput {
   name: string;
-  category: PresetCategory;
+  category?: PresetCategory;
   icon?: string;
-  instruction: {
+  // 指示内容（品物登録フォームのservingMethodDetailに適用）
+  processingDetail?: string;
+  // @deprecated 旧形式（後方互換性のため保持）
+  instruction?: {
     content: string;
     servingMethod?: ServingMethod;
     servingDetail?: string;

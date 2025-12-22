@@ -69,11 +69,8 @@ export function SaveManualPresetDialog({
           name: presetName,
           category: presetCategory,
           icon: '📌',
-          instruction: {
-            content: formData.servingMethodDetail || '',
-            servingMethod: formData.servingMethod,
-            servingDetail: formData.servingMethodDetail,
-          },
+          // 品物登録フォームのservingMethodDetailをprocessingDetailとして保存
+          processingDetail: formData.servingMethodDetail || '',
           matchConfig: {
             keywords: [formData.itemName],
             categories: [formData.category],
