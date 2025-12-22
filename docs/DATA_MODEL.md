@@ -2,7 +2,7 @@
 status: working
 scope: data
 owner: core-team
-last_reviewed: 2025-12-20
+last_reviewed: 2025-12-23
 links:
   - docs/archive/SHEET_A_STRUCTURE.md
   - docs/archive/SHEET_B_STRUCTURE.md
@@ -113,6 +113,7 @@ PWAからの入力データを保存するシート。
 | `prohibitions` | 禁止ルール | itemId, reason |
 | `careItems` | ケア記録 | recordDate, mealType, items |
 | `chat_messages` | チャットメッセージ | content, sender, timestamp |
+| `staffNotes` | スタッフ注意事項（Phase 40） | content, priority, startDate, endDate |
 
 ---
 
@@ -170,4 +171,5 @@ gs://facility-care-input-form.appspot.com/
 
 | 日付 | 変更内容 |
 |------|----------|
+| 2025-12-23 | Phase 40: staffNotesコレクション追加 |
 | 2025-12-20 | 統合ドキュメント作成 |

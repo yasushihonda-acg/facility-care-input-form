@@ -125,6 +125,10 @@ https://asia-northeast1-facility-care-input-form.cloudfunctions.net
 | POST | `/generateDailyTasks` | 日次タスクを自動生成 | Phase 8.2.1 | ✅ |
 | POST | `/triggerTaskGeneration` | タスク生成をトリガー | Phase 8.2.1 | ✅ |
 | GET | `/checkDailyRecords` | 日次記録チェック（通知用） | Phase 30 | ✅ |
+| GET | `/getStaffNotes` | スタッフ注意事項を取得 | Phase 40 | ✅ |
+| POST | `/createStaffNote` | スタッフ注意事項を作成 | Phase 40 | ✅ |
+| PUT | `/updateStaffNote` | スタッフ注意事項を更新 | Phase 40 | ✅ |
+| DELETE | `/deleteStaffNote` | スタッフ注意事項を削除 | Phase 40 | ✅ |
 | POST | `/submitCareRecord` | ケア実績を入力 (deprecated) | Flow B | ❌ |
 | POST | `/submitFamilyRequest` | 家族要望を送信 | Flow C | ❌ |
 | GET | `/getFamilyRequests` | 家族要望一覧を取得 | - | ❌ |
@@ -1635,6 +1639,7 @@ curl -X POST \
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
+| 2025-12-23 | 1.16.0 | Phase 40: スタッフ注意事項API追加（getStaffNotes/create/update/delete） |
 | 2025-12-22 | 1.15.0 | ドキュメント最適化（TypeScript型定義・cURLサンプルをコード参照に変更） |
 | 2025-12-20 | 1.14.0 | Phase 15.7: recordConsumptionLog/getConsumptionLogs詳細追加 |
 | 2025-12-19 | 1.13.0 | Phase 17: Firebase Storage移行 |
