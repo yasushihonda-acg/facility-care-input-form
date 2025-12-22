@@ -41,11 +41,13 @@ export function FooterNav({ className = '' }: FooterNavProps) {
   // 明確にパスで判定し、共有ページはどちらでもない状態に
   const isDemoMode = location.pathname.startsWith('/demo');
   const isDemoStaffPath = location.pathname.startsWith('/demo/staff');
-  const isDemoFamilyPath = location.pathname.startsWith('/demo/family');
+  // /demo は家族デモホーム（DemoHome.tsx）なので家族パスとして扱う
+  const isDemoFamilyPath = location.pathname === '/demo' || location.pathname.startsWith('/demo/family');
   const isDemoSharedPath = isDemoMode && !isDemoStaffPath && !isDemoFamilyPath;
 
   // パスからロールを判定（デモモードも含む）
   const isFamilyPath = location.pathname.startsWith('/family') ||
+                       location.pathname === '/demo' ||
                        location.pathname.startsWith('/demo/family');
   const isStaffPath = location.pathname.startsWith('/staff') ||
                       location.pathname.startsWith('/input') ||

@@ -37,8 +37,9 @@ export function detectRole(pathname: string): UserRole | null {
     return null;
   }
 
-  // 家族判定（/family/* または /demo/family/*）
-  if (pathname.startsWith('/family') || pathname.startsWith('/demo/family')) {
+  // 家族判定（/family/*、/demo、または /demo/family/*）
+  // /demo は家族デモホーム（DemoHome.tsx）
+  if (pathname.startsWith('/family') || pathname === '/demo' || pathname.startsWith('/demo/family')) {
     return 'family';
   }
 
