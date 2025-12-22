@@ -36,9 +36,11 @@ export function FooterNav({ className = '' }: FooterNavProps) {
   // const [staffUnreadCount, setStaffUnreadCount] = useState(0);
 
   // デモモード判定
+  // 明確にパスで判定し、共有ページはどちらでもない状態に
   const isDemoMode = location.pathname.startsWith('/demo');
-  const isDemoStaffMode = location.pathname.startsWith('/demo/staff');
-  const isDemoFamilyMode = isDemoMode && !isDemoStaffMode;
+  const isDemoStaffPath = location.pathname.startsWith('/demo/staff');
+  const isDemoFamilyPath = location.pathname.startsWith('/demo/family');
+  const isDemoSharedPath = isDemoMode && !isDemoStaffPath && !isDemoFamilyPath;
 
   // パスからロールを判定（デモモードも含む）
   const isFamilyPath = location.pathname.startsWith('/family') ||
@@ -61,9 +63,19 @@ export function FooterNav({ className = '' }: FooterNavProps) {
 
   // 表示するフッターを決定
   // デモ家族モードでは家族フッター、デモスタッフモードではスタッフフッターを表示
+  // デモ共有ページ（/demo/stats, /demo/view）ではsavedRoleに基づく
   // @see docs/DEMO_STAFF_SPEC.md セクション3.4
   const savedRole = localStorage.getItem(USER_ROLE_KEY) || 'staff';
-  const showFamilyFooter = isDemoFamilyMode || isFamilyPath || (isSharedPath && savedRole === 'family');
+
+  // フッター表示ロジック:
+  // 1. デモ家族パス（/demo/family/*）→ 家族フッター
+  // 2. デモスタッフパス（/demo/staff/*）→ スタッフフッター
+  // 3. デモ共有パス（/demo/view, /demo/stats）→ savedRoleに基づく
+  // 4. 本番パスは従来通り
+  const showFamilyFooter =
+    isDemoFamilyPath ||
+    (isDemoSharedPath && savedRole === 'family') ||
+    (!isDemoMode && (isFamilyPath || (isSharedPath && savedRole === 'family')));
 
   // デモモード対応: リンク先を動的生成
   const paths = useMemo(() => ({
@@ -173,14 +185,14 @@ export function FooterNav({ className = '' }: FooterNavProps) {
             to={paths.familyItems}
             className={({ isActive }) => `
               flex-1 flex flex-col items-center justify-center gap-1 relative transition-all duration-200
-              ${isActive || location.pathname.includes('/family/items')
+              ${isActive || location.pathname.includes('/family/items') || location.pathname.includes('/demo/family/items')
                 ? 'bg-primary text-white'
                 : 'bg-white text-gray-500 hover:bg-gray-50'
               }
             `}
           >
             {({ isActive }) => {
-              const isItemsActive = isActive || location.pathname.includes('/family/items');
+              const isItemsActive = isActive || location.pathname.includes('/family/items') || location.pathname.includes('/demo/family/items');
               return (
                 <>
                   {isItemsActive && (
@@ -463,14 +475,14 @@ export function FooterNav({ className = '' }: FooterNavProps) {
           to={paths.staffFamilyMessages}
           className={({ isActive }) => `
             flex-1 flex flex-col items-center justify-center gap-1 relative transition-all duration-200
-            ${isActive || location.pathname.includes('/staff/family-messages')
+            ${isActive || location.pathname.includes('/staff/family-messages') || location.pathname.includes('/demo/staff/family-messages')
               ? 'bg-primary text-white'
               : 'bg-white text-gray-500 hover:bg-gray-50'
             }
           `}
         >
           {({ isActive }) => {
-            const isMessagesActive = isActive || location.pathname.includes('/staff/family-messages');
+            const isMessagesActive = isActive || location.pathname.includes('/staff/family-messages') || location.pathname.includes('/demo/staff/family-messages');
             return (
               <>
                 {isMessagesActive && (

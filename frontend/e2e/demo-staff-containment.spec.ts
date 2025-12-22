@@ -185,7 +185,8 @@ test.describe('Phase 20: スタッフデモ環境完結', () => {
       await expect(footer).toBeVisible();
 
       // 各タブをクリックして遷移先を確認
-      const tabs = ['記録閲覧', '記録入力', 'チャット', '家族連絡', '統計'];
+      // Phase 21: チャット機能は一時非表示
+      const tabs = ['記録閲覧', '記録入力', '家族連絡', '統計'];
 
       for (const tab of tabs) {
         await page.goto('/demo/staff/family-messages');
