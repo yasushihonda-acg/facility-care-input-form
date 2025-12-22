@@ -152,29 +152,29 @@ export const createPreset = functions
         return;
       }
 
-      // processingDetail優先、旧形式instruction.contentもフォールバック
-      const processingDetail = preset?.processingDetail || preset?.instruction?.content;
-      if (!preset || !preset.name || !processingDetail) {
+      if (!preset || !preset.name) {
         res.status(400).json({
           success: false,
-          error: "preset.name and preset.processingDetail are required",
+          error: "preset.name is required",
         });
         return;
       }
 
       const now = Timestamp.now();
 
-      // Firestoreに保存（processingDetailを正規フィールドとして保存）
+      // Firestoreに保存
       const presetData = {
         residentId,
         name: preset.name,
-        category: preset.category || "cut",
         icon: preset.icon || undefined,
-        processingDetail,
-        // 旧形式との後方互換性のため instruction も保存
-        instruction: {
-          content: processingDetail,
-        },
+        // 品物フォームへの適用値（新フィールド）
+        itemCategory: preset.itemCategory || undefined,
+        storageMethod: preset.storageMethod || undefined,
+        servingMethod: preset.servingMethod || undefined,
+        servingMethodDetail: preset.servingMethodDetail || undefined,
+        noteToStaff: preset.noteToStaff || undefined,
+        remainingHandlingInstruction: preset.remainingHandlingInstruction || undefined,
+        // マッチング設定
         matchConfig: {
           keywords: preset.matchConfig?.keywords || [],
           categories: preset.matchConfig?.categories || undefined,
@@ -272,23 +272,27 @@ export const updatePreset = functions
       if (updates.name !== undefined) {
         updateData.name = updates.name;
       }
-      if (updates.category !== undefined) {
-        updateData.category = updates.category;
-      }
       if (updates.icon !== undefined) {
         updateData.icon = updates.icon;
       }
-      // processingDetailを優先、旧形式instructionも後方互換性のため対応
-      if (updates.processingDetail !== undefined) {
-        updateData.processingDetail = updates.processingDetail;
-        // 後方互換性のためinstructionも同期
-        updateData.instruction = {content: updates.processingDetail};
-      } else if (updates.instruction !== undefined) {
-        updateData.instruction = updates.instruction;
-        // 新形式にも同期
-        if (updates.instruction.content) {
-          updateData.processingDetail = updates.instruction.content;
-        }
+      // 品物フォームへの適用値（新フィールド）
+      if (updates.itemCategory !== undefined) {
+        updateData.itemCategory = updates.itemCategory;
+      }
+      if (updates.storageMethod !== undefined) {
+        updateData.storageMethod = updates.storageMethod;
+      }
+      if (updates.servingMethod !== undefined) {
+        updateData.servingMethod = updates.servingMethod;
+      }
+      if (updates.servingMethodDetail !== undefined) {
+        updateData.servingMethodDetail = updates.servingMethodDetail;
+      }
+      if (updates.noteToStaff !== undefined) {
+        updateData.noteToStaff = updates.noteToStaff;
+      }
+      if (updates.remainingHandlingInstruction !== undefined) {
+        updateData.remainingHandlingInstruction = updates.remainingHandlingInstruction;
       }
       if (updates.matchConfig !== undefined) {
         updateData.matchConfig = updates.matchConfig;

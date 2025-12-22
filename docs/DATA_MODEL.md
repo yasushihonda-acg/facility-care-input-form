@@ -145,30 +145,26 @@ gs://facility-care-input-form.appspot.com/
   residentId: string;
 
   // 基本情報
-  name: string;                              // "キウイ8等分"
-  icon?: string;
+  name: string;                              // "キウイ（8等分・半月切り）"
+  icon?: string;                             // "🥝"
 
-  // 指示内容
-  instruction: {
-    content: string;                         // "輪切り8等分にして提供"
-    servingMethod?: 'warm' | 'cold' | 'room';
-    servingDetail?: string;
-  },
+  // 品物フォームへの適用値（プリセット選択時にフォームに自動入力）
+  itemCategory?: 'food' | 'drink';           // 食べ物/飲み物
+  storageMethod?: 'room_temp' | 'refrigerated' | 'frozen';
+  servingMethod?: 'as_is' | 'cut' | 'peeled' | 'heated' | 'other';
+  servingMethodDetail?: string;              // "輪切り8等分にして提供"
+  noteToStaff?: string;                      // スタッフへの申し送り
+  remainingHandlingInstruction?: 'none' | 'discarded' | 'stored';
 
   // マッチング設定
   matchConfig: {
-    keywords: string[];                      // ["キウイ", "フルーツ"]
+    keywords: string[];                      // ["キウイ", "kiwi"]
     categories?: ItemCategory[];
     exactMatch?: boolean;
   },
 
   // 出所追跡
-  source: 'fax' | 'family_app' | 'ai_generated' | 'staff_created';
-  aiSourceInfo?: {
-    model: string;
-    confidence: number;
-    generatedAt: string;
-  },
+  source: 'manual' | 'ai';
 
   // ステータス
   isActive: boolean;

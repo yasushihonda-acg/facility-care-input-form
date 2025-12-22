@@ -1249,16 +1249,15 @@ Webhook URLの動作確認テスト。管理者が設定保存前にURLの有効
   "userId": "family-001",
   "preset": {
     "name": "キウイ（8等分・半月切り）",
-    "category": "cut",
     "icon": "🥝",
-    "instruction": {
-      "content": "半月切りで8等分に",
-      "servingMethod": "cut",
-      "servingDetail": "8等分"
-    },
+    "itemCategory": "food",
+    "storageMethod": "refrigerated",
+    "servingMethod": "cut",
+    "servingMethodDetail": "輪切り4等分をさらに半分に切ってください",
+    "noteToStaff": "皮は必ず剥いてください",
+    "remainingHandlingInstruction": "discarded",
     "matchConfig": {
-      "keywords": ["キウイ", "キーウィ"],
-      "categories": ["fruit"],
+      "keywords": ["キウイ", "kiwi"],
       "exactMatch": false
     }
   },
@@ -1272,10 +1271,13 @@ Webhook URLの動作確認テスト。管理者が設定保存前にURLの有効
 | `userId` | string | Yes | 作成した家族ID |
 | `preset` | object | Yes | プリセット定義 |
 | `preset.name` | string | Yes | プリセット名 |
-| `preset.category` | string | No | カテゴリ（デフォルト: `other`） |
 | `preset.icon` | string | No | アイコン絵文字 |
-| `preset.instruction` | object | Yes | 指示内容 |
-| `preset.instruction.content` | string | Yes | 指示テキスト |
+| `preset.itemCategory` | string | No | カテゴリ（`food`/`drink`） |
+| `preset.storageMethod` | string | No | 保存方法 |
+| `preset.servingMethod` | string | No | 提供方法 |
+| `preset.servingMethodDetail` | string | No | 提供方法の詳細 |
+| `preset.noteToStaff` | string | No | スタッフへの申し送り |
+| `preset.remainingHandlingInstruction` | string | No | 残り処置（`none`/`discarded`/`stored`） |
 | `preset.matchConfig` | object | No | マッチング設定 |
 | `source` | string | No | 出所（デフォルト: `manual`） |
 
@@ -1304,11 +1306,8 @@ Webhook URLの動作確認テスト。管理者が設定保存前にURLの有効
   "presetId": "preset-abc123",
   "updates": {
     "name": "キウイ（8等分・半月切り・皮むき）",
-    "instruction": {
-      "content": "皮をむいて半月切りで8等分に",
-      "servingMethod": "cut",
-      "servingDetail": "8等分・皮むき"
-    }
+    "servingMethodDetail": "皮をむいて半月切りで8等分に",
+    "noteToStaff": "種が多い部分は避けてください"
   }
 }
 ```
@@ -1320,9 +1319,13 @@ Webhook URLの動作確認テスト。管理者が設定保存前にURLの有効
 
 **更新可能フィールド**:
 - `name`: プリセット名
-- `category`: カテゴリ
 - `icon`: アイコン
-- `instruction`: 指示内容
+- `itemCategory`: カテゴリ（`food`/`drink`）
+- `storageMethod`: 保存方法
+- `servingMethod`: 提供方法
+- `servingMethodDetail`: 提供方法の詳細
+- `noteToStaff`: スタッフへの申し送り
+- `remainingHandlingInstruction`: 残り処置
 - `matchConfig`: マッチング設定
 - `isActive`: 有効フラグ
 

@@ -1309,20 +1309,30 @@ export interface CarePreset {
 /** プリセット作成入力 */
 export interface CarePresetInput {
   name: string;
-  category?: string;
   icon?: string;
-  // 指示内容（品物登録フォームのservingMethodDetailに適用）
-  processingDetail?: string;
-  // @deprecated 旧形式（後方互換性のため保持）
-  instruction?: {
-    content: string;
-    servingMethod?: ServingMethod;
-    servingDetail?: string;
-  };
+
+  // 品物フォームへの適用値
+  itemCategory?: ItemCategory;
+  storageMethod?: StorageMethod;
+  servingMethod?: ServingMethod;
+  servingMethodDetail?: string;
+  noteToStaff?: string;
+  remainingHandlingInstruction?: RemainingHandlingInstruction;
+
+  // マッチング設定
   matchConfig: {
     keywords: string[];
     categories?: ItemCategory[];
     exactMatch?: boolean;
+  };
+
+  // @deprecated 旧フィールド（後方互換性）
+  category?: string;
+  processingDetail?: string;
+  instruction?: {
+    content: string;
+    servingMethod?: ServingMethod;
+    servingDetail?: string;
   };
 }
 
