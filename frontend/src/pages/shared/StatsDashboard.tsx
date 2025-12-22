@@ -21,7 +21,6 @@ import type {
   FoodRankingItem,
 } from '../../types/stats';
 import { ALERT_SEVERITY_COLORS, ALERT_SEVERITY_LABELS, ALERT_TYPE_LABELS } from '../../types/stats';
-import { getCategoryLabel } from '../../types/careItem';
 import type { AIConsumptionRecord } from '../../types/careItem';
 
 // デモ用の入居者ID（将来は認証から取得）
@@ -523,7 +522,7 @@ function ConsumptionStatsTab({ data }: ConsumptionStatsTabProps) {
     );
   }
 
-  const { mostPreferred, leastPreferred, categoryStats } = data;
+  const { mostPreferred, leastPreferred } = data;
 
   // データがない場合
   const hasData = mostPreferred.length > 0 || leastPreferred.length > 0;
@@ -570,17 +569,6 @@ function ConsumptionStatsTab({ data }: ConsumptionStatsTabProps) {
             よく残す品目 TOP{leastPreferred.length}
           </h3>
           <FoodRankingList items={leastPreferred} color="#F59E0B" showSuggestion />
-        </div>
-      )}
-
-      {/* カテゴリ別摂食率 */}
-      {categoryStats.length > 0 && (
-        <div className="bg-white rounded-lg shadow-card p-4">
-          <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-            <span className="text-lg">📊</span>
-            カテゴリ別摂食率
-          </h3>
-          <CategoryRateChart data={categoryStats} />
         </div>
       )}
     </div>
@@ -630,47 +618,3 @@ function FoodRankingList({ items, color, showSuggestion }: FoodRankingListProps)
   );
 }
 
-// =============================================================================
-// カテゴリ別摂食率チャート
-// =============================================================================
-
-import type { CategoryStats } from '../../types/stats';
-
-interface CategoryRateChartProps {
-  data: CategoryStats[];
-}
-
-function CategoryRateChart({ data }: CategoryRateChartProps) {
-  const getBarColor = (rate: number): string => {
-    if (rate >= 80) return '#10B981'; // green
-    if (rate >= 60) return '#3B82F6'; // blue
-    if (rate >= 40) return '#F59E0B'; // yellow
-    return '#EF4444'; // red
-  };
-
-  return (
-    <div className="space-y-2">
-      {data.map((item) => (
-        <div key={item.category} className="flex items-center gap-2">
-          <span className="w-20 text-xs text-gray-600 truncate">
-            {getCategoryLabel(item.category)}
-          </span>
-          <div className="flex-1 bg-gray-100 rounded h-5 overflow-hidden">
-            <div
-              className="h-full rounded flex items-center justify-end pr-2 text-xs text-white font-medium"
-              style={{
-                width: `${Math.max(item.avgConsumptionRate, 10)}%`,
-                backgroundColor: getBarColor(item.avgConsumptionRate),
-              }}
-            >
-              {item.avgConsumptionRate}%
-            </div>
-          </div>
-          <span className="w-20 text-xs text-gray-400 text-right">
-            {item.totalItems}品/{item.totalServings}回
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
