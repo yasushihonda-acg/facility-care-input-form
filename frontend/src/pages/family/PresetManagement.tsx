@@ -48,13 +48,21 @@ export function PresetManagement() {
   const updatePresetMutation = useUpdatePreset();
   const deletePresetMutation = useDeletePreset();
 
-  // フィルタリング
+  // フィルタリング（【Phase 41】新形式instructionsも検索対象に）
   const filteredPresets = (data?.presets || []).filter((preset) => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
+      // 新形式の指示を結合して検索
+      const instructionsCombined = [
+        preset.instructions?.cut,
+        preset.instructions?.serve,
+        preset.instructions?.condition,
+      ].filter(Boolean).join(' ').toLowerCase();
+
       return (
         preset.name.toLowerCase().includes(query) ||
-        preset.instruction?.content.toLowerCase().includes(query) ||
+        preset.instruction?.content?.toLowerCase().includes(query) ||
+        instructionsCombined.includes(query) ||
         preset.matchConfig.keywords.some((kw) => kw.toLowerCase().includes(query))
       );
     }
@@ -243,6 +251,7 @@ export function PresetManagement() {
 }
 
 // プリセットカード
+// 【Phase 41】カテゴリ別指示の表示に対応
 function PresetCard({
   preset,
   onEdit,
@@ -260,15 +269,45 @@ function PresetCard({
     ? new Date(preset.aiSourceInfo.savedAt).toLocaleDateString('ja-JP')
     : null;
 
+  // 【Phase 41】新形式の指示を表示用に構築
+  const hasNewFormat = preset.instructions &&
+    (preset.instructions.cut || preset.instructions.serve || preset.instructions.condition);
+
   return (
     <div className="bg-white rounded-xl border p-4 shadow-sm">
       <div className="flex items-start gap-3">
         <div className="text-2xl">{preset.icon || '📋'}</div>
         <div className="flex-1 min-w-0">
           <h3 className="font-bold text-gray-900 truncate">{preset.name}</h3>
-          <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-            {preset.instruction?.content || '（指示なし）'}
-          </p>
+
+          {/* 【Phase 41】カテゴリ別指示の表示 */}
+          {hasNewFormat ? (
+            <div className="mt-2 space-y-1">
+              {preset.instructions?.cut && (
+                <div className="flex items-start gap-1.5 text-sm">
+                  <span className="text-blue-600">{PRESET_CATEGORY_ICONS.cut}</span>
+                  <span className="text-gray-600 line-clamp-1">{preset.instructions.cut}</span>
+                </div>
+              )}
+              {preset.instructions?.serve && (
+                <div className="flex items-start gap-1.5 text-sm">
+                  <span className="text-green-600">{PRESET_CATEGORY_ICONS.serve}</span>
+                  <span className="text-gray-600 line-clamp-1">{preset.instructions.serve}</span>
+                </div>
+              )}
+              {preset.instructions?.condition && (
+                <div className="flex items-start gap-1.5 text-sm">
+                  <span className="text-amber-600">{PRESET_CATEGORY_ICONS.condition}</span>
+                  <span className="text-gray-600 line-clamp-1">{preset.instructions.condition}</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            // 旧形式のフォールバック
+            <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+              {preset.instruction?.content || '（指示なし）'}
+            </p>
+          )}
 
           {/* メタ情報 */}
           <div className="flex items-center gap-3 mt-3 text-xs text-gray-500">
@@ -305,6 +344,7 @@ function PresetCard({
 }
 
 // プリセット作成/編集モーダル
+// 【Phase 41】カテゴリ別テキスト入力に変更
 function PresetFormModal({
   preset,
   onClose,
@@ -317,26 +357,42 @@ function PresetFormModal({
   isSaving: boolean;
 }) {
   const [name, setName] = useState(preset?.name || '');
-  const [category, setCategory] = useState<PresetCategory>(preset?.category || 'cut');
   const [icon, setIcon] = useState(preset?.icon || '📋');
-  const [content, setContent] = useState(preset?.instruction?.content || '');
   const [keywords, setKeywords] = useState(preset?.matchConfig.keywords.join(', ') || '');
+
+  // 【Phase 41】カテゴリ別指示のステート
+  const [cutInstruction, setCutInstruction] = useState(
+    preset?.instructions?.cut || preset?.instruction?.content || ''
+  );
+  const [serveInstruction, setServeInstruction] = useState(
+    preset?.instructions?.serve || ''
+  );
+  const [conditionInstruction, setConditionInstruction] = useState(
+    preset?.instructions?.condition || ''
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name.trim() || !content.trim()) {
-      alert('プリセット名と詳細指示は必須です');
+    // 少なくとも1つの指示が必要
+    const hasAnyInstruction =
+      cutInstruction.trim() || serveInstruction.trim() || conditionInstruction.trim();
+
+    if (!name.trim() || !hasAnyInstruction) {
+      alert('プリセット名と、少なくとも1つの指示は必須です');
       return;
     }
 
+    // 【Phase 41】新形式のinstructionsを構築
+    const instructions: { cut?: string; serve?: string; condition?: string } = {};
+    if (cutInstruction.trim()) instructions.cut = cutInstruction.trim();
+    if (serveInstruction.trim()) instructions.serve = serveInstruction.trim();
+    if (conditionInstruction.trim()) instructions.condition = conditionInstruction.trim();
+
     const input: CarePresetInput = {
       name: name.trim(),
-      category,
       icon,
-      instruction: {
-        content: content.trim(),
-      },
+      instructions,
       matchConfig: {
         keywords: keywords
           .split(',')
@@ -383,24 +439,6 @@ function PresetFormModal({
             />
           </div>
 
-          {/* カテゴリ */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              カテゴリ <span className="text-red-500">*</span>
-            </label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value as PresetCategory)}
-              className="w-full px-4 py-2 border rounded-lg"
-            >
-              {Object.entries(PRESET_CATEGORY_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {PRESET_CATEGORY_ICONS[value as PresetCategory]} {label}
-                </option>
-              ))}
-            </select>
-          </div>
-
           {/* アイコン */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -424,19 +462,54 @@ function PresetFormModal({
             </div>
           </div>
 
-          {/* 詳細指示 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              詳細指示 <span className="text-red-500">*</span>
-            </label>
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="スタッフへの具体的な指示を入力してください"
-              rows={4}
-              className="w-full px-4 py-2 border rounded-lg resize-none"
-              required
-            />
+          {/* 【Phase 41】カテゴリ別指示入力 */}
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-gray-700">
+              指示内容 <span className="text-red-500">*</span>
+              <span className="font-normal text-gray-500 ml-1">（1つ以上必須）</span>
+            </p>
+
+            {/* カット・調理方法 */}
+            <div className="border rounded-lg p-3 bg-blue-50/30">
+              <label className="flex items-center gap-2 text-sm font-medium text-blue-700 mb-2">
+                {PRESET_CATEGORY_ICONS.cut} {PRESET_CATEGORY_LABELS.cut}
+              </label>
+              <textarea
+                value={cutInstruction}
+                onChange={(e) => setCutInstruction(e.target.value)}
+                placeholder="例: 輪切りを8等分、皮はむいて提供"
+                rows={2}
+                className="w-full px-3 py-2 border rounded-lg resize-none text-sm"
+              />
+            </div>
+
+            {/* 提供方法・温度 */}
+            <div className="border rounded-lg p-3 bg-green-50/30">
+              <label className="flex items-center gap-2 text-sm font-medium text-green-700 mb-2">
+                {PRESET_CATEGORY_ICONS.serve} {PRESET_CATEGORY_LABELS.serve}
+              </label>
+              <textarea
+                value={serveInstruction}
+                onChange={(e) => setServeInstruction(e.target.value)}
+                placeholder="例: 温めて提供、少し冷ましてから"
+                rows={2}
+                className="w-full px-3 py-2 border rounded-lg resize-none text-sm"
+              />
+            </div>
+
+            {/* 条件付き対応 */}
+            <div className="border rounded-lg p-3 bg-amber-50/30">
+              <label className="flex items-center gap-2 text-sm font-medium text-amber-700 mb-2">
+                {PRESET_CATEGORY_ICONS.condition} {PRESET_CATEGORY_LABELS.condition}
+              </label>
+              <textarea
+                value={conditionInstruction}
+                onChange={(e) => setConditionInstruction(e.target.value)}
+                placeholder="例: 月・水・金のみ、体調不良時は除外"
+                rows={2}
+                className="w-full px-3 py-2 border rounded-lg resize-none text-sm"
+              />
+            </div>
           </div>
 
           {/* キーワード */}

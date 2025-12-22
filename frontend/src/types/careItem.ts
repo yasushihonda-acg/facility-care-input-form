@@ -680,13 +680,21 @@ export interface CarePreset {
 /** プリセット作成入力 */
 export interface CarePresetInput {
   name: string;
-  category: PresetCategory;
   icon?: string;
-  instruction: {
+
+  // 【Phase 41】新形式：カテゴリ別指示
+  instructions?: PresetInstructions;
+
+  // 【後方互換性】旧形式
+  /** @deprecated Use instructions instead */
+  category?: PresetCategory;
+  /** @deprecated Use instructions instead */
+  instruction?: {
     content: string;
     servingMethod?: ServingMethod;
     servingDetail?: string;
   };
+
   matchConfig: {
     keywords: string[];
     categories?: ItemCategory[];

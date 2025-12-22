@@ -30,12 +30,15 @@ instructions: {
 - [x] ビルド確認（フロントエンド・バックエンド両方成功）
 - コミット: d4d5167
 
-### Phase 41.2: バックエンドAPI改修（Day 1-2）
-- [ ] `functions/src/functions/presets.ts`: CRUD対応
-  - createPreset: 新旧両方のフィールドを保存
-  - updatePreset: 同上
-  - getPresets: 両形式を返却
-- [ ] `functions/src/functions/getPresetSuggestions.ts`: 新形式対応
+### Phase 41.2: バックエンドAPI改修（Day 1-2） ✅ 完了
+- [x] `functions/src/functions/presets.ts`: CRUD対応
+  - createPreset: 新旧両方のフィールドを保存、相互変換
+  - updatePreset: instructions更新時に旧形式も自動同期
+- [x] `functions/src/functions/getPresetSuggestions.ts`: 新形式対応
+  - レスポンスにinstructionsフィールド追加
+  - 検索対象に新形式の内容を追加
+- [x] `CarePresetInput`, `PresetSuggestion` 型更新
+- コミット: 1f963b4
 
 ### Phase 41.3: フロントエンドUI改修（Day 2-3）
 - [ ] `PresetManagement.tsx`: フォームをカテゴリ別テキスト入力に変更
