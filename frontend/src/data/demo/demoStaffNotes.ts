@@ -27,12 +27,15 @@ function getDateOffset(days: number): string {
  * デモ用注意事項データ
  * - critical: 常時表示（期間なし）
  * - warning/normal: 期間内のみ表示
+ *
+ * ※ このアプリは「家族からの差し入れ品（間食・おやつ）」を管理するアプリです。
+ *   注意事項も差し入れ品の提供に関する内容にしています。
  */
 export const DEMO_STAFF_NOTES: StaffNote[] = [
-  // critical: 常時表示（期間指定なし）
+  // critical: 常時表示（期間指定なし）- 差し入れ品提供の基本ルール
   {
     id: 'NOTE001',
-    content: '血圧測定は朝食前に必ず実施してください。薬の調整に影響します。',
+    content: '【重要】施設のおやつは提供しないでください。家族からの差し入れ品のみ提供します。',
     priority: 'critical',
     createdBy: '管理者',
     createdAt: '2024-12-01T09:00:00.000Z',
@@ -40,17 +43,25 @@ export const DEMO_STAFF_NOTES: StaffNote[] = [
   },
   {
     id: 'NOTE002',
-    content: 'アレルギー：甲殻類（エビ・カニ）厳禁。重度のアナフィラキシー歴あり。',
+    content: '糖尿病のため、砂糖を多く含むお菓子（チョコ・飴・ケーキ等）は1日1個までにしてください。',
     priority: 'critical',
-    createdBy: '管理者',
+    createdBy: '看護師',
     createdAt: '2024-11-15T10:00:00.000Z',
     updatedAt: '2024-11-15T10:00:00.000Z',
   },
-
-  // warning: 期間内表示（現在有効）
   {
     id: 'NOTE003',
-    content: '家族面会予定あり。居室の整理整頓をお願いします。',
+    content: '嚥下機能が低下しています。硬いお菓子（せんべい等）は細かく砕いてから提供してください。',
+    priority: 'critical',
+    createdBy: '管理者',
+    createdAt: '2024-11-20T10:00:00.000Z',
+    updatedAt: '2024-11-20T10:00:00.000Z',
+  },
+
+  // warning: 期間内表示（現在有効）- 一時的な注意事項
+  {
+    id: 'NOTE004',
+    content: '新しいプリンが届きました（冷蔵庫保管中）。賞味期限が近いので早めに提供をお願いします。',
     priority: 'warning',
     startDate: getDateOffset(-1), // 昨日から
     endDate: getDateOffset(5),    // 5日後まで
@@ -59,20 +70,20 @@ export const DEMO_STAFF_NOTES: StaffNote[] = [
     updatedAt: '2024-12-20T14:00:00.000Z',
   },
   {
-    id: 'NOTE004',
-    content: '風邪気味のため、水分摂取を多めに促してください。',
+    id: 'NOTE005',
+    content: '家族より「バナナは1日1本まで」との指示がありました。複数回の提供に注意してください。',
     priority: 'warning',
     startDate: getTodayString(),  // 今日から
-    endDate: getDateOffset(3),    // 3日後まで
-    createdBy: '看護師B',
+    endDate: getDateOffset(7),    // 1週間後まで
+    createdBy: 'スタッフB',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
 
-  // normal: 期間内表示（現在有効）
+  // normal: 期間内表示（現在有効）- 好みや習慣
   {
-    id: 'NOTE005',
-    content: '入浴は水曜・土曜の午前中が好みです。',
+    id: 'NOTE006',
+    content: '午後3時のおやつタイムを楽しみにされています。できるだけこの時間に提供してください。',
     priority: 'normal',
     startDate: getDateOffset(-7), // 1週間前から
     endDate: getDateOffset(30),   // 1ヶ月後まで
@@ -81,34 +92,34 @@ export const DEMO_STAFF_NOTES: StaffNote[] = [
     updatedAt: '2024-12-15T11:00:00.000Z',
   },
   {
-    id: 'NOTE006',
-    content: 'リハビリ強化期間中。歩行訓練を1日2回実施。',
+    id: 'NOTE007',
+    content: 'お茶（温かいもの）と一緒に提供すると喜ばれます。冷たい飲み物は苦手です。',
     priority: 'normal',
     startDate: getDateOffset(-3), // 3日前から
     endDate: getDateOffset(14),   // 2週間後まで
-    createdBy: 'PT担当',
+    createdBy: 'スタッフA',
     createdAt: '2024-12-18T09:30:00.000Z',
     updatedAt: '2024-12-18T09:30:00.000Z',
   },
 
   // 期間外のデータ（includeAll=true時のみ表示）
   {
-    id: 'NOTE007',
-    content: '（期間外）先月の検査入院に関する注意事項',
+    id: 'NOTE008',
+    content: '（終了）先月届いた羊羹は賞味期限切れのため破棄しました。',
     priority: 'warning',
     startDate: getDateOffset(-30), // 1ヶ月前
     endDate: getDateOffset(-20),   // 20日前（期間終了）
-    createdBy: '看護師A',
+    createdBy: 'スタッフB',
     createdAt: '2024-11-20T08:00:00.000Z',
     updatedAt: '2024-11-20T08:00:00.000Z',
   },
   {
-    id: 'NOTE008',
-    content: '（期間外）来月開始予定のリハビリプログラム',
+    id: 'NOTE009',
+    content: '（予定）来週、家族が新しい果物を届ける予定です。',
     priority: 'normal',
-    startDate: getDateOffset(10),  // 10日後から（期間前）
-    endDate: getDateOffset(40),    // 40日後まで
-    createdBy: 'PT担当',
+    startDate: getDateOffset(7),   // 1週間後から（期間前）
+    endDate: getDateOffset(14),    // 2週間後まで
+    createdBy: 'スタッフC',
     createdAt: '2024-12-22T10:00:00.000Z',
     updatedAt: '2024-12-22T10:00:00.000Z',
   },
