@@ -516,9 +516,9 @@ export type ServingMethod =
 
 // 残った場合の処置指示
 export type RemainingHandlingInstruction =
-  | "none"      // 指示なし
+  | "none" // 指示なし
   | "discarded" // 破棄してください
-  | "stored";   // 保存してください
+  | "stored"; // 保存してください
 
 /** 摂食状況 */
 export type ConsumptionStatus =
@@ -1268,16 +1268,16 @@ export interface CarePreset {
   icon?: string;
 
   // 品物登録フォームへの適用値
-  itemCategory?: ItemCategory;                           // 食べ物/飲み物
-  storageMethod?: StorageMethod;                         // 保存方法
-  servingMethod?: ServingMethod;                         // 提供方法
-  servingMethodDetail?: string;                          // 提供方法の詳細
-  noteToStaff?: string;                                  // スタッフへの申し送り
+  itemCategory?: ItemCategory; // 食べ物/飲み物
+  storageMethod?: StorageMethod; // 保存方法
+  servingMethod?: ServingMethod; // 提供方法
+  servingMethodDetail?: string; // 提供方法の詳細
+  noteToStaff?: string; // スタッフへの申し送り
   remainingHandlingInstruction?: RemainingHandlingInstruction; // 残った場合の処置
 
   // @deprecated 旧フィールド（後方互換性）
   category?: string;
-  processingDetail?: string;  // → servingMethodDetailに統合
+  processingDetail?: string; // → servingMethodDetailに統合
   instruction?: {
     content: string;
     servingMethod?: ServingMethod;
