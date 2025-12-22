@@ -33,8 +33,8 @@ import {
 const DEMO_RESIDENT_ID = 'resident-001';
 const DEMO_USER_ID = 'family-001';
 
-// アイコン選択肢
-const ICON_OPTIONS = ['🥝', '🍎', '🍊', '🍑', '🧅', '⚫', '🈲', '⚠️', '🔀', '🍽️', '✂️', '🍰', '🥛', '🍚'];
+// アイコン選択肢（食品関連のみ）
+const ICON_OPTIONS = ['🥝', '🍎', '🍊', '🍑', '🍌', '🍇', '🍓', '🍈', '🥭', '🧅', '🥕', '🥒', '🍰', '🍮', '🥛', '🍚', '🍵', '☕'];
 
 export function PresetManagement() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -381,7 +381,7 @@ function PresetFormModal({
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="例: キウイ（8等分・半月切り）"
+              placeholder="例: キウイ"
               className="w-full px-4 py-2 border rounded-lg"
               required
             />
@@ -505,6 +505,9 @@ function PresetFormModal({
               rows={2}
               className="w-full px-4 py-2 border rounded-lg resize-none"
             />
+            <p className="mt-1 text-xs text-gray-500">
+              ※ 特別な条件（体調不良時は除外など）もここに記載してください
+            </p>
           </div>
 
           {/* 残った場合の処置指示 */}
