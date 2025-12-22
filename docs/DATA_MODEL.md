@@ -109,7 +109,7 @@ PWAからの入力データを保存するシート。
 | `settings` | アプリ設定 | webhookUrl, driveSettings |
 | `items` | 品物マスタ | name, category, isActive |
 | `tasks` | タスク管理 | title, status, dueDate |
-| `presets` | プリセット | name, items[], snackTiming |
+| `presets` | プリセット（いつもの指示） | name, category, instruction, matchConfig |
 | `prohibitions` | 禁止ルール | itemId, reason |
 | `careItems` | ケア記録 | recordDate, mealType, items |
 | `chat_messages` | チャットメッセージ | content, sender, timestamp |
@@ -128,6 +128,110 @@ gs://facility-care-input-form.appspot.com/
 │   └── evidence/       # エビデンス写真
 │       └── YYYY-MM-DD/
 │           └── {timestamp}.jpg
+```
+
+---
+
+## 5.1 presetsコレクション詳細
+
+プリセット（いつもの指示）の詳細構造。
+
+### 現行構造（Phase 37）
+
+```typescript
+// Firestore: presets/{presetId}
+{
+  id: string;
+  residentId: string;
+
+  // 基本情報
+  name: string;                              // "キウイ8等分"
+  category: 'cut' | 'serve' | 'condition';   // 単一選択 ← 課題
+  icon?: string;
+
+  // 指示内容
+  instruction: {
+    content: string;                         // "輪切り8等分にして提供"
+    servingMethod?: 'warm' | 'cold' | 'room';
+    servingDetail?: string;
+  },
+
+  // マッチング設定
+  matchConfig: {
+    keywords: string[];                      // ["キウイ", "フルーツ"]
+    categories?: ItemCategory[];
+    exactMatch?: boolean;
+  },
+
+  // 出所追跡
+  source: 'fax' | 'family_app' | 'ai_generated' | 'staff_created';
+  aiSourceInfo?: {
+    model: string;
+    confidence: number;
+    generatedAt: string;
+  },
+
+  // ステータス
+  isActive: boolean;
+  usageCount: number;
+  lastUsedAt?: string;
+
+  // メタ
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+}
+```
+
+### 改善後構造（Phase 41予定）
+
+```typescript
+// Firestore: presets/{presetId}
+{
+  id: string;
+  residentId: string;
+  name: string;
+  icon?: string;
+
+  // 【改善】カテゴリ別指示
+  instructions: {
+    cut?: string;        // カット方法の指示（任意）
+    serve?: string;      // 提供方法の指示（任意）
+    condition?: string;  // 条件付き対応の指示（任意）
+  },
+
+  // 【後方互換性用】移行完了後に削除
+  category?: 'cut' | 'serve' | 'condition';  // deprecated
+  instruction?: {                             // deprecated
+    content: string;
+  },
+
+  // マッチング設定（変更なし）
+  matchConfig: { ... },
+
+  // その他フィールド（変更なし）
+  source: string;
+  isActive: boolean;
+  ...
+}
+```
+
+### カテゴリ定義
+
+| カテゴリ | 説明 | アイコン | 例 |
+|----------|------|----------|-----|
+| `cut` | カット・調理方法 | ✂️ | "輪切り8等分", "すりおろし" |
+| `serve` | 提供方法・温度 | 🍽️ | "温めて提供", "常温で" |
+| `condition` | 条件付き対応 | ⚠️ | "月水金のみ禁止", "体調不良時は除外" |
+
+### マイグレーション方針
+
+```
+既存データ: { category: 'cut', instruction: { content: '8等分' } }
+    ↓ 移行
+新データ:   { instructions: { cut: '8等分' }, category: 'cut', instruction: { content: '8等分' } }
+    ↓ 検証期間後
+最終:       { instructions: { cut: '8等分' } }
 ```
 
 ---
@@ -171,5 +275,6 @@ gs://facility-care-input-form.appspot.com/
 
 | 日付 | 変更内容 |
 |------|----------|
+| 2025-12-23 | Phase 41設計: presetsコレクション改善設計追加 |
 | 2025-12-23 | Phase 40: staffNotesコレクション追加 |
 | 2025-12-20 | 統合ドキュメント作成 |

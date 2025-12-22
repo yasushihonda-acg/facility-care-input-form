@@ -323,7 +323,114 @@ function generatePostId(): string {
 
 ---
 
-## 7. 変更履歴
+## 7. プリセット機能（いつもの指示）
+
+### 7.1 概要
+
+プリセットは「カット・調理方法」「提供方法」「条件付き対応」などの**よく使う指示をテンプレート化**し、品物登録時に簡単に適用できる機能です。
+
+### 7.2 現行仕様（Phase 37時点）
+
+| 項目 | 仕様 | 問題点 |
+|------|------|--------|
+| カテゴリ | 単一選択（cut/serve/condition） | 1つしか選べない |
+| 指示内容 | 単一テキストフィールド | カテゴリ別に分けられない |
+| 適用方法 | キーワードマッチで自動サジェスト | 動作中 |
+
+### 7.3 改善設計（Phase 41予定）
+
+#### 課題
+
+1. **カテゴリ制限**: プリセット作成時に1カテゴリしか選べないが、実際の指示は複数カテゴリにまたがることが多い
+2. **UI不整合**: 品物登録フォームでは複数アイコン選択可能だが、プリセットは単一カテゴリ
+3. **指示分離不可**: 「カット方法」と「提供方法」を別々に管理できない
+
+#### 改善案A: カテゴリ別テキスト入力（推奨）
+
+```typescript
+interface CarePreset {
+  // ... 既存フィールド
+
+  // 改善後: カテゴリ別の指示
+  instructions: {
+    cut?: string;       // カット・調理方法の指示
+    serve?: string;     // 提供方法の指示
+    condition?: string; // 条件付き対応の指示
+  };
+
+  // 後方互換性（移行完了後に削除）
+  category?: PresetCategory;  // deprecated
+  instruction?: {             // deprecated
+    content: string;
+  };
+}
+```
+
+**メリット**:
+- カテゴリごとに独立した指示を定義可能
+- 品物登録時に必要なカテゴリのみ適用できる
+- スタッフ記録画面でカテゴリ別アイコン表示が可能
+
+#### 改善案B: 複数カテゴリ選択
+
+```typescript
+interface CarePreset {
+  categories: PresetCategory[];  // 複数選択
+  instruction: {
+    content: string;             // 統合テキスト
+  };
+}
+```
+
+**メリット**:
+- 最小限の変更で対応可能
+- 既存UIの修正が少ない
+
+**デメリット**:
+- カテゴリ別の指示分離ができない
+
+### 7.4 影響範囲
+
+#### フロントエンド（13ファイル）
+
+| ファイル | 影響内容 |
+|----------|----------|
+| `types/careItem.ts` | CarePreset, PresetCategory型変更 |
+| `pages/family/PresetManagement.tsx` | 作成/編集フォーム改修 |
+| `components/meal/ItemBasedSnackRecord.tsx` | サジェスト表示改修 |
+| `components/meal/StaffRecordDialog.tsx` | 適用表示改修 |
+| `hooks/usePresets.ts` | React Query変更 |
+| `hooks/usePresetSuggestions.ts` | マッチロジック変更 |
+| `data/demo/demoFamilyData.ts` | デモデータ更新 |
+
+#### バックエンド（3ファイル）
+
+| ファイル | 影響内容 |
+|----------|----------|
+| `functions/src/types/index.ts` | 型定義変更 |
+| `functions/src/functions/presets.ts` | CRUD API改修 |
+| `functions/src/functions/getPresetSuggestions.ts` | クエリ変更 |
+
+#### Firestore
+
+- `presets` コレクションのスキーマ変更
+- マイグレーションスクリプト必要
+
+### 7.5 移行戦略
+
+1. **Phase 41.1**: 新フィールド追加（後方互換性維持）
+2. **Phase 41.2**: UIを新フィールド対応に更新
+3. **Phase 41.3**: 既存データ移行スクリプト実行
+4. **Phase 41.4**: 旧フィールド削除（deprecation期間後）
+
+### 7.6 注意事項
+
+> **後方互換性必須**: 既存のプリセットデータが動作し続けることを保証すること。
+> 移行中は新旧フィールド両方をサポートし、段階的に移行すること。
+
+---
+
+## 8. 変更履歴
 
 | 日付 | バージョン | 変更内容 | 担当 |
 |------|------------|----------|------|
