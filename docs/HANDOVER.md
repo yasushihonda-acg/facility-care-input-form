@@ -150,7 +150,7 @@ firebase deploy --only functions --debug
 
 ## 開発履歴
 
-Phase 1〜37まで完了。詳細は `git log` を参照。
+Phase 1〜38.2まで完了。詳細は `git log` を参照。
 
 主要機能:
 - 家族向け品物管理・プリセット管理
