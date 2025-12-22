@@ -173,10 +173,10 @@ firebase deploy --only functions --debug
 | 記録閲覧 | `/view` | 全ケア記録の閲覧・検索 |
 | 統計 | `/stats` | 品物・摂食統計ダッシュボード |
 
-### 管理者向け
+### 設定（独立ページ）
 | 機能 | パス | 説明 |
 |------|------|------|
-| 設定 | `/staff/input/meal?admin=true` | Webhook・Drive設定 |
+| グローバル設定 | `/settings` | Webhook・初期値設定 |
 
 ---
 
@@ -211,6 +211,6 @@ frontend/src/
 
 ## 開発履歴
 
-Phase 1〜38.5まで完了。詳細は `git log` を参照。
+Phase 1〜39まで完了。詳細は `git log` を参照。
 
 E2Eテスト: 343件（290件パス・39件スキップ）
