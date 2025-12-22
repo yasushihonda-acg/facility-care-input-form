@@ -108,13 +108,8 @@ export interface CareInstruction {
   updatedAt: string;
 }
 
-/** プリセット設定 */
-export interface CarePreset {
-  id: string;
-  name: string;                // "キウイ8等分"
-  processingDetail: string;    // 詳細指示内容
-  icon?: string;               // オプションアイコン
-}
+/** プリセット設定 - careItem.tsから再エクスポート */
+export type { CarePreset } from './careItem';
 
 /** タイムラインアイテムのステータス */
 export type TimelineStatus = 'completed' | 'provided' | 'pending' | 'has_instruction';

@@ -145,10 +145,18 @@ export function ItemForm() {
       ...prev,
       // 品物名（プリセット名からカッコ前を抽出）
       itemName,
-      // 提供方法の詳細（processingDetailを設定）
-      servingMethodDetail: preset.processingDetail,
-      // 提供方法: カットがデフォルト（プリセットには通常カット指示が含まれる）
-      servingMethod: 'cut',
+      // カテゴリ（食べ物/飲み物）
+      ...(preset.itemCategory && { category: preset.itemCategory }),
+      // 保存方法
+      ...(preset.storageMethod && { storageMethod: preset.storageMethod }),
+      // 提供方法（プリセットに指定があればそれを使用、なければ'as_is'）
+      servingMethod: preset.servingMethod || 'as_is',
+      // 提供方法の詳細（新形式優先、旧形式フォールバック）
+      servingMethodDetail: preset.servingMethodDetail || preset.processingDetail || '',
+      // スタッフへの申し送り
+      ...(preset.noteToStaff && { noteToStaff: preset.noteToStaff }),
+      // 残った場合の処置指示
+      ...(preset.remainingHandlingInstruction && { remainingHandlingInstruction: preset.remainingHandlingInstruction }),
     }));
   }, []);
 

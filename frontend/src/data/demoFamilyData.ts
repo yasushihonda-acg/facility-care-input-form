@@ -43,60 +43,139 @@ export const DEMO_FAMILY_USER: FamilyUser = {
 // ============================================
 
 export const DEMO_PRESETS: CarePreset[] = [
-  // カット・加工系（category: 'cut'）
+  // カット・加工系
   {
     id: 'preset-kiwi',
+    residentId: 'resident-001',
     name: 'キウイ（8等分・半月切り）',
-    processingDetail:
-      '輪切り4等分をさらに半分（半月）に切ってください。\n皮は必ず剥いてください。\n種が多い部分は避けてください。',
     icon: '🥝',
+    itemCategory: 'food',
+    storageMethod: 'refrigerated',
+    servingMethod: 'cut',
+    servingMethodDetail:
+      '輪切り4等分をさらに半分（半月）に切ってください。\n皮は必ず剥いてください。\n種が多い部分は避けてください。',
+    matchConfig: { keywords: ['キウイ', 'kiwi'] },
+    source: 'manual',
+    isActive: true,
+    usageCount: 5,
+    createdAt: '2025-12-01T10:00:00Z',
+    updatedAt: '2025-12-20T15:00:00Z',
+    createdBy: 'family-001',
   },
   {
     id: 'preset-persimmon',
+    residentId: 'resident-001',
     name: '柿（熟した部分も捨てずに）',
-    processingDetail:
-      '熟して柔らかくなった部分も捨てずに提供してください。\nご本人の好物です。\n皮をむいて食べやすい大きさにカット。',
     icon: '🍑',
+    itemCategory: 'food',
+    storageMethod: 'room_temp',
+    servingMethod: 'cut',
+    servingMethodDetail:
+      '熟して柔らかくなった部分も捨てずに提供してください。\nご本人の好物です。\n皮をむいて食べやすい大きさにカット。',
+    matchConfig: { keywords: ['柿', '柿の実'] },
+    source: 'manual',
+    isActive: true,
+    usageCount: 3,
+    createdAt: '2025-12-01T10:00:00Z',
+    updatedAt: '2025-12-20T15:00:00Z',
+    createdBy: 'family-001',
   },
   {
     id: 'preset-kuromame',
+    residentId: 'resident-001',
     name: '黒豆（煮汁を切って器へ）',
-    processingDetail:
-      '煮汁をしっかり切ってから器に盛り付けてください。\n汁気が多いとこぼれやすいため。',
     icon: '⚫',
+    itemCategory: 'food',
+    storageMethod: 'refrigerated',
+    servingMethod: 'other',
+    servingMethodDetail:
+      '煮汁をしっかり切ってから器に盛り付けてください。\n汁気が多いとこぼれやすいため。',
+    matchConfig: { keywords: ['黒豆', 'くろまめ'] },
+    source: 'manual',
+    isActive: true,
+    usageCount: 2,
+    createdAt: '2025-12-01T10:00:00Z',
+    updatedAt: '2025-12-20T15:00:00Z',
+    createdBy: 'family-001',
   },
-  // 提供方法系（category: 'serve'）
+  // 提供方法系
   {
     id: 'preset-rakkyo',
+    residentId: 'resident-001',
     name: 'らっきょう（冷・小皿で提供）',
-    processingDetail:
-      'らっきょうは冷たいまま小皿で提供してください。\n常温で放置しないでください。\n提供直前まで冷蔵庫で保管をお願いします。',
     icon: '🧅',
+    itemCategory: 'food',
+    storageMethod: 'refrigerated',
+    servingMethod: 'as_is',
+    servingMethodDetail:
+      'らっきょうは冷たいまま小皿で提供してください。\n常温で放置しないでください。',
+    noteToStaff: '提供直前まで冷蔵庫で保管をお願いします。',
+    matchConfig: { keywords: ['らっきょう', 'ラッキョウ'] },
+    source: 'manual',
+    isActive: true,
+    usageCount: 4,
+    createdAt: '2025-12-01T10:00:00Z',
+    updatedAt: '2025-12-20T15:00:00Z',
+    createdBy: 'family-001',
   },
-  // 条件付きロジック系（category: 'condition'）
+  // 条件付きロジック系
   {
     id: 'preset-mikan',
+    residentId: 'resident-001',
     name: 'みかん（未剥離残食は→おやつへ再提供）',
-    processingDetail:
-      '皮を剥かずに残した場合は、おやつの時間に再度提供してください。\n剥いた状態で残した場合は廃棄。',
     icon: '🍊',
+    itemCategory: 'food',
+    storageMethod: 'room_temp',
+    servingMethod: 'peeled',
+    remainingHandlingInstruction: 'stored',
+    noteToStaff:
+      '皮を剥かずに残した場合は、おやつの時間に再度提供してください。\n剥いた状態で残した場合は廃棄。',
+    matchConfig: { keywords: ['みかん', 'ミカン', '蜜柑'] },
+    source: 'manual',
+    isActive: true,
+    usageCount: 6,
+    createdAt: '2025-12-01T10:00:00Z',
+    updatedAt: '2025-12-20T15:00:00Z',
+    createdBy: 'family-001',
   },
-  // 単品分離系：「黒砂糖・チーズは指定日以外禁止」を分離
+  // 条件付き提供系
   {
     id: 'preset-kurozato',
+    residentId: 'resident-001',
     name: '黒砂糖（指定日のみ提供可）',
-    processingDetail:
-      'ご家族が指定した日のみ提供してください。\n指定日以外は提供しないでください。\n不明な場合はご家族に確認を。',
     icon: '🍬',
+    itemCategory: 'food',
+    storageMethod: 'room_temp',
+    servingMethod: 'as_is',
+    noteToStaff:
+      'ご家族が指定した日のみ提供してください。\n指定日以外は提供しないでください。\n不明な場合はご家族に確認を。',
+    matchConfig: { keywords: ['黒砂糖', 'くろざとう'] },
+    source: 'manual',
+    isActive: true,
+    usageCount: 1,
+    createdAt: '2025-12-01T10:00:00Z',
+    updatedAt: '2025-12-20T15:00:00Z',
+    createdBy: 'family-001',
   },
   {
     id: 'preset-cheese',
+    residentId: 'resident-001',
     name: 'チーズ（指定日のみ提供可）',
-    processingDetail:
-      'ご家族が指定した日のみ提供してください。\n指定日以外は提供しないでください。\n不明な場合はご家族に確認を。',
     icon: '🧀',
+    itemCategory: 'food',
+    storageMethod: 'refrigerated',
+    servingMethod: 'as_is',
+    noteToStaff:
+      'ご家族が指定した日のみ提供してください。\n指定日以外は提供しないでください。\n不明な場合はご家族に確認を。',
+    matchConfig: { keywords: ['チーズ', 'cheese'] },
+    source: 'manual',
+    isActive: true,
+    usageCount: 1,
+    createdAt: '2025-12-01T10:00:00Z',
+    updatedAt: '2025-12-20T15:00:00Z',
+    createdBy: 'family-001',
   },
-];
+];;;;
 
 // ============================================
 // 禁止ルールデモデータ（蒲地様FAX内容に基づく）

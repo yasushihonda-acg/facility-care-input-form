@@ -513,6 +513,13 @@ export type ServingMethod =
   | "heated" // 温める
   | "other"; // その他
 
+
+// 残った場合の処置指示
+export type RemainingHandlingInstruction =
+  | "none"      // 指示なし
+  | "discarded" // 破棄してください
+  | "stored";   // 保存してください
+
 /** 摂食状況 */
 export type ConsumptionStatus =
   | "full" // 完食
@@ -1258,13 +1265,19 @@ export interface CarePreset {
 
   // 基本情報
   name: string;
-  category?: string;
   icon?: string;
 
-  // 指示内容（品物登録フォームのservingMethodDetailに適用）
-  processingDetail: string;
+  // 品物登録フォームへの適用値
+  itemCategory?: ItemCategory;                           // 食べ物/飲み物
+  storageMethod?: StorageMethod;                         // 保存方法
+  servingMethod?: ServingMethod;                         // 提供方法
+  servingMethodDetail?: string;                          // 提供方法の詳細
+  noteToStaff?: string;                                  // スタッフへの申し送り
+  remainingHandlingInstruction?: RemainingHandlingInstruction; // 残った場合の処置
 
-  // @deprecated 旧形式（後方互換性のため保持）
+  // @deprecated 旧フィールド（後方互換性）
+  category?: string;
+  processingDetail?: string;  // → servingMethodDetailに統合
   instruction?: {
     content: string;
     servingMethod?: ServingMethod;

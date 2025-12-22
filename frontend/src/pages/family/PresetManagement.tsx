@@ -18,6 +18,15 @@ import { useDemoMode } from '../../hooks/useDemoMode';
 import type {
   CarePreset,
   CarePresetInput,
+  ItemCategory,
+  StorageMethod,
+  ServingMethod,
+  RemainingHandlingInstruction,
+} from '../../types/careItem';
+import {
+  STORAGE_METHODS,
+  SERVING_METHODS,
+  REMAINING_HANDLING_INSTRUCTION_OPTIONS,
 } from '../../types/careItem';
 
 // デモ用の入居者ID・ユーザーID（将来は認証から取得）
@@ -276,6 +285,12 @@ function PresetCard({
   );
 }
 
+// カテゴリラベル
+const ITEM_CATEGORY_LABELS: Record<ItemCategory, string> = {
+  food: '食べ物',
+  drink: '飲み物',
+};
+
 // プリセット作成/編集モーダル
 function PresetFormModal({
   preset,
@@ -288,26 +303,44 @@ function PresetFormModal({
   onSave: (input: CarePresetInput) => Promise<void>;
   isSaving: boolean;
 }) {
+  // 基本情報
   const [name, setName] = useState(preset?.name || '');
   const [icon, setIcon] = useState(preset?.icon || '📋');
-  // processingDetail を優先、旧形式 instruction.content もフォールバック
-  const [processingDetail, setProcessingDetail] = useState(
-    preset?.processingDetail || preset?.instruction?.content || ''
+
+  // 品物フォームフィールド
+  const [itemCategory, setItemCategory] = useState<ItemCategory | undefined>(preset?.itemCategory);
+  const [storageMethod, setStorageMethod] = useState<StorageMethod | undefined>(preset?.storageMethod);
+  const [servingMethod, setServingMethod] = useState<ServingMethod | undefined>(preset?.servingMethod);
+  const [servingMethodDetail, setServingMethodDetail] = useState(
+    preset?.servingMethodDetail || preset?.processingDetail || preset?.instruction?.content || ''
   );
-  const [keywords, setKeywords] = useState(preset?.matchConfig.keywords.join(', ') || '');
+  const [noteToStaff, setNoteToStaff] = useState(preset?.noteToStaff || '');
+  const [remainingHandlingInstruction, setRemainingHandlingInstruction] = useState<RemainingHandlingInstruction | undefined>(
+    preset?.remainingHandlingInstruction
+  );
+
+  // マッチング
+  const [keywords, setKeywords] = useState(preset?.matchConfig?.keywords?.join(', ') || '');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name.trim() || !processingDetail.trim()) {
-      alert('プリセット名と詳細指示は必須です');
+    if (!name.trim()) {
+      alert('プリセット名は必須です');
       return;
     }
 
     const input: CarePresetInput = {
       name: name.trim(),
       icon,
-      processingDetail: processingDetail.trim(),
+      // 品物フォームフィールド
+      itemCategory,
+      storageMethod,
+      servingMethod,
+      servingMethodDetail: servingMethodDetail.trim() || undefined,
+      noteToStaff: noteToStaff.trim() || undefined,
+      remainingHandlingInstruction,
+      // マッチング設定
       matchConfig: {
         keywords: keywords
           .split(',')
@@ -377,19 +410,132 @@ function PresetFormModal({
             </div>
           </div>
 
-          {/* 詳細指示 */}
+          {/* カテゴリ（食べ物/飲み物） */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              詳細指示 <span className="text-red-500">*</span>
+              カテゴリ
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {(Object.entries(ITEM_CATEGORY_LABELS) as [ItemCategory, string][]).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setItemCategory(itemCategory === value ? undefined : value)}
+                  className={`py-2 px-4 border rounded-lg transition-colors ${
+                    itemCategory === value
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  {value === 'food' ? '🍽️' : '🥤'} {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 保存方法 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              保存方法
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {STORAGE_METHODS.map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setStorageMethod(storageMethod === value ? undefined : value)}
+                  className={`py-2 px-3 border rounded-lg text-sm transition-colors ${
+                    storageMethod === value
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 提供方法 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              提供方法
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {SERVING_METHODS.map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setServingMethod(servingMethod === value ? undefined : value)}
+                  className={`py-2 px-3 border rounded-lg text-sm transition-colors ${
+                    servingMethod === value
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 提供方法の詳細 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              提供方法の詳細
             </label>
             <textarea
-              value={processingDetail}
-              onChange={(e) => setProcessingDetail(e.target.value)}
-              placeholder="スタッフへの具体的な指示を入力してください"
-              rows={4}
+              value={servingMethodDetail}
+              onChange={(e) => setServingMethodDetail(e.target.value)}
+              placeholder="例: 食べやすい大きさにカットしてください"
+              rows={3}
               className="w-full px-4 py-2 border rounded-lg resize-none"
-              required
             />
+          </div>
+
+          {/* スタッフへの申し送り */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              スタッフへの申し送り
+            </label>
+            <textarea
+              value={noteToStaff}
+              onChange={(e) => setNoteToStaff(e.target.value)}
+              placeholder="例: 好物なのでぜひ食べさせてあげてください"
+              rows={2}
+              className="w-full px-4 py-2 border rounded-lg resize-none"
+            />
+          </div>
+
+          {/* 残った場合の処置指示 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              残った場合の処置指示
+            </label>
+            <div className="space-y-2">
+              {REMAINING_HANDLING_INSTRUCTION_OPTIONS.map(({ value, label, description }) => (
+                <label
+                  key={value}
+                  className={`flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                    remainingHandlingInstruction === value
+                      ? 'border-primary bg-primary/5'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="remainingHandling"
+                    checked={remainingHandlingInstruction === value}
+                    onChange={() => setRemainingHandlingInstruction(value)}
+                    className="mt-1"
+                  />
+                  <div>
+                    <div className="font-medium">{label}</div>
+                    <div className="text-xs text-gray-500">{description}</div>
+                  </div>
+                </label>
+              ))}
+            </div>
           </div>
 
           {/* キーワード */}

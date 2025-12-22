@@ -615,13 +615,19 @@ export interface CarePreset {
 
   // 基本情報
   name: string;
-  category?: string;
   icon?: string;
 
-  // 指示内容（品物登録フォームのservingMethodDetailに適用）
-  processingDetail: string;
+  // 品物登録フォームへの適用値
+  itemCategory?: ItemCategory;                           // 食べ物/飲み物
+  storageMethod?: StorageMethod;                         // 保存方法
+  servingMethod?: ServingMethod;                         // 提供方法
+  servingMethodDetail?: string;                          // 提供方法の詳細
+  noteToStaff?: string;                                  // スタッフへの申し送り
+  remainingHandlingInstruction?: RemainingHandlingInstruction; // 残った場合の処置
 
-  // @deprecated 旧形式（後方互換性のため保持）
+  // @deprecated 旧フィールド（後方互換性）
+  category?: string;
+  processingDetail?: string;  // → servingMethodDetailに統合
   instruction?: {
     content: string;
     servingMethod?: ServingMethod;
@@ -653,18 +659,23 @@ export interface CarePreset {
 /** プリセット作成入力 */
 export interface CarePresetInput {
   name: string;
-  category?: string;
   icon?: string;
-  // 指示内容（品物登録フォームのservingMethodDetailに適用）
-  processingDetail: string;
-  // @deprecated 旧形式（後方互換性のため保持）
-  instruction?: {
-    content: string;
-    servingMethod?: ServingMethod;
-    servingDetail?: string;
-  };
-  matchConfig: {
-    keywords: string[];
+
+  // 品物登録フォームへの適用値
+  itemCategory?: ItemCategory;
+  storageMethod?: StorageMethod;
+  servingMethod?: ServingMethod;
+  servingMethodDetail?: string;
+  noteToStaff?: string;
+  remainingHandlingInstruction?: RemainingHandlingInstruction;
+
+  // @deprecated 旧フィールド（後方互換性）
+  category?: string;
+  processingDetail?: string;
+
+  // マッチング設定
+  matchConfig?: {
+    keywords?: string[];
     categories?: ItemCategory[];
     exactMatch?: boolean;
   };
