@@ -5,7 +5,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import { AISuggestion } from '../../components/family/AISuggestion';
 import { SaveAISuggestionDialog } from '../../components/family/SaveAISuggestionDialog';
@@ -43,8 +43,12 @@ const getTodayString = () => new Date().toISOString().split('T')[0];
 
 export function ItemForm() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const isDemo = useDemoMode();
   const submitItem = useSubmitCareItem();
+
+  // URL永続化: returnUrlがあればそれを使用、なければデフォルトの品物管理画面へ
+  const returnUrl = searchParams.get('returnUrl') || (isDemo ? '/demo/family/items' : '/family/items');
 
   // フォーム状態（Phase 31: デフォルトカテゴリを food に変更）
   const [formData, setFormData] = useState<CareItemInput>({
@@ -227,27 +231,25 @@ export function ItemForm() {
   const handleManualPresetSkip = useCallback(() => {
     setShowManualPresetDialog(false);
     setRegisteredFormData(null);
-    // デモモードか本番かで遷移先を分ける
+    // デモモードの場合はアラート表示
     if (isDemo) {
       alert('登録しました（デモモード - 実際には保存されません）');
-      navigate('/demo/family/items');
-    } else {
-      navigate('/family/items');
     }
-  }, [isDemo, navigate]);
+    // returnUrl（フィルター状態保持）へ遷移
+    navigate(returnUrl);
+  }, [isDemo, navigate, returnUrl]);
 
   // 手動登録後のダイアログ: 「保存して完了」後
   const handleManualPresetSaved = useCallback(() => {
     setShowManualPresetDialog(false);
     setRegisteredFormData(null);
-    // デモモードか本番かで遷移先を分ける
+    // デモモードの場合はアラート表示
     if (isDemo) {
       alert('登録しました（デモモード - プリセット保存も実際には行われません）');
-      navigate('/demo/family/items');
-    } else {
-      navigate('/family/items');
     }
-  }, [isDemo, navigate]);
+    // returnUrl（フィルター状態保持）へ遷移
+    navigate(returnUrl);
+  }, [isDemo, navigate, returnUrl]);
 
   return (
     <Layout title="品物を登録" showBackButton>

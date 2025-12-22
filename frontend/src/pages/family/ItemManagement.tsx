@@ -13,8 +13,8 @@
  * @see docs/archive/PHASE_38_2_ITEM_MANAGEMENT_REDESIGN.md
  */
 
-import { useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useMemo, useCallback } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import { useCareItems, useDeleteCareItem, useExpiredItems } from '../../hooks/useCareItems';
 import { useDemoMode } from '../../hooks/useDemoMode';
@@ -85,16 +85,54 @@ function filterItemsByDateRange(
 }
 
 export function ItemManagement() {
+  // URL同期用
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // URLから初期値を取得
+  const initialPeriod = Number(searchParams.get('period')) || 2;
+  const initialExD = searchParams.get('exD') === '1';
+  const initialExW = searchParams.get('exW') === '1';
+  const initialExp = searchParams.get('exp') === '1';
+
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<DateViewMode>('day');
-  const [unscheduledPeriod, setUnscheduledPeriod] = useState(2);
+  const [unscheduledPeriod, setUnscheduledPeriod] = useState(initialPeriod);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [showUnscheduledModal, setShowUnscheduledModal] = useState(false);
-  // スケジュールタイプ除外トグル（デフォルト: 両方OFF）
-  const [excludeDaily, setExcludeDaily] = useState(false);
-  const [excludeWeekly, setExcludeWeekly] = useState(false);
+  // スケジュールタイプ除外トグル（URLから初期化）
+  const [excludeDaily, setExcludeDaily] = useState(initialExD);
+  const [excludeWeekly, setExcludeWeekly] = useState(initialExW);
+  // 詳細展開状態（URLから初期化）
+  const [isExpanded, setIsExpanded] = useState(initialExp);
+
   const isDemo = useDemoMode();
   const navigate = useNavigate();
+
+  // URL更新ヘルパー（フィルター状態をURLに同期）
+  const updateUrlParams = useCallback((updates: Record<string, string>) => {
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      Object.entries(updates).forEach(([key, val]) => {
+        if (val === '0' || val === '') {
+          newParams.delete(key);  // デフォルト値は削除してURLを短く
+        } else {
+          newParams.set(key, val);
+        }
+      });
+      return newParams;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  // 現在のフィルター状態を含むURL（returnUrl用）
+  const currentFilterUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    if (unscheduledPeriod !== 2) params.set('period', String(unscheduledPeriod));
+    if (excludeDaily) params.set('exD', '1');
+    if (excludeWeekly) params.set('exW', '1');
+    if (isExpanded) params.set('exp', '1');
+    const queryString = params.toString();
+    return queryString ? `?${queryString}` : '';
+  }, [unscheduledPeriod, excludeDaily, excludeWeekly, isExpanded]);
 
   // デモモード対応: リンク先プレフィックス
   const pathPrefix = isDemo ? '/demo' : '';
@@ -137,9 +175,31 @@ export function ItemManagement() {
     return getUnscheduledDates(activeItems, skipDateStrings, unscheduledPeriod, scheduleExclusion);
   }, [data?.items, skipDateStrings, unscheduledPeriod, scheduleExclusion]);
 
-  // 未設定日クリック → 品物登録画面へ
+  // フィルター変更ハンドラー（URL同期付き）
+  const handlePeriodChange = useCallback((period: number) => {
+    setUnscheduledPeriod(period);
+    updateUrlParams({ period: period === 2 ? '0' : String(period) });
+  }, [updateUrlParams]);
+
+  const handleExcludeDailyChange = useCallback((value: boolean) => {
+    setExcludeDaily(value);
+    updateUrlParams({ exD: value ? '1' : '0' });
+  }, [updateUrlParams]);
+
+  const handleExcludeWeeklyChange = useCallback((value: boolean) => {
+    setExcludeWeekly(value);
+    updateUrlParams({ exW: value ? '1' : '0' });
+  }, [updateUrlParams]);
+
+  const handleExpandChange = useCallback((expanded: boolean) => {
+    setIsExpanded(expanded);
+    updateUrlParams({ exp: expanded ? '1' : '0' });
+  }, [updateUrlParams]);
+
+  // 未設定日クリック → 品物登録画面へ（returnUrl付き）
   const handleUnscheduledDateClick = (date: string) => {
-    navigate(`${pathPrefix}/family/items/new?date=${date}`);
+    const returnUrl = encodeURIComponent(`${pathPrefix}/family/items${currentFilterUrl}`);
+    navigate(`${pathPrefix}/family/items/new?date=${date}&returnUrl=${returnUrl}`);
     setShowUnscheduledModal(false);
   };
 
@@ -188,7 +248,7 @@ export function ItemManagement() {
               <span className="hidden sm:inline">いつもの指示</span>
             </Link>
             <Link
-              to={`${pathPrefix}/family/items/new`}
+              to={`${pathPrefix}/family/items/new?returnUrl=${encodeURIComponent(`${pathPrefix}/family/items${currentFilterUrl}`)}`}
               className="px-4 py-2 bg-primary text-white rounded-lg font-medium text-sm"
             >
               + 新規登録
@@ -209,12 +269,14 @@ export function ItemManagement() {
         onDateClick={handleUnscheduledDateClick}
         onMarkAsSkip={handleMarkAsSkip}
         onShowAll={() => setShowUnscheduledModal(true)}
-        onPeriodChange={setUnscheduledPeriod}
+        onPeriodChange={handlePeriodChange}
         currentPeriod={unscheduledPeriod}
         excludeDaily={excludeDaily}
         excludeWeekly={excludeWeekly}
-        onExcludeDailyChange={setExcludeDaily}
-        onExcludeWeeklyChange={setExcludeWeekly}
+        onExcludeDailyChange={handleExcludeDailyChange}
+        onExcludeWeeklyChange={handleExcludeWeeklyChange}
+        isExpanded={isExpanded}
+        onExpandChange={handleExpandChange}
       />
 
       {/* 日付ナビゲーション */}
@@ -242,7 +304,7 @@ export function ItemManagement() {
               この期間に該当する品物はありません
             </p>
             <Link
-              to={`${pathPrefix}/family/items/new`}
+              to={`${pathPrefix}/family/items/new?returnUrl=${encodeURIComponent(`${pathPrefix}/family/items${currentFilterUrl}`)}`}
               className="inline-block px-6 py-3 bg-primary text-white rounded-lg font-medium"
             >
               品物を登録する

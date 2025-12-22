@@ -32,6 +32,10 @@ interface UnscheduledDatesBannerProps {
   onExcludeDailyChange?: (value: boolean) => void;
   /** 「週ごと」除外トグル変更時 */
   onExcludeWeeklyChange?: (value: boolean) => void;
+  /** 詳細展開状態（URL永続化用） */
+  isExpanded?: boolean;
+  /** 展開状態変更時 */
+  onExpandChange?: (expanded: boolean) => void;
 }
 
 export function UnscheduledDatesBanner({
@@ -46,8 +50,9 @@ export function UnscheduledDatesBanner({
   excludeWeekly = false,
   onExcludeDailyChange,
   onExcludeWeeklyChange,
+  isExpanded = false,
+  onExpandChange,
 }: UnscheduledDatesBannerProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
   const [showPeriodSelect, setShowPeriodSelect] = useState(false);
 
   // 表示する日付（先頭数件）
@@ -121,7 +126,7 @@ export function UnscheduledDatesBanner({
             {/* 展開/折りたたみ（未設定日がある場合のみ） */}
             {hasUnscheduledDates && (
               <button
-                onClick={() => setIsExpanded(!isExpanded)}
+                onClick={() => onExpandChange?.(!isExpanded)}
                 className="text-amber-700 text-xs underline shrink-0"
               >
                 {isExpanded ? '閉じる' : '詳細'}
