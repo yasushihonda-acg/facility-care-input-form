@@ -49,7 +49,7 @@ facility-care-input-form/
 - **Sheet B（書込）**: `1OrpUVoDfUECXCTrKOGKLwN_4OQ9dlg7cUTCPGLDGHV0`
 
 ## 開発履歴
-Phase 1〜38.2完了。詳細は `git log` を参照。
+Phase 1〜38.5完了。詳細は `git log` を参照。
 
 主要機能:
 - 家族向け品物管理・プリセット管理
@@ -59,7 +59,7 @@ Phase 1〜38.2完了。詳細は `git log` を参照。
 - 統計ダッシュボード・AI分析
 
 ## E2Eテスト
-328件定義・275件パス・39件スキップ
+343件定義・290件パス・39件スキップ（+15件 Phase 38.5）
 
 ## ドキュメント更新方針
 
