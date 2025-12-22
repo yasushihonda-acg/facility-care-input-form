@@ -38,14 +38,11 @@ function matchPresets(
           matchReason: `カテゴリ「${CATEGORY_LABELS[category]}」`,
           matchType: "category",
           confidence: 0.8,
-          // 【Phase 41】新形式
-          instructions: preset.instructions,
-          // 【後方互換性】旧形式
           instruction: {
             title: preset.name,
-            content: preset.instruction?.content || "",
-            servingMethod: preset.instruction?.servingMethod,
-            servingDetail: preset.instruction?.servingDetail,
+            content: preset.instruction.content,
+            servingMethod: preset.instruction.servingMethod,
+            servingDetail: preset.instruction.servingDetail,
           },
           source: preset.source,
         });
@@ -66,14 +63,11 @@ function matchPresets(
           matchReason: `品物名「${itemName}」`,
           matchType: "itemName",
           confidence: 0.9,
-          // 【Phase 41】新形式
-          instructions: preset.instructions,
-          // 【後方互換性】旧形式
           instruction: {
             title: preset.name,
-            content: preset.instruction?.content || "",
-            servingMethod: preset.instruction?.servingMethod,
-            servingDetail: preset.instruction?.servingDetail,
+            content: preset.instruction.content,
+            servingMethod: preset.instruction.servingMethod,
+            servingDetail: preset.instruction.servingDetail,
           },
           source: preset.source,
         });
@@ -82,17 +76,8 @@ function matchPresets(
     }
 
     // 3. コンテンツキーワードマッチ（confidence: 0.7）
-    // 新形式instructionsの内容も検索対象に含める
-    const instructionContent = preset.instruction?.content || "";
-    const instructionsCombined = [
-      preset.instructions?.cut,
-      preset.instructions?.serve,
-      preset.instructions?.condition,
-    ].filter(Boolean).join(" ");
-    const searchContent = `${instructionContent} ${instructionsCombined}`;
-
     if (
-      searchContent.includes(itemName) &&
+      preset.instruction.content.includes(itemName) &&
       !seenPresetIds.has(preset.id)
     ) {
       suggestions.push({
@@ -101,14 +86,11 @@ function matchPresets(
         matchReason: `指示内容に「${itemName}」を含む`,
         matchType: "keyword",
         confidence: 0.7,
-        // 【Phase 41】新形式
-        instructions: preset.instructions,
-        // 【後方互換性】旧形式
         instruction: {
           title: preset.name,
-          content: preset.instruction?.content || "",
-          servingMethod: preset.instruction?.servingMethod,
-          servingDetail: preset.instruction?.servingDetail,
+          content: preset.instruction.content,
+          servingMethod: preset.instruction.servingMethod,
+          servingDetail: preset.instruction.servingDetail,
         },
         source: preset.source,
       });

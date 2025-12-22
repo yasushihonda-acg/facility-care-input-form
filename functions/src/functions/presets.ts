@@ -153,66 +153,26 @@ export const createPreset = functions
         return;
       }
 
-      // 【Phase 41】新旧両形式をサポート
-      const hasOldFormat = preset?.instruction?.content;
-      const hasNewFormat = preset?.instructions &&
-        (preset.instructions.cut || preset.instructions.serve || preset.instructions.condition);
-
-      if (!preset || !preset.name || (!hasOldFormat && !hasNewFormat)) {
+      if (!preset || !preset.name || !preset.instruction?.content) {
         res.status(400).json({
           success: false,
-          error: "preset.name and either preset.instruction.content or preset.instructions is required",
+          error: "preset.name and preset.instruction.content are required",
         });
         return;
       }
 
       const now = Timestamp.now();
 
-      // 【Phase 41】新旧形式の相互変換
-      // 新形式から旧形式への変換（後方互換性のため）
-      let instructionContent = preset.instruction?.content || "";
-      let category: PresetCategory = preset.category || "cut";
-
-      if (hasNewFormat && !hasOldFormat) {
-        // 新形式のみの場合、旧形式に変換
-        const parts: string[] = [];
-        if (preset.instructions?.cut) {
-          parts.push(preset.instructions.cut);
-          category = "cut";
-        }
-        if (preset.instructions?.serve) {
-          parts.push(preset.instructions.serve);
-          if (!preset.instructions?.cut) category = "serve";
-        }
-        if (preset.instructions?.condition) {
-          parts.push(preset.instructions.condition);
-          if (!preset.instructions?.cut && !preset.instructions?.serve) category = "condition";
-        }
-        instructionContent = parts.join(" / ");
-      }
-
-      // 旧形式から新形式への変換
-      let instructions = preset.instructions;
-      if (hasOldFormat && !hasNewFormat) {
-        // 旧形式のみの場合、新形式にも保存
-        instructions = {
-          [category]: preset.instruction?.content,
-        };
-      }
-
-      // Firestoreに保存（両形式を保存）
+      // Firestoreに保存
       const presetData = {
         residentId,
         name: preset.name,
+        category: preset.category || "other" as PresetCategory,
         icon: preset.icon || undefined,
-        // 【Phase 41】新形式
-        instructions: instructions || undefined,
-        // 【後方互換性】旧形式
-        category: category,
         instruction: {
-          content: instructionContent,
-          servingMethod: preset.instruction?.servingMethod || undefined,
-          servingDetail: preset.instruction?.servingDetail || undefined,
+          content: preset.instruction.content,
+          servingMethod: preset.instruction.servingMethod || undefined,
+          servingDetail: preset.instruction.servingDetail || undefined,
         },
         matchConfig: {
           keywords: preset.matchConfig?.keywords || [],
@@ -319,33 +279,6 @@ export const updatePreset = functions
       }
       if (updates.instruction !== undefined) {
         updateData.instruction = updates.instruction;
-      }
-      // 【Phase 41】新形式instructionsのサポート
-      if (updates.instructions !== undefined) {
-        updateData.instructions = updates.instructions;
-        // 新形式が更新された場合、旧形式も同期（後方互換性）
-        const parts: string[] = [];
-        let primaryCategory: PresetCategory = "cut";
-        if (updates.instructions.cut) {
-          parts.push(updates.instructions.cut);
-          primaryCategory = "cut";
-        }
-        if (updates.instructions.serve) {
-          parts.push(updates.instructions.serve);
-          if (!updates.instructions.cut) primaryCategory = "serve";
-        }
-        if (updates.instructions.condition) {
-          parts.push(updates.instructions.condition);
-          if (!updates.instructions.cut && !updates.instructions.serve) primaryCategory = "condition";
-        }
-        if (parts.length > 0) {
-          updateData.instruction = {
-            content: parts.join(" / "),
-          };
-          if (updates.category === undefined) {
-            updateData.category = primaryCategory;
-          }
-        }
       }
       if (updates.matchConfig !== undefined) {
         updateData.matchConfig = updates.matchConfig;

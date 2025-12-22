@@ -22,23 +22,17 @@ instructions: {
 
 ## 実装計画
 
-### Phase 41.1: 型定義・後方互換性（Day 1） ✅ 完了
-- [x] `frontend/src/types/careItem.ts`: CarePresetに`instructions`フィールド追加
-- [x] `functions/src/types/index.ts`: バックエンド型も同様に更新
-- [x] 既存`category`/`instruction`は残す（後方互換性）
-- [x] 既存コードのnull check追加（PresetManagement.tsx, getPresetSuggestions.ts）
-- [x] ビルド確認（フロントエンド・バックエンド両方成功）
-- コミット: d4d5167
+### Phase 41.1: 型定義・後方互換性（Day 1）
+- [ ] `frontend/src/types/careItem.ts`: CarePresetに`instructions`フィールド追加
+- [ ] `functions/src/types/index.ts`: バックエンド型も同様に更新
+- [ ] 既存`category`/`instruction`は残す（後方互換性）
 
-### Phase 41.2: バックエンドAPI改修（Day 1-2） ✅ 完了
-- [x] `functions/src/functions/presets.ts`: CRUD対応
-  - createPreset: 新旧両方のフィールドを保存、相互変換
-  - updatePreset: instructions更新時に旧形式も自動同期
-- [x] `functions/src/functions/getPresetSuggestions.ts`: 新形式対応
-  - レスポンスにinstructionsフィールド追加
-  - 検索対象に新形式の内容を追加
-- [x] `CarePresetInput`, `PresetSuggestion` 型更新
-- コミット: 1f963b4
+### Phase 41.2: バックエンドAPI改修（Day 1-2）
+- [ ] `functions/src/functions/presets.ts`: CRUD対応
+  - createPreset: 新旧両方のフィールドを保存
+  - updatePreset: 同上
+  - getPresets: 両形式を返却
+- [ ] `functions/src/functions/getPresetSuggestions.ts`: 新形式対応
 
 ### Phase 41.3: フロントエンドUI改修（Day 2-3）
 - [ ] `PresetManagement.tsx`: フォームをカテゴリ別テキスト入力に変更

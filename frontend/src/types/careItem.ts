@@ -583,20 +583,6 @@ export const CATEGORY_LABELS: Record<ItemCategory, string> = {
 /** プリセットカテゴリ */
 // 注: 'ban'（禁止・制限）はプリセットではなく ProhibitionRule として別管理
 // @see docs/ITEM_MANAGEMENT_SPEC.md セクション8
-
-/**
- * プリセットのカテゴリ別指示 (Phase 41)
- * @description 各カテゴリの指示を独立して管理
- */
-export interface PresetInstructions {
-  /** カット・調理方法の指示 */
-  cut?: string;
-  /** 提供方法・温度の指示 */
-  serve?: string;
-  /** 条件付き対応の指示 */
-  condition?: string;
-}
-
 export type PresetCategory =
   | 'cut'        // カット・調理方法
   | 'serve'      // 提供方法・温度
@@ -640,16 +626,11 @@ export interface CarePreset {
 
   // 基本情報
   name: string;
+  category: PresetCategory;
   icon?: string;
 
-  // 【Phase 41】カテゴリ別指示（新形式）
-  instructions?: PresetInstructions;
-
-  // 【後方互換性】旧形式（Phase 41.7完了後に削除予定）
-  /** @deprecated Use instructions instead */
-  category?: PresetCategory;
-  /** @deprecated Use instructions instead */
-  instruction?: {
+  // 指示内容
+  instruction: {
     content: string;
     servingMethod?: ServingMethod;
     servingDetail?: string;
@@ -680,21 +661,13 @@ export interface CarePreset {
 /** プリセット作成入力 */
 export interface CarePresetInput {
   name: string;
+  category: PresetCategory;
   icon?: string;
-
-  // 【Phase 41】新形式：カテゴリ別指示
-  instructions?: PresetInstructions;
-
-  // 【後方互換性】旧形式
-  /** @deprecated Use instructions instead */
-  category?: PresetCategory;
-  /** @deprecated Use instructions instead */
-  instruction?: {
+  instruction: {
     content: string;
     servingMethod?: ServingMethod;
     servingDetail?: string;
   };
-
   matchConfig: {
     keywords: string[];
     categories?: ItemCategory[];
