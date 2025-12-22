@@ -2,7 +2,7 @@
 status: canonical
 scope: core
 owner: core-team
-last_reviewed: 2025-12-20
+last_reviewed: 2025-12-23
 ---
 
 # システムアーキテクチャ設計書
@@ -104,7 +104,7 @@ last_reviewed: 2025-12-20
 
 #### Flow C 詳細: 家族向け機能（『遠隔ケア・コックピット』）
 
-> **詳細設計**: [FAMILY_UX_DESIGN.md](./FAMILY_UX_DESIGN.md) を参照
+> **詳細設計**: [HANDOVER.md](./HANDOVER.md) を参照
 
 **解決する課題**:
 | 課題 | 現状（FAX） | 解決策（アプリ） |
@@ -239,7 +239,7 @@ interface FamilyRequest {
 
 #### `care_instructions` (Flow C - 構造化ケア指示)
 
-> **詳細**: [FAMILY_UX_DESIGN.md](./FAMILY_UX_DESIGN.md) を参照
+> **詳細**: [DATA_MODEL.md](./DATA_MODEL.md) を参照
 
 ```typescript
 interface CareInstruction {
@@ -331,21 +331,23 @@ service cloud.firestore {
 
 ## 9. 関連ドキュメント
 
+### アクティブドキュメント（6ファイル）
+
 | ドキュメント | 内容 |
 |--------------|------|
-| [CURRENT_STATUS.md](./CURRENT_STATUS.md) | **現在の進捗状況**（再開時に最初に読む） |
-| [ROADMAP.md](./ROADMAP.md) | 開発ロードマップ（Phase 1〜6） |
-| [SETUP.md](./SETUP.md) | 環境セットアップガイド（CLI版） |
-| [BUSINESS_RULES.md](./BUSINESS_RULES.md) | 業務ルール・Bot連携ハック |
+| [HANDOVER.md](./HANDOVER.md) | **引き継ぎ・クイックスタート**（再開時に最初に読む） |
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | システム設計（本ファイル） |
 | [API_SPEC.md](./API_SPEC.md) | API仕様書（Dev Mode） |
-| [SYNC_CONCURRENCY.md](./archive/SYNC_CONCURRENCY.md) | 同期処理の競合防止設計 |
-| [TABLE_VIEW_COLUMNS.md](./TABLE_VIEW_COLUMNS.md) | テーブルビュー表示カラム設計 |
-| [GOOGLE_CHAT_WEBHOOK_SPEC.md](./GOOGLE_CHAT_WEBHOOK_SPEC.md) | Google Chat Webhook仕様 |
-| [PHOTO_UPLOAD_SPEC.md](./PHOTO_UPLOAD_SPEC.md) | 写真アップロード仕様 |
-| [SETTINGS_MODAL_UI_SPEC.md](./SETTINGS_MODAL_UI_SPEC.md) | 設定モーダルUI仕様 |
-| [MEAL_INPUT_FORM_SPEC.md](./MEAL_INPUT_FORM_SPEC.md) | 食事入力フォーム設計 |
-| [SHEET_B_STRUCTURE.md](./archive/SHEET_B_STRUCTURE.md) | Sheet B（書き込み先）構造 |
-| [FAMILY_UX_DESIGN.md](./FAMILY_UX_DESIGN.md) | **家族向けUX設計（Flow C詳細）** |
+| [BUSINESS_RULES.md](./BUSINESS_RULES.md) | 業務ルール・Bot連携ハック |
+| [DATA_MODEL.md](./DATA_MODEL.md) | データモデル定義 |
+| [SETUP.md](./SETUP.md) | 環境セットアップガイド（CLI版） |
+
+### 過去の仕様書
+
+| ドキュメント | 内容 |
+|--------------|------|
+| [archive/SYNC_CONCURRENCY.md](./archive/SYNC_CONCURRENCY.md) | 同期処理の競合防止設計 |
+| [archive/SHEET_B_STRUCTURE.md](./archive/SHEET_B_STRUCTURE.md) | Sheet B（書き込み先）構造 |
 
 ---
 
@@ -418,58 +420,16 @@ graph LR
 
 ---
 
-## 11. 次のステップ
+## 11. 開発状況
 
-詳細は [ROADMAP.md](./ROADMAP.md) を参照してください。
+**Phase 1〜40 完了**
 
-### 完了済みPhase
+実装済み機能・パス一覧は [HANDOVER.md](./HANDOVER.md) を参照。
 
-| Phase | 内容 | 状態 |
-|-------|------|------|
-| Phase 1 | 基盤構築（GCP/Firebase） | ✅ 完了 |
-| Phase 2 | バックエンド実装 | ✅ 完了 |
-| Phase 3 | デプロイ・検証 | ✅ 完了 |
-| Phase 4 | デモ版PWA開発 | ✅ 完了 |
-| Phase 4.1〜4.9 | UI改善・同期最適化 | ✅ 完了 |
-| Phase 5.0〜5.2 | 食事入力フォーム | ✅ 完了 |
-| Phase 5.3〜5.4 | 管理者初期値設定 | ✅ 完了 |
-| Phase 5.5 | Google Chat Webhook連携 | ✅ 完了 |
-| Phase 5.6〜5.10 | 写真・設定モーダル・テスト機能 | ✅ 完了 |
-| Phase 6.0 | フッターナビゲーション | ✅ 完了 |
-| Phase 7.0 | 家族向け機能（Flow C拡張） | ✅ 完了 |
-| Phase 7.1 | 予実管理 | ✅ 完了 |
-| Phase 8.x | 品物・タスク・統計・AI連携 | ✅ 完了 |
-| Phase 9.x | 消費追跡・禁止ルール・統計拡張 | ✅ 完了 |
-| Phase 10-12 | 間食記録連携・FoodMaster・FIFO | ✅ 完了 |
-| Phase 13 | 品物起点の間食記録・スケジュール拡張 | ✅ 完了 |
-| Phase 14 | スタッフ用デモページ | ✅ 完了 |
-| Phase 15 | スタッフ記録入力フォーム統一 | ✅ 完了 |
-| Phase 16 | 写真エビデンス表示 | ✅ 完了 |
-| Phase 17 | Firebase Storage 写真連携 | ✅ 完了 |
+### 将来の機能（検討中）
 
-### 将来の機能
-
-| 機能 | 内容 | 状態 |
-|------|------|------|
-| 週次レポート | Gemini AI による週次サマリー自動生成 | 📋 計画中 |
-| ケア指示永続化 | モックデータ → Firestore永続化 | 📋 計画中 |
-| CSVエクスポート | 表示データのダウンロード | 📋 計画中 |
-
-> **詳細**: [FAMILY_UX_DESIGN.md](./FAMILY_UX_DESIGN.md)、[HANDOVER.md](./HANDOVER.md) を参照
-
-**実装済みビュー**:
-| ビュー | 説明 | 状態 |
-|--------|------|------|
-| 家族ホーム（タイムライン） | 1日の食事状況を時系列表示 | ✅ 完了 |
-| エビデンス・モニター | Plan/Result対比＋写真エビデンス | ✅ 完了 |
-| ケア仕様ビルダー | 構造化されたケア指示作成 | ✅ 完了 |
-| 品物管理 | 差し入れ品物の登録・追跡・FIFO | ✅ 完了 |
-| 統計ダッシュボード | 在庫・摂食傾向・アラート | ✅ 完了 |
-
-### その他オプション機能
-
-| 機能 | 説明 | 優先度 |
-|------|------|--------|
-| 他入力フォーム | 水分・排泄・バイタル等 | 中 |
-| CSVエクスポート | 表示中のデータをダウンロード | 低 |
-| オフラインキャッシュ強化 | ServiceWorker改善 | 低 |
+| 機能 | 説明 |
+|------|------|
+| 週次レポート | Gemini AI による週次サマリー自動生成 |
+| ケア指示永続化 | モックデータ → Firestore永続化 |
+| CSVエクスポート | 表示データのダウンロード |
