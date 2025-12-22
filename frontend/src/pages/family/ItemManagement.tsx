@@ -1,7 +1,10 @@
 /**
  * 品物管理ページ（家族用）
  * @see docs/ITEM_MANAGEMENT_SPEC.md
- * Phase 38: 日付範囲タブ・未設定日通知追加
+ * Phase 38.1: 確認優先UIリデザイン
+ * - 今日のサマリーカードを上部に配置
+ * - 詳細フィルタは折りたたみ式（デフォルト非表示）
+ * - 未設定日通知を維持
  */
 
 import { useState, useMemo } from 'react';
@@ -20,6 +23,7 @@ import {
 } from '../../types/careItem';
 import type { CareItem, ItemStatus } from '../../types/careItem';
 import type { DateRangeType, SchedulePatternType } from '../../types/skipDate';
+import { TodaySummaryCard } from '../../components/family/TodaySummaryCard';
 import { DateRangeTabs } from '../../components/family/DateRangeTabs';
 import { UnscheduledDatesBanner } from '../../components/family/UnscheduledDatesBanner';
 import { UnscheduledDatesModal } from '../../components/family/UnscheduledDatesModal';
@@ -35,6 +39,7 @@ export function ItemManagement() {
   const [statusFilter, setStatusFilter] = useState<ItemStatus | 'all'>('all');
   const [dateRange, setDateRange] = useState<DateRangeType>('all');
   const [schedulePattern, setSchedulePattern] = useState<SchedulePatternType>('all');
+  const [isFilterCollapsed, setIsFilterCollapsed] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [showUnscheduledModal, setShowUnscheduledModal] = useState(false);
   const isDemo = useDemoMode();
@@ -84,6 +89,28 @@ export function ItemManagement() {
     await addSkipDate(date, '家族により提供なしに設定');
   };
 
+  // サマリーカードからのフィルタ: 今日
+  const handleTodayClick = () => {
+    setDateRange('today');
+    setStatusFilter('all');
+    setIsFilterCollapsed(false);
+  };
+
+  // サマリーカードからのフィルタ: 確認待ち
+  const handleAwaitingClick = () => {
+    setStatusFilter('served');
+    setDateRange('all');
+    setIsFilterCollapsed(true);
+  };
+
+  // サマリーカードからのフィルタ: 期限間近/期限切れ
+  const handleExpiringSoonClick = () => {
+    // 期限関連は既存フィルタでは対応できないため、全表示してカード内で確認
+    setStatusFilter('all');
+    setDateRange('all');
+    setIsFilterCollapsed(true);
+  };
+
   // 削除確認
   const handleDeleteConfirm = (itemId: string) => {
     setShowDeleteConfirm(itemId);
@@ -103,8 +130,8 @@ export function ItemManagement() {
     try {
       await deleteItem.mutateAsync(itemId);
       setShowDeleteConfirm(null);
-    } catch (error) {
-      console.error('Delete failed:', error);
+    } catch (err) {
+      console.error('Delete failed:', err);
       alert('削除に失敗しました');
     }
   };
@@ -163,12 +190,24 @@ export function ItemManagement() {
         </div>
       </div>
 
-      {/* 日付範囲 + パターン フィルタ */}
+      {/* 今日のサマリーカード（確認優先UI） */}
+      {!isLoading && data?.items && (
+        <TodaySummaryCard
+          items={data.items}
+          onTodayClick={handleTodayClick}
+          onAwaitingClick={handleAwaitingClick}
+          onExpiringSoonClick={handleExpiringSoonClick}
+        />
+      )}
+
+      {/* 詳細フィルタ（折りたたみ式） */}
       <DateRangeTabs
         dateRange={dateRange}
         schedulePattern={schedulePattern}
         onDateRangeChange={setDateRange}
         onSchedulePatternChange={setSchedulePattern}
+        isCollapsed={isFilterCollapsed}
+        onToggleCollapse={() => setIsFilterCollapsed(!isFilterCollapsed)}
       />
 
       {/* 未設定日サジェスト通知 */}
