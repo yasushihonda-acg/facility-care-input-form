@@ -116,8 +116,22 @@ gh run list --limit 3
 
 ## ドキュメント更新
 
-- `docs/CURRENT_STATUS.md` を更新して進捗を反映
-- 新機能追加時は関連ドキュメントも更新
+### 更新対象（変更がある場合のみ）
+- `docs/HANDOVER.md` - パス・機能一覧に影響する変更時
+- `gh-pages/index.html` - Phase進捗・リンク変更時
+
+### 整合性チェック（Phase完了時）
+```bash
+# 古いパス参照がないか確認
+grep -r "admin=true" docs/ gh-pages/ --include="*.md" --include="*.html" 2>/dev/null
+
+# 新規ドキュメントがdocs/直下にないか確認（archive/に移動すべき）
+ls docs/*.md | grep -v -E "(HANDOVER|API_SPEC|ARCHITECTURE|BUSINESS_RULES|DATA_MODEL|SETUP)\.md"
+```
+
+### ルール確認
+- 新規ファイル作成禁止 → 既存ドキュメントに追記 or archive/に配置
+- Phase仕様書は作らない → コミットメッセージに詳細を残す
 
 ## 動作確認URL
 

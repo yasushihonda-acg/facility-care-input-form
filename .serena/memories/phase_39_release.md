@@ -40,4 +40,10 @@ CSS変数 + data属性方式
 ## 動作確認URL
 - スタッフ（Green）: https://facility-care-input-form.web.app/demo/staff
 - 家族（Orange）: https://facility-care-input-form.web.app/demo/family
-- 管理者（Blue）: https://facility-care-input-form.web.app/staff/input/meal?admin=true
+- 設定ページ: https://facility-care-input-form.web.app/settings
+
+## Phase 39.1 追加変更（2025-12-22）
+- 管理者ロール（Blue）を廃止
+- /settings を独立ページ化（フッターなし）
+- ロール判定を4パターンに簡素化（staff/family/shared/settings）
+- ROLE_THEME_DESIGN.md を docs/archive/ に移動
