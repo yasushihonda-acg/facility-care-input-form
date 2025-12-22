@@ -14,6 +14,7 @@ import { StaffHome } from './pages/staff/StaffHome';
 import { MealInputPage } from './pages/MealInputPage';
 import { FamilyMessages } from './pages/staff/FamilyMessages';
 import { FamilyMessageDetail } from './pages/staff/FamilyMessageDetail';
+import { StaffNotesPage } from './pages/staff/StaffNotesPage';
 
 // 家族専用
 import { FamilyDashboard } from './pages/family/FamilyDashboard';
@@ -66,7 +67,10 @@ function App() {
       {/* 食事記録入力 */}
       <Route path="/staff/input/meal" element={<MealInputPage />} />
 
-      {/* 家族連絡一覧 */}
+      {/* スタッフ注意事項（Phase 40） */}
+      <Route path="/staff/notes" element={<StaffNotesPage />} />
+
+      {/* 家族連絡一覧（品物確認用） */}
       <Route path="/staff/family-messages" element={<FamilyMessages />} />
 
       {/* 家族連絡詳細（消費記録入力） */}
@@ -156,7 +160,10 @@ function App() {
       {/* デモ: スタッフ食事記録入力 */}
       <Route path="/demo/staff/input/meal" element={<MealInputPage />} />
 
-      {/* デモ: スタッフ家族連絡 */}
+      {/* デモ: スタッフ注意事項（Phase 40） */}
+      <Route path="/demo/staff/notes" element={<StaffNotesPage />} />
+
+      {/* デモ: スタッフ家族連絡（品物確認用） */}
       <Route path="/demo/staff/family-messages" element={<FamilyMessages />} />
       <Route path="/demo/staff/family-messages/:id" element={<FamilyMessageDetail />} />
 

@@ -1894,3 +1894,105 @@ export interface GetActiveChatItemsResponse {
   items: (CareItem & CareItemChatExtension)[];
   total: number;
 }
+
+// =============================================================================
+// スタッフ注意事項 Types (Phase 40)
+// スタッフ専用の注意事項管理機能
+// =============================================================================
+
+/** 注意事項の優先度 */
+export type StaffNotePriority = "critical" | "warning" | "normal";
+
+/** 注意事項の優先度設定 */
+export const STAFF_NOTE_PRIORITIES: {
+  value: StaffNotePriority;
+  label: string;
+  icon: string;
+  color: string;
+  bgColor: string;
+}[] = [
+  { value: "critical", label: "重要", icon: "🔴", color: "text-red-700", bgColor: "bg-red-50" },
+  { value: "warning", label: "注意", icon: "⚠️", color: "text-yellow-700", bgColor: "bg-yellow-50" },
+  { value: "normal", label: "通常", icon: "○", color: "text-green-700", bgColor: "bg-green-50" },
+];
+
+/**
+ * スタッフ注意事項（Firestore: staffNotes/{noteId}）
+ * スタッフ専用の注意事項・申し送り
+ */
+export interface StaffNote {
+  // 識別情報
+  id: string;
+
+  // 内容
+  content: string;
+  priority: StaffNotePriority;
+
+  // 期間設定（warning/normalのみ必須、criticalは不要）
+  startDate?: string; // YYYY-MM-DD
+  endDate?: string; // YYYY-MM-DD
+
+  // メタ情報
+  createdBy: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/** 注意事項作成入力 */
+export interface StaffNoteInput {
+  content: string;
+  priority: StaffNotePriority;
+  startDate?: string;
+  endDate?: string;
+  createdBy: string;
+}
+
+// === スタッフ注意事項 APIリクエスト/レスポンス型 ===
+
+/** 注意事項一覧取得リクエスト */
+export interface GetStaffNotesRequest {
+  includeAll?: boolean; // 期間外も含めるか（デフォルト: false）
+}
+
+/** 注意事項一覧取得レスポンス */
+export interface GetStaffNotesResponse {
+  notes: StaffNote[];
+  total: number;
+}
+
+/** 注意事項作成リクエスト */
+export interface CreateStaffNoteRequest {
+  content: string;
+  priority: StaffNotePriority;
+  startDate?: string;
+  endDate?: string;
+  createdBy: string;
+}
+
+/** 注意事項作成レスポンス */
+export interface CreateStaffNoteResponse {
+  noteId: string;
+  createdAt: string;
+}
+
+/** 注意事項更新リクエスト */
+export interface UpdateStaffNoteRequest {
+  noteId: string;
+  updates: {
+    content?: string;
+    priority?: StaffNotePriority;
+    startDate?: string;
+    endDate?: string;
+  };
+}
+
+/** 注意事項更新レスポンス */
+export interface UpdateStaffNoteResponse {
+  noteId: string;
+  updatedAt: string;
+}
+
+/** 注意事項削除リクエスト */
+export interface DeleteStaffNoteRequest {
+  noteId: string;
+}

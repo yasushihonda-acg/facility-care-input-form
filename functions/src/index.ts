@@ -189,3 +189,14 @@ export {
 // =============================================================================
 
 export {checkDailyRecords} from "./functions/checkDailyRecords";
+
+// =============================================================================
+// スタッフ注意事項（Phase 40）
+// =============================================================================
+
+export {
+  getStaffNotes,
+  createStaffNote,
+  updateStaffNote,
+  deleteStaffNote,
+} from "./functions/staffNotes";

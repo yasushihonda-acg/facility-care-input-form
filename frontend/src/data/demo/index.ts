@@ -43,3 +43,6 @@ export * from './demoMessages';
 
 // 品物イベント（編集履歴）デモデータ (Phase 22.3)
 export * from './demoItemEvents';
+
+// スタッフ注意事項デモデータ (Phase 40)
+export * from './demoStaffNotes';

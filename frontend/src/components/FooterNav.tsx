@@ -18,7 +18,7 @@ const DEMO_SHARED_PATHS = ['/demo/view', '/demo/stats', '/demo/items'];
  *
  * ロール別に異なるタブ構成を表示（並び順は統一）
  * - 家族用: [ホーム] [品物管理] [記録閲覧] [統計]
- * - スタッフ用: [家族連絡] [記録入力] [記録閲覧] [統計]
+ * - スタッフ用: [注意事項] [記録入力] [記録閲覧] [統計]
  *
  * 共有ビュー（/view, /stats）にいる場合は、直前のロールを維持
  * デモモード（/demo/*）では、リンク先も /demo/* 内に留まる
@@ -93,7 +93,7 @@ export function FooterNav({ className = '' }: FooterNavProps) {
     staffInput: isDemoMode ? '/demo/staff/input/meal' : '/staff/input/meal',
     // Phase 21: チャット機能一時非表示
     // staffChats: isDemoMode ? '/demo/staff/chats' : '/staff/chats',
-    staffFamilyMessages: isDemoMode ? '/demo/staff/family-messages' : '/staff/family-messages',
+    staffNotes: isDemoMode ? '/demo/staff/notes' : '/staff/notes',
     staffStats: isDemoMode ? '/demo/staff/stats' : '/staff/stats',
   }), [isDemoMode]);
 
@@ -362,39 +362,39 @@ export function FooterNav({ className = '' }: FooterNavProps) {
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0)' }}
     >
       <div className="flex h-16">
-        {/* 家族連絡タブ（スタッフ向け：閲覧用）- 家族用の「ホーム」に相当 */}
+        {/* 注意事項タブ（スタッフ向け：Phase 40）- 家族用の「ホーム」に相当 */}
         <NavLink
-          to={paths.staffFamilyMessages}
+          to={paths.staffNotes}
           className={({ isActive }) => `
             flex-1 flex flex-col items-center justify-center gap-1 relative transition-all duration-200
-            ${isActive || location.pathname.includes('/staff/family-messages') || location.pathname.includes('/demo/staff/family-messages')
+            ${isActive || location.pathname.includes('/staff/notes') || location.pathname.includes('/demo/staff/notes')
               ? 'bg-primary text-white'
               : 'bg-white text-gray-500 hover:bg-gray-50'
             }
           `}
         >
           {({ isActive }) => {
-            const isMessagesActive = isActive || location.pathname.includes('/staff/family-messages') || location.pathname.includes('/demo/staff/family-messages');
+            const isNotesActive = isActive || location.pathname.includes('/staff/notes') || location.pathname.includes('/demo/staff/notes');
             return (
               <>
-                {isMessagesActive && (
+                {isNotesActive && (
                   <div className="absolute top-0 left-0 right-0 h-1 bg-white/30" />
                 )}
                 <svg
                   className="w-6 h-6"
-                  fill={isMessagesActive ? 'currentColor' : 'none'}
+                  fill={isNotesActive ? 'currentColor' : 'none'}
                   stroke="currentColor"
-                  strokeWidth={isMessagesActive ? 0 : 1.5}
+                  strokeWidth={isNotesActive ? 0 : 1.5}
                   viewBox="0 0 24 24"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                   />
                 </svg>
-                <span className={`text-xs font-bold ${isMessagesActive ? 'text-white' : 'text-gray-600'}`}>
-                  家族連絡
+                <span className={`text-xs font-bold ${isNotesActive ? 'text-white' : 'text-gray-600'}`}>
+                  注意事項
                 </span>
               </>
             );

@@ -66,10 +66,10 @@ export function DemoStaffHome() {
         {/* 機能カード一覧 */}
         <div className="space-y-3">
           <DemoCard
-            title="家族連絡を確認"
-            description="家族から送られた品物・指示を確認"
+            title="注意事項"
+            description="スタッフ注意事項と家族からの依頼を確認"
             icon="📋"
-            to="/demo/staff/family-messages"
+            to="/demo/staff/notes"
           />
 
           <DemoCard

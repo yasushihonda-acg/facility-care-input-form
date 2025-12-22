@@ -1253,3 +1253,111 @@ export async function submitHydrationRecord(
 
   return response.json();
 }
+
+// =============================================================================
+// スタッフ注意事項 API（Phase 40）
+// =============================================================================
+
+import type {
+  StaffNote,
+  CreateStaffNoteInput,
+  UpdateStaffNoteInput,
+  GetStaffNotesParams,
+  GetStaffNotesResponse,
+  CreateStaffNoteResponse,
+  UpdateStaffNoteResponse,
+} from '../types/staffNote';
+
+export type {
+  StaffNote,
+  CreateStaffNoteInput,
+  UpdateStaffNoteInput,
+  GetStaffNotesParams,
+  GetStaffNotesResponse,
+  CreateStaffNoteResponse,
+  UpdateStaffNoteResponse,
+};
+
+/**
+ * 注意事項一覧を取得
+ */
+export async function getStaffNotes(
+  params: GetStaffNotesParams = {}
+): Promise<ApiResponse<GetStaffNotesResponse>> {
+  const url = new URL(`${API_BASE}/getStaffNotes`);
+
+  if (params.includeAll) {
+    url.searchParams.set('includeAll', 'true');
+  }
+
+  const response = await fetch(url.toString());
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to get staff notes: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 注意事項を作成
+ */
+export async function createStaffNote(
+  input: CreateStaffNoteInput
+): Promise<ApiResponse<CreateStaffNoteResponse>> {
+  const response = await fetch(`${API_BASE}/createStaffNote`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to create staff note: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 注意事項を更新
+ */
+export async function updateStaffNote(
+  noteId: string,
+  updates: UpdateStaffNoteInput
+): Promise<ApiResponse<UpdateStaffNoteResponse>> {
+  const response = await fetch(`${API_BASE}/updateStaffNote`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ noteId, updates }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to update staff note: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 注意事項を削除
+ */
+export async function deleteStaffNote(
+  noteId: string
+): Promise<ApiResponse<null>> {
+  const url = new URL(`${API_BASE}/deleteStaffNote`);
+  url.searchParams.set('noteId', noteId);
+
+  const response = await fetch(url.toString(), {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to delete staff note: ${response.statusText}`);
+  }
+
+  return response.json();
+}
