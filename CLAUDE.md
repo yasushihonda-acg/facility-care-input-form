@@ -107,7 +107,7 @@ gh run list --repo yasushihonda-acg/facility-care-input-form --workflow=gh-pages
 | `docs/BUSINESS_RULES.md` | 業務ルール・投稿IDルール |
 | `docs/DATA_MODEL.md` | データモデル定義 |
 | `docs/SETUP.md` | 環境セットアップガイド |
-| `docs/archive/` | 過去のPhase仕様書（参照用） |
+| `docs/archive/` | 参照用ファイル（シート構造・同期仕様） |
 
 ---
 
