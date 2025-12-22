@@ -155,14 +155,21 @@ firebase deploy --only functions --debug
 |------|------|------|
 | ダッシュボード | `/family` | ケア記録タイムライン表示 |
 | 品物管理 | `/family/items` | 送付品の登録・在庫・期限管理 |
-| 品物詳細 | `/family/items/:id` | 品物の詳細・編集・削除 |
+| 品物詳細 | `/family/items/:id` | 品物の詳細表示 |
+| 品物編集 | `/family/items/:id/edit` | 品物の編集 |
 | 品物登録 | `/family/items/new` | 新規品物の登録フォーム |
 | プリセット | `/family/presets` | よく送る品物の組み合わせ保存 |
+| タスク一覧 | `/family/tasks` | タスク管理 |
+| ケア指示 | `/family/request` | ケア指示の作成 |
+| エビデンス確認 | `/family/evidence/:date` | 日別エビデンス確認 |
 
 ### スタッフ向け (`/staff`, `/demo/staff`)
 | 機能 | パス | 説明 |
 |------|------|------|
+| スタッフホーム | `/staff` | スタッフ用トップページ |
 | 食事入力 | `/staff/input/meal` | 食事記録入力（写真・Chat通知） |
+| 家族連絡一覧 | `/staff/family-messages` | 家族からの品物・指示を確認 |
+| 家族連絡詳細 | `/staff/family-messages/:id` | 品物詳細・消費記録入力 |
 | 記録閲覧 | `/view` | 全ケア記録の閲覧・検索 |
 | 統計 | `/stats` | 品物・摂食統計ダッシュボード |
 

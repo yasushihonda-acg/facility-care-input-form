@@ -4,7 +4,6 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useLocation } from 'react-router-dom';
 import {
   getFoodMasters,
   searchFoodMaster,
@@ -20,17 +19,10 @@ import type {
   FoodMasterUpdateInput,
 } from '../types/careItem';
 import { DEMO_FOOD_MASTERS } from '../data/demo';
+import { useDemoMode } from './useDemoMode';
 
 // クエリキー
 const FOOD_MASTERS_KEY = 'foodMasters';
-
-/**
- * デモモード判定
- */
-function useIsDemoMode(): boolean {
-  const location = useLocation();
-  return location.pathname.startsWith('/demo');
-}
 
 /**
  * 食品マスタ一覧を取得するフック
@@ -40,7 +32,7 @@ export function useFoodMasters(params?: {
   isActive?: boolean;
   limit?: number;
 }) {
-  const isDemoMode = useIsDemoMode();
+  const isDemoMode = useDemoMode();
 
   return useQuery({
     queryKey: [FOOD_MASTERS_KEY, 'list', params],
@@ -85,7 +77,7 @@ export function useSearchFoodMaster(
   query: string,
   options?: { category?: ItemCategory; enabled?: boolean }
 ) {
-  const isDemoMode = useIsDemoMode();
+  const isDemoMode = useDemoMode();
 
   return useQuery({
     queryKey: [FOOD_MASTERS_KEY, 'search', query, options?.category],
@@ -202,7 +194,7 @@ export function useDeleteFoodMaster() {
  * 単一の食品マスタを取得するフック（ID指定）
  */
 export function useFoodMaster(foodMasterId: string | undefined) {
-  const isDemoMode = useIsDemoMode();
+  const isDemoMode = useDemoMode();
 
   return useQuery({
     queryKey: [FOOD_MASTERS_KEY, 'detail', foodMasterId],

@@ -86,7 +86,7 @@ https://asia-northeast1-facility-care-input-form.cloudfunctions.net
 | POST | `/uploadCareImage` | 画像をFirebase Storageにアップロード | Phase 17 | ✅ |
 | GET | `/getCarePhotos` | 写真メタデータを取得 | Phase 17 | ✅ |
 | POST | `/testWebhook` | Webhook URLの動作確認 | 管理テスト | ✅ |
-| POST | `/createCareItem` | 品物を登録 | Phase 8.1 | ✅ |
+| POST | `/submitCareItem` | 品物を登録 | Phase 8.1 | ✅ |
 | GET | `/getCareItems` | 品物一覧を取得 | Phase 8.1 | ✅ |
 | PUT | `/updateCareItem` | 品物を更新 | Phase 8.1 | ✅ |
 | DELETE | `/deleteCareItem` | 品物を削除 | Phase 8.1 | ✅ |
@@ -111,11 +111,26 @@ https://asia-northeast1-facility-care-input-form.cloudfunctions.net
 | POST | `/createProhibition` | 禁止ルールを作成 | Phase 9.x | ✅ |
 | PUT | `/updateProhibition` | 禁止ルールを更新 | Phase 9.x | ✅ |
 | DELETE | `/deleteProhibition` | 禁止ルールを削除（論理削除） | Phase 9.x | ✅ |
+| POST | `/submitHydrationRecord` | 水分摂取記録を入力 | Phase 29 | ✅ |
+| GET | `/getFoodMasters` | 食品マスタ一覧を取得 | Phase 11 | ✅ |
+| GET | `/searchFoodMaster` | 食品マスタを検索 | Phase 11 | ✅ |
+| POST | `/createFoodMaster` | 食品マスタを作成 | Phase 11 | ✅ |
+| PUT | `/updateFoodMaster` | 食品マスタを更新 | Phase 11 | ✅ |
+| DELETE | `/deleteFoodMaster` | 食品マスタを削除 | Phase 11 | ✅ |
+| POST | `/sendMessage` | チャットメッセージを送信 | Phase 18 | ⏸️ |
+| GET | `/getMessages` | チャットメッセージを取得 | Phase 18 | ⏸️ |
+| POST | `/markAsRead` | メッセージを既読にする | Phase 18 | ⏸️ |
+| GET | `/getNotifications` | 通知一覧を取得 | Phase 18 | ⏸️ |
+| GET | `/getActiveChatItems` | アクティブチャット品物を取得 | Phase 18 | ⏸️ |
+| POST | `/generateDailyTasks` | 日次タスクを自動生成 | Phase 8.2.1 | ✅ |
+| POST | `/triggerTaskGeneration` | タスク生成をトリガー | Phase 8.2.1 | ✅ |
+| GET | `/checkDailyRecords` | 日次記録チェック（通知用） | Phase 30 | ✅ |
 | POST | `/submitCareRecord` | ケア実績を入力 (deprecated) | Flow B | ❌ |
 | POST | `/submitFamilyRequest` | 家族要望を送信 | Flow C | ❌ |
 | GET | `/getFamilyRequests` | 家族要望一覧を取得 | - | ❌ |
 
 > **デモ版**: PWAで使用するエンドポイント
+> **⏸️**: Phase 21で一時非表示（チャット機能）
 
 ---
 

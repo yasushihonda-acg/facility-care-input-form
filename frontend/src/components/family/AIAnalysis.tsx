@@ -4,8 +4,8 @@
  */
 
 import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { aiAnalyze } from '../../api';
+import { useDemoMode } from '../../hooks/useDemoMode';
 import { DEMO_AI_ANALYSIS } from '../../data/demo';
 import type {
   AIAnalyzeResponse,
@@ -28,8 +28,7 @@ interface AIAnalysisProps {
 }
 
 export function AIAnalysis({ residentId, consumptionData, period }: AIAnalysisProps) {
-  const location = useLocation();
-  const isDemo = location.pathname.startsWith('/demo');
+  const isDemo = useDemoMode();
 
   const [analysis, setAnalysis] = useState<AIAnalyzeResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
