@@ -148,16 +148,62 @@ firebase deploy --only functions --debug
 
 ---
 
+## 実装済み機能一覧
+
+### 家族向け (`/family`, `/demo/family`)
+| 機能 | パス | 説明 |
+|------|------|------|
+| ダッシュボード | `/family` | ケア記録タイムライン表示 |
+| 品物管理 | `/family/items` | 送付品の登録・在庫・期限管理 |
+| 品物詳細 | `/family/items/:id` | 品物の詳細・編集・削除 |
+| 品物登録 | `/family/items/new` | 新規品物の登録フォーム |
+| プリセット | `/family/presets` | よく送る品物の組み合わせ保存 |
+
+### スタッフ向け (`/staff`, `/demo/staff`)
+| 機能 | パス | 説明 |
+|------|------|------|
+| 食事入力 | `/staff/input/meal` | 食事記録入力（写真・Chat通知） |
+| 記録閲覧 | `/view` | 全ケア記録の閲覧・検索 |
+| 統計 | `/stats` | 品物・摂食統計ダッシュボード |
+
+### 管理者向け
+| 機能 | パス | 説明 |
+|------|------|------|
+| 設定 | `/staff/input/meal?admin=true` | Webhook・Drive設定 |
+
+---
+
+## フロントエンド構成
+
+```
+frontend/src/
+├── pages/
+│   ├── family/              # 家族向けページ
+│   │   ├── FamilyDashboard  # ダッシュボード
+│   │   ├── ItemManagement   # 品物一覧（日付ナビ）
+│   │   ├── ItemDetail       # 品物詳細
+│   │   ├── ItemForm         # 品物登録・編集
+│   │   └── PresetManagement # プリセット管理
+│   ├── MealInputPage        # 食事入力フォーム
+│   ├── ViewPage             # 記録閲覧
+│   └── StatsPage            # 統計
+├── components/
+│   ├── family/              # 家族用コンポーネント
+│   │   ├── DateNavigator    # 日付ナビゲーション
+│   │   ├── ExpirationAlert  # 期限切れ警告
+│   │   └── UnscheduledDatesBanner
+│   └── Layout               # 共通レイアウト
+├── hooks/                   # カスタムフック
+│   ├── useCareItems         # 品物CRUD
+│   └── useDemoMode          # デモモード判定
+└── types/                   # TypeScript型定義
+    └── careItem.ts          # 品物・ステータス型
+```
+
+---
+
 ## 開発履歴
 
 Phase 1〜38.2まで完了。詳細は `git log` を参照。
 
-主要機能:
-- 家族向け品物管理・プリセット管理
-- スタッフ向け記録入力フォーム
-- Google Chat Webhook連携
-- Firebase Storage写真連携
-- 統計ダッシュボード・AI分析
-- デモショーケース（家族・スタッフ）
-
-E2Eテスト: 328件定義・275件パス・39件スキップ
+E2Eテスト: 328件
