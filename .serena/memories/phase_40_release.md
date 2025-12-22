@@ -58,3 +58,10 @@ Firestore: staffNotes/{noteId}
 
 ## コミット
 - `57c0ec5` - feat(Phase 40): スタッフ注意事項機能実装
+- `0e84237` - feat(Phase 40): ロールに応じた初期表示リダイレクト実装
+
+## バグ修正（2025-12-23）
+- `0c7fc28` - /demo ページで家族フッターが表示されない問題を修正
+  - isDemoFamilyPath に `/demo` を追加（roleTheme.ts, FooterNav.tsx）
+- `1d35122` - 家族デモホームの「ケアみまもりアプリ」ブロックをベースカラー対応
+  - bg-gradient-to-r from-blue-500 → bg-primary (Orange)
