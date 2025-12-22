@@ -54,7 +54,7 @@ export function PresetManagement() {
       const query = searchQuery.toLowerCase();
       return (
         preset.name.toLowerCase().includes(query) ||
-        preset.instruction.content.toLowerCase().includes(query) ||
+        preset.instruction?.content.toLowerCase().includes(query) ||
         preset.matchConfig.keywords.some((kw) => kw.toLowerCase().includes(query))
       );
     }
@@ -267,7 +267,7 @@ function PresetCard({
         <div className="flex-1 min-w-0">
           <h3 className="font-bold text-gray-900 truncate">{preset.name}</h3>
           <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-            {preset.instruction.content}
+            {preset.instruction?.content || '（指示なし）'}
           </p>
 
           {/* メタ情報 */}
@@ -319,7 +319,7 @@ function PresetFormModal({
   const [name, setName] = useState(preset?.name || '');
   const [category, setCategory] = useState<PresetCategory>(preset?.category || 'cut');
   const [icon, setIcon] = useState(preset?.icon || '📋');
-  const [content, setContent] = useState(preset?.instruction.content || '');
+  const [content, setContent] = useState(preset?.instruction?.content || '');
   const [keywords, setKeywords] = useState(preset?.matchConfig.keywords.join(', ') || '');
 
   const handleSubmit = async (e: React.FormEvent) => {

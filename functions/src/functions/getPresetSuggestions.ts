@@ -40,9 +40,9 @@ function matchPresets(
           confidence: 0.8,
           instruction: {
             title: preset.name,
-            content: preset.instruction.content,
-            servingMethod: preset.instruction.servingMethod,
-            servingDetail: preset.instruction.servingDetail,
+            content: preset.instruction?.content || "",
+            servingMethod: preset.instruction?.servingMethod,
+            servingDetail: preset.instruction?.servingDetail,
           },
           source: preset.source,
         });
@@ -65,9 +65,9 @@ function matchPresets(
           confidence: 0.9,
           instruction: {
             title: preset.name,
-            content: preset.instruction.content,
-            servingMethod: preset.instruction.servingMethod,
-            servingDetail: preset.instruction.servingDetail,
+            content: preset.instruction?.content || "",
+            servingMethod: preset.instruction?.servingMethod,
+            servingDetail: preset.instruction?.servingDetail,
           },
           source: preset.source,
         });
@@ -77,7 +77,7 @@ function matchPresets(
 
     // 3. コンテンツキーワードマッチ（confidence: 0.7）
     if (
-      preset.instruction.content.includes(itemName) &&
+      preset.instruction?.content?.includes(itemName) &&
       !seenPresetIds.has(preset.id)
     ) {
       suggestions.push({
@@ -88,9 +88,9 @@ function matchPresets(
         confidence: 0.7,
         instruction: {
           title: preset.name,
-          content: preset.instruction.content,
-          servingMethod: preset.instruction.servingMethod,
-          servingDetail: preset.instruction.servingDetail,
+          content: preset.instruction?.content || "",
+          servingMethod: preset.instruction?.servingMethod,
+          servingDetail: preset.instruction?.servingDetail,
         },
         source: preset.source,
       });
