@@ -51,6 +51,12 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     },
     consumptionRate: 75,
     remainingHandlingInstruction: 'stored' as RemainingHandlingInstruction, // Phase 33: 残ったら保存
+    // 残り1.5房 → 特定の1日に提供
+    servingSchedule: {
+      type: 'once',
+      date: getDateString(1), // 明日
+      timeSlot: 'breakfast',
+    } as ServingSchedule,
     createdAt: getDateTimeString(-5),
     updatedAt: getDateTimeString(-1),
   },
@@ -108,6 +114,12 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     consumptionRate: 25,
     remainingHandlingInstruction: 'discarded' as RemainingHandlingInstruction, // Phase 33: 残ったら破棄
     noteToFamily: '食べ残しが多いようです',
+    // 残り1.5個 → 2日に分けて提供
+    servingSchedule: {
+      type: 'specific_dates',
+      dates: [getDateString(2), getDateString(4)], // 2日後と4日後
+      timeSlot: 'snack',
+    } as ServingSchedule,
     createdAt: getDateTimeString(-3),
     updatedAt: getDateTimeString(-1),
   },
@@ -135,6 +147,12 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
       avgConsumptionRate: 80,
     },
     consumptionRate: 80,
+    // 残り3個 → 3日に分けて提供
+    servingSchedule: {
+      type: 'specific_dates',
+      dates: [getDateString(1), getDateString(3), getDateString(5)], // 明日、3日後、5日後
+      timeSlot: 'snack',
+    } as ServingSchedule,
     createdAt: getDateTimeString(-4),
     updatedAt: getDateTimeString(0),
   },
@@ -155,6 +173,12 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     storageMethod: 'room_temp',
     servingMethod: 'cut' as ServingMethod,
     servingMethodDetail: '熟した部分も捨てずに提供。ご本人の好物です。',
+    // 期限間近のため毎日おやつ時に提供
+    servingSchedule: {
+      type: 'daily',
+      timeSlot: 'snack',
+      note: '期限が近いので早めに提供をお願いします',
+    } as ServingSchedule,
     createdAt: getDateTimeString(-1),
     updatedAt: getDateTimeString(-1),
   },
@@ -186,6 +210,12 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     consumptionRate: 95,
     remainingHandlingInstruction: 'discarded' as RemainingHandlingInstruction, // Phase 33: 冷蔵品なので残ったら破棄
     noteToFamily: '大好物のようです',
+    // 残り2個 → 2日に分けて提供（期限間近）
+    servingSchedule: {
+      type: 'specific_dates',
+      dates: [getDateString(0), getDateString(1)], // 今日と明日
+      timeSlot: 'snack',
+    } as ServingSchedule,
     createdAt: getDateTimeString(-4),
     updatedAt: getDateTimeString(0),
   },
@@ -276,6 +306,12 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     },
     consumptionRate: 90,
     remainingHandlingInstruction: 'stored' as RemainingHandlingInstruction, // Phase 33: 残ったら保存
+    // 飲み物は毎日提供
+    servingSchedule: {
+      type: 'daily',
+      timeSlot: 'anytime',
+      note: '食事時にコップ1杯',
+    } as ServingSchedule,
     createdAt: getDateTimeString(-3),
     updatedAt: getDateTimeString(0),
   },
@@ -305,6 +341,13 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
       avgConsumptionRate: 80,
     },
     consumptionRate: 80,
+    // 週1回（日）昼食時 - 漬物は控えめに
+    servingSchedule: {
+      type: 'weekly',
+      weekdays: [0], // 日
+      timeSlot: 'lunch',
+      note: '小皿に3〜4粒程度',
+    } as ServingSchedule,
     createdAt: getDateTimeString(-10),
     updatedAt: getDateTimeString(-1),
   },
@@ -333,6 +376,12 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     },
     consumptionRate: 40,
     noteToFamily: '最近あまり召し上がりません',
+    // 週2回（月・木）朝食時
+    servingSchedule: {
+      type: 'weekly',
+      weekdays: [1, 4], // 月・木
+      timeSlot: 'breakfast',
+    } as ServingSchedule,
     createdAt: getDateTimeString(-8),
     updatedAt: getDateTimeString(-2),
   },
@@ -362,6 +411,12 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
       avgConsumptionRate: 90,
     },
     consumptionRate: 90,
+    // 残り1個 → 1日で提供（期限切れのため早急に対応）
+    servingSchedule: {
+      type: 'once',
+      date: getDateString(-1), // 昨日予定だった（期限切れ）
+      timeSlot: 'breakfast',
+    } as ServingSchedule,
     createdAt: getDateTimeString(-10),
     updatedAt: getDateTimeString(-2),
   },
@@ -385,6 +440,13 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     storageMethod: 'refrigerated',
     servingMethod: 'cut' as ServingMethod,
     servingMethodDetail: '一口大にカット',
+    // 残り2個 → 2日に分けて提供（FIFO優先）
+    servingSchedule: {
+      type: 'specific_dates',
+      dates: [getDateString(0), getDateString(1)], // 今日と明日
+      timeSlot: 'snack',
+      note: '古いものから先に提供',
+    } as ServingSchedule,
     createdAt: getDateTimeString(-10),
     updatedAt: getDateTimeString(-1),
   },
@@ -405,6 +467,13 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     storageMethod: 'room_temp',
     servingMethod: 'cut' as ServingMethod,
     servingMethodDetail: '皮を剥いてカット',
+    // 残り1房・期限今日 → 本日中に提供
+    servingSchedule: {
+      type: 'once',
+      date: getDateString(0), // 今日
+      timeSlot: 'breakfast',
+      note: '本日中に提供してください',
+    } as ServingSchedule,
     createdAt: getDateTimeString(-10),
     updatedAt: getDateTimeString(0),
   },
