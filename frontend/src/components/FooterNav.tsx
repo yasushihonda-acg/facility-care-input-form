@@ -16,18 +16,16 @@ const DEMO_SHARED_PATHS = ['/demo/view', '/demo/stats', '/demo/items'];
 /**
  * フッターナビゲーション
  *
- * ロール別に異なるタブ構成を表示
- * - スタッフ用: [記録閲覧] [記録入力] [チャット] [家族連絡] [統計]
- * - 家族用: [ホーム] [品物管理] [チャット] [記録閲覧] [統計]
+ * ロール別に異なるタブ構成を表示（並び順は統一）
+ * - 家族用: [ホーム] [品物管理] [記録閲覧] [統計]
+ * - スタッフ用: [家族連絡] [記録入力] [記録閲覧] [統計]
  *
  * 共有ビュー（/view, /stats）にいる場合は、直前のロールを維持
  * デモモード（/demo/*）では、リンク先も /demo/* 内に留まる
- * チャットタブは未読数バッジを表示（Phase 18）
  *
  * @see docs/VIEW_ARCHITECTURE_SPEC.md - セクション3「フッターナビゲーション設計」
  * @see docs/FOOTER_NAVIGATION_SPEC.md
  * @see docs/DEMO_SHOWCASE_SPEC.md - デモモード対応
- * @see docs/CHAT_INTEGRATION_SPEC.md - チャット連携
  */
 export function FooterNav({ className = '' }: FooterNavProps) {
   const location = useLocation();
@@ -355,6 +353,7 @@ export function FooterNav({ className = '' }: FooterNavProps) {
   }
 
   // スタッフ用フッター（デフォルト）
+  // 順序: 家族連絡 → 記録入力 → 記録閲覧 → 統計（家族用フッターと同じ並び順）
   return (
     <nav
       role="navigation"
@@ -363,43 +362,46 @@ export function FooterNav({ className = '' }: FooterNavProps) {
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0)' }}
     >
       <div className="flex h-16">
-        {/* 記録閲覧タブ */}
+        {/* 家族連絡タブ（スタッフ向け：閲覧用）- 家族用の「ホーム」に相当 */}
         <NavLink
-          to={paths.view}
+          to={paths.staffFamilyMessages}
           className={({ isActive }) => `
             flex-1 flex flex-col items-center justify-center gap-1 relative transition-all duration-200
-            ${isActive
+            ${isActive || location.pathname.includes('/staff/family-messages') || location.pathname.includes('/demo/staff/family-messages')
               ? 'bg-primary text-white'
               : 'bg-white text-gray-500 hover:bg-gray-50'
             }
           `}
         >
-          {({ isActive }) => (
-            <>
-              {isActive && (
-                <div className="absolute top-0 left-0 right-0 h-1 bg-white/30" />
-              )}
-              <svg
-                className="w-6 h-6"
-                fill={isActive ? 'currentColor' : 'none'}
-                stroke="currentColor"
-                strokeWidth={isActive ? 0 : 1.5}
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-              <span className={`text-xs font-bold ${isActive ? 'text-white' : 'text-gray-600'}`}>
-                記録閲覧
-              </span>
-            </>
-          )}
+          {({ isActive }) => {
+            const isMessagesActive = isActive || location.pathname.includes('/staff/family-messages') || location.pathname.includes('/demo/staff/family-messages');
+            return (
+              <>
+                {isMessagesActive && (
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-white/30" />
+                )}
+                <svg
+                  className="w-6 h-6"
+                  fill={isMessagesActive ? 'currentColor' : 'none'}
+                  stroke="currentColor"
+                  strokeWidth={isMessagesActive ? 0 : 1.5}
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"
+                  />
+                </svg>
+                <span className={`text-xs font-bold ${isMessagesActive ? 'text-white' : 'text-gray-600'}`}>
+                  家族連絡
+                </span>
+              </>
+            );
+          }}
         </NavLink>
 
-        {/* 記録入力タブ */}
+        {/* 記録入力タブ - 家族用の「品物管理」に相当 */}
         <NavLink
           to={paths.staffInput}
           className={({ isActive }) => `
@@ -482,43 +484,40 @@ export function FooterNav({ className = '' }: FooterNavProps) {
         </NavLink>
         */}
 
-        {/* 家族連絡タブ（スタッフ向け：閲覧用） */}
+        {/* 記録閲覧タブ */}
         <NavLink
-          to={paths.staffFamilyMessages}
+          to={paths.view}
           className={({ isActive }) => `
             flex-1 flex flex-col items-center justify-center gap-1 relative transition-all duration-200
-            ${isActive || location.pathname.includes('/staff/family-messages') || location.pathname.includes('/demo/staff/family-messages')
+            ${isActive
               ? 'bg-primary text-white'
               : 'bg-white text-gray-500 hover:bg-gray-50'
             }
           `}
         >
-          {({ isActive }) => {
-            const isMessagesActive = isActive || location.pathname.includes('/staff/family-messages') || location.pathname.includes('/demo/staff/family-messages');
-            return (
-              <>
-                {isMessagesActive && (
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-white/30" />
-                )}
-                <svg
-                  className="w-6 h-6"
-                  fill={isMessagesActive ? 'currentColor' : 'none'}
-                  stroke="currentColor"
-                  strokeWidth={isMessagesActive ? 0 : 1.5}
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"
-                  />
-                </svg>
-                <span className={`text-xs font-bold ${isMessagesActive ? 'text-white' : 'text-gray-600'}`}>
-                  家族連絡
-                </span>
-              </>
-            );
-          }}
+          {({ isActive }) => (
+            <>
+              {isActive && (
+                <div className="absolute top-0 left-0 right-0 h-1 bg-white/30" />
+              )}
+              <svg
+                className="w-6 h-6"
+                fill={isActive ? 'currentColor' : 'none'}
+                stroke="currentColor"
+                strokeWidth={isActive ? 0 : 1.5}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              <span className={`text-xs font-bold ${isActive ? 'text-white' : 'text-gray-600'}`}>
+                記録閲覧
+              </span>
+            </>
+          )}
         </NavLink>
 
         {/* 統計タブ */}
