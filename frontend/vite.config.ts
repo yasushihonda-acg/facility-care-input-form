@@ -40,7 +40,15 @@ export default defineConfig({
         ]
       },
       workbox: {
+        // 新しいService Workerを即座にアクティブ化
+        skipWaiting: true,
+        // 全クライアント（タブ）を即座に制御
+        clientsClaim: true,
+        // 静的アセットのプリキャッシュ
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        // ナビゲーションリクエストのフォールバック
+        navigateFallback: 'index.html',
+        navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/asia-northeast1-facility-care-input-form\.cloudfunctions\.net\/.*/i,

@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useRoleTheme } from './hooks/useRoleTheme';
+import { PWAUpdateNotification } from './components/PWAUpdateNotification';
 
 /**
  * ロールに応じたリダイレクトコンポーネント
@@ -65,6 +66,7 @@ function App() {
   useRoleTheme();
 
   return (
+    <>
     <Routes>
       {/* デフォルト: ロールに応じてリダイレクト */}
       <Route path="/" element={<RoleBasedRedirect />} />
@@ -203,6 +205,10 @@ function App() {
       {/* デモ: 品物タイムライン */}
       <Route path="/demo/items/:id/timeline" element={<ItemTimeline />} />
     </Routes>
+
+    {/* PWA更新通知 */}
+    <PWAUpdateNotification />
+    </>
   );
 }
 

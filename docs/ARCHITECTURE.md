@@ -416,6 +416,29 @@ graph LR
 
 > **注**: PWAからsyncPlanDataへの直接呼び出しは廃止。Cloud Schedulerが唯一の同期トリガー。
 
+### 10.5 PWA更新戦略
+
+Service Workerによるキャッシュで、新バージョンが即座に反映されない問題に対応。
+
+| 設定項目 | 値 | 説明 |
+|----------|-----|------|
+| `registerType` | `autoUpdate` | バックグラウンドで自動更新 |
+| `skipWaiting` | `true` | 新SW即座にアクティブ化 |
+| `clientsClaim` | `true` | 全タブを即座に制御 |
+
+#### 更新フロー
+
+1. **デプロイ**: 新しいアセット（JS/CSS）がFirebase Hostingにアップロード
+2. **SW検知**: Service Workerが1分ごとに更新をチェック
+3. **通知表示**: 更新があれば「新しいバージョンがあります」バナーを表示
+4. **ユーザー操作**: 「更新」ボタンでリロード、または「後で」で延期
+
+#### 関連ファイル
+
+| ファイル | 役割 |
+|----------|------|
+| `vite.config.ts` | PWA設定（workbox） |
+| `PWAUpdateNotification.tsx` | 更新通知UIコンポーネント |
 
 ---
 
