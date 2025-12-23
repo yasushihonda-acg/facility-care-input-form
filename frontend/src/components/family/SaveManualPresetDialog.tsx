@@ -85,14 +85,18 @@ export function SaveManualPresetDialog({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl max-w-md w-full shadow-xl">
         {/* ヘッダー */}
-        <div className="p-4 border-b flex items-center justify-between">
-          <div className="w-8" /> {/* バランス用スペーサー */}
-          <h3 className="text-lg font-bold text-center flex-1">
+        <div className="relative p-4 border-b">
+          <h3 className="text-lg font-bold text-center pr-8">
             この設定を「いつもの指示」として保存しますか？
           </h3>
           <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 text-2xl"
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClose();
+            }}
+            className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 text-2xl"
             aria-label="閉じる"
           >
             ×
