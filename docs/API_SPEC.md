@@ -130,8 +130,6 @@ https://asia-northeast1-facility-care-input-form.cloudfunctions.net
 | PUT | `/updateStaffNote` | スタッフ注意事項を更新 | Phase 40 | ✅ |
 | DELETE | `/deleteStaffNote` | スタッフ注意事項を削除 | Phase 40 | ✅ |
 | POST | `/submitCareRecord` | ケア実績を入力 (deprecated) | Flow B | ❌ |
-| POST | `/submitFamilyRequest` | 家族要望を送信 | Flow C | ❌ |
-| GET | `/getFamilyRequests` | 家族要望一覧を取得 | - | ❌ |
 
 > **デモ版**: PWAで使用するエンドポイント
 > **⏸️**: Phase 21で一時非表示（チャット機能）
@@ -485,65 +483,7 @@ Content-Type: application/json
 
 ---
 
-### 4.3 POST /submitFamilyRequest
-
-ご家族からのケア要望をFirestoreに保存します。
-
-#### リクエスト
-
-```http
-POST /submitFamilyRequest
-Content-Type: application/json
-```
-
-```json
-{
-  "userId": "F001",
-  "residentId": "R001",
-  "category": "meal",
-  "content": "父は最近、柔らかい食事を好むようになりました。可能であれば、おかずを少し細かく刻んでいただけると助かります。",
-  "priority": "medium",
-  "attachments": []
-}
-```
-
-| フィールド | 型 | 必須 | 説明 |
-|------------|-----|------|------|
-| `userId` | string | Yes | ご家族ユーザーID |
-| `residentId` | string | Yes | 対象入居者ID |
-| `category` | enum | Yes | カテゴリ（下記参照） |
-| `content` | string | Yes | 要望内容（自由記述） |
-| `priority` | enum | Yes | `low` / `medium` / `high` |
-| `attachments` | string[] | No | 添付ファイルURL |
-
-#### category 一覧
-
-| 値 | 説明 |
-|-----|------|
-| `meal` | 食事に関する要望 |
-| `daily_life` | 日常生活に関する要望 |
-| `medical` | 医療・健康に関する要望 |
-| `recreation` | レクリエーションに関する要望 |
-| `communication` | コミュニケーションに関する要望 |
-| `other` | その他 |
-
-#### レスポンス
-
-```json
-{
-  "success": true,
-  "data": {
-    "requestId": "REQ_F001_20240115_160000",
-    "status": "pending",
-    "estimatedReviewDate": "2024-01-17"
-  },
-  "timestamp": "2024-01-15T16:00:00.000Z"
-}
-```
-
----
-
-### 4.4 POST /uploadCareImage
+### 4.3 POST /uploadCareImage
 
 ケア記録に添付する画像をFirebase Storageにアップロードします。（Phase 17で移行）
 
@@ -700,50 +640,6 @@ GET /getPlanData?sheetName=バイタル&limit=50
     "lastSyncedAt": "2025-12-13T12:00:00.000Z"
   },
   "timestamp": "2025-12-13T16:30:00.000Z"
-}
-```
-
----
-
-### 4.6 GET /getFamilyRequests
-
-家族要望一覧を取得します。
-
-#### リクエスト
-
-```http
-GET /getFamilyRequests?userId=F001&status=pending
-```
-
-| パラメータ | 型 | 必須 | 説明 |
-|------------|-----|------|------|
-| `userId` | string | No | ご家族ユーザーIDで絞り込み |
-| `residentId` | string | No | 入居者IDで絞り込み |
-| `status` | enum | No | `pending` / `reviewed` / `implemented` |
-| `limit` | number | No | 取得件数上限（デフォルト: 50） |
-
-#### レスポンス
-
-```json
-{
-  "success": true,
-  "data": {
-    "requests": [
-      {
-        "requestId": "REQ_F001_20240115_160000",
-        "userId": "F001",
-        "residentId": "R001",
-        "category": "meal",
-        "content": "父は最近、柔らかい食事を好むようになりました...",
-        "priority": "medium",
-        "status": "pending",
-        "createdAt": "2024-01-15T16:00:00.000Z",
-        "updatedAt": "2024-01-15T16:00:00.000Z"
-      }
-    ],
-    "totalCount": 1
-  },
-  "timestamp": "2024-01-15T17:00:00.000Z"
 }
 ```
 

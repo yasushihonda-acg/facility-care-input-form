@@ -104,8 +104,6 @@ export const BOT_HACK = {
 export const COLLECTIONS = {
   /** Flow A: 同期された記録データ */
   PLAN_DATA: "plan_data",
-  /** Flow C: 家族要望 */
-  FAMILY_REQUESTS: "family_requests",
   /** 同期メタデータ（最終同期日時管理） */
   SYNC_METADATA: "sync_metadata",
 } as const;

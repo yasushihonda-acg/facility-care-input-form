@@ -88,19 +88,19 @@ last_reviewed: 2025-12-23
 
 ### Flow C: 家族要望フロー (Firestore Database)
 
-**概要**: ご家族からの詳細なケア要望・指示を管理
+**概要**: ご家族からの品物送付・提供指示を管理
 
 | 属性 | 値 |
 |------|-----|
 | **Role** | アプリ内完結データ |
-| **Storage** | Cloud Firestore (`family_requests`, `care_instructions` collection) |
+| **Storage** | Cloud Firestore (`careItems`, `presets`, `tasks` collection) |
 | **操作** | 読み書き可能 |
 
 **データ内容例**:
-- ケア方法への要望（自由記述）
-- 構造化されたケア指示（メニュー・調理方法・条件付きロジック）
-- 特別な配慮事項
-- 優先度・カテゴリ分類
+- 品物の送付情報（送付日・数量・賞味期限）
+- 提供指示（カット方法・提供温度・申し送り）
+- プリセット（よく使う指示の保存）
+- タスク（賞味期限アラート等）
 
 #### Flow C 詳細: 家族向け機能（『遠隔ケア・コックピット』）
 
@@ -110,8 +110,8 @@ last_reviewed: 2025-12-23
 | 課題 | 現状（FAX） | 解決策（アプリ） |
 |------|------------|------------------|
 | 指示の不透明さ | FAXを送っても実施確認できない | 写真付きエビデンスで実施確認 |
-| 手書きの手間 | 詳細な指示を毎回手書き | プリセット＋構造化入力で効率化 |
-| 条件付き指示 | 「残食があれば...」が伝わりにくい | If-Then形式のUI |
+| 手書きの手間 | 詳細な指示を毎回手書き | プリセット機能で効率化 |
+| 在庫管理 | 何がどれだけ残っているか不明 | 品物管理で可視化 |
 
 **2つのビュー**:
 | ビュー | パス | 説明 |
@@ -139,7 +139,7 @@ graph TD
     subgraph "API Layer - Cloud Run functions"
         FUNC_SYNC[syncPlanData<br/>記録同期]
         FUNC_CARE[submitCareRecord<br/>実績入力]
-        FUNC_REQ[submitFamilyRequest<br/>家族要望]
+        FUNC_ITEM[submitCareItem<br/>品物管理]
         FUNC_IMG[uploadCareImage<br/>画像連携]
     end
 
@@ -157,7 +157,7 @@ graph TD
     %% Client to Functions (No Auth)
     APP -->|"POST (No Auth)"| FUNC_SYNC
     APP -->|"POST (No Auth)"| FUNC_CARE
-    APP -->|"POST (No Auth)"| FUNC_REQ
+    APP -->|"POST (No Auth)"| FUNC_ITEM
     APP -->|"POST (No Auth)"| FUNC_IMG
 
     %% Flow A: Read-Only Sync
@@ -168,8 +168,8 @@ graph TD
     FUNC_CARE -->|"Append Only"| SHEET_B
     SHEET_B -.->|"Trigger (重要フラグ検知)"| BOT
 
-    %% Flow C: Family Request
-    FUNC_REQ -->|"Write"| FS
+    %% Flow C: Item Management
+    FUNC_ITEM -->|"Write"| FS
 
     %% Image Flow
     FUNC_IMG -->|"Upload"| STORAGE
@@ -220,65 +220,21 @@ interface PlanDataRecord {
 3. ヘッダー名と値を `data` マップにマッピング
 4. 共通フィールド (`timestamp`, `staffName`, `residentName`) を個別に抽出
 
-#### `family_requests` (Flow C - 汎用要望)
-```typescript
-interface FamilyRequest {
-  id: string;                  // ドキュメントID
-  userId: string;              // ご家族ユーザーID
-  residentId: string;          // 対象入居者ID
-  category: string;            // カテゴリ（食事/生活/医療など）
-  content: string;             // 要望内容（自由記述）
-  priority: 'low' | 'medium' | 'high';
-  status: 'pending' | 'reviewed' | 'implemented';
-  attachments?: string[];      // 添付ファイルURL
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-}
-```
-
-#### `care_instructions` (Flow C - 構造化ケア指示)
+#### Flow C コレクション
 
 > **詳細**: [DATA_MODEL.md](./DATA_MODEL.md) を参照
-
-```typescript
-interface CareInstruction {
-  id: string;                  // ドキュメントID
-  userId: string;              // ご家族ユーザーID
-  residentId: string;          // 対象入居者ID
-
-  // 対象指定
-  targetDate: string;          // "2025-12-14"
-  mealTime: 'breakfast' | 'lunch' | 'dinner' | 'snack';
-
-  // メニュー・指示内容
-  menuName: string;            // "キウイ"
-  processingDetail: string;    // 詳細指示（必須・長文OK）
-
-  // 条件付きロジック（オプション）
-  conditions?: {
-    trigger: 'leftover' | 'poor_condition' | 'no_appetite' | 'after_rehab';
-    action: 'reserve_snack' | 'reduce_amount' | 'cancel' | 'alternative';
-  }[];
-
-  // 優先度
-  priority: 'normal' | 'critical';  // critical = 絶対厳守
-
-  // ステータス
-  status: 'pending' | 'acknowledged' | 'completed';
-
-  // メタ情報
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-}
-```
 
 **Firestoreコレクション構成**:
 ```
 firestore/
-├── family_requests/           # 汎用的な要望（自由記述）
-│   └── {requestId}
-├── care_instructions/         # 構造化されたケア指示
-│   └── {instructionId}
+├── careItems/                 # 品物管理（送付品）
+│   └── {itemId}
+├── presets/                   # プリセット（いつもの指示）
+│   └── {presetId}
+├── tasks/                     # タスク（賞味期限アラート等）
+│   └── {taskId}
+├── staffNotes/                # スタッフ注意事項
+│   └── {noteId}
 ├── plan_data/                 # 同期済み記録データ（Flow A）
 │   └── {recordId}
 └── settings/                  # アプリ設定
@@ -296,7 +252,7 @@ src/
 ├── functions/
 │   ├── syncPlanData.ts        # Flow A: 記録同期
 │   ├── submitCareRecord.ts    # Flow B: 実績入力
-│   ├── submitFamilyRequest.ts # Flow C: 家族要望
+│   ├── submitCareItem.ts      # Flow C: 品物管理
 │   ├── uploadCareImage.ts     # 画像アップロード
 │   └── getCarePhotos.ts       # 写真取得（Phase 17）
 ├── services/
@@ -452,5 +408,4 @@ Service Workerによるキャッシュで、新バージョンが即座に反映
 | 機能 | 説明 |
 |------|------|
 | 週次レポート | Gemini AI による週次サマリー自動生成 |
-| ケア指示永続化 | モックデータ → Firestore永続化 |
 | CSVエクスポート | 表示データのダウンロード |

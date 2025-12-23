@@ -64,7 +64,6 @@ export interface Task {
 
   // 関連データ
   relatedItemId?: string;        // 関連する品物ID（care_items）
-  relatedInstructionId?: string; // 関連するケア指示ID（care_instructions）
 
   // スケジュール
   dueDate: string;               // YYYY-MM-DD

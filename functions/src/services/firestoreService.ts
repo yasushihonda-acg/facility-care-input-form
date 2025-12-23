@@ -1,6 +1,6 @@
 /**
  * Firestore サービス
- * Flow A (記録同期) と Flow C (家族要望) のデータ操作
+ * Flow A (記録同期) のデータ操作
  *
  * 同期方式:
  * - 差分同期 (incremental): 新規レコードのみ追加、削除なし（15分間隔）
@@ -13,12 +13,7 @@ import * as admin from "firebase-admin";
 import {Timestamp} from "firebase-admin/firestore";
 import * as crypto from "crypto";
 import {COLLECTIONS} from "../config/sheets";
-import {
-  PlanData,
-  FamilyRequest,
-  SubmitFamilyRequestRequest,
-  GetFamilyRequestsRequest,
-} from "../types";
+import {PlanData} from "../types";
 
 /**
  * Firestore インスタンスを取得
@@ -327,139 +322,3 @@ export async function getPlanData(
   };
 }
 
-// =============================================================================
-// Flow C: Family Requests (家族要望)
-// =============================================================================
-
-/**
- * 家族要望を保存
- *
- * @param request 家族要望リクエスト
- * @return 生成されたリクエストID
- */
-export async function createFamilyRequest(
-  request: SubmitFamilyRequestRequest
-): Promise<string> {
-  const db = getFirestore();
-  const collection = db.collection(COLLECTIONS.FAMILY_REQUESTS);
-
-  const now = Timestamp.now();
-  const requestId = generateRequestId(request.userId);
-
-  const familyRequest: Omit<FamilyRequest, "id"> = {
-    userId: request.userId,
-    residentId: request.residentId,
-    category: request.category,
-    content: request.content,
-    priority: request.priority,
-    status: "pending",
-    attachments: request.attachments || [],
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  await collection.doc(requestId).set({
-    ...familyRequest,
-    id: requestId,
-  });
-
-  return requestId;
-}
-
-/**
- * 家族要望を取得
- *
- * @param request 取得条件
- */
-export async function getFamilyRequests(request: GetFamilyRequestsRequest): Promise<{
-  requests: FamilyRequest[];
-  totalCount: number;
-}> {
-  const db = getFirestore();
-  let query: admin.firestore.Query = db.collection(COLLECTIONS.FAMILY_REQUESTS);
-
-  if (request.userId) {
-    query = query.where("userId", "==", request.userId);
-  }
-
-  if (request.residentId) {
-    query = query.where("residentId", "==", request.residentId);
-  }
-
-  if (request.status) {
-    query = query.where("status", "==", request.status);
-  }
-
-  query = query.orderBy("createdAt", "desc");
-
-  const limit = request.limit || 50;
-  query = query.limit(limit);
-
-  const snapshot = await query.get();
-  const requests: FamilyRequest[] = [];
-
-  snapshot.docs.forEach((doc) => {
-    requests.push(doc.data() as FamilyRequest);
-  });
-
-  return {
-    requests,
-    totalCount: requests.length,
-  };
-}
-
-/**
- * 家族要望のステータスを更新
- *
- * @param requestId リクエストID
- * @param status 新しいステータス
- */
-export async function updateFamilyRequestStatus(
-  requestId: string,
-  status: "pending" | "reviewed" | "implemented"
-): Promise<void> {
-  const db = getFirestore();
-  const docRef = db.collection(COLLECTIONS.FAMILY_REQUESTS).doc(requestId);
-
-  await docRef.update({
-    status,
-    updatedAt: Timestamp.now(),
-  });
-}
-
-// =============================================================================
-// Helper Functions
-// =============================================================================
-
-/**
- * リクエストIDを生成
- * フォーマット: REQ_{userId}_{YYYYMMDD}_{HHmmss}
- */
-function generateRequestId(userId: string): string {
-  const now = new Date();
-  const dateStr = now
-    .toISOString()
-    .replace(/[-:T]/g, "")
-    .slice(0, 14);
-  return `REQ_${userId}_${dateStr}`;
-}
-
-/**
- * 推定レビュー日を計算（2営業日後）
- */
-export function calculateEstimatedReviewDate(): string {
-  const now = new Date();
-  let daysToAdd = 2;
-  const resultDate = new Date(now);
-
-  while (daysToAdd > 0) {
-    resultDate.setDate(resultDate.getDate() + 1);
-    const dayOfWeek = resultDate.getDay();
-    // 土日をスキップ
-    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-      daysToAdd--;
-    }
-  }
-
-  return resultDate.toISOString().split("T")[0];
-}

@@ -38,12 +38,6 @@ export {submitMealRecord} from "./functions/submitMealRecord";
 export {submitHydrationRecord} from "./functions/submitHydrationRecord";
 
 // =============================================================================
-// Flow C: 家族要望
-// =============================================================================
-
-export {submitFamilyRequest} from "./functions/submitFamilyRequest";
-
-// =============================================================================
 // 画像連携（Phase 17: Firebase Storage）
 // =============================================================================
 
@@ -55,7 +49,6 @@ export {getCarePhotos} from "./functions/getCarePhotos";
 // =============================================================================
 
 export {getPlanDataFunc as getPlanData} from "./functions/getPlanData";
-export {getFamilyRequestsFunc as getFamilyRequests} from "./functions/getFamilyRequests";
 
 // =============================================================================
 // グローバル設定

@@ -125,21 +125,6 @@ export interface SubmitCareRecordRequest {
   notes?: string;
 }
 
-export interface SubmitFamilyRequestRequest {
-  userId: string;
-  residentId: string;
-  category:
-    | "meal"
-    | "daily_life"
-    | "medical"
-    | "recreation"
-    | "communication"
-    | "other";
-  content: string;
-  priority: "low" | "medium" | "high";
-  attachments?: string[];
-}
-
 export interface UploadCareImageRequest {
   staffId: string;
   residentId: string;
@@ -148,13 +133,6 @@ export interface UploadCareImageRequest {
 
 export interface GetPlanDataRequest {
   residentId?: string;
-  limit?: number;
-}
-
-export interface GetFamilyRequestsRequest {
-  userId?: string;
-  residentId?: string;
-  status?: "pending" | "reviewed" | "implemented";
   limit?: number;
 }
 
@@ -182,12 +160,6 @@ export interface SubmitCareRecordResponse {
   recordId: string;
   sheetRow: number;
   botNotificationTriggered: boolean;
-}
-
-export interface SubmitFamilyRequestResponse {
-  requestId: string;
-  status: "pending";
-  estimatedReviewDate: string;
 }
 
 /**
@@ -281,23 +253,6 @@ export interface GetPlanDataResponse {
   lastSyncedAt: string;
 }
 
-export interface FamilyRequestRecord {
-  requestId: string;
-  userId: string;
-  residentId: string;
-  category: string;
-  content: string;
-  priority: "low" | "medium" | "high";
-  status: "pending" | "reviewed" | "implemented";
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface GetFamilyRequestsResponse {
-  requests: FamilyRequestRecord[];
-  totalCount: number;
-}
-
 // =============================================================================
 // Firestore Document Types
 // =============================================================================
@@ -324,28 +279,6 @@ export interface PlanData {
   headers: string[];
   /** Firestore同期日時 */
   syncedAt: Timestamp;
-}
-
-/**
- * Flow C: 家族要望フロー用データ
- */
-export interface FamilyRequest {
-  id: string;
-  userId: string;
-  residentId: string;
-  category:
-    | "meal"
-    | "daily_life"
-    | "medical"
-    | "recreation"
-    | "communication"
-    | "other";
-  content: string;
-  priority: "low" | "medium" | "high";
-  status: "pending" | "reviewed" | "implemented";
-  attachments?: string[];
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
 }
 
 // =============================================================================
