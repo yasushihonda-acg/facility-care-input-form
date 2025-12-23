@@ -94,13 +94,13 @@ https://asia-northeast1-facility-care-input-form.cloudfunctions.net
 | GET | `/getTasks` | タスク一覧を取得 | Phase 8.2 | ✅ |
 | PUT | `/updateTask` | タスクを更新 | Phase 8.2 | ✅ |
 | DELETE | `/deleteTask` | タスクを削除 | Phase 8.2 | ✅ |
-| POST | `/getPresetSuggestions` | プリセット候補を取得 | Phase 8.5 | ✅ |
+| POST | `/getPresetSuggestions` | プリセット候補を取得 | Phase 8.5 | ⚠️ 未使用 |
 | GET | `/getPresets` | プリセット一覧を取得 | Phase 8.6 | ✅ |
 | POST | `/createPreset` | プリセットを作成 | Phase 8.6 | ✅ |
 | PUT | `/updatePreset` | プリセットを更新 | Phase 8.6 | ✅ |
 | DELETE | `/deletePreset` | プリセットを削除 | Phase 8.6 | ✅ |
-| POST | `/saveAISuggestionAsPreset` | AI提案をプリセット保存 | Phase 8.7 | ✅ |
-| POST | `/aiSuggest` | AI品物入力補助 | Phase 8.4 | ✅ |
+| POST | `/saveAISuggestionAsPreset` | AI提案をプリセット保存 | Phase 8.7 | ⚠️ 未使用 |
+| POST | `/aiSuggest` | AI品物入力補助 | Phase 8.4 | ⚠️ 未使用 |
 | POST | `/aiAnalyze` | AI摂食傾向分析 | Phase 8.4.1 | ✅ |
 | GET | `/getStats` | 統計データを取得 | Phase 8.3 | ✅ |
 | GET | `/getInventorySummary` | 在庫サマリーを取得 | Phase 9.3 | ✅ |
@@ -1364,6 +1364,8 @@ Webhook URLの動作確認テスト。管理者が設定保存前にURLの有効
 ---
 
 ### 4.24 POST /getPresetSuggestions (Phase 8.5)
+
+> **⚠️ 注意**: このAPIはフロントエンドから未使用です（Phase 41でAI機能を一時非表示化）。バックエンド実装は存在しますが、将来の再有効化まで使用されません。
 
 品物名からマッチするプリセット候補を取得します。
 
