@@ -95,8 +95,8 @@ test.describe('デモショーケース', () => {
     await page.goto('/demo/showcase', { waitUntil: 'networkidle' });
     await waitForSpaLoad(page);
 
-    // 「ステップ 1/6」という表示がある
-    await expect(page.locator('text=ステップ 1/6')).toBeVisible({ timeout: 15000 });
+    // 「ステップ 1/5」という表示がある
+    await expect(page.locator('text=ステップ 1/5')).toBeVisible({ timeout: 15000 });
 
     // 最初のステップタイトル「品物を登録する」が表示される
     await expect(page.getByRole('heading', { name: '品物を登録する' })).toBeVisible({ timeout: 10000 });
@@ -107,13 +107,13 @@ test.describe('デモショーケース', () => {
     await waitForSpaLoad(page);
 
     // Step 1が表示されている
-    await expect(page.locator('text=ステップ 1/6')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('text=ステップ 1/5')).toBeVisible({ timeout: 15000 });
 
     // 「次へ」ボタンをクリック
     await page.getByRole('button', { name: /次へ/ }).click();
 
     // Step 2に進む（タイトルが「登録した品物を確認」）
-    await expect(page.locator('text=ステップ 2/6')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=ステップ 2/5')).toBeVisible({ timeout: 10000 });
     await expect(page.getByRole('heading', { name: '登録した品物を確認' })).toBeVisible({ timeout: 10000 });
   });
 
@@ -123,13 +123,13 @@ test.describe('デモショーケース', () => {
 
     // Step 2に進む
     await page.getByRole('button', { name: /次へ/ }).click();
-    await expect(page.locator('text=ステップ 2/6')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('text=ステップ 2/5')).toBeVisible({ timeout: 15000 });
 
     // 「前へ」ボタンをクリック
     await page.getByRole('button', { name: /前へ/ }).click();
 
     // Step 1に戻る
-    await expect(page.locator('text=ステップ 1/6')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=ステップ 1/5')).toBeVisible({ timeout: 10000 });
   });
 
   test('DEMO-014: プログレスバーが表示される', async ({ page }) => {
@@ -156,10 +156,10 @@ test.describe('デモショーケース', () => {
     // 「全ステップ一覧」のdetails要素を開く
     await page.locator('summary:has-text("全ステップ一覧")').click();
 
-    // 全6ステップのタイトルが表示される（家族向けに変更）
+    // 全5ステップのタイトルが表示される（家族向けに変更）
     await expect(page.locator('text=1. 品物を登録する')).toBeVisible({ timeout: 10000 });
     await expect(page.locator('text=2. 登録した品物を確認')).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('text=6. 傾向を分析する')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=5. 傾向を分析する')).toBeVisible({ timeout: 10000 });
   });
 
   test('DEMO-017: ストーリーが表示される', async ({ page }) => {

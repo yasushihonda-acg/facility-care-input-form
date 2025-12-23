@@ -1,12 +1,14 @@
 /**
  * Phase 39: ロール別ベースカラー整合性テスト
  *
- * 5パターンのフッター・ベースカラーを検証:
+ * 4パターンのフッター・ベースカラーを検証:
  * 1. スタッフ（本番）: /staff/* → Green
  * 2. 家族（本番）: /family/* → Orange
- * 3. 管理者: ?admin=true → Blue
- * 4. 家族デモ: /demo/family/* → Orange
- * 5. スタッフデモ: /demo/staff/* → Green
+ * 3. 家族デモ: /demo/family/* → Orange
+ * 4. スタッフデモ: /demo/staff/* → Green
+ *
+ * Note: 管理者モード（?admin=true → Blue）はPhase 39.1で廃止
+ *       /settings は独立ページとして実装
  */
 
 import { test, expect, Page } from '@playwright/test';
@@ -165,27 +167,10 @@ test.describe('Phase 39: ロール別ベースカラー整合性', () => {
     });
   });
 
-  test.describe('3. 管理者: ?admin=true', () => {
-    test('ROLE-020: /staff/input/meal?admin=true で管理者カラー（Blue）が適用される', async ({ page }) => {
-      await page.goto('/staff/input/meal?admin=true');
-      await page.waitForLoadState('networkidle');
+  // Phase 39.1: 管理者モード（?admin=true）は廃止されました
+  // /settings が独立ページとして実装されているため、admin判定テストは削除
 
-      // data-role属性の確認
-      const dataRole = await getDataRole(page);
-      expect(dataRole).toBe('admin');
-    });
-
-    test('ROLE-021: /staff/input/meal?admin=true のアクティブタブがBlueである', async ({ page }) => {
-      await page.goto('/staff/input/meal?admin=true');
-      await page.waitForLoadState('networkidle');
-
-      const inputTab = page.locator('nav a[href*="input/meal"]');
-      const bgColor = await inputTab.evaluate((el) => getComputedStyle(el).backgroundColor);
-      expect(bgColor).toBe(EXPECTED_COLORS.admin.primaryRgb);
-    });
-  });
-
-  test.describe('4. 家族デモ: /demo/family/*', () => {
+  test.describe('3. 家族デモ: /demo/family/*', () => {
     test('ROLE-030: /demo/family で家族カラー（Orange）が適用される', async ({ page }) => {
       await page.goto('/demo/family');
       await page.waitForLoadState('networkidle');
@@ -224,7 +209,7 @@ test.describe('Phase 39: ロール別ベースカラー整合性', () => {
     });
   });
 
-  test.describe('5. スタッフデモ: /demo/staff/*', () => {
+  test.describe('4. スタッフデモ: /demo/staff/*', () => {
     test('ROLE-040: /demo/staff でスタッフカラー（Green）が適用される', async ({ page }) => {
       await page.goto('/demo/staff');
       await page.waitForLoadState('networkidle');

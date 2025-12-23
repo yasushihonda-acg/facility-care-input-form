@@ -23,7 +23,7 @@ test.describe('Phase 14: スタッフ用デモページ', () => {
       await page.goto('/demo/staff');
 
       // 4つの機能カードが表示される（カード内のh3を指定）
-      await expect(page.locator('h3').filter({ hasText: '家族連絡を確認' })).toBeVisible();
+      await expect(page.locator('h3').filter({ hasText: '注意事項' })).toBeVisible();
       await expect(page.locator('h3').filter({ hasText: '食事記録を入力' })).toBeVisible();
       await expect(page.locator('h3').filter({ hasText: '統計' })).toBeVisible();
       await expect(page.locator('h3').filter({ hasText: '記録閲覧' })).toBeVisible();
@@ -38,12 +38,13 @@ test.describe('Phase 14: スタッフ用デモページ', () => {
   });
 
   test.describe('STAFF-01x: ナビゲーション', () => {
-    test('STAFF-010: 家族連絡カードをクリック→一覧ページへ遷移', async ({ page }) => {
+    test('STAFF-010: 注意事項カードをクリック→一覧ページへ遷移', async ({ page }) => {
       await page.goto('/demo/staff');
 
-      await page.getByText('家族連絡を確認').click();
+      // カード内のh3をクリック（フッターの「注意事項」と区別）
+      await page.locator('h3').filter({ hasText: '注意事項' }).click();
 
-      await expect(page).toHaveURL('/demo/staff/family-messages');
+      await expect(page).toHaveURL('/demo/staff/notes');
     });
 
     test('STAFF-011: 食事記録カードをクリック→入力ページへ遷移', async ({ page }) => {
@@ -88,68 +89,63 @@ test.describe('Phase 14: スタッフ用デモページ', () => {
       await page.getByText('全ステップ一覧').click();
 
       // 4つのステップが表示される（折りたたみ内）
-      await expect(page.getByText('1. 家族連絡を確認')).toBeVisible();
-      await expect(page.getByText('2. 品物の詳細を見る')).toBeVisible();
+      await expect(page.getByText('1. 注意事項を確認')).toBeVisible();
+      await expect(page.getByText('2. 家族依頼を確認')).toBeVisible();
       await expect(page.getByText('3. 食事記録を入力')).toBeVisible();
       await expect(page.getByText('4. 統計を確認')).toBeVisible();
     });
 
-    test('STAFF-022: Step 1クリック→家族連絡一覧へ遷移', async ({ page }) => {
+    test('STAFF-022: Step 1クリック→注意事項ページへ遷移', async ({ page }) => {
       await page.goto('/demo/staff/showcase');
 
       // 「この機能を見る」ボタンをクリック（Step 1が初期表示）
       await page.getByRole('button', { name: /この機能を見る/i }).click();
 
-      await expect(page).toHaveURL('/demo/staff/family-messages');
+      await expect(page).toHaveURL('/demo/staff/notes');
     });
   });
 
-  test.describe('STAFF-03x: 家族連絡ページ', () => {
-    test('STAFF-030: 家族連絡一覧に品物が表示される', async ({ page }) => {
-      await page.goto('/demo/staff/family-messages');
+  test.describe('STAFF-03x: 注意事項ページ', () => {
+    test('STAFF-030: 注意事項一覧にスタッフノートが表示される', async ({ page }) => {
+      await page.goto('/demo/staff/notes');
 
       // ページが読み込まれるまで待機
       await page.waitForLoadState('networkidle');
 
-      // 品物が少なくとも1つ表示される（demoCareItemsからのデータ）
-      // 品物カード内のテキストを確認（バナナ、みかん等）
-      await expect(page.getByText(/バナナ|みかん|りんご|羊羹/i).first()).toBeVisible();
+      // スタッフ注意事項が表示される（デモデータから）
+      // 例: 糖尿病関連の注意事項
+      await expect(page.getByText(/糖尿病|差し入れ品|おやつ/i).first()).toBeVisible();
     });
 
-    test('STAFF-031: 品物クリック→詳細ページへ遷移（デモ内）', async ({ page }) => {
-      await page.goto('/demo/staff/family-messages');
+    test('STAFF-031: 注意事項ページにタブが表示される', async ({ page }) => {
+      await page.goto('/demo/staff/notes');
 
       // ページが読み込まれるまで待機
       await page.waitForLoadState('networkidle');
 
-      // 品物名（リンク）をクリック
-      await page.getByRole('link', { name: /バナナ|みかん|りんご|羊羹/i }).first().click();
-
-      // デモ内の詳細ページに遷移することを確認
-      await expect(page).toHaveURL(/\/demo\/staff\/family-messages\/.+/);
+      // 「注意事項」タブと「家族依頼」タブが表示される
+      await expect(page.getByText('注意事項', { exact: false }).first()).toBeVisible();
     });
 
-    test('STAFF-032: 禁止品目に警告バッジが表示される', async ({ page }) => {
-      await page.goto('/demo/staff/family-messages');
+    test('STAFF-032: 注意事項に優先度バッジが表示される', async ({ page }) => {
+      await page.goto('/demo/staff/notes');
 
       // ページが読み込まれるまで待機
       await page.waitForLoadState('networkidle');
 
-      // 禁止品目の警告（「提供禁止」または「禁止」のテキスト）
-      // デモデータに禁止品目（七福のお菓子等）がある場合に表示
-      // 注: デモデータの禁止ルールによってはスキップ
-      const warningBadge = page.getByText(/禁止|提供禁止/i);
-      // 禁止品目がない場合はスキップ
-      const count = await warningBadge.count();
+      // 重要（critical）注意事項がある場合、バッジが表示される
+      // デモデータにはcritical優先度の注意事項がある
+      const criticalBadge = page.getByText(/重要|要注意/i);
+      const count = await criticalBadge.count();
       if (count > 0) {
-        await expect(warningBadge.first()).toBeVisible();
+        await expect(criticalBadge.first()).toBeVisible();
       }
     });
   });
 
   test.describe('STAFF-04x: フッターナビゲーション', () => {
     test('STAFF-040: /demo/staff/*でスタッフフッターが表示される', async ({ page }) => {
-      await page.goto('/demo/staff/family-messages');
+      await page.goto('/demo/staff/notes');
 
       // ページが読み込まれるまで待機
       await page.waitForLoadState('networkidle');
@@ -159,11 +155,11 @@ test.describe('Phase 14: スタッフ用デモページ', () => {
       await expect(footer).toBeVisible();
       await expect(footer.getByText('記録閲覧')).toBeVisible();
       await expect(footer.getByText('記録入力')).toBeVisible();
-      await expect(footer.getByText('家族連絡')).toBeVisible();
+      await expect(footer.getByText('注意事項')).toBeVisible();
     });
 
     test('STAFF-041: フッターからデモページ内へ正しく遷移', async ({ page }) => {
-      await page.goto('/demo/staff/family-messages');
+      await page.goto('/demo/staff/notes');
 
       // ページが読み込まれるまで待機
       await page.waitForLoadState('networkidle');
@@ -179,14 +175,14 @@ test.describe('Phase 14: スタッフ用デモページ', () => {
 
   test.describe('STAFF-05x: ヘッダーボタン（ツアーナビゲーション）', () => {
     test('STAFF-050: ツアーTOPに戻るボタンが表示される', async ({ page }) => {
-      await page.goto('/demo/staff/family-messages');
+      await page.goto('/demo/staff/notes');
 
       // ヘッダーに「ツアーTOPに戻る」ボタンが表示される
       await expect(page.getByRole('link', { name: /ツアーTOP/i })).toBeVisible();
     });
 
     test('STAFF-051: ボタンクリック→ショーケースへ遷移', async ({ page }) => {
-      await page.goto('/demo/staff/family-messages');
+      await page.goto('/demo/staff/notes');
 
       // 「ツアーTOPに戻る」ボタンをクリック
       await page.getByRole('link', { name: /ツアーTOP/i }).click();

@@ -178,7 +178,7 @@ test.describe('Phase 20: スタッフデモ環境完結', () => {
 
   test.describe('DSC-04x: フッターナビ完全性', () => {
     test('DSC-040: 全フッタータブがデモ内遷移', async ({ page }) => {
-      await page.goto('/demo/staff/family-messages');
+      await page.goto('/demo/staff/notes');
       await page.waitForLoadState('networkidle');
 
       const footer = page.locator('nav[aria-label="スタッフ用ナビゲーション"]');
@@ -186,10 +186,11 @@ test.describe('Phase 20: スタッフデモ環境完結', () => {
 
       // 各タブをクリックして遷移先を確認
       // Phase 21: チャット機能は一時非表示
-      const tabs = ['記録閲覧', '記録入力', '家族連絡', '統計'];
+      // Phase 40: 家族連絡→注意事項に変更
+      const tabs = ['記録閲覧', '記録入力', '注意事項', '統計'];
 
       for (const tab of tabs) {
-        await page.goto('/demo/staff/family-messages');
+        await page.goto('/demo/staff/notes');
         await page.waitForLoadState('networkidle');
 
         await footer.getByText(tab).click();
@@ -202,18 +203,20 @@ test.describe('Phase 20: スタッフデモ環境完結', () => {
 
   test.describe('DSC-05x: ブラウザバック対応', () => {
     test('DSC-050: ブラウザバックでデモ内に留まる', async ({ page }) => {
-      // デモホーム → 家族連絡 → 詳細 と遷移
+      // デモホーム → 注意事項 → 記録入力 と遷移
       await page.goto('/demo/staff');
       await page.waitForLoadState('networkidle');
 
-      await page.getByText('家族連絡を確認').click();
+      // カード内のh3をクリック（フッターの「注意事項」と区別）
+      await page.locator('h3').filter({ hasText: '注意事項' }).click();
       await page.waitForLoadState('networkidle');
-      await expect(page).toHaveURL('/demo/staff/family-messages');
+      await expect(page).toHaveURL('/demo/staff/notes');
 
-      // 品物詳細へ
-      await page.getByRole('link', { name: /バナナ|みかん|りんご|羊羹/i }).first().click();
+      // フッターから記録入力へ
+      const footer = page.locator('nav[aria-label="スタッフ用ナビゲーション"]');
+      await footer.getByText('記録入力').click();
       await page.waitForLoadState('networkidle');
-      await expect(page).toHaveURL(/\/demo\/staff\/family-messages\/.+/);
+      await expect(page).toHaveURL('/demo/staff/input/meal');
 
       // ブラウザバック
       await page.goBack();
