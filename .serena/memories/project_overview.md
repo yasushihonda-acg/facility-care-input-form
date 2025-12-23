@@ -48,20 +48,38 @@ facility-care-input-form/
 - **Sheet A（読取）**: `1Gf8QTbGyKB7rn5QQa5cYOg1NNYWMV8lzqySdbDkfG-w`
 - **Sheet B（書込）**: `1OrpUVoDfUECXCTrKOGKLwN_4OQ9dlg7cUTCPGLDGHV0`
 
-## プリセット型定義（2025-12-23統一）
+## プリセット型定義（Phase 41.2で更新）
 
 ```typescript
-// 正規フィールド（ItemFormに適用）
-processingDetail: string;
+// 品物フォームへの適用値
+itemCategory?: ItemCategory;
+storageMethod?: StorageMethod;
+servingMethod?: ServingMethod;
+servingMethodDetail?: string;
+noteToStaff?: string;
+remainingHandlingInstruction?: RemainingHandlingInstruction;
 
 // @deprecated 後方互換性のため保持
+processingDetail?: string;
 instruction?: { content: string; };
 ```
 
 データフロー:
-1. PresetFormModal → processingDetailで保存
-2. Backend API → processingDetailを保存・返却
-3. ItemForm.handleApplyPreset → processingDetailを読んでservingMethodDetailに設定
+1. PresetFormModal / SaveManualPresetDialog → 全フィールドで保存
+2. Backend API (createPreset/updatePreset) → 全フィールドを保存・返却
+3. ItemForm.handleApplyPreset → 全フィールドをフォームに適用
+
+## AI機能（Phase 41で一時非表示）
+
+以下の機能はフロントエンドで非表示化（ENABLE_AI_SUGGESTION = false）:
+- 品物登録フォームの「AI提案」ボタン
+- AISuggestionコンポーネント
+- SaveAISuggestionDialog
+
+バックエンドAPI（将来の再有効化用に保持）:
+- POST /aiSuggest
+- POST /getPresetSuggestions
+- POST /saveAISuggestionAsPreset
 
 ## 開発履歴
 Phase 1〜40完了。詳細は `git log` を参照。
