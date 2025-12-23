@@ -12,7 +12,15 @@
         .category-badge { font-size: 0.75rem; padding: 0.125rem 0.5rem; border-radius: 9999px; }
         .search-highlight { background-color: #fef08a; }
         tr:hover { background-color: #f8fafc; }
-        .sticky-header { position: sticky; top: 0; z-index: 10; }
+        .sticky-header th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: #f9fafb;
+            box-shadow: 0 1px 0 #e5e7eb;
+        }
+        .sticky-header th:hover { background-color: #f3f4f6; }
+        .table-container { max-height: calc(100vh - 350px); overflow-y: auto; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -96,8 +104,8 @@
     <!-- Test Table -->
     <div class="container mx-auto px-4 py-6">
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full">
+            <div class="overflow-x-auto table-container">
+                <table class="w-full relative">
                     <thead class="bg-gray-50 sticky-header">
                         <tr>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable('id')">
