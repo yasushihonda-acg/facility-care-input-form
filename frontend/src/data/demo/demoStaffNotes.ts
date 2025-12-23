@@ -1,8 +1,6 @@
 /**
  * デモ用スタッフ注意事項データ
  * Phase 40: スタッフ専用の注意事項管理機能
- *
- * @see docs/DEMO_SHOWCASE_SPEC.md
  */
 
 import type { StaffNote } from '../../types/staffNote';

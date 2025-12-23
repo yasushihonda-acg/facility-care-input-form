@@ -1,6 +1,5 @@
 /**
  * デモショーケース（ガイド付きツアー）- 家族向け特化版
- * @see docs/DEMO_FAMILY_REDESIGN.md
  *
  * 家族の使い方に沿ったストーリー仕立てのガイド
  * テーマ: 「離れて暮らす親御さんへの差し入れを、施設スタッフと連携して見守る」
@@ -57,7 +56,7 @@ const SHOWCASE_STEPS: ShowcaseStep[] = [
     path: '/demo/family/presets',
     highlights: [
       'よく持っていく品物をプリセット保存',
-      'AI提案をワンクリックで保存',
+      '品物登録時にワンクリックで保存',
       '次回からの入力がラクラク',
     ],
   },
@@ -98,7 +97,7 @@ const SHOWCASE_STEPS: ShowcaseStep[] = [
     highlights: [
       'よく食べる品目 TOP5',
       'よく残す品目 TOP5',
-      'カテゴリ別摂食率グラフ',
+      'AI分析で傾向を把握',
     ],
   },
 ];

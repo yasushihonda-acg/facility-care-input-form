@@ -1,6 +1,5 @@
 /**
  * 品物デモデータ
- * @see docs/DEMO_SHOWCASE_SPEC.md セクション4.2
  *
  * 統計・在庫サマリーが見栄えするよう、様々なステータス・期限・カテゴリのデータを用意
  */
@@ -422,7 +421,7 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
   },
 
   // ===== FIFO テスト用: 同じ品物名の重複アイテム =====
-  // docs/FIFO_DESIGN_SPEC.md テスト用データ
+  // 同名品物の先入れ先出し（FIFO）動作確認用データ
   {
     id: 'demo-item-013',
     residentId: 'resident-001',
