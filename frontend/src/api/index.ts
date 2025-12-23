@@ -543,39 +543,6 @@ export async function aiAnalyze(
 }
 
 // =============================================================================
-// プリセット統合 API（Phase 8.5）
-// =============================================================================
-
-import type {
-  GetPresetSuggestionsRequest,
-  GetPresetSuggestionsResponse,
-  PresetSuggestion,
-} from '../types/careItem';
-
-export type { GetPresetSuggestionsRequest, GetPresetSuggestionsResponse, PresetSuggestion };
-
-/**
- * プリセット候補を取得
- * 品物名・カテゴリからマッチする「いつもの指示」を検索
- */
-export async function getPresetSuggestions(
-  params: GetPresetSuggestionsRequest
-): Promise<GetPresetSuggestionsResponse> {
-  const response = await fetch(`${API_BASE}/getPresetSuggestions`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(params),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `Failed to get preset suggestions: ${response.statusText}`);
-  }
-
-  return response.json();
-}
-
-// =============================================================================
 // プリセット管理 CRUD API（Phase 8.6）
 // =============================================================================
 

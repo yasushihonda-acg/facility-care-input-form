@@ -522,55 +522,6 @@ export const SUGGESTION_PRIORITY_CONFIG: Record<SuggestionPriority, { label: str
 };
 
 // =============================================================================
-// プリセット統合 (Phase 8.5)
-// =============================================================================
-
-/** プリセットマッチタイプ */
-export type PresetMatchType = 'category' | 'itemName' | 'keyword';
-
-/** プリセット候補取得リクエスト */
-export interface GetPresetSuggestionsRequest {
-  residentId: string;
-  itemName: string;
-  category?: ItemCategory;
-}
-
-/** プリセット候補（マッチ結果） */
-export interface PresetSuggestion {
-  presetId: string;
-  presetName: string;
-  matchReason: string;
-  matchType: PresetMatchType;
-  confidence: number;
-  // 指示内容（品物登録フォームのservingMethodDetailに適用）
-  processingDetail: string;
-  // @deprecated 旧形式（後方互換性のため保持）
-  instruction?: {
-    title: string;
-    content: string;
-    servingMethod?: ServingMethod;
-    servingDetail?: string;
-  };
-}
-
-/** プリセット候補取得レスポンス */
-export interface GetPresetSuggestionsResponse {
-  success: boolean;
-  data?: {
-    suggestions: PresetSuggestion[];
-  };
-  error?: string;
-}
-
-/** CareItemInput 拡張フィールド（指示の出所追跡） */
-export type InstructionSource = 'ai' | 'preset' | 'manual' | 'mixed';
-
-/** 拡張版 CareItemInput（プリセット適用情報付き） */
-export interface CareItemInputExtended extends CareItemInput {
-  appliedPresetIds?: string[];
-  aiSuggestionApplied?: boolean;
-  instructionSource?: InstructionSource;
-}
 
 /** カテゴリラベルマップ（Phase 31: 2カテゴリに簡素化） */
 export const CATEGORY_LABELS: Record<ItemCategory, string> = {

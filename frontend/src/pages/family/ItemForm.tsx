@@ -38,6 +38,9 @@ import type { CarePreset } from '../../types/family';
 const DEMO_RESIDENT_ID = 'resident-001';
 const DEMO_USER_ID = 'family-001';
 
+// AI提案機能は一時的に非表示（Phase 41）
+const ENABLE_AI_SUGGESTION = false;
+
 // 今日の日付（YYYY-MM-DD形式）
 const getTodayString = () => new Date().toISOString().split('T')[0];
 
@@ -309,32 +312,36 @@ export function ItemForm() {
                   errors.itemName ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
-              {/* AI提案ボタン（ボタン押下で発動） */}
-              <button
-                type="button"
-                onClick={handleRequestAISuggestion}
-                disabled={formData.itemName.length < 2 || isAISuggesting}
-                className={`px-4 py-3 rounded-lg font-medium transition-colors whitespace-nowrap ${
-                  formData.itemName.length < 2
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : isAISuggesting
-                      ? 'bg-blue-100 text-blue-600'
-                      : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'
-                }`}
-              >
-                {isAISuggesting ? '🔄' : '🤖'} AI提案
-              </button>
+              {/* AI提案ボタン（ボタン押下で発動） - Phase 41で一時的に非表示 */}
+              {ENABLE_AI_SUGGESTION && (
+                <button
+                  type="button"
+                  onClick={handleRequestAISuggestion}
+                  disabled={formData.itemName.length < 2 || isAISuggesting}
+                  className={`px-4 py-3 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                    formData.itemName.length < 2
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : isAISuggesting
+                        ? 'bg-blue-100 text-blue-600'
+                        : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'
+                  }`}
+                >
+                  {isAISuggesting ? '🔄' : '🤖'} AI提案
+                </button>
+              )}
             </div>
             {errors.itemName && (
               <p className="mt-1 text-sm text-red-500">{errors.itemName}</p>
             )}
-            {/* AI提案カード（ボタン押下後に表示） */}
-            <AISuggestion
-              suggestion={suggestion}
-              isLoading={isAISuggesting}
-              warning={aiWarning}
-              onApply={handleApplySuggestion}
-            />
+            {/* AI提案カード（ボタン押下後に表示） - Phase 41で一時的に非表示 */}
+            {ENABLE_AI_SUGGESTION && (
+              <AISuggestion
+                suggestion={suggestion}
+                isLoading={isAISuggesting}
+                warning={aiWarning}
+                onApply={handleApplySuggestion}
+              />
+            )}
           </div>
 
           {/* カテゴリ（Phase 31: 2カテゴリに簡素化） */}
@@ -584,8 +591,8 @@ export function ItemForm() {
         </form>
       </div>
 
-      {/* AI提案保存ダイアログ */}
-      {pendingAISuggestion && (
+      {/* AI提案保存ダイアログ - Phase 41で一時的に非表示 */}
+      {ENABLE_AI_SUGGESTION && pendingAISuggestion && (
         <SaveAISuggestionDialog
           isOpen={showSaveDialog}
           onClose={handleSkipSave}

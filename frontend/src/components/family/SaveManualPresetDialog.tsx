@@ -67,8 +67,13 @@ export function SaveManualPresetDialog({
         preset: {
           name: presetName,
           icon: '📌',
-          // 品物登録フォームのservingMethodDetailをprocessingDetailとして保存
-          processingDetail: formData.servingMethodDetail || '',
+          // 品物登録フォームの値をそのままプリセットに保存
+          itemCategory: formData.category,
+          storageMethod: formData.storageMethod,
+          servingMethod: formData.servingMethod,
+          servingMethodDetail: formData.servingMethodDetail || undefined,
+          noteToStaff: formData.noteToStaff || undefined,
+          remainingHandlingInstruction: formData.remainingHandlingInstruction,
           matchConfig: {
             keywords: [formData.itemName],
             categories: [formData.category],
@@ -118,6 +123,17 @@ export function SaveManualPresetDialog({
                     : formData.storageMethod === 'refrigerated'
                       ? '冷蔵'
                       : '冷凍'}
+                </p>
+              )}
+              {formData.noteToStaff && (
+                <p>申し送り: {formData.noteToStaff}</p>
+              )}
+              {formData.remainingHandlingInstruction && formData.remainingHandlingInstruction !== 'none' && (
+                <p>
+                  残り処置:{' '}
+                  {formData.remainingHandlingInstruction === 'stored'
+                    ? '保存'
+                    : '破棄'}
                 </p>
               )}
             </div>
