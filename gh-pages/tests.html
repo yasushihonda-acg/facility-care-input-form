@@ -14,13 +14,12 @@
         tr:hover { background-color: #f8fafc; }
         .sticky-header th {
             position: sticky;
-            top: 0;
-            z-index: 10;
+            top: 58px; /* フィルターバーの高さ分 */
+            z-index: 15;
             background-color: #f9fafb;
             box-shadow: 0 1px 0 #e5e7eb;
         }
         .sticky-header th:hover { background-color: #f3f4f6; }
-        .table-container { max-height: calc(100vh - 350px); overflow-y: auto; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -104,7 +103,7 @@
     <!-- Test Table -->
     <div class="container mx-auto px-4 py-6">
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div class="overflow-x-auto table-container">
+            <div class="overflow-x-auto">
                 <table class="w-full relative">
                     <thead class="bg-gray-50 sticky-header">
                         <tr>
