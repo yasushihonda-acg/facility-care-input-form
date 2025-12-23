@@ -81,26 +81,36 @@ export function SaveManualPresetDialog({
     }
   };
 
+  // デバッグ用ログ
+  console.log('[SaveManualPresetDialog] Rendering, isOpen:', isOpen);
+
+  const handleCloseClick = (e: React.MouseEvent) => {
+    console.log('[SaveManualPresetDialog] × clicked');
+    e.preventDefault();
+    e.stopPropagation();
+    onClose();
+    console.log('[SaveManualPresetDialog] onClose called');
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-md w-full shadow-xl">
-        {/* ヘッダー - flexboxで×ボタンを右上固定 */}
-        <div className="flex items-start p-4 border-b">
-          <h3 className="flex-1 text-lg font-bold text-center">
+      <div className="bg-white rounded-xl max-w-md w-full shadow-xl relative">
+        {/* ×ボタン - モーダル右上に絶対配置 */}
+        <button
+          type="button"
+          onClick={handleCloseClick}
+          className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 rounded-full text-xl font-bold transition-colors"
+          aria-label="閉じる"
+          data-testid="close-button"
+        >
+          ✕
+        </button>
+
+        {/* ヘッダー */}
+        <div className="p-4 pr-12 border-b">
+          <h3 className="text-lg font-bold text-center">
             この設定を「いつもの指示」として保存しますか？
           </h3>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onClose();
-            }}
-            className="flex-shrink-0 -mt-1 -mr-1 w-10 h-10 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full text-2xl transition-colors"
-            aria-label="閉じる"
-          >
-            ×
-          </button>
         </div>
 
         {/* 説明 */}
