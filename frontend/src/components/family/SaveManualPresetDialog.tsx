@@ -84,9 +84,9 @@ export function SaveManualPresetDialog({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl max-w-md w-full shadow-xl">
-        {/* ヘッダー */}
+        {/* ヘッダー - ×ボタンを右上固定 */}
         <div className="relative p-4 border-b">
-          <h3 className="text-lg font-bold text-center pr-8">
+          <h3 className="text-lg font-bold text-center pr-10">
             この設定を「いつもの指示」として保存しますか？
           </h3>
           <button
@@ -96,7 +96,7 @@ export function SaveManualPresetDialog({
               e.stopPropagation();
               onClose();
             }}
-            className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 text-2xl"
+            className="absolute top-2 right-2 w-10 h-10 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full text-2xl transition-colors"
             aria-label="閉じる"
           >
             ×
