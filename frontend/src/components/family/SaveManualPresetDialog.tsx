@@ -94,12 +94,32 @@ export function SaveManualPresetDialog({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-md w-full shadow-xl relative">
-        {/* ×ボタン - モーダル右上に絶対配置 */}
+      <div
+        className="bg-white rounded-xl max-w-md w-full shadow-xl"
+        style={{ position: 'relative' }}
+      >
+        {/* ×ボタン - モーダル右上に絶対配置（インラインスタイルで強制） */}
         <button
           type="button"
           onClick={handleCloseClick}
-          className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 rounded-full text-xl font-bold transition-colors"
+          style={{
+            position: 'absolute',
+            top: '12px',
+            right: '12px',
+            zIndex: 100,
+            width: '32px',
+            height: '32px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#e5e7eb',
+            borderRadius: '50%',
+            fontSize: '20px',
+            fontWeight: 'bold',
+            color: '#4b5563',
+            border: 'none',
+            cursor: 'pointer',
+          }}
           aria-label="閉じる"
           data-testid="close-button"
         >
@@ -107,7 +127,7 @@ export function SaveManualPresetDialog({
         </button>
 
         {/* ヘッダー */}
-        <div className="p-4 pr-12 border-b">
+        <div className="p-4 border-b" style={{ paddingRight: '56px' }}>
           <h3 className="text-lg font-bold text-center">
             この設定を「いつもの指示」として保存しますか？
           </h3>
