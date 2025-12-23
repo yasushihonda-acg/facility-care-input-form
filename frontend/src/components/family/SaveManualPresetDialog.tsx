@@ -83,12 +83,8 @@ export function SaveManualPresetDialog({
     }
   };
 
-  // デバッグ用ログ
-  console.log('[SaveManualPresetDialog] Rendering, isOpen:', isOpen);
-
   // ×ボタン: ダイアログを閉じるだけ（ナビゲーションなし）
   const handleDismissClick = (e: React.MouseEvent) => {
-    console.log('[SaveManualPresetDialog] × clicked (dismiss)');
     e.preventDefault();
     e.stopPropagation();
     onDismiss();
