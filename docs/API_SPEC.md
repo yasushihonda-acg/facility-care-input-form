@@ -273,7 +273,6 @@ Content-Type: application/json
 }
 ```
 
-> **詳細**: [ITEM_BASED_SNACK_RECORD_SPEC.md](./ITEM_BASED_SNACK_RECORD_SPEC.md) を参照
 
 #### SnackRecord 型（間食記録連携）
 
@@ -299,7 +298,6 @@ interface SnackRecord {
 | `snack`（自由記入）のみ | `施設のおやつも少々` |
 | **両方入力** | `黒豆 1g（完食）、らっきょう 0.7瓶（ほぼ完食）。施設のおやつも少々` |
 
-> **詳細**: [SNACK_RECORD_INTEGRATION_SPEC.md](./SNACK_RECORD_INTEGRATION_SPEC.md) を参照
 
 #### レスポンス
 
@@ -320,7 +318,6 @@ interface SnackRecord {
 | `sheetRow` | number | Sheet Bに追記された行番号 |
 
 > **参照**:
-> - フォーム仕様の詳細は [MEAL_INPUT_FORM_SPEC.md](./MEAL_INPUT_FORM_SPEC.md) を参照
 > - 投稿IDルールの詳細は [BUSINESS_RULES.md#6-投稿id生成ルール](./BUSINESS_RULES.md#6-投稿id生成ルール) を参照
 
 #### Webhook連携
@@ -330,7 +327,6 @@ interface SnackRecord {
 - **通常Webhook**: 全ての記録を通知
 - **重要Webhook**: `isImportant="重要"` の場合のみ追加通知
 
-> **詳細**: [GOOGLE_CHAT_WEBHOOK_SPEC.md](./GOOGLE_CHAT_WEBHOOK_SPEC.md) を参照
 
 ---
 
@@ -757,7 +753,6 @@ GET /getFamilyRequests?userId=F001&status=pending
 
 Webhook URLの動作確認テスト。管理者が設定保存前にURLの有効性を確認するために使用。
 
-> **詳細設計**: [ADMIN_TEST_FEATURE_SPEC.md](./ADMIN_TEST_FEATURE_SPEC.md) を参照
 
 **エンドポイント**: `POST /testWebhook`
 
@@ -830,7 +825,6 @@ Webhook URLの動作確認テスト。管理者が設定保存前にURLの有効
 
 家族が送付した品物（差し入れ）を登録します。
 
-> **詳細設計**: [ITEM_MANAGEMENT_SPEC.md](./ITEM_MANAGEMENT_SPEC.md) を参照
 
 **エンドポイント**: `POST /createCareItem`
 
@@ -1007,7 +1001,6 @@ Webhook URLの動作確認テスト。管理者が設定保存前にURLの有効
 
 タスクを作成します。
 
-> **詳細設計**: [TASK_MANAGEMENT_SPEC.md](./TASK_MANAGEMENT_SPEC.md) を参照
 
 **エンドポイント**: `POST /createTask`
 
@@ -1188,7 +1181,6 @@ Webhook URLの動作確認テスト。管理者が設定保存前にURLの有効
 
 プリセット一覧を取得します。
 
-> **詳細設計**: [PRESET_MANAGEMENT_SPEC.md](./PRESET_MANAGEMENT_SPEC.md) を参照
 
 **エンドポイント**: `GET /getPresets`
 
@@ -1468,7 +1460,6 @@ AI提案をプリセットとして保存します。
 
 禁止ルール（提供禁止品目）一覧を取得します。
 
-> **詳細設計**: [ITEM_MANAGEMENT_SPEC.md セクション8](./ITEM_MANAGEMENT_SPEC.md#8-禁止ルール提供禁止品目) を参照
 
 **エンドポイント**: `GET /getProhibitions`
 

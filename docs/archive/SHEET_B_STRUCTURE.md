@@ -153,7 +153,7 @@ last_reviewed: 2025-12-20
 
 **注意**: `snackRecords[].noteToFamily`（家族へのメモ）はSheet Bには反映されません（Firestoreの消費ログにのみ保存）。
 
-詳細は [SNACK_RECORD_INTEGRATION_SPEC.md](./SNACK_RECORD_INTEGRATION_SPEC.md) セクション2.2 参照。
+詳細は [API_SPEC.md](../API_SPEC.md) を参照。
 
 ---
 

@@ -484,7 +484,5 @@ curl -s "https://asia-northeast1-facility-care-input-form.cloudfunctions.net/get
 
 | ドキュメント | 内容 |
 |--------------|------|
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | システム全体設計 |
-| [DEMO_PWA_SPEC.md](./DEMO_PWA_SPEC.md) | 同期仕様 |
-| [API_SPEC.md](./API_SPEC.md) | syncPlanData API仕様 |
-| [ROADMAP.md](./ROADMAP.md) | 開発ロードマップ |
+| [ARCHITECTURE.md](../ARCHITECTURE.md) | システム全体設計 |
+| [API_SPEC.md](../API_SPEC.md) | syncPlanData API仕様 |

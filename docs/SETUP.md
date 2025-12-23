@@ -481,10 +481,4 @@ Error: The caller does not have permission
 
 ## 次のステップ
 
-Phase 1 完了後、[ROADMAP.md](./ROADMAP.md) の **Phase 2: バックエンド実装** に進みます。
-
-```bash
-# Phase 2 開始コマンド
-cd functions/src
-mkdir -p config functions services types
-```
+環境構築完了後、[HANDOVER.md](./HANDOVER.md) のクイックスタートセクションを参照してください。

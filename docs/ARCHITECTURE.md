@@ -416,7 +416,6 @@ graph LR
 
 > **注**: PWAからsyncPlanDataへの直接呼び出しは廃止。Cloud Schedulerが唯一の同期トリガー。
 
-詳細は [DEMO_PWA_SPEC.md](./archive/DEMO_PWA_SPEC.md) を参照。
 
 ---
 
