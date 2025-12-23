@@ -25,8 +25,9 @@ const SERVING_METHOD_LABELS: Record<string, string> = {
 
 interface SaveManualPresetDialogProps {
   isOpen: boolean;
-  onClose: () => void;
-  onSaved: () => void;
+  onDismiss: () => void; // ×ボタン: ダイアログを閉じるだけ
+  onSkip: () => void; // 「今回だけ」: スキップして一覧へ
+  onSaved: () => void; // 「保存して完了」: 保存して一覧へ
   residentId: string;
   userId: string;
   formData: CareItemInput;
@@ -34,7 +35,8 @@ interface SaveManualPresetDialogProps {
 
 export function SaveManualPresetDialog({
   isOpen,
-  onClose,
+  onDismiss,
+  onSkip,
   onSaved,
   residentId,
   userId,
@@ -84,12 +86,12 @@ export function SaveManualPresetDialog({
   // デバッグ用ログ
   console.log('[SaveManualPresetDialog] Rendering, isOpen:', isOpen);
 
-  const handleCloseClick = (e: React.MouseEvent) => {
-    console.log('[SaveManualPresetDialog] × clicked');
+  // ×ボタン: ダイアログを閉じるだけ（ナビゲーションなし）
+  const handleDismissClick = (e: React.MouseEvent) => {
+    console.log('[SaveManualPresetDialog] × clicked (dismiss)');
     e.preventDefault();
     e.stopPropagation();
-    onClose();
-    console.log('[SaveManualPresetDialog] onClose called');
+    onDismiss();
   };
 
   return (
@@ -101,7 +103,7 @@ export function SaveManualPresetDialog({
         {/* ×ボタン - モーダル右上に絶対配置（インラインスタイルで強制） */}
         <button
           type="button"
-          onClick={handleCloseClick}
+          onClick={handleDismissClick}
           style={{
             position: 'absolute',
             top: '12px',
@@ -193,7 +195,7 @@ export function SaveManualPresetDialog({
         {/* アクションボタン */}
         <div className="p-4 border-t flex gap-3">
           <button
-            onClick={onClose}
+            onClick={onSkip}
             className="flex-1 py-3 px-4 border rounded-lg font-medium text-gray-700 hover:bg-gray-50"
           >
             今回だけ

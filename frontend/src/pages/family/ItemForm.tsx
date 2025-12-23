@@ -238,6 +238,12 @@ export function ItemForm() {
     }
   };
 
+  // 手動登録後のダイアログ: ×ボタン（ダイアログを閉じるだけ）
+  const handleDialogDismiss = useCallback(() => {
+    setShowManualPresetDialog(false);
+    // registeredFormDataはクリアしない（再度ダイアログを開ける可能性を残す）
+  }, []);
+
   // 手動登録後のダイアログ: 「今回だけ」を選択
   const handleManualPresetSkip = useCallback(() => {
     setShowManualPresetDialog(false);
@@ -609,7 +615,8 @@ export function ItemForm() {
       {registeredFormData && (
         <SaveManualPresetDialog
           isOpen={showManualPresetDialog}
-          onClose={handleManualPresetSkip}
+          onDismiss={handleDialogDismiss}
+          onSkip={handleManualPresetSkip}
           onSaved={handleManualPresetSaved}
           residentId={DEMO_RESIDENT_ID}
           userId={DEMO_USER_ID}
