@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E2Eテスト一覧 - 施設ケア入力フォーム</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .status-pass { background-color: #dcfce7; color: #166534; }
+        .status-skip { background-color: #fef9c3; color: #854d0e; }
+        .status-fail { background-color: #fee2e2; color: #991b1b; }
+        .category-badge { font-size: 0.75rem; padding: 0.125rem 0.5rem; border-radius: 9999px; }
+        .search-highlight { background-color: #fef08a; }
+        tr:hover { background-color: #f8fafc; }
+        .sticky-header { position: sticky; top: 0; z-index: 10; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-6">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold mb-1">E2Eテスト一覧</h1>
+                    <p class="text-blue-200">Playwright テストカタログ</p>
+                </div>
+                <a href="index.html" class="text-blue-200 hover:text-white flex items-center gap-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    トップへ戻る
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Stats Summary -->
+    <div class="bg-white shadow-sm border-b">
+        <div class="container mx-auto px-4 py-4">
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div class="text-center">
+                    <div id="totalCount" class="text-3xl font-bold text-gray-800">0</div>
+                    <div class="text-sm text-gray-500">総テスト数</div>
+                </div>
+                <div class="text-center">
+                    <div id="passCount" class="text-3xl font-bold text-green-600">0</div>
+                    <div class="text-sm text-gray-500">パス</div>
+                </div>
+                <div class="text-center">
+                    <div id="skipCount" class="text-3xl font-bold text-yellow-600">0</div>
+                    <div class="text-sm text-gray-500">スキップ</div>
+                </div>
+                <div class="text-center">
+                    <div id="failCount" class="text-3xl font-bold text-red-600">0</div>
+                    <div class="text-sm text-gray-500">失敗</div>
+                </div>
+                <div class="text-center">
+                    <div id="categoryCount" class="text-3xl font-bold text-blue-600">0</div>
+                    <div class="text-sm text-gray-500">カテゴリ</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white shadow-sm border-b sticky top-0 z-20">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex flex-wrap gap-3 items-center">
+                <!-- Search -->
+                <div class="flex-1 min-w-[200px]">
+                    <input type="text" id="searchInput" placeholder="テストID、説明、ファイル名で検索..."
+                           class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <!-- Status Filter -->
+                <div class="flex gap-2">
+                    <button onclick="filterByStatus('all')" class="filter-btn px-3 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-sm font-medium" data-status="all">
+                        すべて
+                    </button>
+                    <button onclick="filterByStatus('pass')" class="filter-btn px-3 py-2 rounded-lg bg-green-100 hover:bg-green-200 text-green-700 text-sm font-medium" data-status="pass">
+                        パス
+                    </button>
+                    <button onclick="filterByStatus('skip')" class="filter-btn px-3 py-2 rounded-lg bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-sm font-medium" data-status="skip">
+                        スキップ
+                    </button>
+                </div>
+
+                <!-- Category Filter -->
+                <select id="categoryFilter" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="all">全カテゴリ</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Table -->
+    <div class="container mx-auto px-4 py-6">
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 sticky-header">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable('id')">
+                                ID <span class="sort-icon"></span>
+                            </th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable('description')">
+                                説明 <span class="sort-icon"></span>
+                            </th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable('category')">
+                                カテゴリ <span class="sort-icon"></span>
+                            </th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable('status')">
+                                ステータス <span class="sort-icon"></span>
+                            </th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                備考
+                            </th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                ファイル
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="testTableBody" class="divide-y divide-gray-200">
+                        <!-- Dynamic content -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="mt-6 bg-white rounded-xl shadow-sm p-4">
+            <h3 class="font-semibold text-gray-800 mb-3">凡例・スキップ理由</h3>
+            <div class="grid md:grid-cols-2 gap-4 text-sm">
+                <div>
+                    <h4 class="font-medium text-gray-700 mb-2">ステータス</h4>
+                    <ul class="space-y-1">
+                        <li><span class="inline-block w-3 h-3 rounded-full bg-green-500 mr-2"></span>パス: テスト成功</li>
+                        <li><span class="inline-block w-3 h-3 rounded-full bg-yellow-500 mr-2"></span>スキップ: 意図的にスキップ（理由あり）</li>
+                        <li><span class="inline-block w-3 h-3 rounded-full bg-red-500 mr-2"></span>失敗: 修正が必要</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-medium text-gray-700 mb-2">主なスキップ理由</h4>
+                    <ul class="space-y-1 text-gray-600">
+                        <li><strong>Phase 26削除</strong>: 入居者設定機能を削除済み</li>
+                        <li><strong>本番API依存</strong>: 本番環境でのみテスト可能</li>
+                        <li><strong>本番データ必要</strong>: 実際のデータがないとテスト不可</li>
+                        <li><strong>デモデータ依存</strong>: 特定のデモデータ状態が必要</li>
+                        <li><strong>Phase 21非表示</strong>: チャット機能を一時非表示中</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories Summary -->
+        <div class="mt-6 bg-white rounded-xl shadow-sm p-4">
+            <h3 class="font-semibold text-gray-800 mb-3">カテゴリ別サマリー</h3>
+            <div id="categorySummary" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                <!-- Dynamic content -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6 mt-8">
+        <div class="container mx-auto px-4 text-center text-sm">
+            <p>最終更新: <span id="lastUpdate">2025-12-23</span> | Phase 41完了</p>
+            <p class="mt-1 text-gray-400">
+                <a href="index.html" class="hover:text-white">プロジェクト概要</a> |
+                <a href="architecture.html" class="hover:text-white">アーキテクチャ</a> |
+                <a href="https://github.com/yasushihonda-acg/facility-care-input-form" class="hover:text-white">GitHub</a>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+    // テストデータ（E2Eテストファイルから抽出）
+    const testData = [
+        // chat-integration.spec.ts (Phase 21で非表示中)
+        { id: "CHAT-001", description: "家族用チャット一覧にアクセスできる", category: "チャット", status: "skip", note: "Phase 21で非表示中", file: "chat-integration.spec.ts" },
+        { id: "CHAT-002", description: "スタッフ用チャット一覧にアクセスできる", category: "チャット", status: "skip", note: "Phase 21で非表示中", file: "chat-integration.spec.ts" },
+        { id: "CHAT-003", description: "フッターにチャットタブがある（家族）", category: "チャット", status: "skip", note: "Phase 21で非表示中", file: "chat-integration.spec.ts" },
+        { id: "CHAT-004", description: "フッターにチャットタブがある（スタッフ）", category: "チャット", status: "skip", note: "Phase 21で非表示中", file: "chat-integration.spec.ts" },
+        { id: "CHAT-005", description: "フッターからチャット一覧へ遷移できる（家族）", category: "チャット", status: "skip", note: "Phase 21で非表示中", file: "chat-integration.spec.ts" },
+        { id: "CHAT-006", description: "フッターからチャット一覧へ遷移できる（スタッフ）", category: "チャット", status: "skip", note: "Phase 21で非表示中", file: "chat-integration.spec.ts" },
+        { id: "CHAT-007", description: "家族品物詳細にチャットリンクがある", category: "チャット", status: "skip", note: "Phase 21で非表示中", file: "chat-integration.spec.ts" },
+        { id: "CHAT-008", description: "チャット一覧で空の状態メッセージが表示される", category: "チャット", status: "skip", note: "Phase 21で非表示中", file: "chat-integration.spec.ts" },
+
+        // column-resize.spec.ts
+        { id: "VIEW-RESIZE-001", description: "リサイズハンドルが表示される", category: "記録閲覧", status: "pass", note: "", file: "column-resize.spec.ts" },
+        { id: "VIEW-RESIZE-002", description: "リサイズハンドルにホバーで青色表示", category: "記録閲覧", status: "pass", note: "", file: "column-resize.spec.ts" },
+        { id: "VIEW-RESIZE-003", description: "ドラッグでカラム幅が変更される", category: "記録閲覧", status: "pass", note: "", file: "column-resize.spec.ts" },
+        { id: "VIEW-RESIZE-004", description: "ダブルクリックでデフォルト幅にリセット", category: "記録閲覧", status: "pass", note: "", file: "column-resize.spec.ts" },
+        { id: "VIEW-RESIZE-005", description: "最小幅以下には縮小されない", category: "記録閲覧", status: "pass", note: "", file: "column-resize.spec.ts" },
+        { id: "VIEW-RESIZE-006", description: "日時カラムのデフォルト幅が165px", category: "記録閲覧", status: "pass", note: "", file: "column-resize.spec.ts" },
+        { id: "VIEW-RESIZE-007", description: "col-resizeカーソルが表示される", category: "記録閲覧", status: "pass", note: "", file: "column-resize.spec.ts" },
+
+        // demo-page.spec.ts
+        { id: "DEMO-001", description: "デモホームにアクセスできる", category: "デモ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-002", description: "デモモード説明が表示される", category: "デモ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-003", description: "機能カードが5つ表示される", category: "デモ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-004", description: "本番モードへのリンクがある", category: "デモ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-005", description: "ショーケースへのリンクがある", category: "デモ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-010", description: "ショーケースページにアクセスできる", category: "デモ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-011", description: "ステップ表示がある", category: "デモ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-012", description: "次へボタンで進める", category: "デモ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-013", description: "前へボタンで戻れる", category: "デモ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-014", description: "プログレスバーが表示される", category: "デモ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-015", description: "この機能を見るボタンがある", category: "デモ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-016", description: "全ステップ一覧が折りたたみで表示できる", category: "デモ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-017", description: "ストーリーが表示される", category: "デモ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-021", description: "デモ家族ホームにアクセスできる", category: "デモ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-022", description: "デモ統計にアクセスできる", category: "デモ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-023", description: "デモ品物一覧にアクセスできる", category: "デモ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-024", description: "デモタスク一覧にアクセスできる", category: "デモ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-025", description: "デモプリセット管理にアクセスできる", category: "デモ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-026", description: "デモ入居者設定にアクセスできる", category: "デモ", status: "skip", note: "Phase 26: 入居者設定削除", file: "demo-page.spec.ts" },
+        { id: "DEMO-030", description: "品物一覧にサンプルデータが表示される", category: "デモ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-031", description: "統計ダッシュボードにタブがある", category: "デモ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-032", description: "タスク一覧にフィルタタブが表示される", category: "デモ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-040", description: "デモホームから品物管理に遷移できる", category: "デモ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-041", description: "デモホームから統計に遷移できる", category: "デモ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-042", description: "デモホームからショーケースに遷移できる", category: "デモ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-043", description: "デモホームから本番に遷移できる", category: "デモ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-044", description: "ショーケースからデモホームに戻れる", category: "デモ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-NAV-001", description: "デモ家族ホームのフッターナビはすべてデモページ内を指す", category: "デモナビ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-NAV-002", description: "デモ家族ホームからフッター「品物管理」クリック→デモページ内に留まる", category: "デモナビ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-NAV-003", description: "デモ家族ホームからフッター「記録閲覧」クリック→デモページ内に留まる", category: "デモナビ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-NAV-004", description: "デモ家族ホームからフッター「統計」クリック→デモページ内に留まる", category: "デモナビ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-NAV-005", description: "デモ品物一覧で新規登録→デモページ内に留まる", category: "デモナビ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-NAV-006", description: "デモタスク一覧のフッターからホームに戻る→デモページ内に留まる", category: "デモナビ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-NAV-007", description: "デモ統計画面から戻ってもデモ内に留まる", category: "デモナビ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-TOUR-001", description: "/demo/familyでツアーボタンがヘッダーに表示される", category: "デモツアー", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-TOUR-002", description: "/demo/statsでツアーボタンがヘッダーに表示される", category: "デモツアー", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-TOUR-003", description: "/demo/showcaseではツアーボタン非表示", category: "デモツアー", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-TOUR-004", description: "ツアーボタンクリックで/demo/showcaseに遷移", category: "デモツアー", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-TOUR-005", description: "本番ページ(/family)ではツアーボタン非表示", category: "デモツアー", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-TOUR-006", description: "/demo でもツアーボタンが表示される", category: "デモツアー", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-TOUR-007", description: "スクロールしてもツアーボタンは常に見える", category: "デモツアー", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-RESP-001", description: "モバイル幅でデモホームが正しく表示される", category: "レスポンシブ", status: "pass", note: "", file: "demo-page.spec.ts" },
+        { id: "DEMO-RESP-002", description: "モバイル幅でショーケースが正しく表示される", category: "レスポンシブ", status: "pass", note: "", file: "demo-page.spec.ts" },
+
+        // demo-staff-containment.spec.ts
+        { id: "DSC-001", description: "記録入力ページの戻るボタンがデモ環境内に留まる", category: "スタッフデモ", status: "pass", note: "", file: "demo-staff-containment.spec.ts" },
+        { id: "DSC-002", description: "記録入力からフッターで記録閲覧に遷移してもデモ内", category: "スタッフデモ", status: "pass", note: "", file: "demo-staff-containment.spec.ts" },
+        { id: "DSC-010", description: "フッターの統計タブがデモ環境内に遷移", category: "スタッフデモ", status: "pass", note: "", file: "demo-staff-containment.spec.ts" },
+        { id: "DSC-011", description: "記録入力ページからも統計タブがデモ内遷移", category: "スタッフデモ", status: "pass", note: "", file: "demo-staff-containment.spec.ts" },
+        { id: "DSC-020", description: "タイムラインからの戻りリンクがデモ内", category: "スタッフデモ", status: "pass", note: "", file: "demo-staff-containment.spec.ts" },
+        { id: "DSC-021", description: "タイムラインのアクションボタンがデモ内", category: "スタッフデモ", status: "pass", note: "", file: "demo-staff-containment.spec.ts" },
+        { id: "DSC-030", description: "各ページからの全リンクがデモ内（複数パターン）", category: "スタッフデモ", status: "pass", note: "input/meal, view, statsの3パターン", file: "demo-staff-containment.spec.ts" },
+        { id: "DSC-040", description: "全フッタータブがデモ内遷移", category: "スタッフデモ", status: "pass", note: "", file: "demo-staff-containment.spec.ts" },
+        { id: "DSC-050", description: "ブラウザバックでデモ内に留まる", category: "スタッフデモ", status: "pass", note: "", file: "demo-staff-containment.spec.ts" },
+
+        // demo-staff.spec.ts
+        { id: "STAFF-001", description: "スタッフ用デモホームが表示される", category: "スタッフデモ", status: "pass", note: "", file: "demo-staff.spec.ts" },
+        { id: "STAFF-002", description: "4つの機能カードが表示される", category: "スタッフデモ", status: "pass", note: "", file: "demo-staff.spec.ts" },
+        { id: "STAFF-003", description: "ガイドツアーボタンが表示される", category: "スタッフデモ", status: "pass", note: "", file: "demo-staff.spec.ts" },
+        { id: "STAFF-010", description: "注意事項カードをクリック→一覧ページへ遷移", category: "スタッフデモ", status: "pass", note: "", file: "demo-staff.spec.ts" },
+        { id: "STAFF-011", description: "食事記録カードをクリック→入力ページへ遷移", category: "スタッフデモ", status: "pass", note: "", file: "demo-staff.spec.ts" },
+        { id: "STAFF-012", description: "統計カードをクリック→統計ページへ遷移", category: "スタッフデモ", status: "pass", note: "", file: "demo-staff.spec.ts" },
+        { id: "STAFF-013", description: "記録閲覧カードをクリック→閲覧ページへ遷移", category: "スタッフデモ", status: "pass", note: "", file: "demo-staff.spec.ts" },
+        { id: "STAFF-020", description: "ショーケースページが表示される", category: "スタッフデモ", status: "pass", note: "", file: "demo-staff.spec.ts" },
+        { id: "STAFF-021", description: "4つのステップが表示される", category: "スタッフデモ", status: "pass", note: "", file: "demo-staff.spec.ts" },
+        { id: "STAFF-022", description: "Step 1クリック→注意事項ページへ遷移", category: "スタッフデモ", status: "pass", note: "", file: "demo-staff.spec.ts" },
+        { id: "STAFF-030", description: "注意事項一覧にスタッフノートが表示される", category: "スタッフデモ", status: "pass", note: "", file: "demo-staff.spec.ts" },
+        { id: "STAFF-031", description: "注意事項ページにタブが表示される", category: "スタッフデモ", status: "pass", note: "", file: "demo-staff.spec.ts" },
+        { id: "STAFF-032", description: "注意事項に優先度バッジが表示される", category: "スタッフデモ", status: "pass", note: "", file: "demo-staff.spec.ts" },
+        { id: "STAFF-040", description: "/demo/staff/*でスタッフフッターが表示される", category: "スタッフデモ", status: "pass", note: "", file: "demo-staff.spec.ts" },
+        { id: "STAFF-041", description: "フッターからデモページ内へ正しく遷移", category: "スタッフデモ", status: "pass", note: "", file: "demo-staff.spec.ts" },
+        { id: "STAFF-050", description: "ツアーTOPに戻るボタンが表示される", category: "スタッフデモ", status: "pass", note: "", file: "demo-staff.spec.ts" },
+        { id: "STAFF-051", description: "ボタンクリック→ショーケースへ遷移", category: "スタッフデモ", status: "pass", note: "", file: "demo-staff.spec.ts" },
+
+        // demo-stats-ai.spec.ts
+        { id: "DEMO-STATS-AI-001", description: "AI分析パネルが表示される", category: "統計AI", status: "pass", note: "", file: "demo-stats-ai.spec.ts" },
+        { id: "DEMO-STATS-AI-002", description: "分析開始ボタンが表示される", category: "統計AI", status: "pass", note: "", file: "demo-stats-ai.spec.ts" },
+        { id: "DEMO-STATS-AI-003", description: "分析実行で結果が表示される", category: "統計AI", status: "pass", note: "", file: "demo-stats-ai.spec.ts" },
+        { id: "DEMO-STATS-AI-004", description: "発見事項が表示される", category: "統計AI", status: "pass", note: "", file: "demo-stats-ai.spec.ts" },
+        { id: "DEMO-STATS-AI-005", description: "注意傾向が表示される", category: "統計AI", status: "pass", note: "", file: "demo-stats-ai.spec.ts" },
+        { id: "DEMO-STATS-AI-006", description: "改善提案が表示される", category: "統計AI", status: "pass", note: "", file: "demo-stats-ai.spec.ts" },
+        { id: "DEMO-STATS-AI-007", description: "分析後に再分析ボタンが表示される", category: "統計AI", status: "pass", note: "", file: "demo-stats-ai.spec.ts" },
+        { id: "DEMO-STATS-AI-008", description: "デモモードでAPIエラーが発生しない", category: "統計AI", status: "pass", note: "", file: "demo-stats-ai.spec.ts" },
+        { id: "DEMO-STATS-AI-009", description: "メトリクスが正しく表示される", category: "統計AI", status: "pass", note: "", file: "demo-stats-ai.spec.ts" },
+
+        // family-notify.spec.ts
+        { id: "SETTINGS-030-001", description: "設定モーダルに監視通知Webhook URL欄が表示される", category: "設定", status: "pass", note: "", file: "family-notify.spec.ts" },
+        { id: "SETTINGS-030-002", description: "監視通知Webhook URLの保存と復元", category: "設定", status: "skip", note: "本番API依存", file: "family-notify.spec.ts" },
+        { id: "SETTINGS-030-003", description: "空のURLでテスト送信するとエラー表示", category: "設定", status: "pass", note: "", file: "family-notify.spec.ts" },
+        { id: "SETTINGS-030-004", description: "不正なURLプレフィックスでテスト送信するとエラー表示", category: "設定", status: "pass", note: "", file: "family-notify.spec.ts" },
+        { id: "SETTINGS-030-005", description: "説明文が正しく表示される", category: "設定", status: "pass", note: "", file: "family-notify.spec.ts" },
+        { id: "SETTINGS-030-006", description: "キャンセル時に入力値がリセットされる", category: "設定", status: "pass", note: "", file: "family-notify.spec.ts" },
+        { id: "SETTINGS-030-007", description: "クリア操作でfamilyNotifyWebhookUrlもクリアされる", category: "設定", status: "skip", note: "本番API依存", file: "family-notify.spec.ts" },
+
+        // family-page.spec.ts
+        { id: "家族ホーム", description: "家族ホーム（/family）にアクセスできる", category: "家族", status: "pass", note: "", file: "family-page.spec.ts" },
+        { id: "フッター4タブ", description: "フッターナビゲーションが4タブで正しく表示される", category: "家族", status: "pass", note: "", file: "family-page.spec.ts" },
+        { id: "品物管理遷移", description: "品物管理ページに遷移できる", category: "家族", status: "pass", note: "", file: "family-page.spec.ts" },
+        { id: "タスク管理遷移", description: "ホームからタスク管理に遷移できる", category: "家族", status: "pass", note: "", file: "family-page.spec.ts" },
+        { id: "日付セレクター", description: "日付セレクターが表示され機能する", category: "家族", status: "pass", note: "", file: "family-page.spec.ts" },
+        { id: "タイムライン順序", description: "タイムラインが食事時間順に表示される", category: "家族", status: "pass", note: "", file: "family-page.spec.ts" },
+        { id: "品物一覧表示", description: "品物一覧ページが表示される", category: "家族", status: "pass", note: "", file: "family-page.spec.ts" },
+        { id: "品物登録遷移", description: "品物登録フォームに遷移できる", category: "家族", status: "pass", note: "", file: "family-page.spec.ts" },
+        { id: "登録フォーム項目", description: "品物登録フォームに必要な項目がある", category: "家族", status: "pass", note: "", file: "family-page.spec.ts" },
+        { id: "プリセット管理", description: "プリセット管理ページにアクセスできる", category: "家族", status: "pass", note: "", file: "family-page.spec.ts" },
+        { id: "タスク一覧", description: "タスク一覧ページにアクセスできる", category: "家族", status: "pass", note: "", file: "family-page.spec.ts" },
+        { id: "記録閲覧フッター維持", description: "記録閲覧ページに遷移しても家族用フッターが維持される", category: "家族", status: "pass", note: "", file: "family-page.spec.ts" },
+        { id: "統計フッター維持", description: "統計ページに遷移しても家族用フッターが維持される", category: "家族", status: "pass", note: "", file: "family-page.spec.ts" },
+        { id: "新規登録戻る", description: "品物管理 → 新規登録 → 戻るで品物一覧に戻る", category: "家族", status: "pass", note: "", file: "family-page.spec.ts" },
+        { id: "消費ログ表示", description: "品物詳細ページで消費ログが表示される（デモモード）", category: "家族", status: "pass", note: "", file: "family-page.spec.ts" },
+        { id: "家族指示対応", description: "消費ログに家族指示対応が表示される", category: "家族", status: "pass", note: "", file: "family-page.spec.ts" },
+        { id: "提供者名摂食率", description: "消費ログに提供者名と摂食率が表示される", category: "家族", status: "pass", note: "", file: "family-page.spec.ts" },
+        { id: "フッター4タブ構成", description: "家族用フッターは4タブ構成である", category: "家族", status: "pass", note: "", file: "family-page.spec.ts" },
+        { id: "登録フォームあり", description: "/family/items/new から品物を登録できるフォームがある", category: "家族", status: "pass", note: "", file: "family-page.spec.ts" },
+
+        // family-user-scenario.spec.ts
+        { id: "SCENARIO-D01", description: "品物登録フォームにアクセスできる", category: "シナリオ", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "SCENARIO-D02", description: "品物名を入力するとAI提案ボタンが表示される", category: "シナリオ", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "SCENARIO-D03", description: "プリセットボタンが表示される", category: "シナリオ", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "SCENARIO-D04", description: "デモモードでは登録操作が本番に影響しない", category: "シナリオ", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "SCENARIO-D05", description: "品物一覧にデモデータが表示される", category: "シナリオ", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "SCENARIO-D06", description: "新規登録ボタンが機能する", category: "シナリオ", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "SCENARIO-D07", description: "品物カードまたはリストが表示される", category: "シナリオ", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "SCENARIO-D08", description: "プリセット管理画面にアクセスできる", category: "シナリオ", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "SCENARIO-D09", description: "プリセット管理ページのメインコンテンツが表示される", category: "シナリオ", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "SCENARIO-D10", description: "入居者設定画面にアクセスできる", category: "シナリオ", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "SCENARIO-D11", description: "禁止ルール見出しが表示される", category: "シナリオ", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "SCENARIO-D12", description: "家族ダッシュボードにアクセスできる", category: "シナリオ", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "SCENARIO-D13", description: "日付セレクターが機能する", category: "シナリオ", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "SCENARIO-D14", description: "タイムラインが表示される", category: "シナリオ", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "SCENARIO-D15", description: "統計ダッシュボードにアクセスできる", category: "シナリオ", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "SCENARIO-D16", description: "品物状況タブがある", category: "シナリオ", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "SCENARIO-D17", description: "摂食傾向タブがある", category: "シナリオ", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "SCENARIO-D18", description: "品物別分布が表示される", category: "シナリオ", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "PARITY-01", description: "品物登録フォーム（デモ↔本番）", category: "整合性", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "PARITY-02", description: "品物一覧ページ（デモ↔本番）", category: "整合性", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "PARITY-03", description: "プリセット管理ページ（デモ↔本番）", category: "整合性", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "PARITY-04", description: "入居者設定ページ（デモ↔本番）", category: "整合性", status: "skip", note: "Phase 26: 入居者設定削除", file: "family-user-scenario.spec.ts" },
+        { id: "PARITY-05", description: "家族ダッシュボード（デモ↔本番）", category: "整合性", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "PARITY-06", description: "統計ダッシュボード（デモ↔本番）", category: "整合性", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "FLOW-01", description: "デモツアーを最初から最後まで体験する", category: "フロー", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "FLOW-02", description: "品物登録→一覧確認→統計の流れ", category: "フロー", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "FLOW-03", description: "フッターナビで全ページを巡回（デモモード）", category: "フロー", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "PROD-01", description: "本番家族ホームが正常に表示される", category: "本番", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "PROD-02", description: "本番品物管理が正常に表示される", category: "本番", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "PROD-03", description: "本番品物登録フォームが正常に表示される", category: "本番", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "PROD-04", description: "本番プリセット管理が正常に表示される", category: "本番", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "PROD-05", description: "本番入居者設定が正常に表示される", category: "本番", status: "skip", note: "Phase 26: 入居者設定削除", file: "family-user-scenario.spec.ts" },
+        { id: "PROD-06", description: "本番統計が正常に表示される", category: "本番", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+        { id: "PROD-07", description: "本番フッターナビで全ページ遷移可能", category: "本番", status: "pass", note: "", file: "family-user-scenario.spec.ts" },
+
+        // fifo.spec.ts
+        { id: "FIFO-期限順", description: "デモ品物一覧で期限が近い順に表示される", category: "FIFO", status: "pass", note: "", file: "fifo.spec.ts" },
+        { id: "FIFO-期限切れ先頭", description: "期限切れ品物が先頭に表示される", category: "FIFO", status: "pass", note: "", file: "fifo.spec.ts" },
+        { id: "FIFO-Warning表示", description: "スタッフ食事入力で同一品物が複数ある場合にFIFOWarningが表示される", category: "FIFO", status: "skip", note: "本番データ必要", file: "fifo.spec.ts" },
+        { id: "FIFO-推奨マーク", description: "FIFOWarningに「推奨」マークが表示される", category: "FIFO", status: "skip", note: "本番データ必要", file: "fifo.spec.ts" },
+        { id: "FIFO-りんご", description: "りんご詳細ページで同一品物アラートが表示される", category: "FIFO", status: "pass", note: "", file: "fifo.spec.ts" },
+        { id: "FIFO-バナナ", description: "バナナ詳細ページで同一品物アラートが表示される", category: "FIFO", status: "pass", note: "", file: "fifo.spec.ts" },
+        { id: "FIFO-重複なし", description: "重複のない品物の詳細ページではSameItemAlertが表示されない", category: "FIFO", status: "pass", note: "", file: "fifo.spec.ts" },
+        { id: "FIFO-先消費", description: "SameItemAlertに「先に消費推奨」マークが表示される", category: "FIFO", status: "pass", note: "", file: "fifo.spec.ts" },
+        { id: "FIFO-期限なし末尾", description: "期限なし品物は末尾に配置される", category: "FIFO", status: "pass", note: "", file: "fifo.spec.ts" },
+        { id: "FIFO-ソート確認", description: "FIFOソートでデモデータが正しくソートされている", category: "FIFO", status: "pass", note: "", file: "fifo.spec.ts" },
+
+        // filter-state-persistence.spec.ts
+        { id: "FILTER-001", description: "URLパラメータでフィルター状態が復元される", category: "フィルター", status: "pass", note: "", file: "filter-state-persistence.spec.ts" },
+        { id: "FILTER-002", description: "期間変更でURLが更新される", category: "フィルター", status: "pass", note: "", file: "filter-state-persistence.spec.ts" },
+        { id: "FILTER-003", description: "トグル変更でURLが更新される", category: "フィルター", status: "pass", note: "", file: "filter-state-persistence.spec.ts" },
+        { id: "FILTER-004", description: "詳細展開でURLが更新される", category: "フィルター", status: "pass", note: "", file: "filter-state-persistence.spec.ts" },
+        { id: "FILTER-005", description: "新規登録画面から戻るとフィルター状態が維持される", category: "フィルター", status: "skip", note: "実装調整中", file: "filter-state-persistence.spec.ts" },
+
+        // footer-nav-demo.spec.ts
+        { id: "FND-001", description: "/demo/staff should not have 500 errors", category: "フッター", status: "pass", note: "", file: "footer-nav-demo.spec.ts" },
+        { id: "FND-002", description: "/demo/family should not have 500 errors", category: "フッター", status: "pass", note: "", file: "footer-nav-demo.spec.ts" },
+        { id: "FND-003", description: "/demo/view should not have 500 errors", category: "フッター", status: "pass", note: "", file: "footer-nav-demo.spec.ts" },
+        { id: "FND-010", description: "/demo/staff should display footer navigation", category: "フッター", status: "pass", note: "", file: "footer-nav-demo.spec.ts" },
+        { id: "FND-011", description: "/demo/family should display footer navigation", category: "フッター", status: "pass", note: "", file: "footer-nav-demo.spec.ts" },
+        { id: "FND-012", description: "Demo mode should not call getActiveChatItems API", category: "フッター", status: "pass", note: "", file: "footer-nav-demo.spec.ts" },
+        { id: "FND-013", description: "Demo family mode should not call getActiveChatItems API", category: "フッター", status: "pass", note: "", file: "footer-nav-demo.spec.ts" },
+        { id: "FND-020", description: "Demo staff footer navigation stays in demo", category: "フッター", status: "pass", note: "", file: "footer-nav-demo.spec.ts" },
+        { id: "FND-021", description: "Demo family footer navigation stays in demo", category: "フッター", status: "pass", note: "", file: "footer-nav-demo.spec.ts" },
+
+        // fulltext-search.spec.ts
+        { id: "VIEW-SEARCH-001", description: "検索ボタンをクリックで検索バーが開く", category: "検索", status: "pass", note: "", file: "fulltext-search.spec.ts" },
+        { id: "VIEW-SEARCH-002", description: "スタッフ名で検索できる", category: "検索", status: "pass", note: "", file: "fulltext-search.spec.ts" },
+        { id: "VIEW-SEARCH-003", description: "日付で検索できる", category: "検索", status: "pass", note: "", file: "fulltext-search.spec.ts" },
+        { id: "VIEW-SEARCH-004", description: "特記事項の内容で検索できる（特記事項タブ）", category: "検索", status: "pass", note: "", file: "fulltext-search.spec.ts" },
+        { id: "VIEW-SEARCH-005", description: "時間帯で検索できる（食事タブ）", category: "検索", status: "pass", note: "", file: "fulltext-search.spec.ts" },
+        { id: "VIEW-SEARCH-006", description: "検索結果が0件の場合メッセージが表示される", category: "検索", status: "pass", note: "", file: "fulltext-search.spec.ts" },
+        { id: "VIEW-SEARCH-007", description: "検索クリアで全件表示に戻る", category: "検索", status: "pass", note: "", file: "fulltext-search.spec.ts" },
+
+        // item-based-snack-record.spec.ts
+        { id: "SNACK-TAB-1", description: "タブが2つ表示される（食事、品物から記録）", category: "品物記録", status: "pass", note: "", file: "item-based-snack-record.spec.ts" },
+        { id: "SNACK-TAB-2", description: "初期状態は「食事」タブがアクティブ", category: "品物記録", status: "pass", note: "", file: "item-based-snack-record.spec.ts" },
+        { id: "SNACK-TAB-3", description: "「品物から記録」タブをクリックすると切り替わる", category: "品物記録", status: "pass", note: "", file: "item-based-snack-record.spec.ts" },
+        { id: "SNACK-TAB-4", description: "タブ切替で表示内容が変わる", category: "品物記録", status: "pass", note: "", file: "item-based-snack-record.spec.ts" },
+        { id: "SNACK-TAB-5", description: "品物から記録タブで品物リストが表示される", category: "品物記録", status: "pass", note: "", file: "item-based-snack-record.spec.ts" },
+        { id: "SNACK-TAB-6", description: "デモモードでは品物が表示される", category: "品物記録", status: "pass", note: "", file: "item-based-snack-record.spec.ts" },
+        { id: "SNACK-TAB-7", description: "品物カードに必要な情報が表示される", category: "品物記録", status: "pass", note: "", file: "item-based-snack-record.spec.ts" },
+        { id: "SNACK-TAB-8", description: "「提供記録」ボタンでモーダルが開く", category: "品物記録", status: "pass", note: "", file: "item-based-snack-record.spec.ts" },
+        { id: "SNACK-TAB-9", description: "モーダルに必要なフォーム要素がある", category: "品物記録", status: "pass", note: "", file: "item-based-snack-record.spec.ts" },
+        { id: "SNACK-TAB-10", description: "摂食状況の選択肢が表示される", category: "品物記録", status: "pass", note: "", file: "item-based-snack-record.spec.ts" },
+        { id: "SNACK-TAB-11", description: "キャンセルボタンでモーダルが閉じる", category: "品物記録", status: "pass", note: "", file: "item-based-snack-record.spec.ts" },
+        { id: "SNACK-TAB-12", description: "記録保存ボタンが機能する", category: "品物記録", status: "pass", note: "", file: "item-based-snack-record.spec.ts" },
+        { id: "SNACK-TAB-13", description: "Sheet B連携のメッセージが表示される", category: "品物記録", status: "pass", note: "", file: "item-based-snack-record.spec.ts" },
+
+        // item-edit.spec.ts
+        { id: "ITEM-EDIT-001", description: "編集ボタンが品物詳細に表示される", category: "品物編集", status: "pass", note: "", file: "item-edit.spec.ts" },
+        { id: "ITEM-EDIT-002", description: "編集ページに遷移できる", category: "品物編集", status: "pass", note: "", file: "item-edit.spec.ts" },
+        { id: "ITEM-EDIT-003", description: "既存の値がフォームに入力されている", category: "品物編集", status: "pass", note: "", file: "item-edit.spec.ts" },
+        { id: "ITEM-EDIT-004", description: "品物名を変更して保存できる（デモモード）", category: "品物編集", status: "pass", note: "", file: "item-edit.spec.ts" },
+        { id: "ITEM-EDIT-005", description: "送付日は編集不可", category: "品物編集", status: "pass", note: "", file: "item-edit.spec.ts" },
+        { id: "ITEM-EDIT-006", description: "キャンセルで元の詳細ページに戻る", category: "品物編集", status: "pass", note: "", file: "item-edit.spec.ts" },
+        { id: "ITEM-EDIT-007", description: "デモモードで編集UIが正常に動作する", category: "品物編集", status: "pass", note: "", file: "item-edit.spec.ts" },
+        { id: "ITEM-EDIT-P01", description: "本番品物詳細で編集ボタンが表示される", category: "品物編集", status: "pass", note: "", file: "item-edit.spec.ts" },
+        { id: "ITEM-EDIT-P02", description: "本番編集ページが正常にロードされる", category: "品物編集", status: "pass", note: "", file: "item-edit.spec.ts" },
+        { id: "ITEM-TS-001", description: "登録日時が品物詳細に表示される", category: "タイムスタンプ", status: "pass", note: "", file: "item-edit.spec.ts" },
+        { id: "ITEM-TS-002", description: "更新日時が表示される（更新がある場合）", category: "タイムスタンプ", status: "pass", note: "", file: "item-edit.spec.ts" },
+        { id: "ITEM-TS-003", description: "タイムスタンプが人間可読形式で表示される", category: "タイムスタンプ", status: "pass", note: "", file: "item-edit.spec.ts" },
+        { id: "ITEM-TL-001", description: "タイムラインセクションが品物詳細に表示される", category: "タイムライン", status: "pass", note: "", file: "item-edit.spec.ts" },
+        { id: "ITEM-TL-002", description: "登録イベント（📦）がタイムラインに表示される", category: "タイムライン", status: "pass", note: "", file: "item-edit.spec.ts" },
+        { id: "ITEM-TL-003", description: "編集イベント（✏️）がタイムラインに表示される", category: "タイムライン", status: "pass", note: "", file: "item-edit.spec.ts" },
+        { id: "ITEM-TL-003a", description: "編集イベントに変更内容が表示される", category: "タイムライン", status: "pass", note: "", file: "item-edit.spec.ts" },
+        { id: "ITEM-TL-003b", description: "編集イベントに実行者が表示される", category: "タイムライン", status: "pass", note: "", file: "item-edit.spec.ts" },
+        { id: "ITEM-TL-004", description: "提供・消費イベントがタイムラインに表示される", category: "タイムライン", status: "pass", note: "", file: "item-edit.spec.ts" },
+        { id: "ITEM-TL-005", description: "タイムラインが時系列順（新しい順）に表示される", category: "タイムライン", status: "pass", note: "", file: "item-edit.spec.ts" },
+        { id: "ITEM-TL-006", description: "イベントにタイムスタンプが表示される", category: "タイムライン", status: "pass", note: "", file: "item-edit.spec.ts" },
+        { id: "ITEM-TL-007", description: "デモモードでイベントタイムラインが正常に動作する", category: "タイムライン", status: "pass", note: "", file: "item-edit.spec.ts" },
+        { id: "FLOW-EDIT-01", description: "品物一覧→詳細→編集→保存→詳細のフロー", category: "フロー", status: "pass", note: "", file: "item-edit.spec.ts" },
+        { id: "FLOW-EDIT-02", description: "編集キャンセルフロー", category: "フロー", status: "pass", note: "", file: "item-edit.spec.ts" },
+
+        // photo-evidence.spec.ts
+        { id: "PHOTO-001", description: "エビデンス画面で写真が表示される", category: "写真", status: "pass", note: "", file: "photo-evidence.spec.ts" },
+        { id: "PHOTO-002", description: "写真がない場合はプレースホルダが表示される", category: "写真", status: "pass", note: "", file: "photo-evidence.spec.ts" },
+        { id: "PHOTO-003", description: "家族ダッシュボードから写真を見るリンクが機能する", category: "写真", status: "pass", note: "", file: "photo-evidence.spec.ts" },
+        { id: "PHOTO-010", description: "記録入力画面に写真アップロードUIがある", category: "写真", status: "pass", note: "", file: "photo-evidence.spec.ts" },
+        { id: "PHOTO-011", description: "写真を選択できる", category: "写真", status: "pass", note: "", file: "photo-evidence.spec.ts" },
+        { id: "PHOTO-020", description: "本番環境でエビデンス画面に写真が表示される", category: "写真", status: "skip", note: "本番データ必要", file: "photo-evidence.spec.ts" },
+
+        // preset-navigation.spec.ts
+        { id: "PRESET-NAV-001", description: "品物管理ページにいつもの指示リンクが表示される", category: "プリセット", status: "pass", note: "", file: "preset-navigation.spec.ts" },
+        { id: "PRESET-NAV-002", description: "リンククリックでプリセット管理ページに遷移", category: "プリセット", status: "pass", note: "", file: "preset-navigation.spec.ts" },
+        { id: "PRESET-NAV-003", description: "デモモードでプリセット管理ページが正常に動作", category: "プリセット", status: "pass", note: "", file: "preset-navigation.spec.ts" },
+        { id: "PRESET-NAV-004", description: "本番モードでもリンクが正しく機能", category: "プリセット", status: "pass", note: "", file: "preset-navigation.spec.ts" },
+        { id: "PRESET-NAV-005", description: "レスポンシブ表示（モバイル幅）", category: "プリセット", status: "pass", note: "", file: "preset-navigation.spec.ts" },
+
+        // record-chat-integration.spec.ts (Phase 21で非表示中)
+        { id: "RECORD-CHAT-001", description: "チャットスレッドに記録カードが表示される", category: "記録チャット", status: "skip", note: "Phase 21で非表示中", file: "record-chat-integration.spec.ts" },
+        { id: "RECORD-CHAT-002", description: "記録カードに品物名・提供数・摂食状況が表示される", category: "記録チャット", status: "skip", note: "Phase 21で非表示中", file: "record-chat-integration.spec.ts" },
+        { id: "RECORD-CHAT-003", description: "家族ホームに通知セクションが表示される", category: "記録チャット", status: "skip", note: "Phase 21で非表示中", file: "record-chat-integration.spec.ts" },
+        { id: "RECORD-CHAT-004", description: "スタッフホームに通知セクションが表示される", category: "記録チャット", status: "skip", note: "Phase 21で非表示中", file: "record-chat-integration.spec.ts" },
+        { id: "RECORD-CHAT-005", description: "通知をクリックするとチャットに遷移できる", category: "記録チャット", status: "skip", note: "Phase 21で非表示中", file: "record-chat-integration.spec.ts" },
+        { id: "RECORD-CHAT-006", description: "記録カードは中央配置で表示される", category: "記録チャット", status: "skip", note: "Phase 21で非表示中", file: "record-chat-integration.spec.ts" },
+        { id: "RECORD-CHAT-007", description: "通常メッセージと記録カードが区別できる", category: "記録チャット", status: "skip", note: "Phase 21で非表示中", file: "record-chat-integration.spec.ts" },
+        { id: "RECORD-CHAT-008", description: "デモモードでは記録カードがモックデータで表示される", category: "記録チャット", status: "skip", note: "Phase 21で非表示中", file: "record-chat-integration.spec.ts" },
+
+        // remaining-handling-instruction.spec.ts
+        { id: "RHI-001", description: "品物登録時に「破棄してください」指示を設定できる", category: "残り処置", status: "pass", note: "", file: "remaining-handling-instruction.spec.ts" },
+        { id: "RHI-002", description: "品物登録時に「保存してください」指示を設定できる", category: "残り処置", status: "pass", note: "", file: "remaining-handling-instruction.spec.ts" },
+        { id: "RHI-003", description: "品物登録時に「指定なし」がデフォルト選択されている", category: "残り処置", status: "pass", note: "", file: "remaining-handling-instruction.spec.ts" },
+        { id: "RHI-004", description: "注意書きが表示されている", category: "残り処置", status: "pass", note: "", file: "remaining-handling-instruction.spec.ts" },
+        { id: "RHI-005", description: "品物編集ページで処置指示セクションが表示される", category: "残り処置", status: "skip", note: "デモデータ依存", file: "remaining-handling-instruction.spec.ts" },
+        { id: "RHI-006", description: "品物編集で指示を変更できる", category: "残り処置", status: "skip", note: "デモデータ依存", file: "remaining-handling-instruction.spec.ts" },
+        { id: "RHI-007", description: "スタッフ記録ダイアログで残り対応選択肢が表示される", category: "残り処置", status: "pass", note: "", file: "remaining-handling-instruction.spec.ts" },
+        { id: "RHI-008", description: "家族指示がある場合、指示バナーが表示される", category: "残り処置", status: "pass", note: "", file: "remaining-handling-instruction.spec.ts" },
+        { id: "RHI-009", description: "家族指示がある場合、他の選択肢が非活性化される", category: "残り処置", status: "pass", note: "", file: "remaining-handling-instruction.spec.ts" },
+        { id: "RHI-010", description: "型定義とUIが一致していることを確認（回帰テスト）", category: "残り処置", status: "pass", note: "", file: "remaining-handling-instruction.spec.ts" },
+
+        // role-theme-colors.spec.ts
+        { id: "ROLE-001", description: "/staff/input/meal でスタッフカラー（Green）が適用される", category: "テーマ", status: "pass", note: "", file: "role-theme-colors.spec.ts" },
+        { id: "ROLE-002", description: "/staff/input/meal でスタッフ用フッターが表示される", category: "テーマ", status: "pass", note: "", file: "role-theme-colors.spec.ts" },
+        { id: "ROLE-003", description: "/staff/input/meal のアクティブタブがGreenである", category: "テーマ", status: "pass", note: "", file: "role-theme-colors.spec.ts" },
+        { id: "ROLE-010", description: "/family で家族カラー（Orange）が適用される", category: "テーマ", status: "pass", note: "", file: "role-theme-colors.spec.ts" },
+        { id: "ROLE-011", description: "/family で家族用フッターが表示される", category: "テーマ", status: "pass", note: "", file: "role-theme-colors.spec.ts" },
+        { id: "ROLE-012", description: "/family のアクティブタブがOrangeである", category: "テーマ", status: "pass", note: "", file: "role-theme-colors.spec.ts" },
+        { id: "ROLE-013", description: "/family/items でも家族カラーが維持される", category: "テーマ", status: "pass", note: "", file: "role-theme-colors.spec.ts" },
+        { id: "ROLE-030", description: "/demo/family で家族カラー（Orange）が適用される", category: "テーマ", status: "pass", note: "", file: "role-theme-colors.spec.ts" },
+        { id: "ROLE-031", description: "/demo/family で家族用フッターが表示される", category: "テーマ", status: "pass", note: "", file: "role-theme-colors.spec.ts" },
+        { id: "ROLE-032", description: "/demo/family のアクティブタブがOrangeである", category: "テーマ", status: "pass", note: "", file: "role-theme-colors.spec.ts" },
+        { id: "ROLE-033", description: "/demo/family/items でも家族カラーが維持される", category: "テーマ", status: "pass", note: "", file: "role-theme-colors.spec.ts" },
+        { id: "ROLE-040", description: "/demo/staff でスタッフカラー（Green）が適用される", category: "テーマ", status: "pass", note: "", file: "role-theme-colors.spec.ts" },
+        { id: "ROLE-041", description: "/demo/staff でスタッフ用フッターが表示される", category: "テーマ", status: "pass", note: "", file: "role-theme-colors.spec.ts" },
+        { id: "ROLE-042", description: "/demo/staff/input/meal のアクティブタブがGreenである", category: "テーマ", status: "pass", note: "", file: "role-theme-colors.spec.ts" },
+        { id: "ROLE-050", description: "/family → /view で家族カラーが維持される", category: "テーマ", status: "pass", note: "", file: "role-theme-colors.spec.ts" },
+        { id: "ROLE-051", description: "/staff/input/meal → /view でスタッフカラーが維持される", category: "テーマ", status: "pass", note: "", file: "role-theme-colors.spec.ts" },
+        { id: "ROLE-052", description: "/demo/family → /demo/view で家族カラーが維持される", category: "テーマ", status: "pass", note: "", file: "role-theme-colors.spec.ts" },
+        { id: "ROLE-053", description: "/demo/staff → /demo/view でスタッフカラーが維持される", category: "テーマ", status: "pass", note: "", file: "role-theme-colors.spec.ts" },
+
+        // schedule-display.spec.ts
+        { id: "SCHED-020", description: "タイムスロットが表示される（おやつ時）", category: "スケジュール", status: "pass", note: "", file: "schedule-display.spec.ts" },
+        { id: "SCHED-020b", description: "毎日スケジュールのタイムスロット表示", category: "スケジュール", status: "pass", note: "", file: "schedule-display.spec.ts" },
+        { id: "SCHED-021", description: "曜日指定スケジュールで曜日が表示される", category: "スケジュール", status: "pass", note: "", file: "schedule-display.spec.ts" },
+        { id: "SCHED-022", description: "今日の曜日がハイライトされる", category: "スケジュール", status: "pass", note: "", file: "schedule-display.spec.ts" },
+        { id: "SCHED-023", description: "今日が該当しない場合、次回日付が表示される", category: "スケジュール", status: "skip", note: "曜日依存（条件付きスキップ）", file: "schedule-display.spec.ts" },
+        { id: "SCHED-024", description: "補足メモが表示される", category: "スケジュール", status: "pass", note: "", file: "schedule-display.spec.ts" },
+        { id: "SCHED-025", description: "スケジュールなし品物にはスケジュール表示がない", category: "スケジュール", status: "pass", note: "", file: "schedule-display.spec.ts" },
+        { id: "SCHED-026", description: "品物から記録タブが正しく表示される", category: "スケジュール", status: "pass", note: "", file: "schedule-display.spec.ts" },
+
+        // schedule-extension.spec.ts
+        { id: "SCHED-001", description: "スケジュールタイプを切り替えできる", category: "スケジュール拡張", status: "pass", note: "", file: "schedule-extension.spec.ts" },
+        { id: "SCHED-002", description: "曜日を選択できる", category: "スケジュール拡張", status: "pass", note: "", file: "schedule-extension.spec.ts" },
+        { id: "SCHED-003", description: "複数日を追加・削除できる", category: "スケジュール拡張", status: "pass", note: "", file: "schedule-extension.spec.ts" },
+        { id: "SCHED-004", description: "提供タイミングを選択できる", category: "スケジュール拡張", status: "pass", note: "", file: "schedule-extension.spec.ts" },
+        { id: "SCHED-005", description: "スケジュールをクリアできる", category: "スケジュール拡張", status: "pass", note: "", file: "schedule-extension.spec.ts" },
+        { id: "SCHED-006", description: "補足メモを入力できる", category: "スケジュール拡張", status: "pass", note: "", file: "schedule-extension.spec.ts" },
+        { id: "SCHED-012", description: "スケジュール表示が正しくフォーマットされる", category: "スケジュール拡張", status: "pass", note: "", file: "schedule-extension.spec.ts" },
+
+        // schedule-start-date.spec.ts
+        { id: "SCHEDULE-001", description: "「毎日」選択時に開始日入力が表示される", category: "スケジュール開始日", status: "pass", note: "", file: "schedule-start-date.spec.ts" },
+        { id: "SCHEDULE-002", description: "「曜日指定」選択時に開始日入力が表示される", category: "スケジュール開始日", status: "pass", note: "", file: "schedule-start-date.spec.ts" },
+        { id: "SCHEDULE-003", description: "「特定の日」選択時に開始日入力は表示されない", category: "スケジュール開始日", status: "pass", note: "", file: "schedule-start-date.spec.ts" },
+        { id: "SCHEDULE-004", description: "「複数日指定」選択時に開始日入力は表示されない", category: "スケジュール開始日", status: "pass", note: "", file: "schedule-start-date.spec.ts" },
+        { id: "SCHEDULE-005", description: "開始日入力にヘルプテキストが表示される", category: "スケジュール開始日", status: "pass", note: "", file: "schedule-start-date.spec.ts" },
+        { id: "SCHEDULE-EDIT-001", description: "編集画面にスケジュール入力コンポーネントが表示される", category: "スケジュール開始日", status: "pass", note: "", file: "schedule-start-date.spec.ts" },
+        { id: "SCHEDULE-EDIT-002", description: "スケジュールを設定して保存できる（デモモード）", category: "スケジュール開始日", status: "pass", note: "", file: "schedule-start-date.spec.ts" },
+        { id: "SCHEDULE-DISP-001", description: "毎日スケジュールの表示形式が正しい", category: "スケジュール開始日", status: "pass", note: "", file: "schedule-start-date.spec.ts" },
+        { id: "SCHEDULE-DISP-002", description: "曜日指定スケジュールの表示形式が正しい", category: "スケジュール開始日", status: "pass", note: "", file: "schedule-start-date.spec.ts" },
+        { id: "SCHEDULE-DISP-003", description: "開始日が未来の場合「⏳から開始」が表示される", category: "スケジュール開始日", status: "skip", note: "デモデータ依存", file: "schedule-start-date.spec.ts" },
+        { id: "SCHEDULE-PREVIEW-001", description: "毎日+開始日でプレビューに開始日が表示される", category: "スケジュール開始日", status: "pass", note: "", file: "schedule-start-date.spec.ts" },
+        { id: "SCHEDULE-PREVIEW-002", description: "曜日指定でプレビューに曜日が表示される", category: "スケジュール開始日", status: "pass", note: "", file: "schedule-start-date.spec.ts" },
+        { id: "SCHEDULE-FLOW-001", description: "新規登録→スケジュール設定フロー", category: "スケジュール開始日", status: "pass", note: "", file: "schedule-start-date.spec.ts" },
+        { id: "SCHEDULE-FLOW-002", description: "編集→スケジュール変更フロー", category: "スケジュール開始日", status: "pass", note: "", file: "schedule-start-date.spec.ts" },
+
+        // snack-record.spec.ts
+        { id: "SNACK-001", description: "食事入力ページに間食セクションが表示される", category: "間食記録", status: "pass", note: "", file: "snack-record.spec.ts" },
+        { id: "SNACK-002", description: "在庫あり品物がリスト表示される（デモモード）", category: "間食記録", status: "pass", note: "", file: "snack-record.spec.ts" },
+        { id: "SNACK-003", description: "品物に家族指示が表示される", category: "間食記録", status: "pass", note: "", file: "snack-record.spec.ts" },
+        { id: "SNACK-010", description: "品物を選択すると提供記録カードが表示される", category: "間食記録", status: "pass", note: "", file: "snack-record.spec.ts" },
+        { id: "SNACK-011", description: "品物選択時にサジェスト量が設定される", category: "間食記録", status: "pass", note: "", file: "snack-record.spec.ts" },
+        { id: "SNACK-012", description: "摂食状況を選択できる", category: "間食記録", status: "pass", note: "", file: "snack-record.spec.ts" },
+        { id: "SNACK-013", description: "品物を選択解除できる", category: "間食記録", status: "pass", note: "", file: "snack-record.spec.ts" },
+        { id: "SNACK-014", description: "家族へのメモを入力できる", category: "間食記録", status: "pass", note: "", file: "snack-record.spec.ts" },
+        { id: "SNACK-020", description: "サジェスト理由が表示される", category: "間食記録", status: "pass", note: "", file: "snack-record.spec.ts" },
+        { id: "SNACK-021", description: "在庫残量が表示される", category: "間食記録", status: "pass", note: "", file: "snack-record.spec.ts" },
+
+        // stats-page-theme.spec.ts
+        { id: "STATS-010", description: "統計ページが正常に表示される", category: "統計", status: "pass", note: "", file: "stats-page-theme.spec.ts" },
+        { id: "STATS-011", description: "品物状況タブがある", category: "統計", status: "pass", note: "", file: "stats-page-theme.spec.ts" },
+        { id: "STATS-012", description: "摂食傾向タブがある", category: "統計", status: "pass", note: "", file: "stats-page-theme.spec.ts" },
+        { id: "STATS-020", description: "/demo/family → /demo/stats で家族テーマ維持", category: "統計", status: "pass", note: "", file: "stats-page-theme.spec.ts" },
+        { id: "STATS-021", description: "/demo/staff → /demo/stats でスタッフテーマ維持", category: "統計", status: "pass", note: "", file: "stats-page-theme.spec.ts" },
+        { id: "STATS-022", description: "/family → /stats で家族テーマ維持", category: "統計", status: "pass", note: "", file: "stats-page-theme.spec.ts" },
+        { id: "STATS-023", description: "/stats 直接アクセスで適切なテーマ適用", category: "統計", status: "pass", note: "", file: "stats-page-theme.spec.ts" },
+
+        // view-page-sort.spec.ts
+        { id: "VIEW-SORT-001", description: "日時カラムでソートできる", category: "ソート", status: "pass", note: "", file: "view-page-sort.spec.ts" },
+        { id: "VIEW-SORT-002", description: "降順→昇順の切り替えができる", category: "ソート", status: "pass", note: "", file: "view-page-sort.spec.ts" },
+        { id: "VIEW-SORT-003", description: "ソート状態がアイコンで表示される", category: "ソート", status: "pass", note: "", file: "view-page-sort.spec.ts" },
+        { id: "VIEW-SORT-004", description: "日時ソートが正しい時系列順になる", category: "ソート", status: "pass", note: "", file: "view-page-sort.spec.ts" },
+    ];
+
+    // グローバル変数
+    let currentFilter = 'all';
+    let currentCategory = 'all';
+    let currentSort = { column: 'id', direction: 'asc' };
+    let filteredData = [...testData];
+
+    // 初期化
+    document.addEventListener('DOMContentLoaded', () => {
+        initializePage();
+        setupEventListeners();
+    });
+
+    function initializePage() {
+        updateStats();
+        populateCategoryFilter();
+        renderTable();
+        renderCategorySummary();
+    }
+
+    function setupEventListeners() {
+        document.getElementById('searchInput').addEventListener('input', debounce(handleSearch, 300));
+        document.getElementById('categoryFilter').addEventListener('change', handleCategoryChange);
+    }
+
+    function updateStats() {
+        const total = testData.length;
+        const pass = testData.filter(t => t.status === 'pass').length;
+        const skip = testData.filter(t => t.status === 'skip').length;
+        const fail = testData.filter(t => t.status === 'fail').length;
+        const categories = [...new Set(testData.map(t => t.category))].length;
+
+        document.getElementById('totalCount').textContent = total;
+        document.getElementById('passCount').textContent = pass;
+        document.getElementById('skipCount').textContent = skip;
+        document.getElementById('failCount').textContent = fail;
+        document.getElementById('categoryCount').textContent = categories;
+    }
+
+    function populateCategoryFilter() {
+        const categories = [...new Set(testData.map(t => t.category))].sort();
+        const select = document.getElementById('categoryFilter');
+        categories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat;
+            option.textContent = cat;
+            select.appendChild(option);
+        });
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('testTableBody');
+        tbody.innerHTML = '';
+
+        filteredData.forEach(test => {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-gray-50';
+
+            const statusClass = test.status === 'pass' ? 'status-pass' :
+                               test.status === 'skip' ? 'status-skip' : 'status-fail';
+            const statusText = test.status === 'pass' ? 'パス' :
+                              test.status === 'skip' ? 'スキップ' : '失敗';
+
+            tr.innerHTML = `
+                <td class="px-4 py-3 text-sm font-mono text-gray-900">${test.id}</td>
+                <td class="px-4 py-3 text-sm text-gray-700">${test.description}</td>
+                <td class="px-4 py-3">
+                    <span class="category-badge bg-blue-100 text-blue-700">${test.category}</span>
+                </td>
+                <td class="px-4 py-3">
+                    <span class="px-2 py-1 rounded-full text-xs font-medium ${statusClass}">${statusText}</span>
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-500">${test.note || '-'}</td>
+                <td class="px-4 py-3 text-xs text-gray-400 font-mono">${test.file}</td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    function renderCategorySummary() {
+        const container = document.getElementById('categorySummary');
+        const categories = [...new Set(testData.map(t => t.category))].sort();
+
+        container.innerHTML = categories.map(cat => {
+            const tests = testData.filter(t => t.category === cat);
+            const pass = tests.filter(t => t.status === 'pass').length;
+            const skip = tests.filter(t => t.status === 'skip').length;
+            const total = tests.length;
+
+            return `
+                <div class="p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100"
+                     onclick="filterByCategory('${cat}')">
+                    <div class="font-medium text-gray-800 text-sm truncate" title="${cat}">${cat}</div>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="text-green-600 text-xs">${pass}パス</span>
+                        ${skip > 0 ? `<span class="text-yellow-600 text-xs">${skip}スキップ</span>` : ''}
+                        <span class="text-gray-400 text-xs">/ ${total}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function filterByStatus(status) {
+        currentFilter = status;
+        applyFilters();
+
+        // ボタンのアクティブ状態を更新
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.remove('ring-2', 'ring-offset-2');
+            if (btn.dataset.status === status) {
+                btn.classList.add('ring-2', 'ring-offset-2');
+            }
+        });
+    }
+
+    function filterByCategory(category) {
+        currentCategory = category;
+        document.getElementById('categoryFilter').value = category;
+        applyFilters();
+    }
+
+    function handleCategoryChange(e) {
+        currentCategory = e.target.value;
+        applyFilters();
+    }
+
+    function handleSearch(e) {
+        const query = e.target.value.toLowerCase();
+        applyFilters(query);
+    }
+
+    function applyFilters(searchQuery = '') {
+        filteredData = testData.filter(test => {
+            // ステータスフィルター
+            if (currentFilter !== 'all' && test.status !== currentFilter) return false;
+
+            // カテゴリフィルター
+            if (currentCategory !== 'all' && test.category !== currentCategory) return false;
+
+            // 検索フィルター
+            if (searchQuery) {
+                const searchable = `${test.id} ${test.description} ${test.file} ${test.note}`.toLowerCase();
+                if (!searchable.includes(searchQuery)) return false;
+            }
+
+            return true;
+        });
+
+        renderTable();
+    }
+
+    function sortTable(column) {
+        if (currentSort.column === column) {
+            currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSort.column = column;
+            currentSort.direction = 'asc';
+        }
+
+        filteredData.sort((a, b) => {
+            const aVal = a[column] || '';
+            const bVal = b[column] || '';
+            const comparison = aVal.localeCompare(bVal);
+            return currentSort.direction === 'asc' ? comparison : -comparison;
+        });
+
+        renderTable();
+    }
+
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+    </script>
+</body>
+</html>
