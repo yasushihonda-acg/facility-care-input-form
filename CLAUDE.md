@@ -324,9 +324,8 @@ facility-care-input-form/
 │   │   │   ├── ViewPage.tsx       # 記録閲覧
 │   │   │   ├── MealInputPage.tsx  # 食事入力フォーム
 │   │   │   └── family/            # 家族向けページ
-│   │   │       ├── FamilyDashboard.tsx  # View C: 家族ホーム
-│   │   │       ├── EvidenceMonitor.tsx  # View A: エビデンス・モニター
-│   │   │       └── RequestBuilder.tsx   # View B: ケア仕様ビルダー
+│   │   │       ├── FamilyDashboard.tsx  # 家族ホーム
+│   │   │       └── EvidenceMonitor.tsx  # エビデンス・モニター
 │   │   ├── components/            # UIコンポーネント
 │   │   │   └── family/            # 家族向けコンポーネント
 │   │   ├── hooks/                 # カスタムフック

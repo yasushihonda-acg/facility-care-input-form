@@ -39,7 +39,6 @@ import { StaffNotesPage } from './pages/staff/StaffNotesPage';
 // 家族専用
 import { FamilyDashboard } from './pages/family/FamilyDashboard';
 import { EvidenceMonitor } from './pages/family/EvidenceMonitor';
-import { RequestBuilder } from './pages/family/RequestBuilder';
 import { ItemManagement } from './pages/family/ItemManagement';
 import { ItemForm } from './pages/family/ItemForm';
 import { ItemDetail } from './pages/family/ItemDetail';
@@ -114,10 +113,6 @@ function App() {
       <Route path="/family/items/new" element={<ItemForm />} />
       <Route path="/family/items/:id" element={<ItemDetail />} />
       <Route path="/family/items/:id/edit" element={<ItemEditPage />} />
-
-      {/* ケア指示 */}
-      <Route path="/family/request" element={<RequestBuilder />} />
-      <Route path="/family/request/:id" element={<RequestBuilder />} />
 
       {/* プリセット管理 */}
       <Route path="/family/presets" element={<PresetManagement />} />

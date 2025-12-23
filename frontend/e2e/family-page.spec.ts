@@ -132,14 +132,7 @@ test.describe('プリセット管理ページ', () => {
   });
 });
 
-test.describe('ケア指示ビルダー', () => {
-  test('ケア指示作成ページにアクセスできる', async ({ page }) => {
-    await page.goto('/family/request');
-
-    // ページが表示されることを確認
-    await expect(page.locator('text=ケア指示')).toBeVisible();
-  });
-});
+// ケア指示ビルダー機能は削除（品物管理で代替）
 
 test.describe('タスク一覧ページ', () => {
   test('タスク一覧ページにアクセスできる', async ({ page }) => {
@@ -194,17 +187,7 @@ test.describe('ナビゲーションフロー', () => {
     }
   });
 
-  test('FABボタンからケア指示作成に遷移できる', async ({ page }) => {
-    await page.goto('/family');
-
-    // FAB（Floating Action Button）をクリック
-    const fab = page.getByLabel('新しいケア指示を作成');
-    await expect(fab).toBeVisible();
-    await fab.click();
-
-    // ケア指示ページに遷移
-    await expect(page).toHaveURL('/family/request');
-  });
+  // FABボタン・ケア指示機能は削除（品物管理で代替）
 });
 
 test.describe('品物詳細ページ', () => {

@@ -22,7 +22,7 @@
 
 - **記録閲覧**: スプレッドシートから自動同期されたケア記録の参照
 - **食事入力**: スタッフによる食事記録入力（写真・Google Chat通知付き）
-- **家族ビュー**: ご家族向けのタイムライン表示・ケア指示作成
+- **家族ビュー**: ご家族向けのタイムライン表示・品物管理
 
 ### 技術スタック
 
@@ -118,7 +118,7 @@ flowchart LR
 | Google Chat通知 | 入力時にWebhookで自動通知 | ✅ 完了 |
 | 写真アップロード | Google Driveへの画像保存 | ✅ 完了 |
 | 管理者設定 | 初期値・Webhook URL・フォルダID設定 | ✅ 完了 |
-| 家族ビュー | タイムライン形式・エビデンス・ケア指示 | ✅ 完了 |
+| 家族ビュー | タイムライン形式・エビデンス確認 | ✅ 完了 |
 | 品物管理 | 家族からの差し入れ品物の登録・追跡 | ✅ 完了 |
 | タスク管理 | 賞味期限警告・リマインダー等のタスク管理 | ✅ 完了 |
 | 統計ダッシュボード | 品物状況・摂食傾向・アラートの可視化 | ✅ 完了 |
@@ -143,12 +143,12 @@ graph TB
     subgraph Family["家族向け"]
         FamHome["家族ホーム<br/>/family"]
         Evidence["エビデンス<br/>/family/evidence/:date"]
-        Request["ケア指示作成<br/>/family/request"]
+        Items["品物管理<br/>/family/items"]
     end
 
     Home <--> Input
     FamHome --> Evidence
-    FamHome --> Request
+    FamHome --> Items
 ```
 
 ---

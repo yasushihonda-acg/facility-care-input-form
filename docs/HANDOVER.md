@@ -160,7 +160,6 @@ firebase deploy --only functions --debug
 | 品物登録 | `/family/items/new` | 新規品物の登録フォーム |
 | プリセット | `/family/presets` | よく送る品物の組み合わせ保存 |
 | タスク一覧 | `/family/tasks` | タスク管理 |
-| ケア指示 | `/family/request` | ケア指示の作成 |
 | エビデンス確認 | `/family/evidence/:date` | 日別エビデンス確認 |
 
 ### スタッフ向け (`/staff`, `/demo/staff`)

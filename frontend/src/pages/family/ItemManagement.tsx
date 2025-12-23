@@ -317,6 +317,7 @@ export function ItemManagement() {
                 key={item.id}
                 item={item}
                 onDelete={() => handleDeleteConfirm(item.id)}
+                onEdit={() => navigate(`${pathPrefix}/family/items/${item.id}/edit`)}
               />
             ))}
           </div>
@@ -364,7 +365,7 @@ export function ItemManagement() {
 /**
  * 品物カードコンポーネント
  */
-function ItemCard({ item, onDelete }: { item: CareItem; onDelete: () => void }) {
+function ItemCard({ item, onDelete, onEdit }: { item: CareItem; onDelete: () => void; onEdit: () => void }) {
   const isDemo = useDemoMode();
   const pathPrefix = isDemo ? '/demo' : '';
   const statusColor = getStatusColorClass(item.status);
@@ -419,17 +420,30 @@ function ItemCard({ item, onDelete }: { item: CareItem; onDelete: () => void }) 
           )}
         </div>
 
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onDelete();
-          }}
-          className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-          aria-label="削除"
-        >
-          🗑️
-        </button>
+        <div className="flex flex-col gap-1">
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onEdit();
+            }}
+            className="p-2 text-gray-400 hover:text-blue-500 transition-colors"
+            aria-label="編集"
+          >
+            ✏️
+          </button>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+            aria-label="削除"
+          >
+            🗑️
+          </button>
+        </div>
       </div>
 
       {item.status === 'consumed' && item.consumptionRate !== undefined && (

@@ -226,16 +226,6 @@ export function FamilyDashboard() {
           )}
         </div>
 
-        {/* ケア指示作成ボタン（FAB風） */}
-        <Link
-          to={`${pathPrefix}/family/request`}
-          className="fixed bottom-24 right-4 w-14 h-14 bg-primary text-white rounded-full shadow-lg flex items-center justify-center hover:bg-primary-dark transition z-30"
-          aria-label="新しいケア指示を作成"
-        >
-          <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-        </Link>
       </div>
     </Layout>
   );
