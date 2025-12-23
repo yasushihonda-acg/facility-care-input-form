@@ -5,19 +5,25 @@
 
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
+// ビルドタイムスタンプ（vite.config.tsで定義）
+declare const __BUILD_TIMESTAMP__: string;
+
 export function PWAUpdateNotification() {
   const {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW({
     onRegisteredSW(swUrl: string, registration: ServiceWorkerRegistration | undefined) {
+      // バージョン情報をログに出力
+      console.log(`[PWA] Build: ${__BUILD_TIMESTAMP__}`);
+      console.log(`[PWA] Service Worker registered: ${swUrl}`);
+
       // Service Workerが登録されたら、定期的に更新をチェック
       if (registration) {
         setInterval(() => {
           registration.update();
         }, 60 * 1000); // 1分ごとにチェック
       }
-      console.log(`[PWA] Service Worker registered: ${swUrl}`);
     },
     onRegisterError(error: Error) {
       console.error('[PWA] Service Worker registration error:', error);
