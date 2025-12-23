@@ -95,6 +95,16 @@ Phase 1〜40完了。詳細は `git log` を参照。
 - Firebase Storage写真連携
 - 統計ダッシュボード・AI分析
 
+## PWA更新戦略
+
+Service Workerキャッシュによる更新遅延問題に対応:
+- `skipWaiting: true` - 新SW即座にアクティブ化
+- `clientsClaim: true` - 全タブを即座に制御
+- `PWAUpdateNotification.tsx` - 更新通知バナーUI
+- ビルドタイムスタンプをコンソール出力（デバッグ用）
+
+詳細: docs/ARCHITECTURE.md セクション10.5
+
 ## E2Eテスト
 343件定義・290件パス・39件スキップ（+15件 Phase 38.5）
 
