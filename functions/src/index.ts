@@ -105,6 +105,7 @@ export {getStats} from "./functions/getStats";
 
 export {aiSuggest} from "./functions/aiSuggest";
 export {aiAnalyze} from "./functions/aiAnalyze";
+export {normalizeItemName} from "./functions/normalizeItemName"; // Phase 43.1
 
 // =============================================================================
 // プリセット統合（Phase 8.5）

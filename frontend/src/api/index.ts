@@ -542,6 +542,36 @@ export async function aiAnalyze(
   return response.json();
 }
 
+/**
+ * 品物名正規化レスポンス型
+ */
+export interface NormalizeItemNameResponse {
+  normalizedName: string;
+  confidence: 'high' | 'medium' | 'low';
+}
+
+/**
+ * AI品物名正規化（Phase 43.1）
+ * 品物名から統計用の基準品目名を推定（Gemini 2.5 Flash Lite使用）
+ * 例: 「極みプリン」→「プリン」
+ */
+export async function normalizeItemName(
+  itemName: string
+): Promise<ApiResponse<NormalizeItemNameResponse>> {
+  const response = await fetch(`${API_BASE}/normalizeItemName`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ itemName }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Normalize failed: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
 // =============================================================================
 // プリセット管理 CRUD API（Phase 8.6）
 // =============================================================================

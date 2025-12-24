@@ -102,6 +102,7 @@ https://asia-northeast1-facility-care-input-form.cloudfunctions.net
 | POST | `/saveAISuggestionAsPreset` | AI提案をプリセット保存 | Phase 8.7 | ⚠️ 未使用 |
 | POST | `/aiSuggest` | AI品物入力補助 | Phase 8.4 | ⚠️ 未使用 |
 | POST | `/aiAnalyze` | AI摂食傾向分析 | Phase 8.4.1 | ✅ |
+| POST | `/normalizeItemName` | 品物名正規化 | Phase 43.1 | ✅ |
 | GET | `/getStats` | 統計データを取得 | Phase 8.3 | ✅ |
 | GET | `/getInventorySummary` | 在庫サマリーを取得 | Phase 9.3 | ✅ |
 | GET | `/getFoodStats` | 食品傾向統計を取得 | Phase 9.3 | ✅ |
@@ -1497,6 +1498,48 @@ AI提案をプリセットとして保存します。
 
 ---
 
+### 4.30 POST /normalizeItemName (Phase 43.1)
+
+品物名から統計用の基準品目名をAIで推定します。Gemini 2.5 Flash Liteを使用。
+
+**エンドポイント**: `POST /normalizeItemName`
+
+**リクエストボディ**:
+
+| パラメータ | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `itemName` | string | Yes | 正規化する品物名 |
+
+**成功レスポンス (200)**:
+```json
+{
+  "success": true,
+  "data": {
+    "normalizedName": "プリン",
+    "confidence": "high"
+  },
+  "timestamp": "2025-12-25T10:00:00.000Z"
+}
+```
+
+**レスポンスフィールド**:
+
+| フィールド | 型 | 説明 |
+|-----------|-----|------|
+| `normalizedName` | string | 正規化された品目名 |
+| `confidence` | string | 信頼度（"high" / "medium" / "low"） |
+
+**使用例**:
+
+| 入力 | 出力 | 信頼度 |
+|------|------|--------|
+| 森永プリン | プリン | high |
+| 極みヨーグルト | ヨーグルト | high |
+| 青森りんご | りんご | high |
+| バナナ | バナナ | high（変更なし） |
+
+---
+
 ## 5. 型定義・サンプルコード
 
 ### 5.1 TypeScript型定義
@@ -1529,6 +1572,7 @@ curl -X POST \
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
+| 2025-12-25 | 1.17.0 | Phase 43.1: normalizeItemName API追加（品物名正規化・Gemini 2.5 Flash Lite使用） |
 | 2025-12-23 | 1.16.0 | Phase 40: スタッフ注意事項API追加（getStaffNotes/create/update/delete） |
 | 2025-12-22 | 1.15.0 | ドキュメント最適化（TypeScript型定義・cURLサンプルをコード参照に変更） |
 | 2025-12-20 | 1.14.0 | Phase 15.7: recordConsumptionLog/getConsumptionLogs詳細追加 |

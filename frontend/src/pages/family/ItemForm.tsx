@@ -4,7 +4,7 @@
  * @see docs/AI_INTEGRATION_SPEC.md (セクション8: AI提案UI統合, セクション9: プリセット統合)
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import { AISuggestion } from '../../components/family/AISuggestion';
@@ -32,6 +32,7 @@ import type {
 } from '../../types/careItem';
 import { scheduleToPlannedDate } from '../../utils/scheduleUtils';
 import { DEMO_PRESETS } from '../../data/demoFamilyData';
+import { normalizeItemName } from '../../api';
 import type { CarePreset } from '../../types/family';
 
 // デモ用の入居者ID・ユーザーID（将来は認証から取得）
@@ -74,6 +75,11 @@ export function ItemForm() {
   const [showManualPresetDialog, setShowManualPresetDialog] = useState(false);
   const [registeredFormData, setRegisteredFormData] = useState<CareItemInput | null>(null);
 
+  // Phase 43.1: 品物名正規化の状態
+  const [isNormalizing, setIsNormalizing] = useState(false);
+  const [normalizedSuggestion, setNormalizedSuggestion] = useState<string | null>(null);
+  const lastNormalizedItemName = useRef<string>(''); // 重複呼び出し防止
+
   // AI提案フック（ボタン押下で発動）
   // @see docs/ITEM_MANAGEMENT_SPEC.md - 手入力 + AI提案フロー
   const {
@@ -90,6 +96,50 @@ export function ItemForm() {
       fetchSuggestion(formData.itemName, formData.category);
     }
   }, [formData.itemName, formData.category, fetchSuggestion]);
+
+  // Phase 43.1: 品物名正規化（onBlurで呼び出し）
+  const handleNormalizeItemName = useCallback(async () => {
+    const itemName = formData.itemName.trim();
+
+    // 既に正規化済み、または短すぎる場合はスキップ
+    if (itemName.length < 3 || itemName === lastNormalizedItemName.current) {
+      return;
+    }
+
+    // ユーザーが既に手動で入力している場合はスキップ
+    if (formData.normalizedName && formData.normalizedName !== lastNormalizedItemName.current) {
+      return;
+    }
+
+    // デモモードでもAPIを呼び出す（将来的にはデモ用のモックに切り替え可能）
+    setIsNormalizing(true);
+    setNormalizedSuggestion(null);
+
+    try {
+      const response = await normalizeItemName(itemName);
+      if (response.success && response.data) {
+        const { normalizedName, confidence } = response.data;
+        // 品物名と異なる場合のみ提案を表示
+        if (normalizedName !== itemName && confidence !== 'low') {
+          setNormalizedSuggestion(normalizedName);
+          lastNormalizedItemName.current = itemName;
+        }
+      }
+    } catch (error) {
+      console.error('品物名正規化エラー:', error);
+      // エラー時は静かに失敗（UXを損なわない）
+    } finally {
+      setIsNormalizing(false);
+    }
+  }, [formData.itemName, formData.normalizedName]);
+
+  // 正規化提案を適用
+  const handleApplyNormalizedName = useCallback(() => {
+    if (normalizedSuggestion) {
+      setFormData((prev) => ({ ...prev, normalizedName: normalizedSuggestion }));
+      setNormalizedSuggestion(null);
+    }
+  }, [normalizedSuggestion]);
 
   // AI提案をフォームに適用（内部ロジック）
   const applySuggestionToForm = useCallback((aiSuggestion: AISuggestResponse) => {
@@ -314,7 +364,9 @@ export function ItemForm() {
                 onChange={(e) => {
                   updateField('itemName', e.target.value);
                   clearSuggestion(); // 入力変更時はAI提案をクリア
+                  setNormalizedSuggestion(null); // 正規化提案もクリア
                 }}
+                onBlur={handleNormalizeItemName}
                 placeholder="例: ぶどう（プリセット以外は手入力）"
                 className={`flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary ${
                   errors.itemName ? 'border-red-500' : 'border-gray-300'
@@ -359,16 +411,47 @@ export function ItemForm() {
                 <span>📊</span>
                 <span>統計での表示名</span>
                 <span className="text-xs text-gray-400 font-normal">（任意）</span>
+                {isNormalizing && (
+                  <span className="text-xs text-blue-500 animate-pulse">🔄 AI分析中...</span>
+                )}
               </span>
             </label>
-            <input
-              id="normalizedName"
-              type="text"
-              value={formData.normalizedName || ''}
-              onChange={(e) => updateField('normalizedName', e.target.value || undefined)}
-              placeholder={formData.itemName || '品物名と同じ（変更可能）'}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
-            />
+            <div className="flex gap-2">
+              <input
+                id="normalizedName"
+                type="text"
+                value={formData.normalizedName || ''}
+                onChange={(e) => {
+                  updateField('normalizedName', e.target.value || undefined);
+                  setNormalizedSuggestion(null); // 手動入力時は提案をクリア
+                }}
+                placeholder={formData.itemName || '品物名と同じ（変更可能）'}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+              />
+              {/* AI提案ボタン（Phase 43.1） */}
+              {normalizedSuggestion && !formData.normalizedName && (
+                <button
+                  type="button"
+                  onClick={handleApplyNormalizedName}
+                  className="px-3 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors text-sm whitespace-nowrap"
+                >
+                  「{normalizedSuggestion}」を使う
+                </button>
+              )}
+            </div>
+            {/* AI提案のヒント表示 */}
+            {normalizedSuggestion && formData.normalizedName && normalizedSuggestion !== formData.normalizedName && (
+              <p className="mt-1 text-xs text-blue-500">
+                💡 AI提案: 「{normalizedSuggestion}」
+                <button
+                  type="button"
+                  onClick={handleApplyNormalizedName}
+                  className="ml-2 underline hover:no-underline"
+                >
+                  適用
+                </button>
+              </p>
+            )}
             <p className="mt-1 text-xs text-gray-500">
               例: 「森永プリン」→「プリン」。同じ種類の品物を同じ名前にすると統計がまとまります。
             </p>

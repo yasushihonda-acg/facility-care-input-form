@@ -82,7 +82,11 @@ instruction?: { content: string; };
 - POST /saveAISuggestionAsPreset
 
 ## 開発履歴
-Phase 1〜43完了。詳細は `git log` を参照。
+Phase 1〜43.1完了。詳細は `git log` を参照。
+
+- **Phase 43.1**: 品物名正規化AI（Gemini 2.5 Flash Lite）
+  - POST /normalizeItemName API
+  - ItemForm: 品物名入力後、統計用表示名を自動提案
 
 主要機能:
 - 家族向け品物管理・プリセット管理

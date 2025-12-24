@@ -223,6 +223,8 @@ frontend/src/
 
 ## 開発履歴
 
-Phase 1〜41まで完了。詳細は `git log` を参照。
+Phase 1〜43.1まで完了。詳細は `git log` を参照。
+
+- **Phase 43.1**: 品物名正規化AI（Gemini 2.5 Flash Lite）- 統計用の基準品目名を自動提案
 
 E2Eテスト: 394件定義

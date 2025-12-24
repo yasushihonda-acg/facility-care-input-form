@@ -12,6 +12,8 @@ const PROJECT_ID = "facility-care-input-form";
 const LOCATION = "asia-northeast1";
 // Gemini 2.5 Flash - 最新の高速モデル（GA）
 const MODEL_ID = "gemini-2.5-flash";
+// Gemini 2.5 Flash Lite - 低コスト・高速モデル（Phase 43.1）
+const MODEL_ID_LITE = "gemini-2.5-flash-lite";
 
 let vertexAIInstance: VertexAI | null = null;
 
@@ -50,6 +52,33 @@ export async function generateContent(prompt: string): Promise<string> {
     return text;
   } catch (error) {
     functions.logger.error("Gemini API error:", error);
+    throw error;
+  }
+}
+
+/**
+ * Gemini Flash Lite モデルを使用してテキスト生成（低コスト版）
+ * Phase 43.1: 品物名正規化などの軽量タスク向け
+ */
+export async function generateContentLite(prompt: string): Promise<string> {
+  try {
+    const vertexAI = getVertexAI();
+    const model = vertexAI.getGenerativeModel({
+      model: MODEL_ID_LITE,
+      generationConfig: {
+        maxOutputTokens: 64, // 短い出力で十分
+        temperature: 0.1, // より安定した出力
+        topP: 0.8,
+      },
+    });
+
+    const result = await model.generateContent(prompt);
+    const response = result.response;
+    const text = response.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+    return text.trim();
+  } catch (error) {
+    functions.logger.error("Gemini Lite API error:", error);
     throw error;
   }
 }
