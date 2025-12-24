@@ -412,7 +412,7 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
           {todayGroups.recordedToday.length > 0 && (
             <div>
               <h3 className="text-sm font-bold text-gray-500 mb-2 flex items-center gap-2">
-                <span>✅</span>
+                <span>☑️</span>
                 入力済み（本日）
               </h3>
               <div className="space-y-3">
@@ -644,7 +644,7 @@ function ItemCard({ item, highlight, onRecordClick, onDiscardClick }: ItemCardPr
             {highlight === 'today' && <span className="text-amber-500">⭐</span>}
             {highlight === 'expiring' && <span className="text-orange-500">⚠️</span>}
             {highlight === 'expired' && <span className="text-red-500">❌</span>}
-            {highlight === 'recorded' && <span className="text-gray-400">✅</span>}
+            {highlight === 'recorded' && <span className="text-gray-400">☑️</span>}
             {highlight === 'missed' && <span className="text-purple-500">📢</span>}
             {highlight === 'none' && <span className="text-green-500">🟢</span>}
             <span className={`font-bold ${isRecorded ? 'text-gray-500' : 'text-gray-800'}`}>{item.itemName}</span>
