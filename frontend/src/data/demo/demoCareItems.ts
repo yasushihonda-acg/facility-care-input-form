@@ -4,7 +4,7 @@
  * 統計・在庫サマリーが見栄えするよう、様々なステータス・期限・カテゴリのデータを用意
  */
 
-import type { CareItem, ItemStatus, ItemCategory, ServingMethod, ServingSchedule, RemainingHandlingInstruction } from '../../types/careItem';
+import type { CareItem, ItemStatus, ItemCategory, ServingMethod, ServingSchedule, RemainingHandlingInstruction, RemainingHandlingLog } from '../../types/careItem';
 
 // ===== 日付ヘルパー =====
 
@@ -50,6 +50,25 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     },
     consumptionRate: 75,
     remainingHandlingInstruction: 'stored' as RemainingHandlingInstruction, // Phase 33: 残ったら保存
+    // Phase 42: 残り対応履歴
+    remainingHandlingLogs: [
+      {
+        id: 'RHL_demo_001',
+        handling: 'stored',
+        quantity: 1,
+        note: '1房保存しました',
+        recordedBy: '田中',
+        recordedAt: getDateTimeString(-2, 15),
+      } as RemainingHandlingLog,
+      {
+        id: 'RHL_demo_002',
+        handling: 'stored',
+        quantity: 0.5,
+        note: '半房保存',
+        recordedBy: '佐藤',
+        recordedAt: getDateTimeString(-1, 10),
+      } as RemainingHandlingLog,
+    ],
     // 残り1.5房 → 特定の1日に提供
     servingSchedule: {
       type: 'once',
@@ -113,6 +132,17 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     consumptionRate: 25,
     remainingHandlingInstruction: 'discarded' as RemainingHandlingInstruction, // Phase 33: 残ったら破棄
     noteToFamily: '食べ残しが多いようです',
+    // Phase 42: 残り対応履歴
+    remainingHandlingLogs: [
+      {
+        id: 'RHL_demo_003',
+        handling: 'discarded',
+        quantity: 0.3,
+        note: '傷みが出ていたため破棄',
+        recordedBy: '山田',
+        recordedAt: getDateTimeString(-1, 14),
+      } as RemainingHandlingLog,
+    ],
     // 残り1.5個 → 2日に分けて提供
     servingSchedule: {
       type: 'specific_dates',

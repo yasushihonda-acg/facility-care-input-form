@@ -123,6 +123,18 @@ export function getRemainingHandlingInstructionLabel(instruction: RemainingHandl
   return REMAINING_HANDLING_INSTRUCTION_OPTIONS.find(o => o.value === instruction)?.label ?? '指定なし';
 }
 
+/**
+ * 残り対応の実績ログ（スタッフが記録）
+ */
+export interface RemainingHandlingLog {
+  id: string;                         // ログID（RHL_{timestamp}_{random}）
+  handling: 'discarded' | 'stored';   // 対応種別
+  quantity: number;                   // 対応した数量
+  note?: string;                      // メモ
+  recordedBy: string;                 // 記録者
+  recordedAt: string;                 // 記録日時（ISO8601）
+}
+
 // === インターフェース ===
 
 // 品物（Firestore: care_items/{itemId}）
@@ -193,6 +205,9 @@ export interface CareItem {
   discardedAt?: string;          // 廃棄日時（ISO8601）
   discardedBy?: string;          // 廃棄実行者
   discardReason?: string;        // 廃棄理由
+
+  // 残り対応の実績履歴
+  remainingHandlingLogs?: RemainingHandlingLog[];
 }
 
 // 家族が入力する登録フォーム

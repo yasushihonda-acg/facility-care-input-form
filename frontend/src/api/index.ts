@@ -1326,3 +1326,43 @@ export async function deleteStaffNote(
 
   return response.json();
 }
+
+// =============================================================================
+// 残り対応記録（Phase 42）
+// =============================================================================
+
+import type { RemainingHandlingLog } from '../types/careItem';
+
+export interface SubmitRemainingHandlingRequest {
+  itemId: string;
+  handling: 'discarded' | 'stored';
+  quantity: number;
+  note?: string;
+  staffName: string;
+}
+
+export interface SubmitRemainingHandlingResponse {
+  success: boolean;
+  log?: RemainingHandlingLog;
+  error?: string;
+}
+
+/**
+ * 残り対応を記録（破棄/保存）
+ */
+export async function submitRemainingHandling(
+  params: SubmitRemainingHandlingRequest
+): Promise<ApiResponse<SubmitRemainingHandlingResponse>> {
+  const response = await fetch(`${API_BASE}/submitRemainingHandling`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to record remaining handling: ${response.statusText}`);
+  }
+
+  return response.json();
+}

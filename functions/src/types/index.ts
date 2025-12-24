@@ -453,6 +453,16 @@ export type RemainingHandlingInstruction =
   | "discarded" // 破棄してください
   | "stored"; // 保存してください
 
+/** 残り対応の実績ログ（スタッフが記録） */
+export interface RemainingHandlingLog {
+  id: string;                         // ログID（RHL_{timestamp}_{random}）
+  handling: "discarded" | "stored";   // 対応種別
+  quantity: number;                   // 対応した数量
+  note?: string;                      // メモ
+  recordedBy: string;                 // 記録者
+  recordedAt: string;                 // 記録日時（ISO8601）
+}
+
 /** 摂食状況 */
 export type ConsumptionStatus =
   | "full" // 完食
@@ -535,6 +545,9 @@ export interface CareItem {
   remainingQuantity: number; // 旧: 互換性のため残す
   createdAt: Timestamp;
   updatedAt: Timestamp;
+
+  // 残り対応の実績履歴
+  remainingHandlingLogs?: RemainingHandlingLog[];
 }
 
 /** 家族が入力する品物登録フォーム */
