@@ -135,7 +135,7 @@ export function DemoShowcase() {
         {/* プログレスバー */}
         <div className="bg-gray-200 rounded-full h-2 overflow-hidden">
           <div
-            className="bg-blue-500 h-full transition-all duration-300"
+            className="bg-orange-500 h-full transition-all duration-300"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -151,8 +151,8 @@ export function DemoShowcase() {
           </div>
 
           {/* ストーリー（感情移入用） */}
-          <div className="bg-blue-50 border-l-4 border-blue-400 p-3 mb-4 rounded-r">
-            <p className="text-sm text-blue-800 italic">"{step.story}"</p>
+          <div className="bg-orange-50 border-l-4 border-orange-400 p-3 mb-4 rounded-r">
+            <p className="text-sm text-orange-800 italic">"{step.story}"</p>
           </div>
 
           <div className="bg-gray-50 rounded-lg p-4 mb-4">
@@ -170,7 +170,7 @@ export function DemoShowcase() {
           {/* アクションボタン */}
           <button
             onClick={handleGo}
-            className="w-full py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition"
+            className="w-full py-3 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition"
           >
             この機能を見る →
           </button>
@@ -196,7 +196,7 @@ export function DemoShowcase() {
                 key={idx}
                 onClick={() => setCurrentStep(idx)}
                 className={`w-2 h-2 rounded-full transition ${
-                  idx === currentStep ? 'bg-blue-500' : 'bg-gray-300'
+                  idx === currentStep ? 'bg-orange-500' : 'bg-gray-300'
                 }`}
               />
             ))}
@@ -208,7 +208,7 @@ export function DemoShowcase() {
             className={`px-4 py-2 rounded-lg font-medium text-sm transition ${
               currentStep === SHOWCASE_STEPS.length - 1
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : 'bg-blue-500 text-white hover:bg-blue-600'
+                : 'bg-orange-500 text-white hover:bg-orange-600'
             }`}
           >
             次へ →
@@ -227,7 +227,7 @@ export function DemoShowcase() {
                 onClick={() => setCurrentStep(idx)}
                 className={`w-full text-left p-2 rounded flex items-center gap-2 transition ${
                   idx === currentStep
-                    ? 'bg-blue-50 text-blue-700'
+                    ? 'bg-orange-50 text-orange-700'
                     : 'hover:bg-gray-50 text-gray-600'
                 }`}
               >
@@ -236,7 +236,7 @@ export function DemoShowcase() {
                   {s.id}. {s.title}
                 </span>
                 {idx === currentStep && (
-                  <span className="ml-auto text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full">
+                  <span className="ml-auto text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full">
                     現在
                   </span>
                 )}
