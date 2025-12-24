@@ -18,7 +18,6 @@ import {
   getRemainingHandlingInstructionLabel,
 } from '../../types/careItem';
 import { StaffRecordDialog } from '../staff/StaffRecordDialog';
-import { RemainingHandlingDialog } from '../staff/RemainingHandlingDialog';
 import {
   isScheduledForToday as checkScheduledForToday,
   isScheduledForTomorrow as checkScheduledForTomorrow,
@@ -161,9 +160,6 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
   // 廃棄確認ダイアログ
   const [discardTarget, setDiscardTarget] = useState<CareItem | null>(null);
   const discardMutation = useDiscardItem();
-
-  // 残り対応記録ダイアログ（Phase 42）
-  const [remainingHandlingTarget, setRemainingHandlingTarget] = useState<CareItem | null>(null);
 
   // 在庫あり品物のみ取得（pending/in_progress のみ）
   const { data, isLoading, error, refetch } = useCareItems({
@@ -511,7 +507,7 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
             </div>
           )}
 
-          {/* 保存済みサブタブ（記録ボタンあり） */}
+          {/* 保存済みサブタブ（提供記録ボタンあり） */}
           {remainingSubTab === 'stored' && (
             <div className="space-y-3">
               {remainingItems.stored.length > 0 ? (
@@ -522,7 +518,6 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
                     type="stored"
                     showButtons={true}
                     onRecordClick={() => setSelectedItem(item)}
-                    onRemainingClick={() => setRemainingHandlingTarget(item)}
                   />
                 ))
               ) : (
@@ -534,20 +529,6 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
             </div>
           )}
         </div>
-      )}
-
-      {/* 残り対応記録ダイアログ（Phase 42） */}
-      {remainingHandlingTarget && (
-        <RemainingHandlingDialog
-          isOpen={!!remainingHandlingTarget}
-          onClose={() => setRemainingHandlingTarget(null)}
-          item={remainingHandlingTarget}
-          onSuccess={() => {
-            refetch();
-            setRemainingHandlingTarget(null);
-          }}
-          isDemo={isDemo}
-        />
       )}
 
       {/* 廃棄確認ダイアログ */}
@@ -725,10 +706,9 @@ interface RemainingItemCardProps {
   type: 'discarded' | 'stored';
   showButtons?: boolean;
   onRecordClick?: () => void;
-  onRemainingClick?: () => void;
 }
 
-function RemainingItemCard({ item, type, showButtons = true, onRecordClick, onRemainingClick }: RemainingItemCardProps) {
+function RemainingItemCard({ item, type, showButtons = true, onRecordClick }: RemainingItemCardProps) {
   const daysUntil = getDaysUntilExpiration(item);
   const remainingQty = item.currentQuantity ?? item.remainingQuantity ?? item.quantity;
 
@@ -817,7 +797,7 @@ function RemainingItemCard({ item, type, showButtons = true, onRecordClick, onRe
           </div>
         </div>
 
-        {showButtons && (
+        {showButtons && onRecordClick && (
           <div className="flex flex-col gap-2 ml-4">
             <button
               onClick={onRecordClick}
@@ -825,13 +805,6 @@ function RemainingItemCard({ item, type, showButtons = true, onRecordClick, onRe
             >
               <span>🍪</span>
               <span>提供記録</span>
-            </button>
-            <button
-              onClick={onRemainingClick}
-              className="px-4 py-2 bg-gray-500 text-white text-sm font-medium rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-1"
-            >
-              <span>🔄</span>
-              <span>残り対応</span>
             </button>
           </div>
         )}
