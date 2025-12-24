@@ -479,6 +479,71 @@ Error: The caller does not have permission
 
 ---
 
+## プロジェクト固有情報
+
+### アカウント設定
+
+| サービス | アカウント/ID | 備考 |
+|----------|--------------|------|
+| GitHub | `yasushihonda-acg` | リポジトリ: `yasushihonda-acg/facility-care-input-form` |
+| GCP | `yasushi.honda@aozora-cg.com` | プロジェクトID: `facility-care-input-form` |
+| Firebase | `yasushi.honda@aozora-cg.com` | GCPと同一 |
+
+### 認証切替コマンド
+
+```bash
+# GitHub
+gh auth switch --user yasushihonda-acg
+
+# GCP
+gcloud config set account yasushi.honda@aozora-cg.com
+gcloud config set project facility-care-input-form
+
+# Firebase
+firebase login:use yasushi.honda@aozora-cg.com
+firebase use facility-care-input-form
+```
+
+### スプレッドシート
+
+| 用途 | Sheet ID | 権限 |
+|------|----------|------|
+| Sheet A（読取） | `1Gf8QTbGyKB7rn5QQa5cYOg1NNYWMV8lzqySdbDkfG-w` | 閲覧者 |
+| Sheet B（書込） | `1OrpUVoDfUECXCTrKOGKLwN_4OQ9dlg7cUTCPGLDGHV0` | 編集者 |
+| 水分摂取量 | `1su5K9TjmzMfKc8OIK2aZYXCfuDrNeIRM0a3LUCFcct4` | 編集者 |
+
+共有先SA: `facility-care-sa@facility-care-input-form.iam.gserviceaccount.com`
+
+### 開発モード設定
+
+- **認証**: なし (`--allow-unauthenticated`)
+- **Firestore**: 全開放 (`allow read, write: if true;`)
+- **注意**: 本番移行時に必ず認証を実装すること
+
+### CLIコマンドリファレンス
+
+```bash
+# 開発サーバー
+cd frontend && npm run dev
+
+# ビルド
+cd frontend && npm run build
+npm run build --prefix functions
+
+# Lint
+cd frontend && npm run lint
+npm run lint --prefix functions
+
+# Emulator
+firebase emulators:start --only functions,firestore
+
+# デプロイ（通常は git push origin main で自動）
+firebase deploy --only hosting
+firebase deploy --only functions
+```
+
+---
+
 ## 次のステップ
 
 環境構築完了後、[HANDOVER.md](./HANDOVER.md) のクイックスタートセクションを参照してください。
