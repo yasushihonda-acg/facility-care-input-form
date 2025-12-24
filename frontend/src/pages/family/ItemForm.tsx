@@ -416,30 +416,29 @@ export function ItemForm() {
                 )}
               </span>
             </label>
-            <div className="flex gap-2">
-              <input
-                id="normalizedName"
-                type="text"
-                value={formData.normalizedName || ''}
-                onChange={(e) => {
-                  updateField('normalizedName', e.target.value || undefined);
-                  setNormalizedSuggestion(null); // 手動入力時は提案をクリア
-                }}
-                placeholder={formData.itemName || '品物名と同じ（変更可能）'}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
-              />
-              {/* AI提案ボタン（Phase 43.1） */}
-              {normalizedSuggestion && !formData.normalizedName && (
-                <button
-                  type="button"
-                  onClick={handleApplyNormalizedName}
-                  className="px-3 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors text-sm whitespace-nowrap"
-                >
-                  「{normalizedSuggestion}」を使う
-                </button>
-              )}
-            </div>
-            {/* AI提案のヒント表示 */}
+            <input
+              id="normalizedName"
+              type="text"
+              value={formData.normalizedName || ''}
+              onChange={(e) => {
+                updateField('normalizedName', e.target.value || undefined);
+                setNormalizedSuggestion(null); // 手動入力時は提案をクリア
+              }}
+              placeholder={formData.itemName || '品物名と同じ（変更可能）'}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+            />
+            {/* AI提案バナー（Phase 43.1） - 入力フィールドの下に目立つ形で表示 */}
+            {normalizedSuggestion && !formData.normalizedName && (
+              <button
+                type="button"
+                onClick={handleApplyNormalizedName}
+                className="mt-2 w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-50 text-green-700 border-2 border-green-300 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium"
+              >
+                <span>💡</span>
+                <span>AIの提案: 「{normalizedSuggestion}」を使う</span>
+              </button>
+            )}
+            {/* AI提案のヒント表示（手動入力済みの場合） */}
             {normalizedSuggestion && formData.normalizedName && normalizedSuggestion !== formData.normalizedName && (
               <p className="mt-1 text-xs text-blue-500">
                 💡 AI提案: 「{normalizedSuggestion}」
