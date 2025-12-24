@@ -10,12 +10,15 @@ import * as functions from "firebase-functions";
 const PROJECT_ID = "facility-care-input-form";
 // Gemini 2.5 Flash は asia-northeast1 (東京) で利用可能
 const LOCATION = "asia-northeast1";
+// Gemini 2.5 Flash Lite は us-central1 で利用（asia-northeast1未対応のため）
+const LOCATION_LITE = "us-central1";
 // Gemini 2.5 Flash - 最新の高速モデル（GA）
 const MODEL_ID = "gemini-2.5-flash";
 // Gemini 2.5 Flash Lite - 低コスト・高速モデル（Phase 43.1）
 const MODEL_ID_LITE = "gemini-2.5-flash-lite";
 
 let vertexAIInstance: VertexAI | null = null;
+let vertexAIInstanceLite: VertexAI | null = null;
 
 /**
  * VertexAI インスタンスを取得（遅延初期化）
@@ -28,6 +31,19 @@ function getVertexAI(): VertexAI {
     });
   }
   return vertexAIInstance;
+}
+
+/**
+ * VertexAI Lite用インスタンスを取得（us-central1）
+ */
+function getVertexAILite(): VertexAI {
+  if (!vertexAIInstanceLite) {
+    vertexAIInstanceLite = new VertexAI({
+      project: PROJECT_ID,
+      location: LOCATION_LITE,
+    });
+  }
+  return vertexAIInstanceLite;
 }
 
 /**
@@ -59,10 +75,11 @@ export async function generateContent(prompt: string): Promise<string> {
 /**
  * Gemini Flash Lite モデルを使用してテキスト生成（低コスト版）
  * Phase 43.1: 品物名正規化などの軽量タスク向け
+ * Note: us-central1リージョンを使用（asia-northeast1未対応のため）
  */
 export async function generateContentLite(prompt: string): Promise<string> {
   try {
-    const vertexAI = getVertexAI();
+    const vertexAI = getVertexAILite();
     const model = vertexAI.getGenerativeModel({
       model: MODEL_ID_LITE,
       generationConfig: {
