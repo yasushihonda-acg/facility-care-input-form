@@ -215,9 +215,19 @@ interface RemainingHandlingLog {
 // items/{itemId}
 {
   // ... 既存フィールド ...
+  normalizedName?: string;                         // 統計用の正規化名（Phase 43）
   remainingHandlingLogs?: RemainingHandlingLog[];  // 残り対応履歴（Phase 42）
 }
 ```
+
+### normalizedName（Phase 43: 統計用の品物名正規化）
+
+統計集計時に品物名のバリエーションをまとめるためのフィールド。
+
+- **用途**: 「森永プリン」「なめらかプリン」→「プリン」で集計
+- **設定方法**: 品物登録時に「📊 統計での表示名」フィールドで入力
+- **フォールバック**: 未設定時は`itemName`を使用
+- **統計計算**: `getFoodStats`で`normalizedName || itemName`を集計キーとして使用
 
 ---
 

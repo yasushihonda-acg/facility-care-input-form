@@ -82,7 +82,7 @@ instruction?: { content: string; };
 - POST /saveAISuggestionAsPreset
 
 ## 開発履歴
-Phase 1〜40完了。詳細は `git log` を参照。
+Phase 1〜43完了。詳細は `git log` を参照。
 
 主要機能:
 - 家族向け品物管理・プリセット管理
