@@ -521,14 +521,35 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
           {remainingSubTab === 'discarded' && (
             <div className="space-y-3">
               {remainingLogs.discarded.length > 0 ? (
-                remainingLogs.discarded.map((log) => (
-                  <LogCard key={log.id} log={log} type="discarded" />
-                ))
+                <>
+                  {remainingLogs.discarded.map((log) => (
+                    <LogCard key={log.id} log={log} type="discarded" />
+                  ))}
+                  {/* 追加記録ボタン */}
+                  <div className="pt-3 border-t border-gray-200">
+                    <select
+                      onChange={(e) => {
+                        const item = items.find(i => i.id === e.target.value);
+                        if (item) setRemainingHandlingTarget(item);
+                        e.target.value = '';
+                      }}
+                      className="w-full p-3 border border-red-300 rounded-lg bg-red-50 text-gray-700"
+                      defaultValue=""
+                    >
+                      <option value="" disabled>＋ 新しい破棄を記録する...</option>
+                      {items.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {getCategoryIcon(item.category)} {item.itemName}（残 {item.remainingQuantity ?? item.quantity}{item.unit}）
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </>
               ) : (
                 <div className="p-8 text-center text-gray-500">
                   <div className="text-4xl mb-4">🗑️</div>
                   <p className="font-medium">破棄履歴はありません</p>
-                  <p className="text-sm mt-2">品物を選択して破棄を記録してください</p>
+                  <p className="text-sm mt-2">上のドロップダウンから品物を選択して記録してください</p>
                 </div>
               )}
             </div>
@@ -538,14 +559,35 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
           {remainingSubTab === 'stored' && (
             <div className="space-y-3">
               {remainingLogs.stored.length > 0 ? (
-                remainingLogs.stored.map((log) => (
-                  <LogCard key={log.id} log={log} type="stored" />
-                ))
+                <>
+                  {remainingLogs.stored.map((log) => (
+                    <LogCard key={log.id} log={log} type="stored" />
+                  ))}
+                  {/* 追加記録ボタン */}
+                  <div className="pt-3 border-t border-gray-200">
+                    <select
+                      onChange={(e) => {
+                        const item = items.find(i => i.id === e.target.value);
+                        if (item) setRemainingHandlingTarget(item);
+                        e.target.value = '';
+                      }}
+                      className="w-full p-3 border border-blue-300 rounded-lg bg-blue-50 text-gray-700"
+                      defaultValue=""
+                    >
+                      <option value="" disabled>＋ 新しい保存を記録する...</option>
+                      {items.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {getCategoryIcon(item.category)} {item.itemName}（残 {item.remainingQuantity ?? item.quantity}{item.unit}）
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </>
               ) : (
                 <div className="p-8 text-center text-gray-500">
                   <div className="text-4xl mb-4">📦</div>
                   <p className="font-medium">保存履歴はありません</p>
-                  <p className="text-sm mt-2">品物を選択して保存を記録してください</p>
+                  <p className="text-sm mt-2">上のドロップダウンから品物を選択して記録してください</p>
                 </div>
               )}
             </div>
