@@ -11,6 +11,11 @@ import { useMemo, useState } from 'react';
 import { useDemoMode } from '../../hooks/useDemoMode';
 import { useCareItems, useDiscardItem } from '../../hooks/useCareItems';
 import type { CareItem, ItemStatus } from '../../types/careItem';
+import {
+  getServingMethodLabel,
+  getStorageLabel,
+  getRemainingHandlingInstructionLabel,
+} from '../../types/careItem';
 import { StaffRecordDialog } from '../staff/StaffRecordDialog';
 import {
   isScheduledForToday as checkScheduledForToday,
@@ -72,10 +77,74 @@ function getDaysUntilExpiration(item: CareItem): number | null {
   return Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
+// 今日記録済みかどうかを判定
+function isRecordedToday(item: CareItem): boolean {
+  const lastServedDate = item.consumptionSummary?.lastServedDate;
+  if (!lastServedDate) return false;
+  const today = new Date().toISOString().split('T')[0];
+  return lastServedDate === today;
+}
+
+// 過去にスケジュールされていたが記録がない（提供漏れ）を判定
+function isMissedSchedule(item: CareItem): boolean {
+  if (!item.servingSchedule) return false;
+  // 今日スケジュールされている場合は提供漏れではない
+  if (isScheduledForToday(item)) return false;
+  // 今日記録済みなら提供漏れではない
+  if (isRecordedToday(item)) return false;
+
+  // スケジュールタイプ別に判定
+  const schedule = item.servingSchedule;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // startDateがない場合は判定不可
+  if (!schedule.startDate) return false;
+
+  // once/specific_dates: 開始日が過去で、記録がない
+  if (schedule.type === 'once' || schedule.type === 'specific_dates') {
+    const startDate = new Date(schedule.startDate);
+    startDate.setHours(0, 0, 0, 0);
+    if (startDate < today) {
+      // 最後の記録日が開始日以降でなければ提供漏れ
+      const lastServed = item.consumptionSummary?.lastServedDate;
+      if (!lastServed) return true;
+      const lastServedDate = new Date(lastServed);
+      lastServedDate.setHours(0, 0, 0, 0);
+      if (lastServedDate < startDate) {
+        return true;
+      }
+    }
+  }
+
+  // daily/weekly: 昨日以前にスケジュールされていたが記録がない場合
+  // （簡易的に、lastServedDateが3日以上前なら提供漏れとする）
+  if (schedule.type === 'daily' || schedule.type === 'weekly') {
+    const lastServed = item.consumptionSummary?.lastServedDate;
+    if (!lastServed) {
+      // 一度も記録がない場合、開始日が3日以上前なら提供漏れ
+      const startDate = new Date(schedule.startDate);
+      startDate.setHours(0, 0, 0, 0);
+      const threeDaysAgo = new Date(today);
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+      if (startDate < threeDaysAgo) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 // 今日提供予定タブ用グループ
-type TodayGroup = 'scheduledToday' | 'other';
+type TodayGroup = 'missedSchedule' | 'scheduledToday' | 'recordedToday' | 'other';
 
 function classifyForTodayTab(item: CareItem): TodayGroup {
+  // 提供漏れを最優先
+  if (isMissedSchedule(item)) return 'missedSchedule';
+  // 今日記録済み
+  if (isRecordedToday(item)) return 'recordedToday';
+  // 今日スケジュール
   if (isScheduledForToday(item)) return 'scheduledToday';
   return 'other';
 }
@@ -128,7 +197,9 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
   // 今日提供予定タブ用グループ
   const todayGroups = useMemo(() => {
     const groups: Record<TodayGroup, CareItem[]> = {
+      missedSchedule: [],
       scheduledToday: [],
+      recordedToday: [],
       other: [],
     };
 
@@ -137,9 +208,17 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
       groups[group].push(item);
     });
 
-    Object.keys(groups).forEach((key) => {
-      groups[key as TodayGroup].sort(sortByExpirationAndSentDate);
+    // 提供漏れは期限切れを優先ソート
+    groups.missedSchedule.sort((a, b) => {
+      const daysA = getDaysUntilExpiration(a) ?? 999;
+      const daysB = getDaysUntilExpiration(b) ?? 999;
+      return daysA - daysB;
     });
+
+    // その他は通常ソート
+    groups.scheduledToday.sort(sortByExpirationAndSentDate);
+    groups.recordedToday.sort(sortByExpirationAndSentDate);
+    groups.other.sort(sortByExpirationAndSentDate);
 
     return groups;
   }, [items]);
@@ -240,6 +319,11 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
           }`}
         >
           📅 今日提供予定
+          {todayGroups.missedSchedule.length > 0 && (
+            <span className="ml-1 px-1.5 py-0.5 text-xs bg-purple-100 text-purple-700 rounded-full">
+              📢{todayGroups.missedSchedule.length}
+            </span>
+          )}
           {todayGroups.scheduledToday.length > 0 && (
             <span className="ml-1 px-1.5 py-0.5 text-xs bg-amber-100 text-amber-700 rounded-full">
               {todayGroups.scheduledToday.length}
@@ -266,6 +350,44 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
       {/* 今日提供予定タブ */}
       {activeTab === 'today' && (
         <div className="space-y-6">
+          {/* 提供漏れアラート */}
+          {todayGroups.missedSchedule.length > 0 && (
+            <div className="bg-purple-50 border-l-4 border-purple-500 p-4 rounded-r-lg">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">📢</span>
+                <div className="flex-1">
+                  <p className="font-bold text-purple-800">
+                    提供漏れが {todayGroups.missedSchedule.length}件 あります
+                  </p>
+                  <p className="text-sm text-purple-600 mt-1">
+                    スケジュール通りに提供されていません
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 提供漏れ */}
+          {todayGroups.missedSchedule.length > 0 && (
+            <div>
+              <h3 className="text-sm font-bold text-purple-700 mb-2 flex items-center gap-2">
+                <span>📢</span>
+                提供漏れ
+              </h3>
+              <div className="space-y-3">
+                {todayGroups.missedSchedule.map((item) => (
+                  <ItemCard
+                    key={item.id}
+                    item={item}
+                    highlight={isExpired(item) ? 'expired' : 'missed'}
+                    onRecordClick={() => handleRecordClick(item)}
+                    onDiscardClick={isExpired(item) ? () => setDiscardTarget(item) : undefined}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* 今日提供予定 */}
           {todayGroups.scheduledToday.length > 0 && (
             <div>
@@ -279,6 +401,26 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
                     key={item.id}
                     item={item}
                     highlight="today"
+                    onRecordClick={() => handleRecordClick(item)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 入力済み（当日のみ表示） */}
+          {todayGroups.recordedToday.length > 0 && (
+            <div>
+              <h3 className="text-sm font-bold text-gray-500 mb-2 flex items-center gap-2">
+                <span>✅</span>
+                入力済み（本日）
+              </h3>
+              <div className="space-y-3">
+                {todayGroups.recordedToday.map((item) => (
+                  <ItemCard
+                    key={item.id}
+                    item={item}
+                    highlight="recorded"
                     onRecordClick={() => handleRecordClick(item)}
                   />
                 ))}
@@ -306,7 +448,10 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
             </div>
           )}
 
-          {todayGroups.scheduledToday.length === 0 && todayGroups.other.length === 0 && (
+          {todayGroups.missedSchedule.length === 0 &&
+           todayGroups.scheduledToday.length === 0 &&
+           todayGroups.recordedToday.length === 0 &&
+           todayGroups.other.length === 0 && (
             <div className="p-8 text-center text-gray-500">
               <div className="text-4xl mb-4">📦</div>
               <p className="font-medium">在庫のある品物がありません</p>
@@ -472,7 +617,7 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
 // 品物カードコンポーネント
 interface ItemCardProps {
   item: CareItem;
-  highlight: 'today' | 'expiring' | 'expired' | 'none';
+  highlight: 'today' | 'expiring' | 'expired' | 'recorded' | 'missed' | 'none';
   onRecordClick: () => void;
   onDiscardClick?: () => void;
 }
@@ -480,11 +625,14 @@ interface ItemCardProps {
 function ItemCard({ item, highlight, onRecordClick, onDiscardClick }: ItemCardProps) {
   const daysUntil = getDaysUntilExpiration(item);
   const remainingQty = item.currentQuantity ?? item.remainingQuantity ?? item.quantity;
+  const isRecorded = highlight === 'recorded';
 
   const borderColor = {
     today: 'border-amber-400 bg-amber-50',
     expiring: 'border-orange-400 bg-orange-50',
     expired: 'border-red-400 bg-red-50',
+    recorded: 'border-gray-300 bg-gray-100',
+    missed: 'border-purple-400 bg-purple-50',
     none: 'border-gray-200 bg-white',
   }[highlight];
 
@@ -496,8 +644,12 @@ function ItemCard({ item, highlight, onRecordClick, onDiscardClick }: ItemCardPr
             {highlight === 'today' && <span className="text-amber-500">⭐</span>}
             {highlight === 'expiring' && <span className="text-orange-500">⚠️</span>}
             {highlight === 'expired' && <span className="text-red-500">❌</span>}
+            {highlight === 'recorded' && <span className="text-gray-400">✅</span>}
+            {highlight === 'missed' && <span className="text-purple-500">📢</span>}
             {highlight === 'none' && <span className="text-green-500">🟢</span>}
-            <span className="font-bold text-gray-800">{item.itemName}</span>
+            <span className={`font-bold ${isRecorded ? 'text-gray-500' : 'text-gray-800'}`}>{item.itemName}</span>
+            {isRecorded && <span className="text-xs text-gray-500 bg-gray-200 px-2 py-0.5 rounded">入力済み</span>}
+            {highlight === 'missed' && <span className="text-xs text-purple-600 bg-purple-100 px-2 py-0.5 rounded">提供漏れ</span>}
           </div>
 
           <div className="mt-2 text-sm text-gray-600 space-y-1">
@@ -536,6 +688,26 @@ function ItemCard({ item, highlight, onRecordClick, onDiscardClick }: ItemCardPr
                 </span>
               </div>
             ) : null}
+
+            {/* 提供方法・保存方法・残り処置 */}
+            <div className="flex flex-wrap gap-2 mt-2">
+              {item.servingMethod && (
+                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                  🍽️ {getServingMethodLabel(item.servingMethod)}
+                  {item.servingMethodDetail && `: ${item.servingMethodDetail}`}
+                </span>
+              )}
+              {item.storageMethod && (
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                  📦 {getStorageLabel(item.storageMethod)}
+                </span>
+              )}
+              {item.remainingHandlingInstruction && (
+                <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">
+                  🔄 残り: {getRemainingHandlingInstructionLabel(item.remainingHandlingInstruction)}
+                </span>
+              )}
+            </div>
 
             {item.noteToStaff && (
               <div className="flex items-start gap-1 text-gray-600 mt-2">
