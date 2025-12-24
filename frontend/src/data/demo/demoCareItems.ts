@@ -29,8 +29,8 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     id: 'demo-item-001',
     residentId: 'resident-001',
     userId: 'family-001',
-    itemName: 'バナナ',
-    normalizedName: 'バナナ', // Phase 43.1: 統計用の表示名
+    itemName: 'フィリピン産バナナ',
+    normalizedName: 'バナナ', // Phase 43.1: 統計用の表示名（産地除外）
     category: 'food' as ItemCategory,
     sentDate: getDateString(-5),
     initialQuantity: 4,
@@ -83,8 +83,8 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     id: 'demo-item-002',
     residentId: 'resident-001',
     userId: 'family-001',
-    itemName: 'キウイ',
-    normalizedName: 'キウイ', // Phase 43.1: 統計用の表示名
+    itemName: 'ゼスプリ ゴールドキウイ',
+    normalizedName: 'キウイ', // Phase 43.1: 統計用の表示名（ブランド・品種除外）
     category: 'food' as ItemCategory,
     sentDate: getDateString(-7),
     initialQuantity: 3,
@@ -112,8 +112,8 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     id: 'demo-item-003',
     residentId: 'resident-001',
     userId: 'family-001',
-    itemName: 'りんご',
-    normalizedName: 'りんご', // Phase 43.1: 統計用の表示名
+    itemName: '青森産サンふじりんご',
+    normalizedName: 'りんご', // Phase 43.1: 統計用の表示名（産地・品種除外）
     category: 'food' as ItemCategory,
     sentDate: getDateString(-3),
     initialQuantity: 2,
@@ -159,8 +159,8 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     id: 'demo-item-004',
     residentId: 'resident-001',
     userId: 'family-001',
-    itemName: 'みかん',
-    normalizedName: 'みかん', // Phase 43.1: 統計用の表示名
+    itemName: '愛媛みかん（Sサイズ）',
+    normalizedName: 'みかん', // Phase 43.1: 統計用の表示名（産地・サイズ除外）
     category: 'food' as ItemCategory,
     sentDate: getDateString(-4),
     initialQuantity: 5,
@@ -193,8 +193,8 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     id: 'demo-item-005',
     residentId: 'resident-001',
     userId: 'family-001',
-    itemName: '柿（熟し）',
-    normalizedName: '柿', // Phase 43.1: 統計用の表示名（品種・状態除外）
+    itemName: '奈良産 富有柿（熟し）',
+    normalizedName: '柿', // Phase 43.1: 統計用の表示名（産地・品種・状態除外）
     category: 'food' as ItemCategory,
     sentDate: getDateString(-1),
     initialQuantity: 2,
@@ -222,8 +222,8 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     id: 'demo-item-006',
     residentId: 'resident-001',
     userId: 'family-001',
-    itemName: 'プリン',
-    normalizedName: 'プリン', // Phase 43.1: 統計用の表示名
+    itemName: '森永の焼プリン',
+    normalizedName: 'プリン', // Phase 43.1: 統計用の表示名（ブランド除外）
     category: 'food' as ItemCategory,
     sentDate: getDateString(-4),
     initialQuantity: 6,
@@ -258,8 +258,8 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     id: 'demo-item-007',
     residentId: 'resident-001',
     userId: 'family-001',
-    itemName: 'カステラ',
-    normalizedName: 'カステラ', // Phase 43.1: 統計用の表示名
+    itemName: '文明堂カステラ（切り落とし）',
+    normalizedName: 'カステラ', // Phase 43.1: 統計用の表示名（ブランド除外）
     category: 'food' as ItemCategory,
     sentDate: getDateString(-2),
     initialQuantity: 8,
@@ -295,8 +295,8 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     id: 'demo-item-008',
     residentId: 'resident-001',
     userId: 'family-001',
-    itemName: '羊羹',
-    normalizedName: '羊羹', // Phase 43.1: 統計用の表示名
+    itemName: 'とらやの小形羊羹',
+    normalizedName: '羊羹', // Phase 43.1: 統計用の表示名（ブランド除外）
     category: 'food' as ItemCategory,
     sentDate: getDateString(0),
     initialQuantity: 4,
@@ -326,8 +326,8 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     id: 'demo-item-009',
     residentId: 'resident-001',
     userId: 'family-001',
-    itemName: '麦茶',
-    normalizedName: '麦茶', // Phase 43.1: 統計用の表示名
+    itemName: '伊藤園の健康ミネラルむぎ茶',
+    normalizedName: '麦茶', // Phase 43.1: 統計用の表示名（ブランド除外）
     category: 'drink' as ItemCategory,
     sentDate: getDateString(-3),
     initialQuantity: 2,
@@ -363,8 +363,8 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     id: 'demo-item-010',
     residentId: 'resident-001',
     userId: 'family-001',
-    itemName: 'らっきょう',
-    normalizedName: 'らっきょう', // Phase 43.1: 統計用の表示名
+    itemName: '鳥取砂丘らっきょう（甘酢漬）',
+    normalizedName: 'らっきょう', // Phase 43.1: 統計用の表示名（産地・調理法除外）
     category: 'food' as ItemCategory,
     sentDate: getDateString(-10),
     initialQuantity: 1,
@@ -398,8 +398,8 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     id: 'demo-item-011',
     residentId: 'resident-001',
     userId: 'family-001',
-    itemName: '黒豆',
-    normalizedName: '黒豆', // Phase 43.1: 統計用の表示名
+    itemName: '丹波篠山産 黒豆煮',
+    normalizedName: '黒豆', // Phase 43.1: 統計用の表示名（産地・調理法除外）
     category: 'food' as ItemCategory,
     sentDate: getDateString(-8),
     initialQuantity: 200,
@@ -436,8 +436,8 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     id: 'demo-item-012',
     residentId: 'resident-001',
     userId: 'family-001',
-    itemName: 'ヨーグルト',
-    normalizedName: 'ヨーグルト', // Phase 43.1: 統計用の表示名
+    itemName: '明治ブルガリアヨーグルト',
+    normalizedName: 'ヨーグルト', // Phase 43.1: 統計用の表示名（ブランド除外）
     category: 'food' as ItemCategory,
     sentDate: getDateString(-10),
     initialQuantity: 4,
@@ -472,8 +472,8 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     id: 'demo-item-013',
     residentId: 'resident-001',
     userId: 'family-001',
-    itemName: 'りんご',
-    normalizedName: 'りんご', // Phase 43.1: 統計用の表示名（FIFO用・item-003と同じ）
+    itemName: '長野産シナノゴールド',
+    normalizedName: 'りんご', // Phase 43.1: 統計用の表示名（FIFO用・item-003と同じ正規化名）
     category: 'food' as ItemCategory,
     sentDate: getDateString(-10),
     initialQuantity: 3,
@@ -500,8 +500,8 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     id: 'demo-item-014',
     residentId: 'resident-001',
     userId: 'family-001',
-    itemName: 'バナナ',
-    normalizedName: 'バナナ', // Phase 43.1: 統計用の表示名（FIFO用・item-001と同じ）
+    itemName: '甘熟王バナナ',
+    normalizedName: 'バナナ', // Phase 43.1: 統計用の表示名（FIFO用・item-001と同じ正規化名）
     category: 'food' as ItemCategory,
     sentDate: getDateString(-10),
     initialQuantity: 3,
@@ -530,8 +530,8 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     id: 'demo-item-015',
     residentId: 'resident-001',
     userId: 'family-001',
-    itemName: 'ゼリー（提供漏れ）',
-    normalizedName: 'ゼリー', // Phase 43.1: 統計用の表示名（状態除外）
+    itemName: 'たらみのフルーツゼリー',
+    normalizedName: 'ゼリー', // Phase 43.1: 統計用の表示名（ブランド除外）
     category: 'food' as ItemCategory,
     sentDate: getDateString(-7),
     initialQuantity: 4,
@@ -561,8 +561,8 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     id: 'demo-item-016',
     residentId: 'resident-001',
     userId: 'family-001',
-    itemName: 'クッキー（提供漏れ・期限切れ）',
-    normalizedName: 'クッキー', // Phase 43.1: 統計用の表示名（状態除外）
+    itemName: 'ステラおばさんのクッキー詰め合わせ',
+    normalizedName: 'クッキー', // Phase 43.1: 統計用の表示名（ブランド除外）
     category: 'food' as ItemCategory,
     sentDate: getDateString(-10),
     initialQuantity: 10,
