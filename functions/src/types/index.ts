@@ -455,12 +455,18 @@ export type RemainingHandlingInstruction =
 
 /** 残り対応の実績ログ（スタッフが記録） */
 export interface RemainingHandlingLog {
-  id: string;                         // ログID（RHL_{timestamp}_{random}）
-  handling: "discarded" | "stored";   // 対応種別
-  quantity: number;                   // 対応した数量
-  note?: string;                      // メモ
-  recordedBy: string;                 // 記録者
-  recordedAt: string;                 // 記録日時（ISO8601）
+  /** ログID（RHL_{timestamp}_{random}） */
+  id: string;
+  /** 対応種別 */
+  handling: "discarded" | "stored";
+  /** 対応した数量 */
+  quantity: number;
+  /** メモ */
+  note?: string;
+  /** 記録者 */
+  recordedBy: string;
+  /** 記録日時（ISO8601） */
+  recordedAt: string;
 }
 
 /** 摂食状況 */
