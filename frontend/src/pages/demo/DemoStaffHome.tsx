@@ -73,9 +73,9 @@ export function DemoStaffHome() {
           />
 
           <DemoCard
-            title="食事記録を入力"
-            description="食事・間食の提供記録を入力"
-            icon="🍽️"
+            title="間食記録を入力"
+            description="家族から送られた品物の提供記録を入力"
+            icon="🍪"
             to="/demo/staff/input/meal"
           />
 

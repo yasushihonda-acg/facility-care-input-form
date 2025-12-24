@@ -24,7 +24,7 @@ test.describe('Phase 14: スタッフ用デモページ', () => {
 
       // 4つの機能カードが表示される（カード内のh3を指定）
       await expect(page.locator('h3').filter({ hasText: '注意事項' })).toBeVisible();
-      await expect(page.locator('h3').filter({ hasText: '食事記録を入力' })).toBeVisible();
+      await expect(page.locator('h3').filter({ hasText: '間食記録を入力' })).toBeVisible();
       await expect(page.locator('h3').filter({ hasText: '統計' })).toBeVisible();
       await expect(page.locator('h3').filter({ hasText: '記録閲覧' })).toBeVisible();
     });
@@ -47,10 +47,10 @@ test.describe('Phase 14: スタッフ用デモページ', () => {
       await expect(page).toHaveURL('/demo/staff/notes');
     });
 
-    test('STAFF-011: 食事記録カードをクリック→入力ページへ遷移', async ({ page }) => {
+    test('STAFF-011: 間食記録カードをクリック→入力ページへ遷移', async ({ page }) => {
       await page.goto('/demo/staff');
 
-      await page.getByText('食事記録を入力').click();
+      await page.getByText('間食記録を入力').click();
 
       await expect(page).toHaveURL('/demo/staff/input/meal');
     });
@@ -91,7 +91,7 @@ test.describe('Phase 14: スタッフ用デモページ', () => {
       // 4つのステップが表示される（折りたたみ内）
       await expect(page.getByText('1. 注意事項を確認')).toBeVisible();
       await expect(page.getByText('2. 家族依頼を確認')).toBeVisible();
-      await expect(page.getByText('3. 食事記録を入力')).toBeVisible();
+      await expect(page.getByText('3. 間食記録を入力')).toBeVisible();
       await expect(page.getByText('4. 統計を確認')).toBeVisible();
     });
 

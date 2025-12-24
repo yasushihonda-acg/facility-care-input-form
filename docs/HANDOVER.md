@@ -166,7 +166,7 @@ firebase deploy --only functions --debug
 | 機能 | パス | 説明 |
 |------|------|------|
 | 注意事項 | `/staff/notes` | スタッフ用注意事項・家族依頼確認（Phase 40） |
-| 食事入力 | `/staff/input/meal` | 食事記録入力（写真・Chat通知） |
+| 間食記録入力 | `/staff/input/meal` | 家族からの品物の提供記録入力（写真・Chat通知） |
 | 記録閲覧 | `/view` | 全ケア記録の閲覧・検索 |
 | 統計 | `/stats` | 品物・摂食統計ダッシュボード |
 
@@ -190,7 +190,7 @@ frontend/src/
 │   │   └── PresetManagement # プリセット管理
 │   ├── staff/               # スタッフ向けページ（Phase 40）
 │   │   └── StaffNotesPage   # 注意事項・家族依頼
-│   ├── MealInputPage        # 食事入力フォーム
+│   ├── MealInputPage        # 間食記録入力フォーム
 │   ├── ViewPage             # 記録閲覧
 │   ├── StatsPage            # 統計
 │   └── SettingsPage         # 設定（独立ページ）
