@@ -107,7 +107,7 @@ PWAからの入力データを保存するシート。
 | コレクション | 用途 | 主要フィールド |
 |--------------|------|----------------|
 | `settings` | アプリ設定 | webhookUrl, driveSettings |
-| `items` | 品物マスタ | name, category, isActive |
+| `items` | 品物マスタ | name, category, isActive, remainingHandlingLogs |
 | `tasks` | タスク管理 | title, status, dueDate |
 | `presets` | プリセット（いつもの指示） | name, category, instruction, matchConfig |
 | `prohibitions` | 禁止ルール | itemId, reason |
@@ -184,6 +184,43 @@ gs://facility-care-input-form.appspot.com/
 
 ---
 
+## 5.2 itemsコレクション詳細（品物マスタ）
+
+品物（CareItem）の詳細構造。
+
+### RemainingHandlingLog型
+
+品物の破棄/保存履歴を記録する型。
+
+```typescript
+interface RemainingHandlingLog {
+  id: string;                         // ログID（RHL_{timestamp}_{random}）
+  handling: 'discarded' | 'stored';   // 対応種別
+  quantity: number;                   // 対応した数量
+  note?: string;                      // メモ
+  recordedBy: string;                 // 記録者
+  recordedAt: string;                 // 記録日時（ISO8601）
+}
+```
+
+### 使用箇所
+
+- **残り対応タブ**（`/staff/input/meal`）: 破棄済み/保存済み品物の表示
+  - 破棄済み: 閲覧のみ（記録ボタンなし）
+  - 保存済み: 「提供記録」ボタンで通常の記録ダイアログを開く
+
+### フィールド追加
+
+```typescript
+// items/{itemId}
+{
+  // ... 既存フィールド ...
+  remainingHandlingLogs?: RemainingHandlingLog[];  // 残り対応履歴（Phase 42）
+}
+```
+
+---
+
 ## 6. エンティティ関連図
 
 ```
@@ -223,6 +260,7 @@ gs://facility-care-input-form.appspot.com/
 
 | 日付 | 変更内容 |
 |------|----------|
+| 2025-12-24 | Phase 42: RemainingHandlingLog型・残り対応タブ仕様追加 |
 | 2025-12-23 | Phase 41設計を削除（既存フォーム構造と不整合のためリバート） |
 | 2025-12-23 | Phase 40: staffNotesコレクション追加 |
 | 2025-12-20 | 統合ドキュメント作成 |
