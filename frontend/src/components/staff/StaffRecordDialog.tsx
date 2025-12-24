@@ -61,6 +61,7 @@ interface StaffRecordDialogProps {
   onClose: () => void;
   item: CareItem;
   onSuccess?: () => void;
+  isDemo?: boolean;
 }
 
 /**
@@ -71,6 +72,7 @@ export function StaffRecordDialog({
   onClose,
   item,
   onSuccess,
+  isDemo = false,
 }: StaffRecordDialogProps) {
   const { settings } = useMealFormSettings();
   const recordMutation = useRecordConsumptionLog();
@@ -233,9 +235,24 @@ export function StaffRecordDialog({
     return Object.keys(newErrors).length === 0;
   }, [formData, currentQuantity, item.unit]);
 
+  // デモモード用のローディング状態
+  const [isDemoSubmitting, setIsDemoSubmitting] = useState(false);
+
   // 送信ハンドラ
   const handleSubmit = useCallback(async () => {
     if (!validate()) return;
+
+    // デモモードの場合はAPIを呼び出さずにフィードバックを表示
+    if (isDemo) {
+      setIsDemoSubmitting(true);
+      // 少し遅延を入れてUXを向上
+      await new Promise(resolve => setTimeout(resolve, 800));
+      setIsDemoSubmitting(false);
+      alert('✅ デモモードのため実際には保存されていませんが、\n入力内容は正常です！\n\n本番環境では記録がスプレッドシートに保存されます。');
+      onSuccess?.();
+      onClose();
+      return;
+    }
 
     try {
       // Phase 15.9: 写真がある場合は先にアップロードしてURLを取得
@@ -338,7 +355,7 @@ export function StaffRecordDialog({
     } catch (err) {
       setErrors({ submit: err instanceof Error ? err.message : '記録に失敗しました' });
     }
-  }, [formData, item, settings, recordMutation, validate, onSuccess, onClose]);
+  }, [formData, item, settings, recordMutation, validate, onSuccess, onClose, isDemo]);
 
   // Phase 15.7: 残り対応に基づいて消費量・残量を計算
   // Phase 29修正: タブ別に計算ロジックを分岐（水分タブも残り対応を考慮）
@@ -422,6 +439,13 @@ export function StaffRecordDialog({
         </div>
 
         <div className="p-4 space-y-4">
+          {/* デモモードバナー */}
+          {isDemo && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
+              🎓 <strong>デモモード</strong>：入力をお試しいただけます。実際には記録は保存されません。
+            </div>
+          )}
+
           {/* Phase 31: タブ固定（カテゴリに応じて自動選択、切替不可） */}
           <div className="text-center py-2 px-4 font-medium border-b-2 border-primary text-primary bg-primary/5 rounded-t-lg">
             {formData.activeTab === 'meal' ? '🍪 食事記録' : '💧 水分記録'}
@@ -952,17 +976,17 @@ export function StaffRecordDialog({
         <div className="sticky bottom-0 bg-white flex justify-end gap-2 p-4 border-t">
           <button
             onClick={onClose}
-            disabled={recordMutation.isPending}
+            disabled={recordMutation.isPending || isDemoSubmitting}
             className="px-4 py-2 text-gray-700 border rounded-lg hover:bg-gray-100 disabled:opacity-50"
           >
             キャンセル
           </button>
           <button
             onClick={handleSubmit}
-            disabled={recordMutation.isPending}
+            disabled={recordMutation.isPending || isDemoSubmitting}
             className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50"
           >
-            {recordMutation.isPending ? '記録中...' : '記録を保存'}
+            {(recordMutation.isPending || isDemoSubmitting) ? '記録中...' : (isDemo ? '記録を保存（デモ）' : '記録を保存')}
           </button>
         </div>
       </div>

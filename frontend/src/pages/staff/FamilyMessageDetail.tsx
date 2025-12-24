@@ -286,6 +286,7 @@ export function FamilyMessageDetail() {
           onSuccess={() => {
             setShowRecordModal(false);
           }}
+          isDemo={isDemo}
         />
       </div>
     </Layout>

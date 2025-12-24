@@ -8,6 +8,7 @@
  */
 
 import { useMemo, useState } from 'react';
+import { useDemoMode } from '../../hooks/useDemoMode';
 import { useCareItems, useDiscardItem } from '../../hooks/useCareItems';
 import type { CareItem, ItemStatus } from '../../types/careItem';
 import { StaffRecordDialog } from '../staff/StaffRecordDialog';
@@ -90,6 +91,8 @@ function classifyForExpirationTab(item: CareItem): ExpirationGroup {
 }
 
 export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBasedSnackRecordProps) {
+  const isDemo = useDemoMode();
+
   // タブ状態（初期: 今日提供予定）
   const [activeTab, setActiveTab] = useState<TabType>('today');
 
@@ -459,6 +462,7 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
           onClose={handleModalClose}
           item={selectedItem}
           onSuccess={handleRecordSuccess}
+          isDemo={isDemo}
         />
       )}
     </div>
