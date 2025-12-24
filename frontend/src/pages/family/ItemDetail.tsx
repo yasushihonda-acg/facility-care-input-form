@@ -135,11 +135,14 @@ export function ItemDetail() {
 
   // 同じ品物名の他のアイテムを取得（FIFOガイド用）
   // docs/FIFO_DESIGN_SPEC.md セクション4.3に基づく
+  // Phase 43.1: normalizedName で比較（ブランド名が異なっても同じ基準品目なら同一扱い）
   const otherSameNameItems = useMemo(() => {
     if (!item || !data?.items) return [];
+    // normalizedName があればそれで比較、なければ itemName で比較
+    const itemKey = item.normalizedName || item.itemName;
     return data.items.filter(
       (i) =>
-        i.itemName === item.itemName &&
+        (i.normalizedName || i.itemName) === itemKey &&
         i.id !== item.id &&
         (i.currentQuantity ?? 0) > 0 &&
         // pending, in_progress, served のいずれかで在庫がある品物が対象

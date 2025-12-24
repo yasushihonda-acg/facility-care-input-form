@@ -192,11 +192,11 @@ test.describe('ナビゲーションフロー', () => {
 
 test.describe('品物詳細ページ', () => {
   test('品物詳細ページで消費ログが表示される（デモモード）', async ({ page }) => {
-    // デモモードで品物詳細にアクセス（キウイ: demo-item-002）
+    // デモモードで品物詳細にアクセス（ゼスプリ ゴールドキウイ: demo-item-002）
     await page.goto('/demo/family/items/demo-item-002');
 
     // ページタイトルが表示される（メイン領域のh1）
-    await expect(page.getByRole('main').getByRole('heading', { name: 'キウイ' })).toBeVisible();
+    await expect(page.getByRole('main').getByRole('heading', { name: /キウイ/ })).toBeVisible();
 
     // 「提供・摂食の記録」セクションが表示される
     await expect(page.locator('text=提供・摂食の記録')).toBeVisible();
@@ -206,7 +206,7 @@ test.describe('品物詳細ページ', () => {
   });
 
   test('消費ログに家族指示対応が表示される', async ({ page }) => {
-    // デモモードで品物詳細にアクセス（キウイ: demo-item-002 - followedInstruction: true のログあり）
+    // デモモードで品物詳細にアクセス（ゼスプリ ゴールドキウイ: demo-item-002 - followedInstruction: true のログあり）
     await page.goto('/demo/family/items/demo-item-002');
 
     // 「家族の指示に従いました」表示を確認（複数あるので first() を使用）

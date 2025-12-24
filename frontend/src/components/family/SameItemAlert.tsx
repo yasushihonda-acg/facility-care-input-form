@@ -89,11 +89,12 @@ export function SameItemAlert({
   return (
     <div className="bg-blue-50 border border-blue-200 rounded-lg overflow-hidden">
       {/* ヘッダー */}
+      {/* Phase 43.1: normalizedName があればそれを表示（ブランド名ではなく基準品目名） */}
       <div className="px-3 py-2 bg-blue-100 border-b border-blue-200">
         <div className="flex items-center gap-2">
           <span className="text-lg">ℹ️</span>
           <span className="font-medium text-blue-800">
-            同じ「{currentItem.itemName}」の他の在庫
+            同じ「{currentItem.normalizedName || currentItem.itemName}」の他の在庫
           </span>
         </div>
       </div>
