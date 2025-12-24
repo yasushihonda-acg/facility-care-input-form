@@ -453,32 +453,9 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
         </div>
       )}
 
-      {/* 残り対応タブ（Phase 42: 履歴ベース） */}
+      {/* 残り対応タブ（Phase 42） */}
       {activeTab === 'remaining' && (
         <div className="space-y-4">
-          {/* 記録ボタン */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm text-blue-700 mb-3">
-              品物を選んで「破棄した」「保存した」を記録できます
-            </p>
-            <select
-              onChange={(e) => {
-                const item = items.find(i => i.id === e.target.value);
-                if (item) setRemainingHandlingTarget(item);
-                e.target.value = '';
-              }}
-              className="w-full p-3 border border-blue-300 rounded-lg bg-white text-gray-700"
-              defaultValue=""
-            >
-              <option value="" disabled>品物を選択して記録する...</option>
-              {items.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {getCategoryIcon(item.category)} {item.itemName}（残 {item.remainingQuantity ?? item.quantity}{item.unit}）
-                </option>
-              ))}
-            </select>
-          </div>
-
           {/* サブタブUI */}
           <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
             <button
@@ -513,7 +490,7 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
             </button>
           </div>
 
-          {/* 破棄済みサブタブ */}
+          {/* 破棄済みサブタブ（記録ボタンなし） */}
           {remainingSubTab === 'discarded' && (
             <div className="space-y-3">
               {remainingItems.discarded.length > 0 ? (
@@ -522,8 +499,7 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
                     key={item.id}
                     item={item}
                     type="discarded"
-                    onRecordClick={() => setSelectedItem(item)}
-                    onRemainingClick={() => setRemainingHandlingTarget(item)}
+                    showButtons={false}
                   />
                 ))
               ) : (
@@ -535,7 +511,7 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
             </div>
           )}
 
-          {/* 保存済みサブタブ */}
+          {/* 保存済みサブタブ（記録ボタンあり） */}
           {remainingSubTab === 'stored' && (
             <div className="space-y-3">
               {remainingItems.stored.length > 0 ? (
@@ -544,6 +520,7 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
                     key={item.id}
                     item={item}
                     type="stored"
+                    showButtons={true}
                     onRecordClick={() => setSelectedItem(item)}
                     onRemainingClick={() => setRemainingHandlingTarget(item)}
                   />
@@ -746,11 +723,12 @@ function ItemCard({ item, highlight, onRecordClick, onDiscardClick }: ItemCardPr
 interface RemainingItemCardProps {
   item: CareItem;
   type: 'discarded' | 'stored';
-  onRecordClick: () => void;
-  onRemainingClick: () => void;
+  showButtons?: boolean;
+  onRecordClick?: () => void;
+  onRemainingClick?: () => void;
 }
 
-function RemainingItemCard({ item, type, onRecordClick, onRemainingClick }: RemainingItemCardProps) {
+function RemainingItemCard({ item, type, showButtons = true, onRecordClick, onRemainingClick }: RemainingItemCardProps) {
   const daysUntil = getDaysUntilExpiration(item);
   const remainingQty = item.currentQuantity ?? item.remainingQuantity ?? item.quantity;
 
@@ -839,22 +817,24 @@ function RemainingItemCard({ item, type, onRecordClick, onRemainingClick }: Rema
           </div>
         </div>
 
-        <div className="flex flex-col gap-2 ml-4">
-          <button
-            onClick={onRecordClick}
-            className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-1"
-          >
-            <span>🍪</span>
-            <span>提供記録</span>
-          </button>
-          <button
-            onClick={onRemainingClick}
-            className="px-4 py-2 bg-gray-500 text-white text-sm font-medium rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-1"
-          >
-            <span>🔄</span>
-            <span>残り対応</span>
-          </button>
-        </div>
+        {showButtons && (
+          <div className="flex flex-col gap-2 ml-4">
+            <button
+              onClick={onRecordClick}
+              className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-1"
+            >
+              <span>🍪</span>
+              <span>提供記録</span>
+            </button>
+            <button
+              onClick={onRemainingClick}
+              className="px-4 py-2 bg-gray-500 text-white text-sm font-medium rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-1"
+            >
+              <span>🔄</span>
+              <span>残り対応</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
