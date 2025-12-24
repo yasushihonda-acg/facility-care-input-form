@@ -10,7 +10,7 @@
 import { useMemo, useState } from 'react';
 import { useDemoMode } from '../../hooks/useDemoMode';
 import { useCareItems, useDiscardItem } from '../../hooks/useCareItems';
-import type { CareItem, ItemStatus, RemainingHandlingLog } from '../../types/careItem';
+import type { CareItem, ItemStatus } from '../../types/careItem';
 import {
   getCategoryIcon,
   getServingMethodLabel,
@@ -215,39 +215,35 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
     return groups;
   }, [items]);
 
-  // Phase 42: 残り対応タブ用ログ履歴グループ
-  // 全品物の remainingHandlingLogs を収集して日時順にソート
-  type LogWithItem = RemainingHandlingLog & { item: CareItem };
-
-  const remainingLogs = useMemo(() => {
-    const discarded: LogWithItem[] = [];
-    const stored: LogWithItem[] = [];
+  // Phase 42: 残り対応タブ用 - 品物ベースでグループ化
+  // 最新の残り対応ログに基づいて品物を分類
+  const remainingItems = useMemo(() => {
+    const discarded: CareItem[] = [];
+    const stored: CareItem[] = [];
 
     items.forEach((item) => {
       const logs = item.remainingHandlingLogs ?? [];
-      logs.forEach((log) => {
-        const logWithItem = { ...log, item };
-        if (log.handling === 'discarded') {
-          discarded.push(logWithItem);
-        } else if (log.handling === 'stored') {
-          stored.push(logWithItem);
-        }
-      });
+      if (logs.length === 0) return;
+
+      // 最新ログを取得（recordedAt降順でソート）
+      const sortedLogs = [...logs].sort(
+        (a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime()
+      );
+      const latestLog = sortedLogs[0];
+
+      if (latestLog.handling === 'discarded') {
+        discarded.push(item);
+      } else if (latestLog.handling === 'stored') {
+        stored.push(item);
+      }
     });
-
-    // 日時降順（新しい順）でソート
-    const sortByDate = (a: LogWithItem, b: LogWithItem) =>
-      new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime();
-
-    discarded.sort(sortByDate);
-    stored.sort(sortByDate);
 
     return { discarded, stored };
   }, [items]);
 
-  // 各サブタブの総数
-  const discardedCount = remainingLogs.discarded.length;
-  const storedCount = remainingLogs.stored.length;
+  // 各サブタブの品物数
+  const discardedCount = remainingItems.discarded.length;
+  const storedCount = remainingItems.stored.length;
 
   if (isLoading) {
     return (
@@ -493,7 +489,7 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
                   : 'text-gray-600 hover:text-gray-800'
               }`}
             >
-              🗑️ 破棄履歴
+              🗑️ 破棄済み
               {discardedCount > 0 && (
                 <span className="ml-1 px-1.5 py-0.5 text-xs bg-red-100 text-red-700 rounded-full">
                   {discardedCount}
@@ -508,7 +504,7 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
                   : 'text-gray-600 hover:text-gray-800'
               }`}
             >
-              📦 保存履歴
+              📦 保存済み
               {storedCount > 0 && (
                 <span className="ml-1 px-1.5 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full">
                   {storedCount}
@@ -517,77 +513,45 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
             </button>
           </div>
 
-          {/* 破棄履歴サブタブ */}
+          {/* 破棄済みサブタブ */}
           {remainingSubTab === 'discarded' && (
             <div className="space-y-3">
-              {remainingLogs.discarded.length > 0 ? (
-                <>
-                  {remainingLogs.discarded.map((log) => (
-                    <LogCard key={log.id} log={log} type="discarded" />
-                  ))}
-                  {/* 追加記録ボタン */}
-                  <div className="pt-3 border-t border-gray-200">
-                    <select
-                      onChange={(e) => {
-                        const item = items.find(i => i.id === e.target.value);
-                        if (item) setRemainingHandlingTarget(item);
-                        e.target.value = '';
-                      }}
-                      className="w-full p-3 border border-red-300 rounded-lg bg-red-50 text-gray-700"
-                      defaultValue=""
-                    >
-                      <option value="" disabled>＋ 新しい破棄を記録する...</option>
-                      {items.map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {getCategoryIcon(item.category)} {item.itemName}（残 {item.remainingQuantity ?? item.quantity}{item.unit}）
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </>
+              {remainingItems.discarded.length > 0 ? (
+                remainingItems.discarded.map((item) => (
+                  <RemainingItemCard
+                    key={item.id}
+                    item={item}
+                    type="discarded"
+                    onRecordClick={() => setSelectedItem(item)}
+                    onRemainingClick={() => setRemainingHandlingTarget(item)}
+                  />
+                ))
               ) : (
                 <div className="p-8 text-center text-gray-500">
                   <div className="text-4xl mb-4">🗑️</div>
-                  <p className="font-medium">破棄履歴はありません</p>
-                  <p className="text-sm mt-2">上のドロップダウンから品物を選択して記録してください</p>
+                  <p className="font-medium">破棄済みの品物はありません</p>
                 </div>
               )}
             </div>
           )}
 
-          {/* 保存履歴サブタブ */}
+          {/* 保存済みサブタブ */}
           {remainingSubTab === 'stored' && (
             <div className="space-y-3">
-              {remainingLogs.stored.length > 0 ? (
-                <>
-                  {remainingLogs.stored.map((log) => (
-                    <LogCard key={log.id} log={log} type="stored" />
-                  ))}
-                  {/* 追加記録ボタン */}
-                  <div className="pt-3 border-t border-gray-200">
-                    <select
-                      onChange={(e) => {
-                        const item = items.find(i => i.id === e.target.value);
-                        if (item) setRemainingHandlingTarget(item);
-                        e.target.value = '';
-                      }}
-                      className="w-full p-3 border border-blue-300 rounded-lg bg-blue-50 text-gray-700"
-                      defaultValue=""
-                    >
-                      <option value="" disabled>＋ 新しい保存を記録する...</option>
-                      {items.map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {getCategoryIcon(item.category)} {item.itemName}（残 {item.remainingQuantity ?? item.quantity}{item.unit}）
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </>
+              {remainingItems.stored.length > 0 ? (
+                remainingItems.stored.map((item) => (
+                  <RemainingItemCard
+                    key={item.id}
+                    item={item}
+                    type="stored"
+                    onRecordClick={() => setSelectedItem(item)}
+                    onRemainingClick={() => setRemainingHandlingTarget(item)}
+                  />
+                ))
               ) : (
                 <div className="p-8 text-center text-gray-500">
                   <div className="text-4xl mb-4">📦</div>
-                  <p className="font-medium">保存履歴はありません</p>
-                  <p className="text-sm mt-2">上のドロップダウンから品物を選択して記録してください</p>
+                  <p className="font-medium">保存済みの品物はありません</p>
                 </div>
               )}
             </div>
@@ -777,52 +741,119 @@ function ItemCard({ item, highlight, onRecordClick, onDiscardClick }: ItemCardPr
   );
 }
 
-// 履歴ログカードコンポーネント（Phase 42）
-interface LogCardProps {
-  log: RemainingHandlingLog & { item: CareItem };
+// 残り対応品物カードコンポーネント（Phase 42）
+// ItemCardと同様の形式で品物情報を表示
+interface RemainingItemCardProps {
+  item: CareItem;
   type: 'discarded' | 'stored';
+  onRecordClick: () => void;
+  onRemainingClick: () => void;
 }
 
-function LogCard({ log, type }: LogCardProps) {
-  const icon = type === 'discarded' ? '🗑️' : '📦';
-  const bgColor = type === 'discarded' ? 'bg-red-50' : 'bg-blue-50';
-  const borderColor = type === 'discarded' ? 'border-red-200' : 'border-blue-200';
-  const iconColor = type === 'discarded' ? 'text-red-600' : 'text-blue-600';
+function RemainingItemCard({ item, type, onRecordClick, onRemainingClick }: RemainingItemCardProps) {
+  const daysUntil = getDaysUntilExpiration(item);
+  const remainingQty = item.currentQuantity ?? item.remainingQuantity ?? item.quantity;
 
-  // 日時フォーマット
-  const date = new Date(log.recordedAt);
-  const dateStr = date.toLocaleDateString('ja-JP', {
-    month: 'numeric',
-    day: 'numeric',
-  });
-  const timeStr = date.toLocaleTimeString('ja-JP', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const borderColor = type === 'discarded'
+    ? 'border-red-300 bg-red-50'
+    : 'border-blue-300 bg-blue-50';
+
+  const statusBadge = type === 'discarded'
+    ? { icon: '🗑️', text: '破棄済み', bgColor: 'bg-red-100 text-red-700' }
+    : { icon: '📦', text: '保存済み', bgColor: 'bg-blue-100 text-blue-700' };
 
   return (
-    <div className={`${bgColor} border ${borderColor} rounded-lg p-4`}>
-      <div className="flex items-start gap-3">
-        <span className={`text-2xl ${iconColor}`}>{icon}</span>
-        <div className="flex-1 min-w-0">
+    <div className={`rounded-lg border-2 p-4 ${borderColor}`}>
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-bold text-gray-800">
-              {getCategoryIcon(log.item.category)} {log.item.itemName}
+              {getCategoryIcon(item.category)} {item.itemName}
             </span>
-            <span className="text-sm text-gray-500">
-              {log.quantity}{log.item.unit}
+            <span className={`text-xs px-2 py-0.5 rounded ${statusBadge.bgColor}`}>
+              {statusBadge.icon} {statusBadge.text}
             </span>
           </div>
-          <div className="text-sm text-gray-600 mt-1">
-            <span>📅 {dateStr} {timeStr}</span>
-            <span className="mx-2">•</span>
-            <span>👤 {log.recordedBy}</span>
-          </div>
-          {log.note && (
-            <div className="text-sm text-gray-600 mt-2 italic">
-              💬 {log.note}
+
+          <div className="mt-2 text-sm text-gray-600 space-y-1">
+            <div className="flex items-center gap-2">
+              <span>残り {remainingQty}{item.unit}</span>
+              <span className="text-gray-300">┃</span>
+              {item.expirationDate ? (
+                <span className={
+                  daysUntil !== null && daysUntil < 0
+                    ? 'text-red-600 font-medium'
+                    : daysUntil !== null && daysUntil <= 3
+                      ? 'text-orange-600 font-medium'
+                      : ''
+                }>
+                  期限 {new Date(item.expirationDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}
+                  {daysUntil !== null && daysUntil < 0 && ` (${Math.abs(daysUntil)}日超過)`}
+                  {daysUntil !== null && daysUntil >= 0 && daysUntil <= 3 && ` (あと${daysUntil}日)`}
+                </span>
+              ) : (
+                <span className="text-gray-400">期限なし</span>
+              )}
             </div>
-          )}
+
+            {/* スケジュール表示 */}
+            {item.servingSchedule ? (
+              <ScheduleDisplay schedule={item.servingSchedule} compact />
+            ) : item.plannedServeDate ? (
+              <div className="flex items-center gap-1 text-blue-600">
+                <span>📅</span>
+                <span>
+                  {new Date(item.plannedServeDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}
+                  {isScheduledForToday(item) && ' (今日)'}
+                  {isScheduledForTomorrow(item) && ' (明日)'}
+                </span>
+              </div>
+            ) : null}
+
+            {/* 提供方法・保存方法・残り処置 */}
+            <div className="flex flex-wrap gap-2 mt-2">
+              {item.servingMethod && (
+                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                  🍽️ {getServingMethodLabel(item.servingMethod)}
+                  {item.servingMethodDetail && `: ${item.servingMethodDetail}`}
+                </span>
+              )}
+              {item.storageMethod && (
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                  📦 {getStorageLabel(item.storageMethod)}
+                </span>
+              )}
+              {item.remainingHandlingInstruction && (
+                <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">
+                  🔄 残り: {getRemainingHandlingInstructionLabel(item.remainingHandlingInstruction)}
+                </span>
+              )}
+            </div>
+
+            {item.noteToStaff && (
+              <div className="flex items-start gap-1 text-gray-600 mt-2">
+                <span>💬</span>
+                <span className="italic">「{item.noteToStaff}」</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2 ml-4">
+          <button
+            onClick={onRecordClick}
+            className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-1"
+          >
+            <span>🍪</span>
+            <span>提供記録</span>
+          </button>
+          <button
+            onClick={onRemainingClick}
+            className="px-4 py-2 bg-gray-500 text-white text-sm font-medium rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-1"
+          >
+            <span>🔄</span>
+            <span>残り対応</span>
+          </button>
         </div>
       </div>
     </div>
