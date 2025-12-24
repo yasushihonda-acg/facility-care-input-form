@@ -193,9 +193,3 @@ export {
   updateStaffNote,
   deleteStaffNote,
 } from "./functions/staffNotes";
-
-// =============================================================================
-// 残り対応記録（Phase 42）
-// =============================================================================
-
-export {submitRemainingHandling} from "./functions/submitRemainingHandling";
