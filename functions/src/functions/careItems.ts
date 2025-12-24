@@ -195,6 +195,8 @@ async function submitCareItemHandler(
       residentId,
       userId,
       itemName: item.itemName,
+      // 統計用の正規化名（未設定時はitemNameをフォールバック）
+      normalizedName: item.normalizedName || item.itemName,
       category: item.category,
       sentDate: item.sentDate,
       quantity: item.quantity,

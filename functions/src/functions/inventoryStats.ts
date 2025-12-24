@@ -212,7 +212,8 @@ async function calculateFoodStats(
   }>();
 
   for (const item of items) {
-    const name = item.itemName;
+    // 統計用名称: normalizedName優先、未設定時はitemNameにフォールバック
+    const name = item.normalizedName || item.itemName;
     const category = item.category;
     const consumptionRate = item.consumptionSummary?.avgConsumptionRate ?? item.consumptionRate ?? 0;
     const servings = item.consumptionSummary?.totalServed ?? (item.actualServeDate ? 1 : 0);

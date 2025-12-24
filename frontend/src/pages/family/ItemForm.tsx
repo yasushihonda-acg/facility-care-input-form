@@ -148,6 +148,8 @@ export function ItemForm() {
       ...prev,
       // 品物名（プリセット名からカッコ前を抽出）
       itemName,
+      // 統計用の表示名（品物名と同じ）
+      normalizedName: itemName,
       // カテゴリ（食べ物/飲み物）
       ...(preset.itemCategory && { category: preset.itemCategory }),
       // 保存方法
@@ -348,6 +350,28 @@ export function ItemForm() {
                 onApply={handleApplySuggestion}
               />
             )}
+          </div>
+
+          {/* 統計用の表示名（Phase 43: 品物名の正規化） */}
+          <div>
+            <label htmlFor="normalizedName" className="block text-sm font-medium text-gray-700 mb-1">
+              <span className="flex items-center gap-1">
+                <span>📊</span>
+                <span>統計での表示名</span>
+                <span className="text-xs text-gray-400 font-normal">（任意）</span>
+              </span>
+            </label>
+            <input
+              id="normalizedName"
+              type="text"
+              value={formData.normalizedName || ''}
+              onChange={(e) => updateField('normalizedName', e.target.value || undefined)}
+              placeholder={formData.itemName || '品物名と同じ（変更可能）'}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              例: 「森永プリン」→「プリン」。同じ種類の品物を同じ名前にすると統計がまとまります。
+            </p>
           </div>
 
           {/* カテゴリ（Phase 31: 2カテゴリに簡素化） */}

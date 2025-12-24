@@ -510,6 +510,8 @@ export interface CareItem {
 
   // 品物基本情報（家族が入力）
   itemName: string;
+  /** 統計用の基準品目名（例: 「森永プリン」→「プリン」）。未設定時はitemNameを使用 */
+  normalizedName?: string;
   category: ItemCategory;
   sentDate: string; // YYYY-MM-DD
   quantity: number; // 旧: 互換性のため残す
@@ -559,6 +561,8 @@ export interface CareItem {
 /** 家族が入力する品物登録フォーム */
 export interface CareItemInput {
   itemName: string;
+  /** 統計用の基準品目名（例: 「森永プリン」→「プリン」）。未設定時はitemNameを使用 */
+  normalizedName?: string;
   category: ItemCategory;
   sentDate: string;
   quantity: number;
