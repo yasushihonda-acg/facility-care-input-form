@@ -240,11 +240,15 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
       totalServedQuantity: 3,
       totalConsumedQuantity: 2.4,
       avgConsumptionRate: 80,
+      lastServedDate: getDateString(0), // 今日記録済み → 「入力済み」表示
+      lastServedBy: 'スタッフA',
     },
     consumptionRate: 80,
+    noteToStaff: 'おやつタイムに1切れずつ提供してください',
     // Phase 13.2 テスト用: 毎日スケジュール
     servingSchedule: {
       type: 'daily',
+      startDate: getDateString(-2),
       timeSlot: 'snack',
     } as ServingSchedule,
     createdAt: getDateTimeString(-2),
@@ -475,6 +479,66 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     } as ServingSchedule,
     createdAt: getDateTimeString(-10),
     updatedAt: getDateTimeString(0),
+  },
+
+  // ===== 提供漏れサンプル（スケジュール通りに提供されていない） =====
+  {
+    id: 'demo-item-015',
+    residentId: 'resident-001',
+    userId: 'family-001',
+    itemName: 'ゼリー（提供漏れ）',
+    category: 'food' as ItemCategory,
+    sentDate: getDateString(-7),
+    initialQuantity: 4,
+    currentQuantity: 4,
+    remainingQuantity: 4,
+    quantity: 4,
+    unit: '個',
+    status: 'pending' as ItemStatus, // まだ一度も提供されていない
+    expirationDate: getDateString(5),
+    storageMethod: 'refrigerated',
+    servingMethod: 'as_is' as ServingMethod,
+    servingMethodDetail: '冷やしてそのまま提供',
+    noteToStaff: '喉に詰まらないよう注意',
+    remainingHandlingInstruction: 'stored' as RemainingHandlingInstruction,
+    // 5日前からスケジュールされているが一度も記録なし → 提供漏れ
+    servingSchedule: {
+      type: 'daily',
+      startDate: getDateString(-5), // 5日前から毎日予定だったが...
+      timeSlot: 'snack',
+      note: 'おやつ時に1個提供',
+    } as ServingSchedule,
+    // consumptionSummary がない = 一度も記録されていない
+    createdAt: getDateTimeString(-7),
+    updatedAt: getDateTimeString(-7),
+  },
+  {
+    id: 'demo-item-016',
+    residentId: 'resident-001',
+    userId: 'family-001',
+    itemName: 'クッキー（提供漏れ・期限切れ）',
+    category: 'food' as ItemCategory,
+    sentDate: getDateString(-10),
+    initialQuantity: 10,
+    currentQuantity: 10,
+    remainingQuantity: 10,
+    quantity: 10,
+    unit: '枚',
+    status: 'pending' as ItemStatus,
+    expirationDate: getDateString(-2), // 2日前に期限切れ → 赤色で目立つ
+    storageMethod: 'room_temp',
+    servingMethod: 'as_is' as ServingMethod,
+    servingMethodDetail: 'そのまま提供',
+    noteToStaff: '1回2枚まで',
+    // 1週間前からスケジュールされているが記録なし＋期限切れ
+    servingSchedule: {
+      type: 'weekly',
+      startDate: getDateString(-7), // 7日前から週2回予定だったが...
+      weekdays: [2, 5], // 火・金
+      timeSlot: 'snack',
+    } as ServingSchedule,
+    createdAt: getDateTimeString(-10),
+    updatedAt: getDateTimeString(-10),
   },
 ];
 
