@@ -517,7 +517,7 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
                     item={item}
                     type="stored"
                     showButtons={true}
-                    onRecordClick={() => setSelectedItem(item)}
+                    onRecordClick={() => handleRecordClick(item)}
                   />
                 ))
               ) : (

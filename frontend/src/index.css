@@ -48,3 +48,14 @@ body {
 #root {
   min-height: 100vh;
 }
+
+/* 全てのボタン・クリック可能要素にポインターカーソル */
+button,
+[role="button"],
+select,
+a,
+input[type="checkbox"],
+input[type="radio"],
+.cursor-pointer {
+  cursor: pointer;
+}
