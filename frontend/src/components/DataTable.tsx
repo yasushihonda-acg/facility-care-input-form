@@ -405,7 +405,7 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
       )}
 
       {/* テーブル */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto" style={{ maxHeight: 'calc(100vh - 380px)' }}>
         <table className="w-full border-collapse table-fixed">
           <thead className="sticky top-0 z-10">
             <tr className="bg-gray-100">
