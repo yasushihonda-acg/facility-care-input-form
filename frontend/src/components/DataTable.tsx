@@ -417,7 +417,7 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
                 return (
                   <th
                     key={column.originalHeader}
-                    className="relative px-3 py-2 text-left text-xs font-semibold text-gray-600 border-b border-gray-200 whitespace-nowrap group"
+                    className="relative px-3 py-2 text-left text-xs font-semibold text-gray-600 border-b border-gray-200 whitespace-nowrap group bg-gray-100"
                     style={{
                       width: typeof currentWidth === 'number' ? `${currentWidth}px` : currentWidth,
                       minWidth: column.width === 'flex-1' ? '120px' : `${minWidth}px`,
@@ -444,7 +444,7 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
                 );
               })}
               <th
-                className="px-3 py-2 text-left text-xs font-semibold text-gray-600 border-b border-gray-200"
+                className="px-3 py-2 text-left text-xs font-semibold text-gray-600 border-b border-gray-200 bg-gray-100"
                 style={{ width: '50px' }}
               >
                 詳細
