@@ -290,7 +290,7 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col flex-1 min-h-0">
       {/* ソートバー + 検索トグル */}
       <div className="flex items-center gap-2 p-3 bg-white border-b border-gray-200">
         {/* 検索トグルボタン */}
