@@ -94,29 +94,36 @@ function isMissedSchedule(item: CareItem): boolean {
   const schedule = item.servingSchedule;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const todayStr = today.toISOString().split('T')[0];
 
-  // startDateがない場合は判定不可
-  if (!schedule.startDate) return false;
-
-  // once/specific_dates: 開始日が過去で、記録がない
-  if (schedule.type === 'once' || schedule.type === 'specific_dates') {
-    const startDate = new Date(schedule.startDate);
-    startDate.setHours(0, 0, 0, 0);
-    if (startDate < today) {
-      // 最後の記録日が開始日以降でなければ提供漏れ
+  // once: 提供予定日が過去で、記録がない
+  if (schedule.type === 'once') {
+    if (!schedule.date) return false;
+    if (schedule.date < todayStr) {
+      // 最後の記録日が提供予定日以降でなければ提供漏れ
       const lastServed = item.consumptionSummary?.lastServedDate;
       if (!lastServed) return true;
-      const lastServedDate = new Date(lastServed);
-      lastServedDate.setHours(0, 0, 0, 0);
-      if (lastServedDate < startDate) {
-        return true;
-      }
+      if (lastServed < schedule.date) return true;
     }
+    return false;
   }
 
-  // daily/weekly: 昨日以前にスケジュールされていたが記録がない場合
-  // （簡易的に、lastServedDateが3日以上前なら提供漏れとする）
+  // specific_dates: 過去の提供予定日に記録がない
+  if (schedule.type === 'specific_dates') {
+    if (!schedule.dates || schedule.dates.length === 0) return false;
+    const pastDates = schedule.dates.filter(d => d < todayStr);
+    if (pastDates.length === 0) return false;
+    // 最後の記録日が最古の予定日以降でなければ提供漏れ
+    const lastServed = item.consumptionSummary?.lastServedDate;
+    if (!lastServed) return true;
+    const oldestPastDate = pastDates.sort()[0];
+    if (lastServed < oldestPastDate) return true;
+    return false;
+  }
+
+  // daily/weekly: 開始日から3日以上経過して記録がない場合
   if (schedule.type === 'daily' || schedule.type === 'weekly') {
+    if (!schedule.startDate) return false;
     const lastServed = item.consumptionSummary?.lastServedDate;
     if (!lastServed) {
       // 一度も記録がない場合、開始日が3日以上前なら提供漏れ
