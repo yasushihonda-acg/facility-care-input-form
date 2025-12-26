@@ -74,12 +74,16 @@ function getDaysUntilExpiration(item: CareItem): number | null {
   return Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
+// ローカル日付を YYYY-MM-DD 形式で取得（toISOStringはUTCなので使わない）
+function getLocalDateString(date: Date = new Date()): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
 // 今日記録済みかどうかを判定
 function isRecordedToday(item: CareItem): boolean {
   const lastServedDate = item.consumptionSummary?.lastServedDate;
   if (!lastServedDate) return false;
-  const today = new Date().toISOString().split('T')[0];
-  return lastServedDate === today;
+  return lastServedDate === getLocalDateString();
 }
 
 // 過去にスケジュールされていたが記録がない（提供漏れ）を判定
@@ -92,21 +96,7 @@ function isMissedSchedule(item: CareItem): boolean {
 
   // スケジュールタイプ別に判定
   const schedule = item.servingSchedule;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayStr = today.toISOString().split('T')[0];
-
-  // DEBUG
-  if (item.itemName.includes('ヨーグルト')) {
-    console.log('[DEBUG isMissedSchedule]', {
-      itemName: item.itemName,
-      scheduleType: schedule.type,
-      scheduleDate: (schedule as { date?: string }).date,
-      todayStr,
-      comparison: (schedule as { date?: string }).date ? `${(schedule as { date?: string }).date} < ${todayStr} = ${(schedule as { date?: string }).date! < todayStr}` : 'no date',
-      lastServed: item.consumptionSummary?.lastServedDate,
-    });
-  }
+  const todayStr = getLocalDateString();
 
   // once: 提供予定日が過去で、記録がない
   if (schedule.type === 'once') {
@@ -141,7 +131,9 @@ function isMissedSchedule(item: CareItem): boolean {
       // 一度も記録がない場合、開始日が3日以上前なら提供漏れ
       const startDate = new Date(schedule.startDate);
       startDate.setHours(0, 0, 0, 0);
-      const threeDaysAgo = new Date(today);
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      const threeDaysAgo = new Date(now);
       threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
       if (startDate < threeDaysAgo) {
         return true;
