@@ -96,6 +96,18 @@ function isMissedSchedule(item: CareItem): boolean {
   today.setHours(0, 0, 0, 0);
   const todayStr = today.toISOString().split('T')[0];
 
+  // DEBUG
+  if (item.itemName.includes('ヨーグルト')) {
+    console.log('[DEBUG isMissedSchedule]', {
+      itemName: item.itemName,
+      scheduleType: schedule.type,
+      scheduleDate: (schedule as { date?: string }).date,
+      todayStr,
+      comparison: (schedule as { date?: string }).date ? `${(schedule as { date?: string }).date} < ${todayStr} = ${(schedule as { date?: string }).date! < todayStr}` : 'no date',
+      lastServed: item.consumptionSummary?.lastServedDate,
+    });
+  }
+
   // once: 提供予定日が過去で、記録がない
   if (schedule.type === 'once') {
     if (!schedule.date) return false;
