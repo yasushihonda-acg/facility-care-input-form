@@ -84,7 +84,7 @@ instruction?: { content: string; };
 ## 開発履歴
 Phase 1〜43.1完了。詳細は `git log` を参照。
 
-- **Phase 43.1**: 品物名正規化AI（Gemini 2.5 Flash Lite）
+- **Phase 44**: 品物名正規化AI（Gemini 2.5 Flash Lite）
   - POST /normalizeItemName API
   - ItemForm: 品物名入力後、統計用表示名を自動提案
 
@@ -110,7 +110,7 @@ Service Workerキャッシュによる更新遅延問題に対応:
 詳細: docs/ARCHITECTURE.md セクション10.5
 
 ## E2Eテスト
-394件定義（Phase 41まで）
+406件定義（Phase 41まで）
 
 ## ドキュメント更新方針
 
