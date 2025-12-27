@@ -5,15 +5,17 @@
  */
 
 import { useState, useCallback, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import { AISuggestion } from '../../components/family/AISuggestion';
 import { SaveAISuggestionDialog } from '../../components/family/SaveAISuggestionDialog';
 import { SaveManualPresetDialog } from '../../components/family/SaveManualPresetDialog';
+import { PresetFormModal } from '../../components/family/PresetFormModal';
 import { ServingScheduleInput } from '../../components/family/ServingScheduleInput';
 import { useSubmitCareItem } from '../../hooks/useCareItems';
 import { useDemoMode } from '../../hooks/useDemoMode';
 import { useAISuggest } from '../../hooks/useAISuggest';
+import { usePresets, useCreatePreset, useUpdatePreset } from '../../hooks/usePresets';
 import {
   ITEM_CATEGORIES,
   STORAGE_METHODS,
@@ -74,6 +76,18 @@ export function ItemForm() {
   // 手動登録後のプリセット保存ダイアログ用state
   const [showManualPresetDialog, setShowManualPresetDialog] = useState(false);
   const [registeredFormData, setRegisteredFormData] = useState<CareItemInput | null>(null);
+
+  // Phase 44: プリセット編集・新規追加用state
+  const [editingPreset, setEditingPreset] = useState<CarePreset | null>(null);
+  const [isCreatingPreset, setIsCreatingPreset] = useState(false);
+
+  // プリセット一覧を取得（usePresetsフック）
+  const { data: presetsData } = usePresets({ residentId: DEMO_RESIDENT_ID });
+  const createPresetMutation = useCreatePreset();
+  const updatePresetMutation = useUpdatePreset();
+
+  // プリセット一覧（APIデータまたはデモデータ）
+  const presets = presetsData?.presets?.length ? presetsData.presets : DEMO_PRESETS;
 
   // Phase 43.1: 品物名正規化の状態
   const [isNormalizing, setIsNormalizing] = useState(false);
@@ -327,28 +341,65 @@ export function ItemForm() {
           {/* いつもの指示（プリセット）- 品物名の上に配置 */}
           {/* @see docs/ITEM_MANAGEMENT_SPEC.md - フォーム順序の設計原則 */}
           <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
-            <label className="flex items-center gap-2 text-sm font-medium text-amber-700 mb-3">
-              <span>⚡</span>
-              <span>いつもの指示（プリセット）</span>
-            </label>
+            {/* ヘッダー：タイトル + 新規追加ボタン */}
+            <div className="flex items-center justify-between mb-3">
+              <label className="flex items-center gap-2 text-sm font-medium text-amber-700">
+                <span>⚡</span>
+                <span>いつもの指示（プリセット）</span>
+              </label>
+              <button
+                type="button"
+                onClick={() => setIsCreatingPreset(true)}
+                className="text-xs px-2 py-1 text-amber-700 bg-amber-100 hover:bg-amber-200 rounded border border-amber-300 transition-colors"
+              >
+                + 新規追加
+              </button>
+            </div>
+            {/* プリセット一覧 */}
             <div className="grid grid-cols-3 gap-2">
-              {DEMO_PRESETS.map((preset) => (
-                <button
+              {presets.map((preset) => (
+                <div
                   key={preset.id}
-                  type="button"
-                  onClick={() => handleApplyPreset(preset)}
-                  className="flex flex-col items-center gap-1 p-2 bg-white rounded-lg border border-amber-200 hover:border-amber-400 hover:bg-amber-100 transition-colors text-center"
+                  className="relative flex flex-col items-center gap-1 p-2 bg-white rounded-lg border border-amber-200 hover:border-amber-400 hover:bg-amber-100 transition-colors text-center group"
                 >
-                  <span className="text-xl">{preset.icon}</span>
-                  <span className="text-xs text-gray-700 line-clamp-2">
-                    {preset.name.replace(/[（(].*/g, '')}
-                  </span>
-                </button>
+                  {/* 編集アイコン */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingPreset(preset);
+                    }}
+                    className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center text-xs text-gray-400 hover:text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="編集"
+                  >
+                    ✏️
+                  </button>
+                  {/* クリックで適用 */}
+                  <button
+                    type="button"
+                    onClick={() => handleApplyPreset(preset)}
+                    className="w-full flex flex-col items-center gap-1"
+                  >
+                    <span className="text-xl">{preset.icon}</span>
+                    <span className="text-xs text-gray-700 line-clamp-2">
+                      {preset.name.replace(/[（(].*/g, '')}
+                    </span>
+                  </button>
+                </div>
               ))}
             </div>
-            <p className="text-xs text-amber-600 mt-2">
-              ※ 選択すると品物名と提供方法詳細が自動入力されます
-            </p>
+            {/* フッター：説明 + 一覧管理リンク */}
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-xs text-amber-600">
+                ※ 選択すると品物名と提供方法詳細が自動入力されます
+              </p>
+              <Link
+                to={isDemo ? '/demo/family/presets' : '/family/presets'}
+                className="text-xs text-amber-700 hover:text-amber-900 underline"
+              >
+                📋 一覧で管理
+              </Link>
+            </div>
           </div>
 
           {/* 品物名 */}
@@ -727,6 +778,45 @@ export function ItemForm() {
           residentId={DEMO_RESIDENT_ID}
           userId={DEMO_USER_ID}
           formData={registeredFormData}
+        />
+      )}
+
+      {/* Phase 44: プリセット作成/編集モーダル */}
+      {(isCreatingPreset || editingPreset) && (
+        <PresetFormModal
+          preset={editingPreset}
+          onClose={() => {
+            setIsCreatingPreset(false);
+            setEditingPreset(null);
+          }}
+          onSave={async (input) => {
+            // デモモードの場合: APIを呼ばず、成功メッセージを表示
+            if (isDemo) {
+              const action = editingPreset ? '更新' : '作成';
+              alert(`${action}しました（デモモード - 実際には保存されません）`);
+              setIsCreatingPreset(false);
+              setEditingPreset(null);
+              return;
+            }
+
+            // 本番モードの場合: 通常通りAPI呼び出し
+            if (editingPreset) {
+              await updatePresetMutation.mutateAsync({
+                presetId: editingPreset.id,
+                updates: input,
+              });
+            } else {
+              await createPresetMutation.mutateAsync({
+                residentId: DEMO_RESIDENT_ID,
+                userId: DEMO_USER_ID,
+                preset: input,
+                source: 'manual',
+              });
+            }
+            setIsCreatingPreset(false);
+            setEditingPreset(null);
+          }}
+          isSaving={createPresetMutation.isPending || updatePresetMutation.isPending}
         />
       )}
     </Layout>
