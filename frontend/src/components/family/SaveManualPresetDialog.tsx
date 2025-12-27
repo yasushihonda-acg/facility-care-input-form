@@ -13,6 +13,9 @@ const ITEM_CATEGORY_LABELS: Record<ItemCategory, string> = {
   drink: '飲み物',
 };
 
+// アイコン選択肢（PresetFormModalと共通）
+const ICON_OPTIONS = ['🥝', '🍎', '🍊', '🍑', '🍌', '🍇', '🍓', '🍈', '🥭', '🧅', '🥕', '🥒', '🍰', '🍮', '🥛', '🍚', '🍵', '☕'];
+
 // 提供方法ラベル
 // Phase 28で整理: cooled/blended削除
 const SERVING_METHOD_LABELS: Record<string, string> = {
@@ -51,6 +54,10 @@ export function SaveManualPresetDialog({
   // 表示用のプリセット名（カスタム入力があればそれを優先）
   const presetName = customPresetName ?? defaultPresetName;
 
+  // アイコン選択（デフォルト: カテゴリに基づく）
+  const defaultIcon = formData.category === 'drink' ? '🥛' : '🥝';
+  const [selectedIcon, setSelectedIcon] = useState(defaultIcon);
+
   const createPresetMutation = useCreatePreset();
 
   if (!isOpen) return null;
@@ -62,7 +69,7 @@ export function SaveManualPresetDialog({
         userId,
         preset: {
           name: presetName,
-          icon: '📌',
+          icon: selectedIcon,
           // 品物登録フォームの値をそのままプリセットに保存
           itemCategory: formData.category,
           storageMethod: formData.storageMethod,
@@ -140,7 +147,7 @@ export function SaveManualPresetDialog({
         <div className="p-4">
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-xl">📌</span>
+              <span className="text-xl">{selectedIcon}</span>
               <span className="font-bold text-amber-900">{formData.itemName}</span>
             </div>
             <div className="text-sm text-amber-800 space-y-1">
@@ -171,6 +178,29 @@ export function SaveManualPresetDialog({
                 </p>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* アイコン選択 */}
+        <div className="px-4 pb-2">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            アイコン
+          </label>
+          <div className="flex flex-wrap gap-1">
+            {ICON_OPTIONS.map((emoji) => (
+              <button
+                key={emoji}
+                type="button"
+                onClick={() => setSelectedIcon(emoji)}
+                className={`w-9 h-9 rounded-lg text-lg flex items-center justify-center transition-colors ${
+                  selectedIcon === emoji
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-100 hover:bg-gray-200'
+                }`}
+              >
+                {emoji}
+              </button>
+            ))}
           </div>
         </div>
 
