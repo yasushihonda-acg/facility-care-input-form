@@ -362,14 +362,14 @@ export function ItemForm() {
                   key={preset.id}
                   className="relative flex flex-col items-center gap-1 p-2 bg-white rounded-lg border border-amber-200 hover:border-amber-400 hover:bg-amber-100 transition-colors text-center group"
                 >
-                  {/* 編集アイコン */}
+                  {/* 編集アイコン（モバイル：常に薄く表示、デスクトップ：ホバー時に濃く） */}
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       setEditingPreset(preset);
                     }}
-                    className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center text-xs text-gray-400 hover:text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center text-sm text-gray-400 opacity-40 hover:opacity-100 hover:text-amber-600 group-hover:opacity-100 transition-opacity"
                     title="編集"
                   >
                     ✏️
