@@ -25,17 +25,18 @@ const PRESETS_KEY = 'presets';
 /**
  * プリセット一覧を取得するフック
  */
-export function usePresets(params: GetPresetsRequest) {
+export function usePresets(params: GetPresetsRequest & { enabled?: boolean }) {
+  const { enabled = true, ...queryParams } = params;
   return useQuery({
-    queryKey: [PRESETS_KEY, params],
+    queryKey: [PRESETS_KEY, queryParams],
     queryFn: async () => {
-      const response = await getPresets(params);
+      const response = await getPresets(queryParams);
       if (!response.success || !response.data) {
         throw new Error('Failed to fetch presets');
       }
       return response.data;
     },
-    enabled: !!params.residentId,
+    enabled: enabled && !!queryParams.residentId,
   });
 }
 

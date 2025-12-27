@@ -81,13 +81,16 @@ export function ItemForm() {
   const [editingPreset, setEditingPreset] = useState<CarePreset | null>(null);
   const [isCreatingPreset, setIsCreatingPreset] = useState(false);
 
-  // プリセット一覧を取得（usePresetsフック）
-  const { data: presetsData } = usePresets({ residentId: DEMO_RESIDENT_ID });
+  // プリセット一覧を取得（本番モードのみAPIを使用）
+  const { data: presetsData } = usePresets({
+    residentId: DEMO_RESIDENT_ID,
+    enabled: !isDemo, // デモモードではAPIを呼ばない
+  });
   const createPresetMutation = useCreatePreset();
   const updatePresetMutation = useUpdatePreset();
 
-  // プリセット一覧（APIデータまたはデモデータ）
-  const presets = presetsData?.presets?.length ? presetsData.presets : DEMO_PRESETS;
+  // プリセット一覧（デモモード: DEMO_PRESETS、本番: APIデータ）
+  const presets = isDemo ? DEMO_PRESETS : (presetsData?.presets || DEMO_PRESETS);
 
   // Phase 43.1: 品物名正規化の状態
   const [isNormalizing, setIsNormalizing] = useState(false);
