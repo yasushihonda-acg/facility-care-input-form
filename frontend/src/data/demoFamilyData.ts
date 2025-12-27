@@ -47,7 +47,7 @@ export const DEMO_PRESETS: CarePreset[] = [
   {
     id: 'preset-kiwi',
     residentId: 'resident-001',
-    name: 'キウイ（8等分・半月切り）',
+    name: 'キウイ',
     icon: '🥝',
     itemCategory: 'food',
     storageMethod: 'refrigerated',
@@ -65,7 +65,7 @@ export const DEMO_PRESETS: CarePreset[] = [
   {
     id: 'preset-persimmon',
     residentId: 'resident-001',
-    name: '柿（熟した部分も捨てずに）',
+    name: '柿',
     icon: '🍑',
     itemCategory: 'food',
     storageMethod: 'room_temp',
@@ -83,7 +83,7 @@ export const DEMO_PRESETS: CarePreset[] = [
   {
     id: 'preset-kuromame',
     residentId: 'resident-001',
-    name: '黒豆（煮汁を切って器へ）',
+    name: '黒豆',
     icon: '⚫',
     itemCategory: 'food',
     storageMethod: 'refrigerated',
@@ -102,7 +102,7 @@ export const DEMO_PRESETS: CarePreset[] = [
   {
     id: 'preset-rakkyo',
     residentId: 'resident-001',
-    name: 'らっきょう（冷・小皿で提供）',
+    name: 'らっきょう',
     icon: '🧅',
     itemCategory: 'food',
     storageMethod: 'refrigerated',
@@ -122,7 +122,7 @@ export const DEMO_PRESETS: CarePreset[] = [
   {
     id: 'preset-mikan',
     residentId: 'resident-001',
-    name: 'みかん（未剥離残食は→おやつへ再提供）',
+    name: 'みかん',
     icon: '🍊',
     itemCategory: 'food',
     storageMethod: 'room_temp',
@@ -142,7 +142,7 @@ export const DEMO_PRESETS: CarePreset[] = [
   {
     id: 'preset-kurozato',
     residentId: 'resident-001',
-    name: '黒砂糖（指定日のみ提供可）',
+    name: '黒砂糖',
     icon: '🍬',
     itemCategory: 'food',
     storageMethod: 'room_temp',
@@ -160,7 +160,7 @@ export const DEMO_PRESETS: CarePreset[] = [
   {
     id: 'preset-cheese',
     residentId: 'resident-001',
-    name: 'チーズ（指定日のみ提供可）',
+    name: 'チーズ',
     icon: '🧀',
     itemCategory: 'food',
     storageMethod: 'refrigerated',
