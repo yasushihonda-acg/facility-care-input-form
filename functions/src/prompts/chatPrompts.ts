@@ -26,10 +26,17 @@ export function buildChatSystemPrompt(): string {
 5. 回答は300文字以内で簡潔にまとめてください
 
 【重要：シート間の相関分析】
-複数のシートにまたがる質問（例：「頓服と排便の関係」）の場合：
-- 同じ日付のレコードを比較して相関を分析してください
-- 例：12/13に頓服を服用 → 同日の排便記録を確認 → 結果を報告
-- 日付ベースで因果関係や相関を考察してください
+複数のシートにまたがる質問の場合、同じ日付のレコードを比較して相関を分析してください。
+
+【回答例】
+Q: 頓服と排便の関係は？
+A: 12/13に頓服（マグミット）服用→同日有形便あり、12/17に頓服服用→同日有形便あり。頓服服用後に排便が見られるケースがあります。
+
+Q: 水分摂取と排尿の関係は？
+A: 水分摂取量が多い日（1500cc以上）は排尿回数も多く（5回以上）、少ない日（800cc未満）は排尿回数も少ない傾向があります。
+
+Q: バイタルに異常はありますか？
+A: 12/15に血圧142/88と高め、12/18に体温37.2℃と微熱がありました。いずれも翌日には正常値に戻っています。
 
 【データの種類】
 - 食事: 主食・副食の摂取率
@@ -151,18 +158,57 @@ function summarizeRecords(
 }
 
 /**
+ * 重要レコードかどうかを判定（Phase 45.3）
+ */
+function checkIfImportantRecord(record: PlanRecord): boolean {
+  // 頓服データあり
+  const tonpuku = String(record["何時に頓服薬を飲まれましたか？"] || "");
+  if (tonpuku && tonpuku !== "" && tonpuku !== "-") return true;
+
+  // 排便あり
+  const haiben = String(record["排便はありましたか？"] || "");
+  if (haiben && haiben.includes("あり")) return true;
+
+  // 水分摂取量が多い/少ない（1500cc以上 or 800cc未満）
+  const hydration = String(record["水分量はいくらでしたか？"] || "");
+  if (hydration) {
+    const amount = parseInt(hydration, 10);
+    if (!isNaN(amount) && (amount >= 1500 || amount < 800)) return true;
+  }
+
+  // バイタル異常（高血圧、発熱）
+  const bpHigh = String(record["最高血圧（BP）はいくつでしたか？"] || "");
+  const temp = String(record["体温（KT）はいくつでしたか？"] || "");
+  if (bpHigh) {
+    const bp = parseInt(bpHigh, 10);
+    if (!isNaN(bp) && bp >= 140) return true;
+  }
+  if (temp) {
+    const t = parseFloat(temp);
+    if (!isNaN(t) && t >= 37.5) return true;
+  }
+
+  // 血糖値異常（高血糖 180以上）
+  const bloodSugar = String(record["血糖値は？"] || "");
+  if (bloodSugar) {
+    const bs = parseInt(bloodSugar, 10);
+    if (!isNaN(bs) && bs >= 180) return true;
+  }
+
+  return false;
+}
+
+/**
  * 複数シート分析用：日付でグループ化して表示
  */
 function formatRecordsByDate(records: PlanRecord[]): string {
-  // 重要レコード（頓服データあり）を先に抽出
+  // 重要レコード（相関分析に有用なデータ）を先に抽出
   const importantRecords: PlanRecord[] = [];
   const normalRecords: PlanRecord[] = [];
 
   for (const record of records) {
-    const tonpuku = String(record["何時に頓服薬を飲まれましたか？"] || "");
-    const haiben = String(record["排便はありましたか？"] || "");
-    if ((tonpuku && tonpuku !== "" && tonpuku !== "-") ||
-        (haiben && haiben.includes("あり"))) {
+    const isImportant = checkIfImportantRecord(record);
+    if (isImportant) {
       importantRecords.push(record);
     } else {
       normalRecords.push(record);
@@ -173,7 +219,7 @@ function formatRecordsByDate(records: PlanRecord[]): string {
 
   // 重要レコードを最初に表示
   if (importantRecords.length > 0) {
-    result += "【重要レコード（頓服・排便あり）】\n";
+    result += "【重要レコード（頓服・排便・異常値など）】\n";
     for (const record of importantRecords) {
       const dateStr = record.date?.split(" ")[0] || "日付不明";
       const sheet = record.sheetName || "不明";
