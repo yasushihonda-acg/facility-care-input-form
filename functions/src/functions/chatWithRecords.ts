@@ -167,6 +167,13 @@ function extractBalancedRecords(
     bySheet[sheet].push(record);
   }
 
+  functions.logger.info("extractBalancedRecords", {
+    keywords,
+    sheetCounts: Object.fromEntries(
+      Object.entries(bySheet).map(([k, v]) => [k, v.length])
+    ),
+  });
+
   // 頓服のような特別なキーワードがある場合、関連日付を抽出
   const targetDates = new Set<string>();
   if (keywords.includes("頓服") && bySheet["内服"]) {
@@ -182,6 +189,10 @@ function extractBalancedRecords(
         }
       }
     }
+    functions.logger.info("頓服日付抽出", {
+      targetDates: Array.from(targetDates),
+      naifukuRecordCount: bySheet["内服"].length,
+    });
   }
 
   const result: PlanRecord[] = [];
