@@ -166,6 +166,15 @@ function formatSheetRecords(
     case "特記事項":
       result += formatNoteRecord(record);
       break;
+    case "体重":
+      result += formatWeightRecord(record);
+      break;
+    case "口腔ケア":
+      result += formatOralCareRecord(record);
+      break;
+    case "血糖値インスリン投与":
+      result += formatBloodSugarRecord(record);
+      break;
     default:
       result += formatGenericRecord(record);
     }
@@ -241,9 +250,48 @@ function formatMedicationRecord(record: PlanRecord): string {
 }
 
 function formatNoteRecord(record: PlanRecord): string {
-  const content = record["内容"] || record["content"] ||
-    record["特記事項"] || "";
-  return String(content).slice(0, 50);
+  const content = String(record["特記事項"] || "");
+  if (content && content !== "【ケアに関すること】\n\n【ACPiece】\n") {
+    return content.slice(0, 50);
+  }
+  return "";
+}
+
+function formatWeightRecord(record: PlanRecord): string {
+  const weight = String(record["何キロでしたか？"] || "");
+  const note = String(record["特記事項"] || "");
+  let result = weight ? `${weight}kg` : "";
+  if (note && note !== "【ケアに関すること】\n\n【ACPiece】\n") {
+    result += ` (${note.slice(0, 30)})`;
+  }
+  return result;
+}
+
+function formatOralCareRecord(record: PlanRecord): string {
+  const time = String(record["口腔ケアはいつのことですか？"] || "");
+  const note = String(record["特記事項"] || "");
+  let result = time;
+  if (note && note !== "【ケアに関すること】\n\n【ACPiece】\n") {
+    result += ` (${note.slice(0, 30)})`;
+  }
+  return result;
+}
+
+function formatBloodSugarRecord(record: PlanRecord): string {
+  const bloodSugar = String(record["血糖値は？"] || "");
+  const insulinUnit = String(record["インスリン投与単位は？"] || "");
+  const insulinTime = String(record["インスリン投与時間は？"] || "");
+  const measureTime = String(record["測定時間は？"] || "");
+  const note = String(record["特記事項"] || "");
+  const parts: string[] = [];
+  if (measureTime) parts.push(`測定:${measureTime}`);
+  if (bloodSugar) parts.push(`血糖値:${bloodSugar}`);
+  if (insulinUnit) parts.push(`インスリン:${insulinUnit}単位`);
+  if (insulinTime) parts.push(`投与時間:${insulinTime}`);
+  if (note && note !== "【ケアに関すること】\n\n【ACPiece】\n") {
+    parts.push(note.slice(0, 20));
+  }
+  return parts.join(" ");
 }
 
 function formatGenericRecord(record: PlanRecord): string {
