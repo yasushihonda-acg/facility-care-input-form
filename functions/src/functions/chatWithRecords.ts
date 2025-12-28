@@ -265,16 +265,22 @@ export const chatWithRecords = functions
       // デバッグ用: 推定されたシート
       const inferredSheets = inferRelatedSheets(message);
 
-      // デバッグ: サンプルレコードを確認
-      const sampleRecord = relevantRecords[0];
-      const sampleRecordKeys = sampleRecord ? Object.keys(sampleRecord) : [];
+      // デバッグ: シートごとのサンプルレコードを確認
+      const samplesBySheet: Record<string, unknown> = {};
+      for (const record of relevantRecords) {
+        if (!samplesBySheet[record.sheetName]) {
+          samplesBySheet[record.sheetName] = {
+            keys: Object.keys(record),
+            sample: JSON.stringify(record).slice(0, 300),
+          };
+        }
+      }
 
       functions.logger.info("chatWithRecords records extracted", {
         totalRecords: planDataResult.records.length,
         relevantRecords: relevantRecords.length,
         inferredSheets,
-        sampleRecordKeys,
-        sampleRecord: sampleRecord ? JSON.stringify(sampleRecord).slice(0, 500) : "none",
+        samplesBySheet,
       });
 
       // プロンプト構築
