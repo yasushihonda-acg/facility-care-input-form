@@ -1977,3 +1977,32 @@ export interface UpdateStaffNoteResponse {
 export interface DeleteStaffNoteRequest {
   noteId: string;
 }
+
+// =============================================================================
+// AIチャットボット Types (Phase 45)
+// =============================================================================
+
+/** チャットメッセージ（会話履歴用） */
+export interface RecordChatMessage {
+  role: "user" | "assistant";
+  content: string;
+  timestamp: string;
+}
+
+/** チャットリクエスト */
+export interface ChatWithRecordsRequest {
+  message: string;
+  context: {
+    sheetName?: string;
+    year?: number;
+    month?: number | null;
+  };
+  conversationHistory?: RecordChatMessage[];
+}
+
+/** チャットレスポンス */
+export interface ChatWithRecordsResponse {
+  message: string;
+  sources?: { sheetName: string; recordCount: number }[];
+  suggestedQuestions?: string[];
+}

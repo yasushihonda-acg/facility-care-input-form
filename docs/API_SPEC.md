@@ -103,6 +103,7 @@ https://asia-northeast1-facility-care-input-form.cloudfunctions.net
 | POST | `/aiSuggest` | AI品物入力補助 | Phase 8.4 | ⚠️ 未使用 |
 | POST | `/aiAnalyze` | AI摂食傾向分析 | Phase 8.4.1 | ✅ |
 | POST | `/normalizeItemName` | 品物名正規化 | Phase 43.1 | ✅ |
+| POST | `/chatWithRecords` | 記録閲覧AIチャット | Phase 45 | ✅ |
 | GET | `/getStats` | 統計データを取得 | Phase 8.3 | ✅ |
 | GET | `/getInventorySummary` | 在庫サマリーを取得 | Phase 9.3 | ✅ |
 | GET | `/getFoodStats` | 食品傾向統計を取得 | Phase 9.3 | ✅ |
@@ -1568,10 +1569,60 @@ curl -X POST \
 
 ---
 
+### 4.31 POST /chatWithRecords (Phase 45)
+
+記録閲覧ページのAIチャットボット。Firestoreの`plan_data`をRAGコンテキストとして使用し、ケア記録に関する質問に回答。
+
+**エンドポイント**: `POST /chatWithRecords`
+
+#### リクエストボディ
+
+```typescript
+interface ChatWithRecordsRequest {
+  message: string;              // ユーザーの質問
+  context: {
+    sheetName?: string;         // 選択中のシート名
+    year?: number;              // 選択中の年
+    month?: number | null;      // 選択中の月
+  };
+  conversationHistory?: {       // 会話履歴（直近5ターン）
+    role: 'user' | 'assistant';
+    content: string;
+    timestamp: string;
+  }[];
+}
+```
+
+#### レスポンス
+
+```typescript
+interface ChatWithRecordsResponse {
+  message: string;                                    // AIの回答
+  sources?: { sheetName: string; recordCount: number }[]; // 参照したデータソース
+  suggestedQuestions?: string[];                      // フォローアップ質問の提案
+}
+```
+
+#### 使用AIモデル
+
+| 項目 | 値 |
+|------|-----|
+| モデル | gemini-2.5-flash |
+| リージョン | asia-northeast1 |
+| 最大出力トークン | 1024 |
+| Temperature | 0.2 |
+
+#### デモモード
+
+`/demo/view` パスではAPIを呼び出さず、キーワードマッチによる模擬レスポンスを返却。
+
+---
+
 ## 6. 変更履歴
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
+| 2025-12-28 | 1.18.0 | Phase 45: chatWithRecords API追加（記録閲覧AIチャットボット） |
 | 2025-12-25 | 1.17.0 | Phase 43.1: normalizeItemName API追加（品物名正規化・Gemini 2.5 Flash Lite使用） |
 | 2025-12-23 | 1.16.0 | Phase 40: スタッフ注意事項API追加（getStaffNotes/create/update/delete） |
 | 2025-12-22 | 1.15.0 | ドキュメント最適化（TypeScript型定義・cURLサンプルをコード参照に変更） |

@@ -7,6 +7,10 @@ import type {
   MealFormSettings,
   UpdateMealFormSettingsRequest,
 } from '../types';
+import type {
+  ChatWithRecordsRequest,
+  ChatWithRecordsResponse,
+} from '../types/chat';
 
 const API_BASE = 'https://asia-northeast1-facility-care-input-form.cloudfunctions.net';
 
@@ -1352,6 +1356,31 @@ export async function deleteStaffNote(
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.error?.message || `Failed to delete staff note: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+// =============================================================================
+// AIチャットボット（Phase 45）
+// =============================================================================
+
+/**
+ * 記録閲覧チャットボット
+ * POST /chatWithRecords
+ */
+export async function chatWithRecords(
+  request: ChatWithRecordsRequest
+): Promise<ApiResponse<ChatWithRecordsResponse>> {
+  const response = await fetch(`${API_BASE}/chatWithRecords`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Chat failed: ${response.statusText}`);
   }
 
   return response.json();

@@ -6,16 +6,36 @@ import { ErrorMessage } from '../components/ErrorMessage';
 import { YearPaginator } from '../components/YearPaginator';
 import { MonthFilter } from '../components/MonthFilter';
 import { Layout } from '../components/Layout';
+import { ChatFloatingButton, ChatDrawer } from '../components/chat';
 import { useSheetList, useSheetRecords } from '../hooks/usePlanData';
 import { useSync } from '../hooks/useSync';
+import { useChatWithRecords } from '../hooks/useChatWithRecords';
+import { useDemoMode } from '../hooks/useDemoMode';
 
 export function ViewPage() {
   const { sheets, isLoading: sheetsLoading, error: sheetsError } = useSheetList();
   const { lastSyncedAt } = useSync();
+  const isDemo = useDemoMode();
   const [selectedSheet, setSelectedSheet] = useState<string>('');
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const tabsRef = useRef<HTMLDivElement>(null);
+
+  // AIチャットボット
+  const {
+    messages,
+    suggestedQuestions,
+    sendMessage,
+    clearMessages,
+    isLoading: chatLoading,
+  } = useChatWithRecords({
+    context: {
+      sheetName: selectedSheet || undefined,
+      year: selectedYear,
+      month: selectedMonth,
+    },
+  });
 
   // 最初のシートを選択（初期値設定パターン：未選択時のみ発火）
   useEffect(() => {
@@ -249,6 +269,19 @@ export function ViewPage() {
           )}
         </>
       )}
+
+      {/* AIチャットボット（Phase 45） */}
+      <ChatFloatingButton onClick={() => setIsChatOpen(true)} />
+      <ChatDrawer
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        messages={messages}
+        suggestedQuestions={suggestedQuestions}
+        onSendMessage={sendMessage}
+        onClearMessages={clearMessages}
+        isLoading={chatLoading}
+        isDemo={isDemo}
+      />
     </Layout>
   );
 }

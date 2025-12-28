@@ -197,3 +197,40 @@ export const NOTIFICATION_TYPE_CONFIG: Record<NotificationType, { label: string;
   record_added: { label: '記録が追加されました', icon: '📝' },
   item_expiring: { label: '期限が近づいています', icon: '⚠️' },
 };
+
+// =============================================================================
+// AIチャットボット (Phase 45: 記録閲覧ページ)
+// =============================================================================
+
+/** AIチャットメッセージ（会話履歴用） */
+export interface RecordChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+}
+
+/** AIチャットリクエスト */
+export interface ChatWithRecordsRequest {
+  message: string;
+  context: {
+    sheetName?: string;
+    year?: number;
+    month?: number | null;
+  };
+  conversationHistory?: RecordChatMessage[];
+}
+
+/** AIチャットレスポンス */
+export interface ChatWithRecordsResponse {
+  message: string;
+  sources?: { sheetName: string; recordCount: number }[];
+  suggestedQuestions?: string[];
+}
+
+/** サンプル質問 */
+export const SAMPLE_QUESTIONS = [
+  { icon: '💊', text: '頓服と排泄の関係について教えて' },
+  { icon: '🍽️', text: '最近の食事摂取量の傾向は？' },
+  { icon: '❤️', text: '今月のバイタルに異常はありますか？' },
+  { icon: '💧', text: '水分摂取が少ない日はいつですか？' },
+];
