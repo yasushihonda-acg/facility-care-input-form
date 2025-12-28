@@ -14,6 +14,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}>
       <div
+        data-testid={isUser ? 'chat-message-user' : 'chat-message-assistant'}
         className={`max-w-[85%] rounded-lg px-4 py-2 ${
           isUser
             ? 'bg-primary text-white'

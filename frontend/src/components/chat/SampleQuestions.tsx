@@ -19,6 +19,7 @@ export function SampleQuestions({ questions, onSelect }: SampleQuestionsProps) {
       {questions.map((q, index) => (
         <button
           key={index}
+          data-testid="chat-suggestion"
           onClick={() => onSelect(q.text)}
           className="flex items-center gap-2 w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-left transition-colors"
         >

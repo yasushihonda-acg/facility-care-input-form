@@ -42,11 +42,13 @@ export function ChatInput({ onSend, isLoading, placeholder = '質問を入力...
         onChange={(e) => setInput(e.target.value)}
         placeholder={placeholder}
         disabled={isLoading}
+        data-testid="chat-input"
         className="flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-gray-100"
       />
       <button
         type="submit"
         disabled={!input.trim() || isLoading}
+        data-testid="chat-send-button"
         className="px-4 py-2 bg-primary text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors"
       >
         {isLoading ? '...' : '送信'}

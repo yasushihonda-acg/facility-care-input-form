@@ -60,6 +60,7 @@ export function ChatDrawer({
       onClick={handleBackdropClick}
     >
       <div
+        data-testid="chat-drawer"
         className="absolute bottom-0 left-0 right-0 bg-white rounded-t-xl shadow-xl"
         style={{ height: '70vh' }}
         onClick={(e) => e.stopPropagation()}
@@ -112,7 +113,7 @@ export function ChatDrawer({
                 <ChatMessage key={index} message={msg} />
               ))}
               {isLoading && (
-                <div className="flex items-center gap-2 text-gray-500 py-2">
+                <div data-testid="chat-loading" className="flex items-center gap-2 text-gray-500 py-2">
                   <span className="animate-pulse">🤖</span>
                   <span>考え中...</span>
                 </div>
@@ -124,6 +125,7 @@ export function ChatDrawer({
                     {displayQuestions.map((q, i) => (
                       <button
                         key={i}
+                        data-testid="chat-suggestion"
                         onClick={() => onSendMessage(q)}
                         className="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full"
                       >
