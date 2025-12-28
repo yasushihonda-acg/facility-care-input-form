@@ -116,7 +116,7 @@ Service Workerキャッシュによる更新遅延問題に対応:
 詳細: docs/ARCHITECTURE.md セクション10.5
 
 ## E2Eテスト
-406件定義（Phase 41まで）
+424件定義（Phase 45まで）
 
 ## ドキュメント更新方針
 
