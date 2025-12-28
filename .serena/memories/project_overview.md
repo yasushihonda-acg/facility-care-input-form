@@ -88,6 +88,12 @@ Phase 1〜43.1完了。詳細は `git log` を参照。
   - POST /normalizeItemName API
   - ItemForm: 品物名入力後、統計用表示名を自動提案
 
+- **Phase 45**: 記録閲覧AIチャットボット
+  - POST /chatWithRecords API（Gemini 2.5 Flash）
+  - ViewPage: FAB + ドロワーUIでAIチャット
+  - plan_dataをRAGコンテキストに質問応答
+  - デモモードでも実データ使用（モック応答なし）
+
 主要機能:
 - 家族向け品物管理・プリセット管理
 - スタッフ向け記録入力フォーム・注意事項管理

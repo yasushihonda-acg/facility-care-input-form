@@ -26,6 +26,35 @@ interface PlanRecord {
 }
 
 /**
+ * キーワードから関連シートを推定
+ */
+function inferRelatedSheets(message: string): string[] {
+  const sheetMapping: Record<string, string[]> = {
+    "頓服": ["内服", "排便・排尿"],
+    "排泄|排便|排尿|トイレ": ["排便・排尿"],
+    "食事|主食|副食|摂取率": ["食事"],
+    "水分|飲|お茶|コーヒー": ["水分摂取量"],
+    "バイタル|血圧|体温|脈拍|SpO2": ["バイタル"],
+    "薬|服薬|内服|投与": ["内服"],
+    "体重|kg": ["体重"],
+    "血糖|インスリン": ["血糖値インスリン投与"],
+    "往診|医師|ドクター": ["往診録"],
+    "口腔|歯磨き": ["口腔ケア"],
+    "特記|申し送り|メモ": ["特記事項"],
+    "カンファレンス|会議": ["カンファレンス録"],
+  };
+
+  const relatedSheets = new Set<string>();
+  for (const [pattern, sheets] of Object.entries(sheetMapping)) {
+    if (new RegExp(pattern).test(message)) {
+      sheets.forEach((s) => relatedSheets.add(s));
+    }
+  }
+
+  return Array.from(relatedSheets);
+}
+
+/**
  * レコードをフィルタリング・抽出
  */
 function extractRelevantRecords(
@@ -45,8 +74,15 @@ function extractRelevantRecords(
 
   let filtered = normalizedRecords;
 
-  // シート名でフィルタ
-  if (context.sheetName) {
+  // キーワードから関連シートを推定
+  const relatedSheets = inferRelatedSheets(message);
+
+  // シート名でフィルタ（関連シートがある場合はそれを優先、なければ選択中シート）
+  if (relatedSheets.length > 0) {
+    // 質問に関連するシートをすべて含める
+    filtered = filtered.filter((r) => relatedSheets.includes(r.sheetName));
+  } else if (context.sheetName) {
+    // 関連シートが推定できない場合は選択中シートのみ
     filtered = filtered.filter((r) => r.sheetName === context.sheetName);
   }
 
@@ -213,10 +249,10 @@ export const chatWithRecords = functions
         historyLength: conversationHistory?.length || 0,
       });
 
-      // Firestoreから記録データを取得
+      // Firestoreから記録データを取得（全シート対象）
+      // シートフィルタはextractRelevantRecordsで行う（質問に応じて動的に変わるため）
       const planDataResult = await getPlanData({
-        sheetName: context.sheetName,
-        limit: 1000, // 十分な量を取得してからフィルタ
+        limit: 2000, // 全シート分を取得
       });
 
       // 関連レコードを抽出
@@ -226,9 +262,13 @@ export const chatWithRecords = functions
         message
       );
 
+      // デバッグ用: 推定されたシート
+      const inferredSheets = inferRelatedSheets(message);
+
       functions.logger.info("chatWithRecords records extracted", {
         totalRecords: planDataResult.records.length,
         relevantRecords: relevantRecords.length,
+        inferredSheets,
       });
 
       // プロンプト構築
