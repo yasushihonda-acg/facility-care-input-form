@@ -62,6 +62,19 @@ function extractRelevantRecords(
   context: ChatWithRecordsRequest["context"],
   message: string
 ): PlanRecord[] {
+  // デバッグ: 生レコードの構造を確認
+  if (records.length > 0) {
+    const sampleRaw = records[0] as Record<string, unknown>;
+    functions.logger.info("Raw record sample", {
+      keys: Object.keys(sampleRaw),
+      dataType: typeof sampleRaw.data,
+      dataKeys: sampleRaw.data && typeof sampleRaw.data === "object" ?
+        Object.keys(sampleRaw.data as object) : "not an object",
+      dataSample: sampleRaw.data ?
+        JSON.stringify(sampleRaw.data).slice(0, 300) : "null",
+    });
+  }
+
   // レコードを標準形式に変換
   const normalizedRecords: PlanRecord[] = records.map((r) => {
     const record = r as Record<string, unknown>;
@@ -262,10 +275,18 @@ export const chatWithRecords = functions
         message
       );
 
+      // デバッグ: 内服レコードのサンプルを出力
+      const medicationSample = relevantRecords
+        .filter((r) => r.sheetName === "内服")
+        .slice(0, 3);
       functions.logger.info("chatWithRecords records extracted", {
         totalRecords: planDataResult.records.length,
         relevantRecords: relevantRecords.length,
         inferredSheets: inferRelatedSheets(message),
+        medicationSampleKeys: medicationSample.length > 0 ?
+          Object.keys(medicationSample[0]) : [],
+        medicationSampleData: medicationSample.length > 0 ?
+          JSON.stringify(medicationSample[0]).slice(0, 500) : "no data",
       });
 
       // プロンプト構築
