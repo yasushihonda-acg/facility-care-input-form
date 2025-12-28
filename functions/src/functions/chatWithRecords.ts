@@ -62,19 +62,6 @@ function extractRelevantRecords(
   context: ChatWithRecordsRequest["context"],
   message: string
 ): PlanRecord[] {
-  // デバッグ: 生レコードの構造を確認
-  if (records.length > 0) {
-    const sampleRaw = records[0] as Record<string, unknown>;
-    functions.logger.info("Raw record sample", {
-      keys: Object.keys(sampleRaw),
-      dataType: typeof sampleRaw.data,
-      dataKeys: sampleRaw.data && typeof sampleRaw.data === "object" ?
-        Object.keys(sampleRaw.data as object) : "not an object",
-      dataSample: sampleRaw.data ?
-        JSON.stringify(sampleRaw.data).slice(0, 300) : "null",
-    });
-  }
-
   // レコードを標準形式に変換
   const normalizedRecords: PlanRecord[] = records.map((r) => {
     const record = r as Record<string, unknown>;
@@ -126,6 +113,18 @@ function extractRelevantRecords(
           score += 1;
         }
       }
+
+      // 特定キーワードに対して、実際にデータがある場合はスコアを上げる
+      // 頓服: 「何時に頓服薬を飲まれましたか？」に値がある場合
+      if (keywords.includes("頓服")) {
+        const tonpukuValue = String(
+          record["何時に頓服薬を飲まれましたか？"] || ""
+        );
+        if (tonpukuValue && tonpukuValue !== "-") {
+          score += 10; // 実際に頓服データがあるレコードを強く優先
+        }
+      }
+
       return {record, score};
     });
 
@@ -275,18 +274,24 @@ export const chatWithRecords = functions
         message
       );
 
-      // デバッグ: 内服レコードのサンプルを出力
-      const medicationSample = relevantRecords
-        .filter((r) => r.sheetName === "内服")
-        .slice(0, 3);
+      // デバッグ: 頓服データがあるレコード数を出力
+      const medicationRecords = relevantRecords
+        .filter((r) => r.sheetName === "内服");
+      const recordsWithTonpuku = medicationRecords
+        .filter((r) => {
+          const val = String(r["何時に頓服薬を飲まれましたか？"] || "");
+          return val && val !== "-";
+        });
       functions.logger.info("chatWithRecords records extracted", {
         totalRecords: planDataResult.records.length,
         relevantRecords: relevantRecords.length,
         inferredSheets: inferRelatedSheets(message),
-        medicationSampleKeys: medicationSample.length > 0 ?
-          Object.keys(medicationSample[0]) : [],
-        medicationSampleData: medicationSample.length > 0 ?
-          JSON.stringify(medicationSample[0]).slice(0, 500) : "no data",
+        medicationRecords: medicationRecords.length,
+        recordsWithTonpuku: recordsWithTonpuku.length,
+        tonpukuSample: recordsWithTonpuku.slice(0, 2).map((r) => ({
+          date: r.date,
+          tonpuku: r["何時に頓服薬を飲まれましたか？"],
+        })),
       });
 
       // プロンプト構築
