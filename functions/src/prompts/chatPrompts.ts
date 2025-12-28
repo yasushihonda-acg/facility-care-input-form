@@ -177,41 +177,67 @@ function formatSheetRecords(
 }
 
 function formatMealRecord(record: PlanRecord): string {
-  const mealTime = record["食事時間帯"] || record["mealTime"] || "";
-  const mainDish = record["主食"] || record["mainDishRatio"] || "";
-  const sideDish = record["副食"] || record["sideDishRatio"] || "";
-  return `${mealTime} 主食${mainDish}% 副食${sideDish}%`;
+  const mealTime = String(record["食事はいつのことですか？"] || "");
+  const mainDish = String(record["主食の摂取量は何割ですか？"] || "");
+  const sideDish = String(record["副食の摂取量は何割ですか？"] || "");
+  const note = String(record["特記事項"] || "");
+  const snack = String(record["間食は何を食べましたか？"] || "");
+  let result = `${mealTime} 主食${mainDish}割 副食${sideDish}割`;
+  if (snack) result += ` 間食:${snack}`;
+  if (note && note !== "【ケアに関すること】\n\n【ACPiece】\n") {
+    result += ` (${note.slice(0, 30)})`;
+  }
+  return result;
 }
 
 function formatHydrationRecord(record: PlanRecord): string {
-  const amount = record["摂取量"] || record["amount"] || "";
-  const time = record["時刻"] || record["time"] || "";
-  return `${time} ${amount}`;
+  const amount = String(record["水分量はいくらでしたか？"] || "");
+  const note = String(record["特記事項"] || "");
+  let result = `${amount}cc`;
+  if (note && note !== "【ケアに関すること】\n\n【ACPiece】\n") {
+    result += ` (${note.slice(0, 30)})`;
+  }
+  return result;
 }
 
 function formatExcretionRecord(record: PlanRecord): string {
-  const type = record["種別"] || record["type"] || "";
-  const time = record["時刻"] || record["time"] || "";
-  const note = record["備考"] || record["note"] || "";
-  return `${time} ${type}${note ? ` (${note})` : ""}`;
+  const bowel = String(record["排便はありましたか？"] || "");
+  const urine = String(record["排尿はありましたか？"] || "");
+  const urineAmount = String(record["排尿量は何ccでしたか？"] || "");
+  const note = String(record["特記事項"] || "");
+  const parts: string[] = [];
+  if (bowel) parts.push(bowel);
+  if (urine) parts.push(`${urine}${urineAmount ? `(${urineAmount}cc)` : ""}`);
+  if (note && note !== "【ケアに関すること】\n\n【ACPiece】\n") {
+    parts.push(note.slice(0, 30));
+  }
+  return parts.join(", ");
 }
 
 function formatVitalRecord(record: PlanRecord): string {
-  const bp = record["血圧"] || record["bloodPressure"] || "";
-  const temp = record["体温"] || record["temperature"] || "";
-  const pulse = record["脈拍"] || record["pulse"] || "";
-  const parts = [];
-  if (bp) parts.push(`血圧${bp}`);
-  if (temp) parts.push(`体温${temp}℃`);
-  if (pulse) parts.push(`脈拍${pulse}`);
+  const bpHigh = String(record["最高血圧（BP）はいくつでしたか？"] || "");
+  const bpLow = String(record["最低血圧（BP）はいくつでしたか？"] || "");
+  const temp = String(record["体温（KT）はいくつでしたか？"] || "");
+  const pulse = String(record["脈拍（P）はいくつでしたか？"] || "");
+  const spo2 = String(record["酸素飽和度（SpO2）はいくつですか？"] || "");
+  const parts: string[] = [];
+  if (bpHigh && bpLow) parts.push(`BP${bpHigh}/${bpLow}`);
+  if (temp) parts.push(`KT${temp}℃`);
+  if (pulse) parts.push(`P${pulse}`);
+  if (spo2) parts.push(`SpO2${spo2}%`);
   return parts.join(" ");
 }
 
 function formatMedicationRecord(record: PlanRecord): string {
-  const name = record["薬品名"] || record["name"] || "";
-  const time = record["時刻"] || record["time"] || "";
-  const status = record["服用状況"] || record["status"] || "";
-  return `${time} ${name} ${status}`;
+  const time = String(record["内服はいつのことですか？"] || "");
+  const tonpuku = String(record["何時に頓服薬を飲まれましたか？"] || "");
+  const note = String(record["特記事項"] || "");
+  let result = time;
+  if (tonpuku) result += ` 頓服:${tonpuku}`;
+  if (note && note !== "【ケアに関すること】\n\n【ACPiece】\n") {
+    result += ` (${note.slice(0, 30)})`;
+  }
+  return result;
 }
 
 function formatNoteRecord(record: PlanRecord): string {
