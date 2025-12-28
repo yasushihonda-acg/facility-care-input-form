@@ -1612,6 +1612,18 @@ interface ChatWithRecordsResponse {
 | 最大出力トークン | 1024 |
 | Temperature | 0.2 |
 
+#### キャッシュ戦略 (Phase 45.1)
+
+plan_dataのインメモリキャッシュでRAG応答時間を高速化。
+
+| 項目 | 値 |
+|------|-----|
+| キャッシュTTL | 5分 |
+| キャッシュMISS時 | 約13秒 |
+| キャッシュHIT時 | 約6秒（7秒短縮） |
+
+※ Cloud Functionsウォームインスタンスでのみ有効。コールドスタート時はFirestoreから取得。
+
 #### デモモード
 
 `/demo/view` パスではAPIを呼び出さず、キーワードマッチによる模擬レスポンスを返却。
@@ -1622,6 +1634,7 @@ interface ChatWithRecordsResponse {
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
+| 2025-12-28 | 1.18.1 | Phase 45.1: chatWithRecordsにインメモリキャッシュ追加（7秒短縮） |
 | 2025-12-28 | 1.18.0 | Phase 45: chatWithRecords API追加（記録閲覧AIチャットボット） |
 | 2025-12-25 | 1.17.0 | Phase 43.1: normalizeItemName API追加（品物名正規化・Gemini 2.5 Flash Lite使用） |
 | 2025-12-23 | 1.16.0 | Phase 40: スタッフ注意事項API追加（getStaffNotes/create/update/delete） |
