@@ -6,7 +6,7 @@
 import * as functions from "firebase-functions";
 import {FUNCTIONS_CONFIG} from "../config/sheets";
 import {generateContent, parseJsonResponse} from "../services/geminiService";
-import {getPlanData} from "../services/firestoreService";
+import {getCachedPlanData} from "../services/planDataCache";
 import {
   buildChatSystemPrompt,
   buildChatUserPrompt,
@@ -261,11 +261,13 @@ export const chatWithRecords = functions
         historyLength: conversationHistory?.length || 0,
       });
 
-      // Firestoreから記録データを取得（全シート対象）
+      // キャッシュから記録データを取得（キャッシュミス時はFirestoreから取得）
       // シートフィルタはextractRelevantRecordsで行う（質問に応じて動的に変わるため）
-      const planDataResult = await getPlanData({
+      const fetchStart = Date.now();
+      const planDataResult = await getCachedPlanData({
         limit: 2000, // 全シート分を取得
       });
+      const fetchDuration = Date.now() - fetchStart;
 
       // 関連レコードを抽出
       const relevantRecords = extractRelevantRecords(
@@ -274,24 +276,13 @@ export const chatWithRecords = functions
         message
       );
 
-      // デバッグ: 頓服データがあるレコード数を出力
-      const medicationRecords = relevantRecords
-        .filter((r) => r.sheetName === "内服");
-      const recordsWithTonpuku = medicationRecords
-        .filter((r) => {
-          const val = String(r["何時に頓服薬を飲まれましたか？"] || "");
-          return val && val !== "-";
-        });
       functions.logger.info("chatWithRecords records extracted", {
         totalRecords: planDataResult.records.length,
         relevantRecords: relevantRecords.length,
         inferredSheets: inferRelatedSheets(message),
-        medicationRecords: medicationRecords.length,
-        recordsWithTonpuku: recordsWithTonpuku.length,
-        tonpukuSample: recordsWithTonpuku.slice(0, 2).map((r) => ({
-          date: r.date,
-          tonpuku: r["何時に頓服薬を飲まれましたか？"],
-        })),
+        fromCache: planDataResult.fromCache,
+        cacheAge: planDataResult.cacheAge,
+        fetchDuration: `${fetchDuration}ms`,
       });
 
       // プロンプト構築
