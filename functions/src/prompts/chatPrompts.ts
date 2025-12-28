@@ -23,7 +23,13 @@ export function buildChatSystemPrompt(): string {
 2. データにない情報については「記録がありません」と正直に伝えてください
 3. 医療的なアドバイスは避け、事実の報告に留めてください
 4. 専門用語は分かりやすく説明してください
-5. 回答は200文字以内で簡潔にまとめてください
+5. 回答は300文字以内で簡潔にまとめてください
+
+【重要：シート間の相関分析】
+複数のシートにまたがる質問（例：「頓服と排便の関係」）の場合：
+- 同じ日付のレコードを比較して相関を分析してください
+- 例：12/13に頓服を服用 → 同日の排便記録を確認 → 結果を報告
+- 日付ベースで因果関係や相関を考察してください
 
 【データの種類】
 - 食事: 主食・副食の摂取率
@@ -31,7 +37,7 @@ export function buildChatSystemPrompt(): string {
 - 排便・排尿: 排泄の記録
 - バイタル: 血圧・体温・脈拍など
 - 口腔ケア: 口腔ケアの実施記録
-- 内服: 服薬記録
+- 内服: 服薬記録（頓服薬の服用時間を含む）
 - 特記事項: スタッフからの申し送り
 - 血糖値インスリン投与: 血糖値とインスリン投与記録
 - 往診録: 医師の往診記録
@@ -112,25 +118,113 @@ function summarizeRecords(
     bySheet[sheet].push(record);
   }
 
+  const sheetNames = Object.keys(bySheet);
+  const isMultiSheetAnalysis = sheetNames.length > 1;
+
   let summary = "";
 
   // 特定シートの場合は詳細表示
   if (sheetName && bySheet[sheetName]) {
     summary += `【${sheetName}】${bySheet[sheetName].length}件\n`;
     summary += formatSheetRecords(sheetName, bySheet[sheetName]);
+  } else if (isMultiSheetAnalysis) {
+    // 複数シートの相関分析用：日付でグループ化
+    summary += "【日付別データ（相関分析用）】\n";
+    summary += formatRecordsByDate(records);
+    summary += "\n【シート別サマリー】\n";
+    for (const [sheet, sheetRecords] of Object.entries(bySheet)) {
+      summary += `${sheet}: ${sheetRecords.length}件\n`;
+    }
   } else {
-    // 全シートの概要
+    // 単一シートの概要
     for (const [sheet, sheetRecords] of Object.entries(bySheet)) {
       summary += `【${sheet}】${sheetRecords.length}件\n`;
-      summary += formatSheetRecords(sheet, sheetRecords.slice(0, 10));
-      if (sheetRecords.length > 10) {
-        summary += `...他${sheetRecords.length - 10}件\n`;
+      summary += formatSheetRecords(sheet, sheetRecords.slice(0, 20));
+      if (sheetRecords.length > 20) {
+        summary += `...他${sheetRecords.length - 20}件\n`;
       }
       summary += "\n";
     }
   }
 
   return summary;
+}
+
+/**
+ * 複数シート分析用：日付でグループ化して表示
+ */
+function formatRecordsByDate(records: PlanRecord[]): string {
+  // 日付でグループ化
+  const byDate: Record<string, PlanRecord[]> = {};
+  for (const record of records) {
+    // 日付部分のみ抽出 (YYYY/MM/DD)
+    const dateStr = record.date?.split(" ")[0] || "日付不明";
+    if (!byDate[dateStr]) {
+      byDate[dateStr] = [];
+    }
+    byDate[dateStr].push(record);
+  }
+
+  // 日付でソート（新しい順）
+  const sortedDates = Object.keys(byDate).sort().reverse();
+
+  let result = "";
+  // 最大30日分を表示
+  for (const date of sortedDates.slice(0, 30)) {
+    const dayRecords = byDate[date];
+    // この日の各シートのデータを1行ずつ
+    const daySheets: Record<string, string[]> = {};
+    for (const record of dayRecords) {
+      const sheet = record.sheetName || "不明";
+      if (!daySheets[sheet]) {
+        daySheets[sheet] = [];
+      }
+      const formatted = formatSingleRecord(sheet, record);
+      if (formatted) {
+        daySheets[sheet].push(formatted);
+      }
+    }
+
+    // この日のデータを出力
+    if (Object.keys(daySheets).length > 0) {
+      result += `\n${date}:\n`;
+      for (const [sheet, items] of Object.entries(daySheets)) {
+        for (const item of items.slice(0, 3)) { // 各シート最大3件
+          result += `  [${sheet}] ${item}\n`;
+        }
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
+ * 単一レコードをフォーマット
+ */
+function formatSingleRecord(sheetName: string, record: PlanRecord): string {
+  switch (sheetName) {
+  case "食事":
+    return formatMealRecord(record);
+  case "水分摂取量":
+    return formatHydrationRecord(record);
+  case "排便・排尿":
+    return formatExcretionRecord(record);
+  case "バイタル":
+    return formatVitalRecord(record);
+  case "内服":
+    return formatMedicationRecord(record);
+  case "特記事項":
+    return formatNoteRecord(record);
+  case "体重":
+    return formatWeightRecord(record);
+  case "口腔ケア":
+    return formatOralCareRecord(record);
+  case "血糖値インスリン投与":
+    return formatBloodSugarRecord(record);
+  default:
+    return formatGenericRecord(record);
+  }
 }
 
 /**

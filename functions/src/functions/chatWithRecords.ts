@@ -76,6 +76,7 @@ function extractRelevantRecords(
 
   // キーワードから関連シートを推定
   const relatedSheets = inferRelatedSheets(message);
+  const isMultiSheetAnalysis = relatedSheets.length > 1;
 
   // シート名でフィルタ（関連シートがある場合はそれを優先、なければ選択中シート）
   if (relatedSheets.length > 0) {
@@ -102,7 +103,12 @@ function extractRelevantRecords(
     });
   }
 
-  // キーワードによる関連度スコアリング
+  // 複数シート相関分析の場合: 各シートから均等に抽出
+  if (isMultiSheetAnalysis) {
+    return extractBalancedRecords(filtered, relatedSheets, message);
+  }
+
+  // 単一シートの場合: キーワードスコアリング
   const keywords = extractKeywords(message);
   if (keywords.length > 0) {
     const scored = filtered.map((record) => {
@@ -115,34 +121,98 @@ function extractRelevantRecords(
       }
 
       // 特定キーワードに対して、実際にデータがある場合はスコアを上げる
-      // 頓服: 「何時に頓服薬を飲まれましたか？」に値がある場合
       if (keywords.includes("頓服")) {
         const tonpukuValue = String(
           record["何時に頓服薬を飲まれましたか？"] || ""
         );
         if (tonpukuValue && tonpukuValue !== "-") {
-          score += 10; // 実際に頓服データがあるレコードを強く優先
+          score += 10;
         }
       }
 
       return {record, score};
     });
 
-    // スコアでソートし、関連度が高いものを優先
     scored.sort((a, b) => b.score - a.score);
-
-    // スコアが0より大きいものを優先、なければ全件
     const relevant = scored.filter((s) => s.score > 0);
     if (relevant.length > 0) {
-      filtered = relevant.slice(0, 100).map((s) => s.record);
+      filtered = relevant.slice(0, 150).map((s) => s.record);
     } else {
-      filtered = filtered.slice(0, 100);
+      filtered = filtered.slice(0, 150);
     }
   } else {
-    filtered = filtered.slice(0, 100);
+    filtered = filtered.slice(0, 150);
   }
 
   return filtered;
+}
+
+/**
+ * 複数シート相関分析用：各シートから均等に抽出
+ */
+function extractBalancedRecords(
+  records: PlanRecord[],
+  sheets: string[],
+  message: string
+): PlanRecord[] {
+  const keywords = extractKeywords(message);
+
+  // シートごとにグループ化
+  const bySheet: Record<string, PlanRecord[]> = {};
+  for (const record of records) {
+    const sheet = record.sheetName;
+    if (!bySheet[sheet]) {
+      bySheet[sheet] = [];
+    }
+    bySheet[sheet].push(record);
+  }
+
+  // 頓服のような特別なキーワードがある場合、関連日付を抽出
+  const targetDates = new Set<string>();
+  if (keywords.includes("頓服") && bySheet["内服"]) {
+    for (const record of bySheet["内服"]) {
+      const tonpukuValue = String(
+        record["何時に頓服薬を飲まれましたか？"] || ""
+      );
+      if (tonpukuValue && tonpukuValue !== "-" && tonpukuValue !== "") {
+        // 頓服データがある日付を抽出
+        const dateStr = record.date?.split(" ")[0];
+        if (dateStr) {
+          targetDates.add(dateStr);
+        }
+      }
+    }
+  }
+
+  const result: PlanRecord[] = [];
+  const maxPerSheet = Math.ceil(200 / sheets.length);
+
+  for (const sheet of sheets) {
+    const sheetRecords = bySheet[sheet] || [];
+
+    if (targetDates.size > 0) {
+      // 特定日付のレコードを優先
+      const priorityRecords = sheetRecords.filter((r) => {
+        const dateStr = r.date?.split(" ")[0];
+        return dateStr && targetDates.has(dateStr);
+      });
+      const otherRecords = sheetRecords.filter((r) => {
+        const dateStr = r.date?.split(" ")[0];
+        return !dateStr || !targetDates.has(dateStr);
+      });
+
+      result.push(...priorityRecords.slice(0, maxPerSheet));
+      const remaining = maxPerSheet - priorityRecords.length;
+      if (remaining > 0) {
+        result.push(...otherRecords.slice(0, remaining));
+      }
+    } else {
+      // 通常の抽出：新しい順
+      result.push(...sheetRecords.slice(0, maxPerSheet));
+    }
+  }
+
+  return result;
 }
 
 /**
