@@ -268,6 +268,20 @@ export const chatWithRecords = functions
         inferredSheets: inferRelatedSheets(message),
       });
 
+      // デバッグ: 往診録・カンファレンス録のサンプルデータを出力
+      const debugSheets = ["往診録", "カンファレンス録"];
+      for (const sheetName of debugSheets) {
+        const samples = relevantRecords
+          .filter((r) => r.sheetName === sheetName)
+          .slice(0, 2);
+        if (samples.length > 0) {
+          functions.logger.info(`DEBUG ${sheetName} sample`, {
+            keys: Object.keys(samples[0]),
+            sample: JSON.stringify(samples[0]).slice(0, 500),
+          });
+        }
+      }
+
       // プロンプト構築
       const systemPrompt = buildChatSystemPrompt();
       const userPrompt = buildChatUserPrompt(
