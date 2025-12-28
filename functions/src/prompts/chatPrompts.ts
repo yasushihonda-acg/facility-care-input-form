@@ -154,10 +154,40 @@ function summarizeRecords(
  * 複数シート分析用：日付でグループ化して表示
  */
 function formatRecordsByDate(records: PlanRecord[]): string {
-  // 日付でグループ化
-  const byDate: Record<string, PlanRecord[]> = {};
+  // 重要レコード（頓服データあり）を先に抽出
+  const importantRecords: PlanRecord[] = [];
+  const normalRecords: PlanRecord[] = [];
+
   for (const record of records) {
-    // 日付部分のみ抽出 (YYYY/MM/DD)
+    const tonpuku = String(record["何時に頓服薬を飲まれましたか？"] || "");
+    const haiben = String(record["排便はありましたか？"] || "");
+    if ((tonpuku && tonpuku !== "" && tonpuku !== "-") ||
+        (haiben && haiben.includes("あり"))) {
+      importantRecords.push(record);
+    } else {
+      normalRecords.push(record);
+    }
+  }
+
+  let result = "";
+
+  // 重要レコードを最初に表示
+  if (importantRecords.length > 0) {
+    result += "【重要レコード（頓服・排便あり）】\n";
+    for (const record of importantRecords) {
+      const dateStr = record.date?.split(" ")[0] || "日付不明";
+      const sheet = record.sheetName || "不明";
+      const formatted = formatSingleRecord(sheet, record);
+      if (formatted) {
+        result += `${dateStr} [${sheet}] ${formatted}\n`;
+      }
+    }
+    result += "\n";
+  }
+
+  // 日付でグループ化（通常レコード）
+  const byDate: Record<string, PlanRecord[]> = {};
+  for (const record of normalRecords) {
     const dateStr = record.date?.split(" ")[0] || "日付不明";
     if (!byDate[dateStr]) {
       byDate[dateStr] = [];
@@ -168,9 +198,9 @@ function formatRecordsByDate(records: PlanRecord[]): string {
   // 日付でソート（新しい順）
   const sortedDates = Object.keys(byDate).sort().reverse();
 
-  let result = "";
-  // 最大30日分を表示
-  for (const date of sortedDates.slice(0, 30)) {
+  result += "【日付別その他データ】\n";
+  // 最大20日分を表示
+  for (const date of sortedDates.slice(0, 20)) {
     const dayRecords = byDate[date];
     // この日の各シートのデータを1行ずつ
     const daySheets: Record<string, string[]> = {};
@@ -189,7 +219,7 @@ function formatRecordsByDate(records: PlanRecord[]): string {
     if (Object.keys(daySheets).length > 0) {
       result += `\n${date}:\n`;
       for (const [sheet, items] of Object.entries(daySheets)) {
-        for (const item of items.slice(0, 3)) { // 各シート最大3件
+        for (const item of items.slice(0, 2)) { // 各シート最大2件
           result += `  [${sheet}] ${item}\n`;
         }
       }
