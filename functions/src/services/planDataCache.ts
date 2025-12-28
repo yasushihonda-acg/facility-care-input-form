@@ -92,12 +92,15 @@ export function invalidatePlanDataCache(): void {
 /**
  * キャッシュ統計を取得
  */
-export function getCacheStats(): {
+
+interface CacheStats {
   isCached: boolean;
   cacheAge: number | null;
   recordCount: number | null;
   ttlRemaining: number | null;
-} {
+}
+
+export function getCacheStats(): CacheStats {
   if (!planDataCache) {
     return {
       isCached: false,
