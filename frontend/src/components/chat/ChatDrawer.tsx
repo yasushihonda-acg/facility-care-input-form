@@ -99,13 +99,20 @@ export function ChatDrawer({
           className="overflow-y-auto p-4"
           style={{ height: 'calc(70vh - 140px)' }}
         >
-          {messages.length === 0 ? (
+          {messages.length === 0 && !isLoading ? (
             <div className="text-center text-gray-500 py-8">
               <p className="mb-4">ケア記録について質問してください</p>
               <SampleQuestions
                 questions={SAMPLE_QUESTIONS}
                 onSelect={onSendMessage}
+                disabled={isLoading}
               />
+            </div>
+          ) : messages.length === 0 && isLoading ? (
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="animate-bounce text-4xl mb-4">🤖</div>
+              <p className="text-gray-600 font-medium">AIが回答を準備中...</p>
+              <p className="text-gray-400 text-sm mt-2">記録データを分析しています</p>
             </div>
           ) : (
             <>
@@ -127,7 +134,7 @@ export function ChatDrawer({
                         key={i}
                         data-testid="chat-suggestion"
                         onClick={() => onSendMessage(q)}
-                        className="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full"
+                        className="text-sm bg-gray-100 hover:bg-gray-200 active:bg-gray-300 active:scale-95 px-3 py-1 rounded-full transition-all duration-150"
                       >
                         {q}
                       </button>
