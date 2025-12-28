@@ -265,10 +265,16 @@ export const chatWithRecords = functions
       // デバッグ用: 推定されたシート
       const inferredSheets = inferRelatedSheets(message);
 
+      // デバッグ: サンプルレコードを確認
+      const sampleRecord = relevantRecords[0];
+      const sampleRecordKeys = sampleRecord ? Object.keys(sampleRecord) : [];
+
       functions.logger.info("chatWithRecords records extracted", {
         totalRecords: planDataResult.records.length,
         relevantRecords: relevantRecords.length,
         inferredSheets,
+        sampleRecordKeys,
+        sampleRecord: sampleRecord ? JSON.stringify(sampleRecord).slice(0, 500) : "none",
       });
 
       // プロンプト構築
@@ -281,6 +287,12 @@ export const chatWithRecords = functions
       );
 
       const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
+
+      // デバッグ: プロンプトの一部を確認
+      functions.logger.info("chatWithRecords prompt preview", {
+        promptLength: fullPrompt.length,
+        promptPreview: fullPrompt.slice(0, 1000),
+      });
 
       // Gemini APIで回答生成
       const responseText = await generateContent(fullPrompt);
