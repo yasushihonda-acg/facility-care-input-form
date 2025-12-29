@@ -116,6 +116,10 @@ Phase 1〜43.1完了。詳細は `git log` を参照。
     → 代替: 「脱水の傾向は？」「水分摂取量が少ない日は？」で同等情報取得可能
 
 - **Phase 46**: 階層的要約システム（RAG品質向上）
+- **Phase 47**: AIチャットMarkdownレンダリング強化
+  - react-markdown + remark-gfm 導入
+  - テーブル・箇条書き・太字対応
+  - システムプロンプトにMarkdown出力指示追加
   - syncPlanData実行時に日次/週次/月次要約を自動生成
   - 階層: monthly → weekly → daily → raw records
   - plan_data_summariesコレクション追加
