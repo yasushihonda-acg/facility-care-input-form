@@ -231,6 +231,76 @@ interface RemainingHandlingLog {
 
 ---
 
+## 5.3 plan_data_summariesコレクション（Phase 46: 階層的要約）
+
+RAG品質向上のための事前要約データ。syncPlanData実行時に自動生成。
+
+### 構造
+
+```typescript
+// Firestore: plan_data_summaries/{summaryId}
+interface PlanDataSummary {
+  id: string;                    // "2024-12" (月次) / "2024-W51" (週次) / "2024-12-28" (日次)
+  type: 'daily' | 'weekly' | 'monthly';
+
+  // 対象範囲
+  periodStart: string;           // "2024-12-01" (ISO日付)
+  periodEnd: string;             // "2024-12-31"
+
+  // 要約内容
+  summary: string;               // AI生成の要約テキスト
+  keyInsights: string[];         // 重要な洞察（箇条書き）
+
+  // シート別サマリー（オプション）
+  sheetSummaries?: {
+    sheetName: string;           // "内服", "排便・排尿" など
+    summary: string;
+    recordCount: number;
+  }[];
+
+  // 相関分析結果（オプション）
+  correlations?: {
+    pattern: string;             // "頓服→排便"
+    observation: string;         // "頓服服用翌日に排便あり: 3/3回"
+    confidence: 'high' | 'medium' | 'low';
+  }[];
+
+  // 関連日付（詳細検索用）
+  relatedDates: string[];        // ["2024-12-13", "2024-12-17"]
+
+  // メタデータ
+  sourceRecordCount: number;     // 要約元のレコード数
+  generatedAt: Timestamp;
+  generatedBy: 'gemini-flash' | 'gemini-flash-lite';
+}
+```
+
+### ドキュメントID規則
+
+| タイプ | ID形式 | 例 |
+|--------|--------|-----|
+| 日次 | `YYYY-MM-DD` | `2024-12-28` |
+| 週次 | `YYYY-Www` | `2024-W52` |
+| 月次 | `YYYY-MM` | `2024-12` |
+
+### 生成タイミング
+
+| タイミング | 生成対象 | トリガー |
+|-----------|---------|---------|
+| 毎日同期後 | 当日の日次サマリー | syncPlanData完了時 |
+| 週末（日曜）同期後 | 当週の週次サマリー | syncPlanData + 曜日判定 |
+| 月末同期後 | 当月の月次サマリー | syncPlanData + 日付判定 |
+
+### インデックス
+
+```
+plan_data_summaries
+  - type + periodStart (降順)    # タイプ別の最新取得用
+  - generatedAt (降順)           # 全体の最新取得用
+```
+
+---
+
 ## 6. エンティティ関連図
 
 ```

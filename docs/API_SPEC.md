@@ -104,6 +104,8 @@ https://asia-northeast1-facility-care-input-form.cloudfunctions.net
 | POST | `/aiAnalyze` | AI摂食傾向分析 | Phase 8.4.1 | ✅ |
 | POST | `/normalizeItemName` | 品物名正規化 | Phase 43.1 | ✅ |
 | POST | `/chatWithRecords` | 記録閲覧AIチャット | Phase 45 | ✅ |
+| GET | `/getSummaries` | 階層的要約を取得 | Phase 46 | ✅ |
+| POST | `/generateSummary` | 要約を手動生成 | Phase 46 | ✅ |
 | GET | `/getStats` | 統計データを取得 | Phase 8.3 | ✅ |
 | GET | `/getInventorySummary` | 在庫サマリーを取得 | Phase 9.3 | ✅ |
 | GET | `/getFoodStats` | 食品傾向統計を取得 | Phase 9.3 | ✅ |
@@ -1609,7 +1611,7 @@ interface ChatWithRecordsResponse {
 |------|-----|
 | モデル | gemini-2.5-flash |
 | リージョン | asia-northeast1 |
-| 最大出力トークン | 1024 |
+| 最大出力トークン | 4096 |
 | Temperature | 0.2 |
 
 #### キャッシュ戦略 (Phase 45.1)
@@ -1630,10 +1632,72 @@ plan_dataのインメモリキャッシュでRAG応答時間を高速化。
 
 ---
 
+### 4.32 GET /getSummaries (Phase 46)
+
+階層的要約データを取得。RAGの再帰的検索に使用。
+
+**エンドポイント**: `GET /getSummaries`
+
+#### クエリパラメータ
+
+| パラメータ | 型 | 必須 | 説明 |
+|------------|-----|------|------|
+| `type` | string | No | `daily` / `weekly` / `monthly`（省略時は全て） |
+| `from` | string | No | 開始日（ISO日付、例: `2024-12-01`） |
+| `to` | string | No | 終了日（ISO日付、例: `2024-12-31`） |
+| `limit` | number | No | 取得件数上限（デフォルト: 50） |
+
+#### レスポンス
+
+```typescript
+interface GetSummariesResponse {
+  summaries: PlanDataSummary[];
+  totalCount: number;
+}
+```
+
+---
+
+### 4.33 POST /generateSummary (Phase 46)
+
+指定期間の要約を手動生成。通常はsyncPlanData完了時に自動生成されるが、過去データの要約生成に使用。
+
+**エンドポイント**: `POST /generateSummary`
+
+#### リクエストボディ
+
+```typescript
+interface GenerateSummaryRequest {
+  type: 'daily' | 'weekly' | 'monthly';
+  date: string;              // 対象日（日次: YYYY-MM-DD、週次: YYYY-Www、月次: YYYY-MM）
+  forceRegenerate?: boolean; // 既存要約を上書き（デフォルト: false）
+}
+```
+
+#### レスポンス
+
+```typescript
+interface GenerateSummaryResponse {
+  summary: PlanDataSummary;
+  generated: boolean;        // 新規生成の場合true、既存の場合false
+  processingTime: number;    // 処理時間（ms）
+}
+```
+
+#### 使用AIモデル
+
+| 要約タイプ | モデル | 理由 |
+|-----------|--------|------|
+| 日次 | gemini-2.5-flash-lite | 低コスト・高速 |
+| 週次/月次 | gemini-2.5-flash | より高品質な要約 |
+
+---
+
 ## 6. 変更履歴
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
+| 2025-12-29 | 1.19.0 | Phase 46: 階層的要約API追加（getSummaries/generateSummary）、chatWithRecords maxOutputTokens 4096に変更 |
 | 2025-12-28 | 1.18.1 | Phase 45.1: chatWithRecordsにインメモリキャッシュ追加（7秒短縮） |
 | 2025-12-28 | 1.18.0 | Phase 45: chatWithRecords API追加（記録閲覧AIチャットボット） |
 | 2025-12-25 | 1.17.0 | Phase 43.1: normalizeItemName API追加（品物名正規化・Gemini 2.5 Flash Lite使用） |
