@@ -169,11 +169,11 @@ function checkIfImportantRecord(record: PlanRecord): boolean {
   const haiben = String(record["排便はありましたか？"] || "");
   if (haiben && haiben.includes("あり")) return true;
 
-  // 水分摂取量が多い/少ない（1500cc以上 or 800cc未満）
+  // 水分摂取量が特に多い（1回で500cc以上は特記に値する）
   const hydration = String(record["水分量はいくらでしたか？"] || "");
   if (hydration) {
     const amount = parseInt(hydration, 10);
-    if (!isNaN(amount) && (amount >= 1500 || amount < 800)) return true;
+    if (!isNaN(amount) && amount >= 500) return true;
   }
 
   // バイタル異常（高血圧、発熱）
