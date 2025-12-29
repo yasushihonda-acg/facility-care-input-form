@@ -115,6 +115,15 @@ Phase 1〜43.1完了。詳細は `git log` を参照。
   - 既知の制限: 「水分摂取と排尿の関係」直接質問は空応答になることがある
     → 代替: 「脱水の傾向は？」「水分摂取量が少ない日は？」で同等情報取得可能
 
+- **Phase 46**: 階層的要約システム（RAG品質向上）
+  - syncPlanData実行時に日次/週次/月次要約を自動生成
+  - 階層: monthly → weekly → daily → raw records
+  - plan_data_summariesコレクション追加
+  - GET /getSummaries: 要約一覧取得
+  - POST /generateSummary: 手動要約生成
+  - 相関検出: 頓服×排便、バイタル異常
+  - 日次はFlash Lite、週次/月次はFlash 2.5で生成
+
 主要機能:
 - 家族向け品物管理・プリセット管理
 - スタッフ向け記録入力フォーム・注意事項管理
@@ -137,7 +146,7 @@ Service Workerキャッシュによる更新遅延問題に対応:
 詳細: docs/ARCHITECTURE.md セクション10.5
 
 ## E2Eテスト
-424件定義（Phase 45まで）
+424件定義（Phase 46まで）
 
 ## ドキュメント更新方針
 
