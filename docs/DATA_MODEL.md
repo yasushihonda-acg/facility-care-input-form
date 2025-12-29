@@ -240,12 +240,12 @@ RAG品質向上のための事前要約データ。syncPlanData実行時に自�
 ```typescript
 // Firestore: plan_data_summaries/{summaryId}
 interface PlanDataSummary {
-  id: string;                    // "2024-12" (月次) / "2024-W51" (週次) / "2024-12-28" (日次)
+  id: string;                    // "2025-12" (月次) / "2025-W52" (週次) / "2025-12-29" (日次)
   type: 'daily' | 'weekly' | 'monthly';
 
   // 対象範囲
-  periodStart: string;           // "2024-12-01" (ISO日付)
-  periodEnd: string;             // "2024-12-31"
+  periodStart: string;           // "2025-12-01" (ISO日付)
+  periodEnd: string;             // "2025-12-31"
 
   // 要約内容
   summary: string;               // AI生成の要約テキスト
@@ -279,9 +279,9 @@ interface PlanDataSummary {
 
 | タイプ | ID形式 | 例 |
 |--------|--------|-----|
-| 日次 | `YYYY-MM-DD` | `2024-12-28` |
-| 週次 | `YYYY-Www` | `2024-W52` |
-| 月次 | `YYYY-MM` | `2024-12` |
+| 日次 | `YYYY-MM-DD` | `2025-12-29` |
+| 週次 | `YYYY-Www` | `2025-W52` |
+| 月次 | `YYYY-MM` | `2025-12` |
 
 ### 生成タイミング
 
