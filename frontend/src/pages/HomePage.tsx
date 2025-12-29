@@ -111,11 +111,13 @@ export function HomePage() {
     return icons[sheetName] || '📋';
   };
 
-  // 次の同期までの残り分数を計算（表示用の計算のみ、副作用なし）
+  // 次の同期までの残り分数を計算（Cloud Schedulerは毎時0分 = 60分間隔）
   const getNextSyncMinutes = () => {
-    if (!lastSyncedAt) return 15;
-    const elapsed = Date.now() - lastSyncedAt.getTime();
-    const remaining = Math.max(0, 15 * 60 * 1000 - elapsed);
+    const now = new Date();
+    const nextHour = new Date(now);
+    nextHour.setMinutes(0, 0, 0);
+    nextHour.setHours(nextHour.getHours() + 1);
+    const remaining = nextHour.getTime() - now.getTime();
     return Math.ceil(remaining / 60000);
   };
 
@@ -247,7 +249,10 @@ export function HomePage() {
 
       {/* フッター */}
       <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 text-center text-xs text-gray-400">
-        次回自動同期: {getNextSyncMinutes()}分後
+        {lastSyncedAt && (
+          <span>最終同期: {lastSyncedAt.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })} / </span>
+        )}
+        次回自動同期: 毎時00分（約{getNextSyncMinutes()}分後）
       </footer>
     </div>
   );

@@ -131,24 +131,24 @@ export function ViewPage() {
     return icons[sheetName] || '📋';
   };
 
-  // 次回同期までの分数を計算（useCallbackで純粋性を保つ）
-  const [nextSyncMinutes, setNextSyncMinutes] = useState(15);
+  // 次回同期までの分数を計算（Cloud Schedulerは毎時0分 = 60分間隔）
+  const [nextSyncMinutes, setNextSyncMinutes] = useState(60);
 
   useEffect(() => {
     const updateSyncMinutes = () => {
-      if (!lastSyncedAt) {
-        setNextSyncMinutes(15);
-        return;
-      }
-      const elapsed = Date.now() - lastSyncedAt.getTime();
-      const remaining = Math.max(0, 15 * 60 * 1000 - elapsed);
+      // Cloud Schedulerは毎時0分に実行されるため、次の00分までの残り時間を計算
+      const now = new Date();
+      const nextHour = new Date(now);
+      nextHour.setMinutes(0, 0, 0);
+      nextHour.setHours(nextHour.getHours() + 1);
+      const remaining = nextHour.getTime() - now.getTime();
       setNextSyncMinutes(Math.ceil(remaining / 60000));
     };
 
     updateSyncMinutes();
     const interval = setInterval(updateSyncMinutes, 60000); // 1分ごとに更新
     return () => clearInterval(interval);
-  }, [lastSyncedAt]);
+  }, []);
 
   const selectedSheetInfo = sheets.find(s => s.sheetName === selectedSheet);
 
@@ -263,7 +263,10 @@ export function ViewPage() {
 
               {/* 同期情報（フッターナビ上のバー） */}
               <div className="bg-gray-100 border-t border-gray-200 px-4 py-2 text-center text-xs text-gray-500">
-                次回自動同期: {nextSyncMinutes}分後
+                {lastSyncedAt && (
+                  <span>最終同期: {lastSyncedAt.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })} / </span>
+                )}
+                次回自動同期: 毎時00分（約{nextSyncMinutes}分後）
               </div>
             </div>
           )}

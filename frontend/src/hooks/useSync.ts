@@ -2,7 +2,7 @@
  * データ更新フック
  *
  * 設計変更（SYNC_CONCURRENCY.md Phase 2）:
- * - Cloud Schedulerが唯一の同期トリガー（15分差分 + 日次完全同期）
+ * - Cloud Schedulerが唯一の同期トリガー（毎時0分の差分同期 + 午前3時の完全同期）
  * - フロントエンドはFirestoreキャッシュの再取得のみ
  * - syncPlanDataの直接呼び出しは廃止（競合防止）
  */
