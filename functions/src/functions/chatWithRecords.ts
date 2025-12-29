@@ -180,15 +180,16 @@ function extractBalancedRecords(
     ),
   });
 
-  // 頓服のような特別なキーワードがある場合、関連日付を抽出
+  // 特別なキーワードがある場合、関連日付を抽出
   const targetDates = new Set<string>();
+
+  // 頓服キーワード：頓服を服用した日付を抽出
   if (keywords.includes("頓服") && bySheet["内服"]) {
     for (const record of bySheet["内服"]) {
       const tonpukuValue = String(
         record["何時に頓服薬を飲まれましたか？"] || ""
       );
       if (tonpukuValue && tonpukuValue !== "-" && tonpukuValue !== "") {
-        // 頓服データがある日付を抽出
         const dateStr = record.date?.split(" ")[0];
         if (dateStr) {
           targetDates.add(dateStr);
@@ -198,6 +199,32 @@ function extractBalancedRecords(
     functions.logger.info("頓服日付抽出", {
       targetDates: Array.from(targetDates),
       naifukuRecordCount: bySheet["内服"].length,
+    });
+  }
+
+  // 水分×排尿相関：排尿回数が多い日を抽出
+  if ((keywords.some((k) => /水分|脱水/.test(k))) &&
+      bySheet["水分摂取量"] && bySheet["排便・排尿"]) {
+    // 日別の排尿回数をカウント
+    const urineCountByDate: Record<string, number> = {};
+    for (const record of bySheet["排便・排尿"]) {
+      const urine = String(record["排尿はありましたか？"] || "");
+      if (urine && urine.includes("あり")) {
+        const dateStr = record.date?.split(" ")[0];
+        if (dateStr) {
+          urineCountByDate[dateStr] = (urineCountByDate[dateStr] || 0) + 1;
+        }
+      }
+    }
+    // 排尿回数が4回以上の日を抽出（相関分析に有用）
+    for (const [date, count] of Object.entries(urineCountByDate)) {
+      if (count >= 4) {
+        targetDates.add(date);
+      }
+    }
+    functions.logger.info("水分×排尿日付抽出", {
+      targetDates: Array.from(targetDates),
+      urineCountByDate,
     });
   }
 
