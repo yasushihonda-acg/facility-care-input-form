@@ -107,6 +107,7 @@ export {aiSuggest} from "./functions/aiSuggest";
 export {aiAnalyze} from "./functions/aiAnalyze";
 export {normalizeItemName} from "./functions/normalizeItemName"; // Phase 43.1
 export {chatWithRecords} from "./functions/chatWithRecords"; // Phase 45
+export {getSummaries, generateSummary} from "./functions/summaries"; // Phase 46
 
 // =============================================================================
 // プリセット統合（Phase 8.5）

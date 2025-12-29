@@ -2006,3 +2006,80 @@ export interface ChatWithRecordsResponse {
   sources?: { sheetName: string; recordCount: number }[];
   suggestedQuestions?: string[];
 }
+
+// =============================================================================
+// 階層的要約 Types (Phase 46)
+// =============================================================================
+
+/** 要約タイプ */
+export type SummaryType = "daily" | "weekly" | "monthly";
+
+/** シート別サマリー（Phase 46要約用） */
+export interface SummarySheetInfo {
+  sheetName: string;
+  summary: string;
+  recordCount: number;
+}
+
+/** 相関分析結果 */
+export interface CorrelationResult {
+  pattern: string; // "頓服→排便"
+  observation: string; // "頓服服用翌日に排便あり: 3/3回"
+  confidence: "high" | "medium" | "low";
+}
+
+/** 要約ドキュメント */
+export interface PlanDataSummary {
+  id: string; // "2025-12" (月次) / "2025-W52" (週次) / "2025-12-29" (日次)
+  type: SummaryType;
+
+  // 対象範囲
+  periodStart: string; // ISO日付
+  periodEnd: string;
+
+  // 要約内容
+  summary: string;
+  keyInsights: string[];
+
+  // シート別サマリー（オプション）
+  sheetSummaries?: SummarySheetInfo[];
+
+  // 相関分析結果（オプション）
+  correlations?: CorrelationResult[];
+
+  // 関連日付（詳細検索用）
+  relatedDates: string[];
+
+  // メタデータ
+  sourceRecordCount: number;
+  generatedAt: Timestamp;
+  generatedBy: "gemini-flash" | "gemini-flash-lite";
+}
+
+/** 要約取得リクエスト */
+export interface GetSummariesRequest {
+  type?: SummaryType;
+  from?: string; // ISO日付
+  to?: string;
+  limit?: number;
+}
+
+/** 要約取得レスポンス */
+export interface GetSummariesResponse {
+  summaries: PlanDataSummary[];
+  totalCount: number;
+}
+
+/** 要約生成リクエスト */
+export interface GenerateSummaryRequest {
+  type: SummaryType;
+  date: string; // YYYY-MM-DD / YYYY-Www / YYYY-MM
+  forceRegenerate?: boolean;
+}
+
+/** 要約生成レスポンス */
+export interface GenerateSummaryResponse {
+  summary: PlanDataSummary;
+  generated: boolean;
+  processingTime: number;
+}

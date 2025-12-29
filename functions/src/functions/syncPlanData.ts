@@ -22,6 +22,7 @@ import {
   PlanData,
   ErrorCodes,
 } from "../types";
+import {generateTodaySummary} from "../services/summaryService";
 
 /**
  * スプレッドシートの行データを汎用 PlanData にパース
@@ -168,6 +169,13 @@ async function syncPlanDataHandler(
     }
 
     const syncDuration = Date.now() - startTime;
+
+    // Phase 46: 同期完了後に要約を自動生成（非同期で実行、エラーは無視）
+    generateTodaySummary().catch((e) => {
+      functions.logger.warn("Summary generation failed (non-blocking)", {
+        error: e instanceof Error ? e.message : "Unknown",
+      });
+    });
 
     const responseData: SyncPlanDataResponse = {
       syncedSheets,
