@@ -55,7 +55,7 @@ export async function generateContent(prompt: string): Promise<string> {
     const model = vertexAI.getGenerativeModel({
       model: MODEL_ID,
       generationConfig: {
-        maxOutputTokens: 1024,
+        maxOutputTokens: 4096,
         temperature: 0.2, // 低め: 安定した出力
         topP: 0.8,
       },

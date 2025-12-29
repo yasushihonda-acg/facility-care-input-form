@@ -8,6 +8,43 @@ interface ChatMessageProps {
   message: RecordChatMessage;
 }
 
+/**
+ * マークダウンをHTMLに変換
+ * サポート: **太字**, *イタリック*, リスト(- / *), 改行
+ */
+function markdownToHtml(text: string): string {
+  let html = text
+    // XSS対策: HTMLエスケープ
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    // **太字**
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    // *イタリック* (太字でないもの)
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    // 改行
+    .replace(/\n/g, '<br />');
+
+  // リスト変換: 連続する - または * で始まる行をul/liに
+  // 連続するリストアイテムをグループ化
+  html = html.replace(
+    /(?:(?:^|<br \/>)\s*[-*]\s+[^<]+)+/g,
+    (match) => {
+      const items = match
+        .split(/<br \/>/)
+        .filter((line) => line.trim().match(/^[-*]\s+/))
+        .map((line) => {
+          const content = line.replace(/^\s*[-*]\s+/, '').trim();
+          return `<li>${content}</li>`;
+        })
+        .join('');
+      return `<ul class="list-disc list-inside my-2">${items}</ul>`;
+    }
+  );
+
+  return html;
+}
+
 export function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === 'user';
 
@@ -27,7 +64,14 @@ export function ChatMessage({ message }: ChatMessageProps) {
             <span className="text-xs text-gray-500">AI</span>
           </div>
         )}
-        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+        {isUser ? (
+          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+        ) : (
+          <div
+            className="text-sm chat-content"
+            dangerouslySetInnerHTML={{ __html: markdownToHtml(message.content) }}
+          />
+        )}
         <p className="text-xs opacity-60 mt-1">
           {formatTime(message.timestamp)}
         </p>
