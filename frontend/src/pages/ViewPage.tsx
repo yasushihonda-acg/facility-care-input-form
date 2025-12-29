@@ -8,13 +8,11 @@ import { MonthFilter } from '../components/MonthFilter';
 import { Layout } from '../components/Layout';
 import { ChatFloatingButton, ChatDrawer } from '../components/chat';
 import { useSheetList, useSheetRecords } from '../hooks/usePlanData';
-import { useSync } from '../hooks/useSync';
 import { useChatWithRecords } from '../hooks/useChatWithRecords';
 import { useDemoMode } from '../hooks/useDemoMode';
 
 export function ViewPage() {
-  const { sheets, isLoading: sheetsLoading, error: sheetsError } = useSheetList();
-  const { lastSyncedAt } = useSync();
+  const { sheets, isLoading: sheetsLoading, error: sheetsError, lastSyncedAt: apiLastSyncedAt } = useSheetList();
   const isDemo = useDemoMode();
   const [selectedSheet, setSelectedSheet] = useState<string>('');
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
@@ -263,8 +261,8 @@ export function ViewPage() {
 
               {/* 同期情報（フッターナビ上のバー） */}
               <div className="bg-gray-100 border-t border-gray-200 px-4 py-2 text-center text-xs text-gray-500">
-                {lastSyncedAt && (
-                  <span>最終同期: {lastSyncedAt.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })} / </span>
+                {apiLastSyncedAt && (
+                  <span>最終同期: {new Date(apiLastSyncedAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })} / </span>
                 )}
                 次回自動同期: 毎時00分（約{nextSyncMinutes}分後）
               </div>

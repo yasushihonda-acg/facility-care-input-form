@@ -7,11 +7,9 @@ import { ErrorMessage } from '../components/ErrorMessage';
 import { YearPaginator } from '../components/YearPaginator';
 import { MonthFilter } from '../components/MonthFilter';
 import { useSheetList, useSheetRecords } from '../hooks/usePlanData';
-import { useSync } from '../hooks/useSync';
 
 export function HomePage() {
-  const { sheets, isLoading: sheetsLoading, error: sheetsError } = useSheetList();
-  const { lastSyncedAt } = useSync();
+  const { sheets, isLoading: sheetsLoading, error: sheetsError, lastSyncedAt: apiLastSyncedAt } = useSheetList();
   const [selectedSheet, setSelectedSheet] = useState<string>('');
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
@@ -249,8 +247,8 @@ export function HomePage() {
 
       {/* フッター */}
       <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 text-center text-xs text-gray-400">
-        {lastSyncedAt && (
-          <span>最終同期: {lastSyncedAt.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })} / </span>
+        {apiLastSyncedAt && (
+          <span>最終同期: {new Date(apiLastSyncedAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })} / </span>
         )}
         次回自動同期: 毎時00分（約{getNextSyncMinutes()}分後）
       </footer>

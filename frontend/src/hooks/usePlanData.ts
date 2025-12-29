@@ -15,6 +15,7 @@ export function useSheetList(): {
   sheets: SheetSummary[];
   isLoading: boolean;
   error: string | null;
+  lastSyncedAt: string | null;
 } {
   const { data, isLoading, error } = usePlanData();
 
@@ -22,6 +23,7 @@ export function useSheetList(): {
     sheets: data?.data?.sheets ?? [],
     isLoading,
     error: error?.message ?? null,
+    lastSyncedAt: data?.data?.lastSyncedAt ?? null,
   };
 }
 
