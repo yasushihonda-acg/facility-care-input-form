@@ -3,11 +3,11 @@
  * Sheet A（記録の結果）からデータを取得し、Firestoreへ同期
  *
  * 同期方式:
- * - 差分同期 (incremental: true): 新規レコードのみ追加、削除なし（15分間隔）
+ * - 差分同期 (incremental: true): 新規レコードのみ追加、削除なし（毎時0分 = 1時間間隔）
  * - 完全同期 (incremental: false): 洗い替えでデータ整合性担保（日次午前3時）
  *
- * 詳細は docs/SYNC_CONCURRENCY.md 参照
- * 各シートの列構造は docs/SHEET_A_STRUCTURE.md を参照
+ * 詳細は docs/archive/SYNC_CONCURRENCY.md 参照
+ * 各シートの列構造は docs/archive/SHEET_A_STRUCTURE.md を参照
  */
 
 import * as functions from "firebase-functions";

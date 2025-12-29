@@ -145,6 +145,17 @@ Service Workerキャッシュによる更新遅延問題に対応:
 
 詳細: docs/ARCHITECTURE.md セクション10.5
 
+## 同期スケジュール
+
+Cloud Schedulerによる自動同期:
+- **差分同期**: 毎時0分（1時間間隔）- 新規レコードのみ追加
+- **完全同期**: 午前3時 - 洗い替え
+
+UI表示（ViewPage/HomePageフッター）:
+- 「最終同期: HH:mm / 次回自動同期: 毎時00分（約N分後）」
+- 最終同期時間: APIレスポンス（getPlanData.lastSyncedAt）から取得
+- 次回同期時間: 次の正時（00分）までの残り時間を計算
+
 ## E2Eテスト
 424件定義（Phase 46まで）
 

@@ -3,10 +3,10 @@
  * Flow A (記録同期) のデータ操作
  *
  * 同期方式:
- * - 差分同期 (incremental): 新規レコードのみ追加、削除なし（15分間隔）
+ * - 差分同期 (incremental): 新規レコードのみ追加、削除なし（毎時0分 = 1時間間隔）
  * - 完全同期 (full): 洗い替えでデータ整合性担保（日次午前3時）
  *
- * 詳細は docs/SYNC_CONCURRENCY.md 参照
+ * 詳細は docs/archive/SYNC_CONCURRENCY.md 参照
  */
 
 import * as admin from "firebase-admin";
@@ -183,7 +183,7 @@ export async function syncPlanDataFull(
 
 /**
  * 記録データを Firestore に差分同期（追記のみ・削除なし）
- * 15分間隔の差分同期で使用。新規レコードのみ追加。
+ * 毎時0分（1時間間隔）の差分同期で使用。新規レコードのみ追加。
  * 決定論的IDを使用し、merge: trueで既存レコードは上書き（実質的に重複なし）。
  *
  * @param sheetName シート名
