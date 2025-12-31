@@ -149,14 +149,11 @@ function transformWeightData(records: PlanDataRecord[]): WeightDataPoint[] {
     const date = getDateString(record.timestamp);
     if (!date) return;
 
-    // 体重フィールドを探す
-    const weightValue = Object.entries(record.data).find(([key]) =>
-      key.includes('体重') || key.includes('kg')
-    );
-
-    if (weightValue && weightValue[1]) {
-      const weight = parseFloat(weightValue[1]);
-      if (!isNaN(weight)) {
+    // 体重フィールドを取得（「何キロでしたか？」）
+    const weightStr = record.data['何キロでしたか？'];
+    if (weightStr) {
+      const weight = parseFloat(weightStr);
+      if (!isNaN(weight) && weight > 0) {
         dataMap.set(date, {
           date,
           fullDate: record.timestamp.split(' ')[0],
@@ -265,11 +262,11 @@ export function ChartsTab({ year, month }: ChartsTabProps) {
               <YAxis yAxisId="bp" orientation="right" domain={[40, 200]} fontSize={12} />
               <Tooltip />
               <Legend />
-              <Line yAxisId="temp" type="monotone" dataKey="temperature" stroke="#ff7300" name="体温" dot={{ r: 3 }} />
-              <Line yAxisId="bp" type="monotone" dataKey="systolic" stroke="#8884d8" name="収縮期血圧" dot={{ r: 3 }} />
-              <Line yAxisId="bp" type="monotone" dataKey="diastolic" stroke="#82ca9d" name="拡張期血圧" dot={{ r: 3 }} />
-              <Line yAxisId="bp" type="monotone" dataKey="pulse" stroke="#ffc658" name="脈拍" dot={{ r: 3 }} />
-              <Line yAxisId="bp" type="monotone" dataKey="spo2" stroke="#00C49F" name="SpO2" dot={{ r: 3 }} />
+              <Line yAxisId="temp" type="monotone" dataKey="temperature" stroke="#ff7300" name="体温" dot={{ r: 2 }} />
+              <Line yAxisId="bp" type="monotone" dataKey="systolic" stroke="#8884d8" name="収縮期血圧" dot={{ r: 2 }} />
+              <Line yAxisId="bp" type="monotone" dataKey="diastolic" stroke="#82ca9d" name="拡張期血圧" dot={{ r: 2 }} />
+              <Line yAxisId="bp" type="monotone" dataKey="pulse" stroke="#ffc658" name="脈拍" dot={{ r: 2 }} />
+              <Line yAxisId="bp" type="monotone" dataKey="spo2" stroke="#00C49F" name="SpO2" dot={{ r: 2 }} />
             </LineChart>
           </ResponsiveContainer>
         )}
@@ -291,8 +288,8 @@ export function ChartsTab({ year, month }: ChartsTabProps) {
               <YAxis domain={[0, 'auto']} fontSize={12} />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey="bowelCount" stroke="#8B4513" name="排便回数" dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="urineCount" stroke="#4169E1" name="排尿回数" dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="bowelCount" stroke="#8B4513" name="排便回数" dot={{ r: 2 }} />
+              <Line type="monotone" dataKey="urineCount" stroke="#4169E1" name="排尿回数" dot={{ r: 2 }} />
             </LineChart>
           </ResponsiveContainer>
         )}
@@ -316,7 +313,7 @@ export function ChartsTab({ year, month }: ChartsTabProps) {
                 <YAxis domain={['dataMin - 5', 'dataMax + 5']} fontSize={12} />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="weight" stroke="#6B7280" name="体重(kg)" dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="weight" stroke="#6B7280" name="体重(kg)" dot={{ r: 2 }} />
               </LineChart>
             </ResponsiveContainer>
           )}
@@ -338,7 +335,7 @@ export function ChartsTab({ year, month }: ChartsTabProps) {
                 <YAxis domain={[0, 'auto']} fontSize={12} />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="totalAmount" stroke="#3B82F6" name="水分量(cc)" dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="totalAmount" stroke="#3B82F6" name="水分量(cc)" dot={{ r: 2 }} />
               </LineChart>
             </ResponsiveContainer>
           )}
