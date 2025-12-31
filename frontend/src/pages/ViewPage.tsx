@@ -7,6 +7,7 @@ import { YearPaginator } from '../components/YearPaginator';
 import { MonthFilter } from '../components/MonthFilter';
 import { Layout } from '../components/Layout';
 import { ChatFloatingButton, ChatDrawer } from '../components/chat';
+import { ViewTabNavigation, ChartsTab, CorrelationTab, type ViewTabType } from '../components/view';
 import { useSheetList, useSheetRecords } from '../hooks/usePlanData';
 import { useChatWithRecords } from '../hooks/useChatWithRecords';
 import { useDemoMode } from '../hooks/useDemoMode';
@@ -18,6 +19,7 @@ export function ViewPage() {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [activeViewTab, setActiveViewTab] = useState<ViewTabType>('data');
   const tabsRef = useRef<HTMLDivElement>(null);
 
   // AIチャットボット
@@ -63,12 +65,14 @@ export function ViewPage() {
     return Array.from(years).sort((a, b) => b - a);
   }, [records]);
 
-  // 選択年が利用可能年にない場合、最新年に変更（無効な選択の補正パターン）
+  // 初期表示時のみ最新データ年を選択（その後はデータなしの年も選択可能）
   useEffect(() => {
-    if (availableYears.length > 0 && !availableYears.includes(selectedYear)) {
+    if (availableYears.length > 0 && selectedYear === new Date().getFullYear() && !availableYears.includes(selectedYear)) {
+      // 初期値（今年）にデータがない場合のみ、最新データ年に変更
       setSelectedYear(availableYears[0]);
     }
-  }, [availableYears, selectedYear]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availableYears.length]); // 初期ロード時のみ実行
 
   // 年でフィルタされたレコード
   const yearFilteredRecords = useMemo(() => {
@@ -199,6 +203,25 @@ export function ViewPage() {
                 onMonthChange={setSelectedMonth}
               />
 
+              {/* ビュータブ（データ/相関分析/グラフ） */}
+              <ViewTabNavigation
+                activeTab={activeViewTab}
+                onTabChange={setActiveViewTab}
+              />
+
+              {/* 相関分析タブ */}
+              {activeViewTab === 'correlation' && (
+                <CorrelationTab year={selectedYear} month={selectedMonth} />
+              )}
+
+              {/* グラフタブ */}
+              {activeViewTab === 'charts' && (
+                <ChartsTab year={selectedYear} month={selectedMonth} />
+              )}
+
+              {/* データタブ - シートタブバー */}
+              {activeViewTab === 'data' && (
+                <>
               {/* シートタブバー */}
               <div
                 ref={tabsRef}
@@ -258,6 +281,8 @@ export function ViewPage() {
                   />
                 )}
               </div>
+              </>
+              )}
 
               {/* 同期情報（フッターナビ上のバー） */}
               <div className="bg-gray-100 border-t border-gray-200 px-4 py-2 text-center text-xs text-gray-500">
