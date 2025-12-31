@@ -223,7 +223,7 @@ frontend/src/
 
 ## 開発履歴
 
-Phase 1〜47まで完了。詳細は `git log` を参照。
+Phase 1〜48まで完了。詳細は `git log` を参照。
 
 - **Phase 43.1**: 品物名正規化AI（Gemini 2.5 Flash Lite）- 統計用の基準品目名を自動提案
 - **Phase 44**: 品物登録フォームからプリセット編集・新規追加が可能に
@@ -232,5 +232,6 @@ Phase 1〜47まで完了。詳細は `git log` を参照。
 - **Phase 45.3**: 相関パターン追加・Few-shot例 - バイタル異常検出、水分×排尿日付抽出
 - **Phase 46**: 階層的要約システム - syncPlanData後に日次/週次/月次要約を自動生成しRAG品質向上
 - **Phase 47**: AIチャットMarkdownレンダリング強化 - react-markdown導入、テーブル・箇条書き・太字対応
+- **Phase 48**: ViewPage機能拡張 - 相関分析タブ（マグミット×排便）、グラフタブ（Recharts導入）、表示期間拡張
 
 E2Eテスト: 424件定義
