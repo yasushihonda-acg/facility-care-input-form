@@ -56,26 +56,26 @@ export function ViewPage() {
     month: selectedMonth,
   });
 
-  // 年リスト取得用（年なしで全データのサマリー取得）
-  // これにより利用可能な年を把握
-  const {
-    records: allRecordsForYears,
-    isLoading: yearsLoading,
-  } = useSheetRecords(selectedSheet);
-
-  // 年の抽出（年リスト取得用データから）
+  // 年リスト（2024年〜現在年の固定値）
+  // データは2024年9月から存在するため、2024年を最古として固定
   const availableYears = useMemo(() => {
-    const years = new Set<number>();
-    allRecordsForYears.forEach(record => {
-      if (record.timestamp) {
-        const match = record.timestamp.match(/^(\d{4})/);
-        if (match) {
-          years.add(parseInt(match[1], 10));
-        }
-      }
-    });
-    return Array.from(years).sort((a, b) => b - a);
-  }, [allRecordsForYears]);
+    const currentYear = new Date().getFullYear();
+    const years: number[] = [];
+    for (let y = currentYear; y >= 2024; y--) {
+      years.push(y);
+    }
+    return years;
+  }, []);
+
+  // 月カウント用（選択年の全データを取得 - 月フィルタなし）
+  const {
+    records: yearRecords,
+    isLoading: yearRecordsLoading,
+  } = useSheetRecords({
+    sheetName: selectedSheet,
+    year: selectedYear,
+    // month undefined → 選択年の全データ取得
+  });
 
   // 初期表示時のみ最新データ年を選択（その後はデータなしの年も選択可能）
   useEffect(() => {
@@ -87,25 +87,22 @@ export function ViewPage() {
   }, [availableYears.length]); // 初期ロード時のみ実行
 
   // ローディング状態の統合
-  const isRecordsLoading = recordsLoading || yearsLoading;
+  const isRecordsLoading = recordsLoading || yearRecordsLoading;
 
-  // 月ごとの件数（年リスト用データから計算 - 月フィルタの影響を受けない）
+  // 月ごとの件数（選択年の全データから計算 - 月フィルタの影響を受けない）
   const monthCounts = useMemo(() => {
     const counts: Record<number, number> = {};
-    allRecordsForYears.forEach(record => {
+    yearRecords.forEach(record => {
       if (record.timestamp) {
-        const yearMatch = record.timestamp.match(/^(\d{4})/);
-        if (yearMatch && parseInt(yearMatch[1], 10) === selectedYear) {
-          const monthMatch = record.timestamp.match(/^\d{4}\/(\d{1,2})/);
-          if (monthMatch) {
-            const month = parseInt(monthMatch[1], 10);
-            counts[month] = (counts[month] || 0) + 1;
-          }
+        const monthMatch = record.timestamp.match(/^\d{4}\/(\d{1,2})/);
+        if (monthMatch) {
+          const month = parseInt(monthMatch[1], 10);
+          counts[month] = (counts[month] || 0) + 1;
         }
       }
     });
     return counts;
-  }, [allRecordsForYears, selectedYear]);
+  }, [yearRecords]);
 
   // サーバーサイドでフィルタ済みのレコードを使用
   const filteredRecords = records;
