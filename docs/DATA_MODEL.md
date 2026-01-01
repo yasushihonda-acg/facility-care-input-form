@@ -217,7 +217,25 @@ interface RemainingHandlingLog {
   // ... 既存フィールド ...
   normalizedName?: string;                         // 統計用の正規化名（Phase 43）
   remainingHandlingLogs?: RemainingHandlingLog[];  // 残り対応履歴（Phase 42）
+
+  // Phase 49: 廃棄指示フロー
+  status?: ItemStatus;                             // 品物ステータス
+  discardRequestedAt?: string;                     // 廃棄指示日時（ISO8601）
+  discardRequestedBy?: string;                     // 廃棄指示者
+  discardReason?: string;                          // 廃棄理由
+  discardedAt?: string;                            // 廃棄完了日時（ISO8601）
+  discardedBy?: string;                            // 廃棄完了者
 }
+
+// ItemStatus型定義
+type ItemStatus =
+  | 'pending'           // 登録済み（未提供）
+  | 'in_progress'       // 提供中
+  | 'served'            // 提供済み
+  | 'consumed'          // 消費完了
+  | 'expired'           // 期限切れ
+  | 'pending_discard'   // 廃棄指示中（Phase 49）
+  | 'discarded';        // 廃棄完了（Phase 49）
 ```
 
 ### normalizedName（Phase 43: 統計用の品物名正規化）
