@@ -13,6 +13,12 @@ export function usePlanData(options?: UsePlanDataOptions | string) {
   const normalizedOptions: UsePlanDataOptions | undefined =
     typeof options === 'string' ? { sheetName: options } : options;
 
+  // year/month指定時はsheetNameが必須（Firestoreインデックス制約）
+  // sheetNameが空の場合はAPI呼び出しをスキップ
+  const hasYearFilter = normalizedOptions?.year !== undefined;
+  const hasSheetName = !!normalizedOptions?.sheetName;
+  const shouldFetch = !hasYearFilter || hasSheetName;
+
   return useQuery({
     queryKey: ['planData', normalizedOptions?.sheetName, normalizedOptions?.year, normalizedOptions?.month],
     queryFn: () => getPlanData({
@@ -20,6 +26,7 @@ export function usePlanData(options?: UsePlanDataOptions | string) {
       year: normalizedOptions?.year,
       month: normalizedOptions?.month ?? undefined,
     }),
+    enabled: shouldFetch,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 15 * 60 * 1000, // 15 minutes (formerly cacheTime)
   });

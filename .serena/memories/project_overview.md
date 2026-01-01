@@ -121,6 +121,11 @@ Phase 1〜43.1完了。詳細は `git log` を参照。
   - 相関分析タブ: マグミット×排便の相関表示
   - グラフタブ: Recharts導入、バイタル/排泄/体重/水分の折れ線グラフ
   - 表示期間拡張: データなしの年も選択可能
+  - **遅延読み込み**: 
+    - getPlanData APIにyear/monthパラメータ追加
+    - サーバーサイドでFirestoreクエリフィルタ（limit制限なし）
+    - PlanData型にyear/monthフィールド追加（同期時に自動抽出）
+    - Firestoreインデックス追加: sheetName + year + month + timestamp
   - react-markdown + remark-gfm 導入
   - テーブル・箇条書き・太字対応
   - システムプロンプトにMarkdown出力指示追加

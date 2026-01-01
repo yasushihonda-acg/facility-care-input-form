@@ -101,6 +101,20 @@ async function getPlanDataHandler(
       return;
     }
 
+    // year/month指定時はsheetNameが必須（Firestoreインデックス制約）
+    if ((year !== undefined || month !== undefined) && !sheetName) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: {
+          code: ErrorCodes.INVALID_REQUEST,
+          message: "sheetName is required when year or month is specified",
+        },
+        timestamp,
+      };
+      res.status(400).json(response);
+      return;
+    }
+
     functions.logger.info("getPlanData started", {sheetName, year, month, limit});
 
     // Firestoreからデータを取得
