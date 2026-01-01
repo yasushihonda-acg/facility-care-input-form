@@ -199,12 +199,14 @@ export function ViewPage() {
                 />
               )}
 
-              {/* 月フィルタ */}
-              <MonthFilter
-                selectedMonth={selectedMonth}
-                monthCounts={monthCounts}
-                onMonthChange={setSelectedMonth}
-              />
+              {/* 月フィルタ（sticky固定） */}
+              <div className="sticky top-0 z-20 bg-white shadow-sm">
+                <MonthFilter
+                  selectedMonth={selectedMonth}
+                  monthCounts={monthCounts}
+                  onMonthChange={setSelectedMonth}
+                />
+              </div>
 
               {/* ビュータブ（データ/相関分析/グラフ） */}
               <ViewTabNavigation
