@@ -423,12 +423,6 @@ export function CorrelationTab() {
         )}
       </div>
 
-      {/* 今後の拡張用プレースホルダー */}
-      <div className="bg-gray-50 rounded-lg p-4 border border-dashed border-gray-300">
-        <p className="text-center text-gray-400 text-sm">
-          今後、他の相関分析（水分×排尿、バイタル×内服など）を追加予定
-        </p>
-      </div>
     </div>
   );
 }

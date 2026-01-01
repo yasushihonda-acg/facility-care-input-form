@@ -112,6 +112,12 @@ export function ViewPage() {
     setSelectedMonth(null); // シート変更時は月フィルタをリセット
   };
 
+  // 年変更時は月フィルタをリセット
+  const handleYearChange = (year: number) => {
+    setSelectedYear(year);
+    setSelectedMonth(null);
+  };
+
   // シート別アイコン定義（DESIGN_GUIDELINES.md準拠）
   const getSheetIcon = (sheetName: string) => {
     const icons: Record<string, string> = {
@@ -189,7 +195,7 @@ export function ViewPage() {
                 <YearPaginator
                   selectedYear={selectedYear}
                   availableYears={availableYears}
-                  onYearChange={setSelectedYear}
+                  onYearChange={handleYearChange}
                 />
               )}
 
