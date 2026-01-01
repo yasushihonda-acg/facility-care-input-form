@@ -73,6 +73,7 @@ function extractMagnesiumDates(specialNotes: PlanDataRecord[]): Map<string, { ti
 interface BowelData {
   hasBowel: boolean;
   count: number;
+  times: string[];
   details: string[];
 }
 
@@ -86,6 +87,7 @@ function aggregateBowelData(excretionRecords: PlanDataRecord[]): Map<string, Bow
     const existing = dataMap.get(dateKey) || {
       hasBowel: false,
       count: 0,
+      times: [],
       details: [],
     };
 
@@ -94,14 +96,15 @@ function aggregateBowelData(excretionRecords: PlanDataRecord[]): Map<string, Bow
       existing.hasBowel = true;
       existing.count += 1;
 
-      // 詳細情報があれば追加
-      const detail = Object.entries(record.data)
-        .filter(([key]) => key.includes('便') && !key.includes('排便はありましたか'))
-        .map(([, val]) => val)
-        .filter(Boolean)
-        .join(', ');
-      if (detail) {
-        existing.details.push(detail);
+      // 時間を追加
+      const timeMatch = record.timestamp.match(/(\d{1,2}:\d{2})/);
+      if (timeMatch) {
+        existing.times.push(timeMatch[1]);
+      }
+
+      // 排便の詳細（「あり（〇〇）」の形式から抽出）
+      if (hasBowel !== 'あり') {
+        existing.details.push(hasBowel);
       }
     }
 
@@ -119,6 +122,7 @@ interface CorrelationDataPoint {
   magnesiumNote: string;
   hasBowel: boolean;
   bowelCount: number;
+  bowelTimes: string;
   bowelDetails: string;
 }
 
@@ -167,6 +171,7 @@ export function CorrelationTab({ year, month }: CorrelationTabProps) {
         magnesiumNote: magInfo.note,
         hasBowel: bowel?.hasBowel || false,
         bowelCount: bowel?.count || 0,
+        bowelTimes: bowel?.times.join(', ') || '',
         bowelDetails: bowel?.details.join(' / ') || '',
       });
     });
@@ -227,34 +232,47 @@ export function CorrelationTab({ year, month }: CorrelationTabProps) {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-gray-50 border-b">
-                    <th className="text-left p-3 font-medium">日付</th>
-                    <th className="text-left p-3 font-medium">マグミット</th>
-                    <th className="text-left p-3 font-medium">排便</th>
-                    <th className="text-left p-3 font-medium hidden sm:table-cell">備考</th>
+                    <th className="text-left p-2 font-medium">日付</th>
+                    <th className="text-left p-2 font-medium">マグミット</th>
+                    <th className="text-left p-2 font-medium">排便</th>
+                    <th className="text-left p-2 font-medium hidden md:table-cell">詳細</th>
                   </tr>
                 </thead>
                 <tbody>
                   {correlationData.map((row) => (
                     <tr key={row.date} className="border-b hover:bg-gray-50">
-                      <td className="p-3 font-medium">{row.displayDate}</td>
-                      <td className="p-3">
-                        <span className="inline-flex items-center gap-1 text-green-600">
-                          <span>✓</span>
-                          <span>{row.magnesiumTime || '服用'}</span>
-                        </span>
+                      <td className="p-2 font-medium">{row.displayDate}</td>
+                      <td className="p-2">
+                        <div className="text-green-600">
+                          <span>✓ {row.magnesiumTime || '服用'}</span>
+                        </div>
+                        {row.magnesiumNote && (
+                          <div className="text-xs text-gray-500 mt-1 max-w-[150px] truncate" title={row.magnesiumNote}>
+                            {row.magnesiumNote}
+                          </div>
+                        )}
                       </td>
-                      <td className="p-3">
+                      <td className="p-2">
                         {row.hasBowel ? (
-                          <span className="inline-flex items-center gap-1 text-green-600">
-                            <span>✓</span>
-                            <span>あり{row.bowelCount > 1 ? ` (${row.bowelCount}回)` : ''}</span>
-                          </span>
+                          <div>
+                            <span className="text-green-600">
+                              ✓ {row.bowelTimes || 'あり'}
+                              {row.bowelCount > 1 && ` (${row.bowelCount}回)`}
+                            </span>
+                            {row.bowelDetails && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                {row.bowelDetails}
+                              </div>
+                            )}
+                          </div>
                         ) : (
                           <span className="text-gray-400">なし</span>
                         )}
                       </td>
-                      <td className="p-3 text-gray-500 text-xs hidden sm:table-cell max-w-xs truncate">
-                        {row.magnesiumNote || row.bowelDetails || '-'}
+                      <td className="p-2 text-gray-500 text-xs hidden md:table-cell max-w-[200px]">
+                        {row.magnesiumNote && <div className="truncate" title={row.magnesiumNote}>💊 {row.magnesiumNote}</div>}
+                        {row.bowelDetails && <div className="truncate" title={row.bowelDetails}>🚻 {row.bowelDetails}</div>}
+                        {!row.magnesiumNote && !row.bowelDetails && '-'}
                       </td>
                     </tr>
                   ))}

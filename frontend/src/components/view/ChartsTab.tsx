@@ -3,7 +3,7 @@
  * バイタル / 排泄 / 体重 / 水分摂取量 の折れ線グラフを表示
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import {
   LineChart,
   Line,
@@ -214,25 +214,56 @@ export function ChartsTab({ year, month }: ChartsTabProps) {
 
   const isLoading = vitalLoading || excretionLoading || weightLoading || hydrationLoading;
 
-  // フィルタリング + 変換
+  // グラフ用の月選択（外部のmonthと独立）
+  const [chartMonth, setChartMonth] = useState<number>(month ?? new Date().getMonth() + 1);
+
+  // 外部monthが変更されたら同期
+  useEffect(() => {
+    if (month !== null) {
+      setChartMonth(month);
+    }
+  }, [month]);
+
+  // その年に存在する月を抽出（全シートから）
+  const availableMonths = useMemo(() => {
+    const months = new Set<number>();
+    const allRecords = [...vitalRecords, ...excretionRecords, ...weightRecords, ...hydrationRecords];
+    allRecords.forEach(record => {
+      if (!record.timestamp) return;
+      const match = record.timestamp.match(/^(\d{4})\/(\d{1,2})/);
+      if (match && parseInt(match[1], 10) === year) {
+        months.add(parseInt(match[2], 10));
+      }
+    });
+    return Array.from(months).sort((a, b) => a - b);
+  }, [vitalRecords, excretionRecords, weightRecords, hydrationRecords, year]);
+
+  // chartMonthが利用可能でない場合、最新月に修正
+  useEffect(() => {
+    if (availableMonths.length > 0 && !availableMonths.includes(chartMonth)) {
+      setChartMonth(availableMonths[availableMonths.length - 1]);
+    }
+  }, [availableMonths, chartMonth]);
+
+  // フィルタリング + 変換（chartMonthを使用）
   const vitalData = useMemo(() =>
-    transformVitalData(filterByYearMonth(vitalRecords, year, month)),
-    [vitalRecords, year, month]
+    transformVitalData(filterByYearMonth(vitalRecords, year, chartMonth)),
+    [vitalRecords, year, chartMonth]
   );
 
   const excretionData = useMemo(() =>
-    transformExcretionData(filterByYearMonth(excretionRecords, year, month)),
-    [excretionRecords, year, month]
+    transformExcretionData(filterByYearMonth(excretionRecords, year, chartMonth)),
+    [excretionRecords, year, chartMonth]
   );
 
   const weightData = useMemo(() =>
-    transformWeightData(filterByYearMonth(weightRecords, year, month)),
-    [weightRecords, year, month]
+    transformWeightData(filterByYearMonth(weightRecords, year, chartMonth)),
+    [weightRecords, year, chartMonth]
   );
 
   const hydrationData = useMemo(() =>
-    transformHydrationData(filterByYearMonth(hydrationRecords, year, month)),
-    [hydrationRecords, year, month]
+    transformHydrationData(filterByYearMonth(hydrationRecords, year, chartMonth)),
+    [hydrationRecords, year, chartMonth]
   );
 
   if (isLoading) {
@@ -245,6 +276,28 @@ export function ChartsTab({ year, month }: ChartsTabProps) {
 
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      {/* 月選択 */}
+      {availableMonths.length > 0 && (
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="text-sm text-gray-600 mr-2">表示月:</span>
+          {availableMonths.map((m) => (
+            <button
+              key={m}
+              onClick={() => setChartMonth(m)}
+              className={`
+                px-3 py-1.5 text-sm rounded-lg transition-all
+                ${chartMonth === m
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }
+              `}
+            >
+              {m}月
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* バイタルグラフ */}
       <div className="bg-white rounded-lg shadow-card p-4">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
