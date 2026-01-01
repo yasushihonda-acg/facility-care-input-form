@@ -80,7 +80,7 @@ export function Layout({
 
 
       {/* メインコンテンツ */}
-      <main className={`flex-1 flex flex-col overflow-hidden px-4 ${title ? 'py-4' : ''}`}>
+      <main className={`flex-1 flex flex-col overflow-x-hidden px-4 ${title ? 'py-4' : ''}`}>
         {children}
       </main>
 

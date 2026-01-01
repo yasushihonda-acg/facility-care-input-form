@@ -327,7 +327,7 @@ export function CorrelationTab() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-6">
+    <div className="flex-1 p-4 space-y-6">
       {/* マグミット × 排便 */}
       <div className="bg-white rounded-lg shadow-card p-4">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
