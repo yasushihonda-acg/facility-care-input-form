@@ -172,10 +172,11 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
   const [discardTarget, setDiscardTarget] = useState<CareItem | null>(null);
   const discardMutation = useDiscardItem();
 
-  // 在庫あり品物のみ取得（pending/in_progress のみ）
+  // 品物取得（pending/in_progress/discarded）
+  // Phase 49: discardedも取得して「破棄済み」タブに表示
   const { data, isLoading, error, refetch } = useCareItems({
     residentId,
-    status: ['pending', 'in_progress'] as ItemStatus[],
+    status: ['pending', 'in_progress', 'discarded'] as ItemStatus[],
   });
   const items = data?.items ?? [];
 
@@ -203,6 +204,9 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
     };
 
     items.forEach((item) => {
+      // Phase 49: discardedは破棄済みタブにのみ表示
+      if (item.status === 'discarded') return;
+
       const group = classifyForTodayTab(item);
       groups[group].push(item);
     });
@@ -224,11 +228,20 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
 
   // Phase 42: 残り対応タブ用 - 品物ベースでグループ化
   // 最新の残り対応ログに基づいて品物を分類
+  // Phase 49: status === 'discarded' の品物も破棄済みタブに表示
   const remainingItems = useMemo(() => {
     const discarded: CareItem[] = [];
     const stored: CareItem[] = [];
+    const discardedIds = new Set<string>(); // 重複防止用
 
     items.forEach((item) => {
+      // Phase 49: status === 'discarded' の品物を追加（期限切れ廃棄など）
+      if (item.status === 'discarded') {
+        discarded.push(item);
+        discardedIds.add(item.id);
+        return; // statusがdiscardedならログは見ない
+      }
+
       const logs = item.remainingHandlingLogs ?? [];
       if (logs.length === 0) return;
 
@@ -238,11 +251,18 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
       );
       const latestLog = sortedLogs[0];
 
-      if (latestLog.handling === 'discarded') {
+      if (latestLog.handling === 'discarded' && !discardedIds.has(item.id)) {
         discarded.push(item);
       } else if (latestLog.handling === 'stored') {
         stored.push(item);
       }
+    });
+
+    // 破棄日時でソート（新しい順）
+    discarded.sort((a, b) => {
+      const dateA = a.discardedAt || a.updatedAt || '';
+      const dateB = b.discardedAt || b.updatedAt || '';
+      return new Date(dateB).getTime() - new Date(dateA).getTime();
     });
 
     return { discarded, stored };
@@ -803,6 +823,14 @@ function RemainingItemCard({ item, type, showButtons = true, onRecordClick }: Re
               <div className="flex items-start gap-1 text-gray-600 mt-2">
                 <span>💬</span>
                 <span className="italic">「{item.noteToStaff}」</span>
+              </div>
+            )}
+
+            {/* Phase 49: 廃棄情報の表示（status='discarded'の場合） */}
+            {item.status === 'discarded' && item.discardedAt && (
+              <div className="mt-2 text-xs text-gray-500 bg-gray-100 rounded px-2 py-1">
+                <span>🗑️ 廃棄日時: {new Date(item.discardedAt).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                {item.discardReason && <span className="ml-2">（{item.discardReason}）</span>}
               </div>
             )}
           </div>
