@@ -549,6 +549,25 @@
         { id: "VIEW-SORT-002", description: "降順→昇順の切り替えができる", category: "ソート", status: "pass", note: "", file: "view-page-sort.spec.ts" },
         { id: "VIEW-SORT-003", description: "ソート状態がアイコンで表示される", category: "ソート", status: "pass", note: "", file: "view-page-sort.spec.ts" },
         { id: "VIEW-SORT-004", description: "日時ソートが正しい時系列順になる", category: "ソート", status: "pass", note: "", file: "view-page-sort.spec.ts" },
+
+        // discard-flow.spec.ts (Phase 49)
+        { id: "DISCARD-001", description: "期限切れ品物がExpirationAlertに表示される", category: "廃棄指示", status: "pass", note: "Phase 49", file: "discard-flow.spec.ts" },
+        { id: "DISCARD-002", description: "期限切れ品物に廃棄ボタンが表示される", category: "廃棄指示", status: "pass", note: "Phase 49", file: "discard-flow.spec.ts" },
+        { id: "DISCARD-003", description: "廃棄ボタンクリックで確認ダイアログが表示される", category: "廃棄指示", status: "pass", note: "Phase 49", file: "discard-flow.spec.ts" },
+        { id: "DISCARD-004", description: "pending_discard品物は「スタッフに通知中...」と表示される", category: "廃棄指示", status: "pass", note: "Phase 49", file: "discard-flow.spec.ts" },
+        { id: "DISCARD-005", description: "詳細リンクから品物詳細ページへ遷移できる", category: "廃棄指示", status: "pass", note: "Phase 49", file: "discard-flow.spec.ts" },
+        { id: "DISCARD-010", description: "注意事項ページが表示される", category: "廃棄指示", status: "pass", note: "Phase 49", file: "discard-flow.spec.ts" },
+        { id: "DISCARD-011", description: "家族依頼タブにバッジが表示される（廃棄指示あり時）", category: "廃棄指示", status: "pass", note: "Phase 49", file: "discard-flow.spec.ts" },
+        { id: "DISCARD-012", description: "廃棄指示がある場合、家族依頼タブが自動選択される", category: "廃棄指示", status: "pass", note: "Phase 49", file: "discard-flow.spec.ts" },
+        { id: "DISCARD-013", description: "廃棄指示セクションに品物情報が表示される", category: "廃棄指示", status: "pass", note: "Phase 49", file: "discard-flow.spec.ts" },
+        { id: "DISCARD-014", description: "廃棄完了ボタンが表示される", category: "廃棄指示", status: "pass", note: "Phase 49", file: "discard-flow.spec.ts" },
+        { id: "DISCARD-015", description: "廃棄完了ボタンクリックでデモアラートが表示される", category: "廃棄指示", status: "pass", note: "Phase 49", file: "discard-flow.spec.ts" },
+        { id: "DISCARD-020", description: "注意事項タブをクリックで切り替え可能", category: "廃棄指示", status: "pass", note: "Phase 49", file: "discard-flow.spec.ts" },
+        { id: "DISCARD-021", description: "家族依頼タブをクリックで切り替え可能", category: "廃棄指示", status: "pass", note: "Phase 49", file: "discard-flow.spec.ts" },
+        { id: "DISCARD-030", description: "デモモードで廃棄依頼がアラートで完了する", category: "廃棄指示", status: "pass", note: "Phase 49", file: "discard-flow.spec.ts" },
+        { id: "DISCARD-040", description: "期限切れなしの場合は緑バナーが表示される", category: "廃棄指示", status: "skip", note: "本番API依存", file: "discard-flow.spec.ts" },
+        { id: "DISCARD-041", description: "通知中品物はグレー背景で表示される", category: "廃棄指示", status: "pass", note: "Phase 49", file: "discard-flow.spec.ts" },
+        { id: "DISCARD-042", description: "廃棄指示セクションは赤背景で目立つ", category: "廃棄指示", status: "pass", note: "Phase 49", file: "discard-flow.spec.ts" },
     ];
 
     // グローバル変数
