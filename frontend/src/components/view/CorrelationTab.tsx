@@ -75,6 +75,7 @@ interface BowelData {
   count: number;
   times: string[];
   details: string[];
+  notes: string[];  // 排便・排尿シートの特記事項
 }
 
 function aggregateBowelData(excretionRecords: PlanDataRecord[]): Map<string, BowelData> {
@@ -89,6 +90,7 @@ function aggregateBowelData(excretionRecords: PlanDataRecord[]): Map<string, Bow
       count: 0,
       times: [],
       details: [],
+      notes: [],
     };
 
     const hasBowel = record.data['排便はありましたか？'];
@@ -105,6 +107,12 @@ function aggregateBowelData(excretionRecords: PlanDataRecord[]): Map<string, Bow
       // 排便の詳細（「あり（〇〇）」の形式から抽出）
       if (hasBowel !== 'あり') {
         existing.details.push(hasBowel);
+      }
+
+      // 排便・排尿シートの特記事項を追加
+      const note = record.data['特記事項'];
+      if (note) {
+        existing.notes.push(note);
       }
     }
 
@@ -124,6 +132,7 @@ interface CorrelationDataPoint {
   bowelCount: number;
   bowelTimes: string;
   bowelDetails: string;
+  bowelNotes: string;  // 排便・排尿シートの特記事項
 }
 
 export function CorrelationTab({ year, month }: CorrelationTabProps) {
@@ -173,6 +182,7 @@ export function CorrelationTab({ year, month }: CorrelationTabProps) {
         bowelCount: bowel?.count || 0,
         bowelTimes: bowel?.times.join(', ') || '',
         bowelDetails: bowel?.details.join(' / ') || '',
+        bowelNotes: bowel?.notes.join(' / ') || '',
       });
     });
 
@@ -235,7 +245,7 @@ export function CorrelationTab({ year, month }: CorrelationTabProps) {
                     <th className="text-left p-2 font-medium">日付</th>
                     <th className="text-left p-2 font-medium">マグミット</th>
                     <th className="text-left p-2 font-medium">排便</th>
-                    <th className="text-left p-2 font-medium hidden md:table-cell">詳細</th>
+                    <th className="text-left p-2 font-medium hidden md:table-cell">特記事項</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -243,14 +253,7 @@ export function CorrelationTab({ year, month }: CorrelationTabProps) {
                     <tr key={row.date} className="border-b hover:bg-gray-50">
                       <td className="p-2 font-medium">{row.displayDate}</td>
                       <td className="p-2">
-                        <div className="text-green-600">
-                          <span>✓ {row.magnesiumTime || '服用'}</span>
-                        </div>
-                        {row.magnesiumNote && (
-                          <div className="text-xs text-gray-500 mt-1 max-w-[150px] truncate" title={row.magnesiumNote}>
-                            {row.magnesiumNote}
-                          </div>
-                        )}
+                        <span className="text-green-600">✓ {row.magnesiumTime || '服用'}</span>
                       </td>
                       <td className="p-2">
                         {row.hasBowel ? (
@@ -259,20 +262,17 @@ export function CorrelationTab({ year, month }: CorrelationTabProps) {
                               ✓ {row.bowelTimes || 'あり'}
                               {row.bowelCount > 1 && ` (${row.bowelCount}回)`}
                             </span>
-                            {row.bowelDetails && (
-                              <div className="text-xs text-gray-500 mt-1">
-                                {row.bowelDetails}
-                              </div>
-                            )}
                           </div>
                         ) : (
                           <span className="text-gray-400">なし</span>
                         )}
                       </td>
-                      <td className="p-2 text-gray-500 text-xs hidden md:table-cell max-w-[200px]">
-                        {row.magnesiumNote && <div className="truncate" title={row.magnesiumNote}>💊 {row.magnesiumNote}</div>}
-                        {row.bowelDetails && <div className="truncate" title={row.bowelDetails}>🚻 {row.bowelDetails}</div>}
-                        {!row.magnesiumNote && !row.bowelDetails && '-'}
+                      <td className="p-2 text-gray-500 text-xs hidden md:table-cell max-w-[250px]">
+                        {row.bowelNotes ? (
+                          <div className="truncate" title={row.bowelNotes}>
+                            {row.bowelNotes}
+                          </div>
+                        ) : '-'}
                       </td>
                     </tr>
                   ))}
