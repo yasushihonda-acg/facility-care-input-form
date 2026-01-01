@@ -208,7 +208,7 @@ export function ViewPage() {
 
               {/* 相関分析タブ */}
               {activeViewTab === 'correlation' && (
-                <CorrelationTab year={selectedYear} month={selectedMonth} />
+                <CorrelationTab />
               )}
 
               {/* グラフタブ */}

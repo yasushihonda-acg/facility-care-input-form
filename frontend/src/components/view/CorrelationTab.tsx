@@ -1,31 +1,15 @@
 /**
  * CorrelationTab - 相関分析タブ
- * マグミット × 排便 の相関を表示
+ * マグミット × 排便 の相関を表示（ページネーション対応）
  */
 
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useSheetRecords } from '../../hooks/usePlanData';
 import { LoadingSpinner } from '../LoadingSpinner';
 import type { PlanDataRecord } from '../../types';
 
-interface CorrelationTabProps {
-  year: number;
-  month: number | null;
-}
-
-// 日付でフィルタ
-function filterByYearMonth(records: PlanDataRecord[], year: number, month: number | null) {
-  return records.filter(record => {
-    if (!record.timestamp) return false;
-    const match = record.timestamp.match(/^(\d{4})\/(\d{1,2})/);
-    if (!match) return false;
-    const recordYear = parseInt(match[1], 10);
-    const recordMonth = parseInt(match[2], 10);
-    if (recordYear !== year) return false;
-    if (month !== null && recordMonth !== month) return false;
-    return true;
-  });
-}
+// 1ページあたりの表示件数
+const ITEMS_PER_PAGE = 20;
 
 // タイムスタンプから日付文字列を取得（YYYY/MM/DD形式）
 function getDateKey(timestamp: string): string {
@@ -35,13 +19,12 @@ function getDateKey(timestamp: string): string {
   return `${match[1]}/${match[2].padStart(2, '0')}/${match[3].padStart(2, '0')}`;
 }
 
-// 表示用の日付文字列（M/D形式）
+// 表示用の日付文字列（YYYY/M/D形式）
 function getDisplayDate(dateKey: string): string {
   const parts = dateKey.split('/');
   if (parts.length < 3) return dateKey;
-  return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
+  return `${parts[0]}/${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
 }
-
 
 // 日付を1日進める
 function getNextDate(dateKey: string): string {
@@ -88,7 +71,7 @@ interface BowelData {
   count: number;
   times: string[];
   details: string[];
-  notes: string[];  // 排便・排尿シートの特記事項
+  notes: string[];
 }
 
 function aggregateBowelData(excretionRecords: PlanDataRecord[]): Map<string, BowelData> {
@@ -117,12 +100,12 @@ function aggregateBowelData(excretionRecords: PlanDataRecord[]): Map<string, Bow
         existing.times.push(timeMatch[1]);
       }
 
-      // 排便の詳細（「あり（〇〇）」の形式から抽出）
+      // 排便の詳細
       if (hasBowel !== 'あり') {
         existing.details.push(hasBowel);
       }
 
-      // 排便・排尿シートの特記事項を追加
+      // 特記事項を追加
       const note = record.data['特記事項'];
       if (note) {
         existing.notes.push(note);
@@ -141,59 +124,146 @@ interface CorrelationDataPoint {
   hasMagnesium: boolean;
   magnesiumTime: string;
   magnesiumNote: string;
-  // 当日の排便
   hasBowelSameDay: boolean;
   bowelCountSameDay: number;
   bowelTimesSameDay: string;
-  bowelNotesSameDay: string;
-  // 翌日の排便
   hasBowelNextDay: boolean;
   bowelCountNextDay: number;
   bowelTimesNextDay: string;
-  bowelNotesNextDay: string;
-  nextDayDate: string;
   nextDayDisplayDate: string;
-  // 判定結果（当日または翌日に排便あり）
   hasEffect: boolean;
 }
 
-export function CorrelationTab({ year, month }: CorrelationTabProps) {
-  // 特記事項と排便・排尿シートのデータを取得（年フィルタ付き - オンデマンド読み込み）
-  const { records: specialNotes, isLoading: notesLoading } = useSheetRecords({
-    sheetName: '特記事項',
-    year,
-  });
-  const { records: excretionRecords, isLoading: excretionLoading } = useSheetRecords({
-    sheetName: '排便・排尿',
-    year,
-  });
+// ページネーションコンポーネント
+function Pagination({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  if (totalPages <= 1) return null;
+
+  // 表示するページ番号を計算（最大5ページ表示）
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    const maxVisible = 5;
+
+    if (totalPages <= maxVisible) {
+      // 全ページ表示
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // 先頭
+      pages.push(1);
+
+      if (currentPage > 3) {
+        pages.push('...');
+      }
+
+      // 現在ページ周辺
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) {
+        if (!pages.includes(i)) {
+          pages.push(i);
+        }
+      }
+
+      if (currentPage < totalPages - 2) {
+        pages.push('...');
+      }
+
+      // 末尾
+      if (!pages.includes(totalPages)) {
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  };
+
+  return (
+    <div className="flex items-center justify-center gap-1 mt-4">
+      {/* 前へ */}
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className={`px-3 py-1.5 rounded-lg text-sm ${
+          currentPage === 1
+            ? 'text-gray-300 cursor-not-allowed'
+            : 'text-gray-600 hover:bg-gray-100'
+        }`}
+      >
+        &lt;
+      </button>
+
+      {/* ページ番号 */}
+      {getPageNumbers().map((page, index) => (
+        typeof page === 'number' ? (
+          <button
+            key={index}
+            onClick={() => onPageChange(page)}
+            className={`min-w-[36px] px-3 py-1.5 rounded-lg text-sm transition-all ${
+              currentPage === page
+                ? 'bg-primary text-white'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            {page}
+          </button>
+        ) : (
+          <span key={index} className="px-2 text-gray-400">
+            {page}
+          </span>
+        )
+      ))}
+
+      {/* 次へ */}
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className={`px-3 py-1.5 rounded-lg text-sm ${
+          currentPage === totalPages
+            ? 'text-gray-300 cursor-not-allowed'
+            : 'text-gray-600 hover:bg-gray-100'
+        }`}
+      >
+        &gt;
+      </button>
+    </div>
+  );
+}
+
+export function CorrelationTab() {
+  // ページネーション状態
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // 特記事項と排便・排尿シートのデータを取得（全期間）
+  const { records: specialNotes, isLoading: notesLoading } = useSheetRecords('特記事項');
+  const { records: excretionRecords, isLoading: excretionLoading } = useSheetRecords('排便・排尿');
 
   const isLoading = notesLoading || excretionLoading;
 
-  // フィルタリング（月フィルタのみ - サーバーサイドで年フィルタ済み）
-  const filteredNotes = useMemo(() =>
-    filterByYearMonth(specialNotes, year, month),
-    [specialNotes, year, month]
-  );
-
   // マグミット日付の抽出
   const magnesiumDates = useMemo(() =>
-    extractMagnesiumDates(filteredNotes),
-    [filteredNotes]
+    extractMagnesiumDates(specialNotes),
+    [specialNotes]
   );
 
-  // 排便データの集計（サーバーサイドで年フィルタ済み）
-  // 注: 12/31→1/1の年またぎは翌年データが含まれないため検出されない場合あり
+  // 排便データの集計
   const bowelData = useMemo(() =>
     aggregateBowelData(excretionRecords),
     [excretionRecords]
   );
 
-  // 相関データの生成（当日＋翌日チェック）
+  // 相関データの生成（新しい順）
   const correlationData = useMemo(() => {
     const data: CorrelationDataPoint[] = [];
 
-    // マグミット服用日をベースにデータを生成
     magnesiumDates.forEach((magInfo, dateKey) => {
       const nextDateKey = getNextDate(dateKey);
       const bowelSameDay = bowelData.get(dateKey);
@@ -208,19 +278,13 @@ export function CorrelationTab({ year, month }: CorrelationTabProps) {
         hasMagnesium: true,
         magnesiumTime: magInfo.time,
         magnesiumNote: magInfo.note,
-        // 当日
         hasBowelSameDay,
         bowelCountSameDay: bowelSameDay?.count || 0,
         bowelTimesSameDay: bowelSameDay?.times.join(', ') || '',
-        bowelNotesSameDay: bowelSameDay?.notes.join(' / ') || '',
-        // 翌日
         hasBowelNextDay,
         bowelCountNextDay: bowelNextDay?.count || 0,
         bowelTimesNextDay: bowelNextDay?.times.join(', ') || '',
-        bowelNotesNextDay: bowelNextDay?.notes.join(' / ') || '',
-        nextDayDate: nextDateKey,
         nextDayDisplayDate: getDisplayDate(nextDateKey),
-        // 効果判定（当日または翌日に排便あり）
         hasEffect: hasBowelSameDay || hasBowelNextDay,
       });
     });
@@ -229,19 +293,30 @@ export function CorrelationTab({ year, month }: CorrelationTabProps) {
     return data.sort((a, b) => b.date.localeCompare(a.date));
   }, [magnesiumDates, bowelData]);
 
-  // 相関率の計算（当日または翌日に排便ありの割合）
+  // ページネーション計算
+  const totalPages = Math.ceil(correlationData.length / ITEMS_PER_PAGE);
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return correlationData.slice(start, start + ITEMS_PER_PAGE);
+  }, [correlationData, currentPage]);
+
+  // 相関率の計算（全データベース）
   const correlationRate = useMemo(() => {
     if (correlationData.length === 0) return 0;
     const withEffect = correlationData.filter(d => d.hasEffect).length;
     return Math.round((withEffect / correlationData.length) * 100);
   }, [correlationData]);
 
-  // 当日のみの相関率（参考値）
   const sameDayRate = useMemo(() => {
     if (correlationData.length === 0) return 0;
     const sameDayOnly = correlationData.filter(d => d.hasBowelSameDay).length;
     return Math.round((sameDayOnly / correlationData.length) * 100);
   }, [correlationData]);
+
+  // ページ変更時にトップへスクロール
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   if (isLoading) {
     return (
@@ -296,7 +371,7 @@ export function CorrelationTab({ year, month }: CorrelationTabProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {correlationData.map((row) => (
+                  {paginatedData.map((row) => (
                     <tr key={row.date} className={`border-b hover:bg-gray-50 ${row.hasEffect ? '' : 'bg-red-50'}`}>
                       <td className="p-2 font-medium">{row.displayDate}</td>
                       <td className="p-2 text-gray-600">{row.magnesiumTime || '-'}</td>
@@ -332,6 +407,13 @@ export function CorrelationTab({ year, month }: CorrelationTabProps) {
                 </tbody>
               </table>
             </div>
+
+            {/* ページネーション */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
 
             {/* 注釈 */}
             <p className="text-xs text-gray-400 mt-4">
