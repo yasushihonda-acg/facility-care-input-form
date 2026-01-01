@@ -31,7 +31,7 @@ export function Layout({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
       {/* ヘッダー（titleが設定されている場合のみ表示） */}
       {title && (
         <header className="bg-gradient-to-r from-primary to-primary-dark text-white sticky top-0 z-50 shadow-header">
@@ -80,7 +80,7 @@ export function Layout({
 
 
       {/* メインコンテンツ */}
-      <main className={`flex-1 flex flex-col overflow-x-hidden px-4 ${title ? 'py-4' : ''}`}>
+      <main className={`flex-1 flex flex-col min-h-0 overflow-hidden px-4 ${title ? 'py-4' : ''}`}>
         {children}
       </main>
 
