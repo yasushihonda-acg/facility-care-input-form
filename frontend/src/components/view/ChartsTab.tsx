@@ -287,10 +287,10 @@ export function ChartsTab({ year, month }: ChartsTabProps) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-6">
-      {/* 月選択 */}
+    <div className="flex-1 overflow-y-auto">
+      {/* 月選択（スティッキー） */}
       {availableMonths.length > 0 && (
-        <div className="flex flex-wrap gap-2 items-center">
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-3 flex flex-wrap gap-2 items-center">
           <span className="text-sm text-gray-600 mr-2">表示月:</span>
           {availableMonths.map((m) => (
             <button
@@ -310,8 +310,10 @@ export function ChartsTab({ year, month }: ChartsTabProps) {
         </div>
       )}
 
-      {/* バイタルグラフ */}
-      <div className="bg-white rounded-lg shadow-card p-4">
+      {/* グラフコンテンツ */}
+      <div className="p-4 space-y-6">
+        {/* バイタルグラフ */}
+        <div className="bg-white rounded-lg shadow-card p-4">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <span>❤️</span>
           <span>バイタル</span>
@@ -405,6 +407,7 @@ export function ChartsTab({ year, month }: ChartsTabProps) {
             </ResponsiveContainer>
           )}
         </div>
+      </div>
       </div>
     </div>
   );
