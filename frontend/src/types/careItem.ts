@@ -73,12 +73,13 @@ export const CONSUMPTION_STATUSES: { value: ConsumptionStatus; label: string; ra
 
 // ステータス
 export type ItemStatus =
-  | 'pending'      // 未提供（登録済み、まだ提供していない）
-  | 'in_progress'  // 提供中（一部消費、残量あり）★新規追加
-  | 'served'       // 提供済み（旧: 互換性のため残す）
-  | 'consumed'     // 消費完了（残量ゼロ）
-  | 'expired'      // 期限切れ
-  | 'discarded';   // 廃棄
+  | 'pending'         // 未提供（登録済み、まだ提供していない）
+  | 'in_progress'     // 提供中（一部消費、残量あり）
+  | 'served'          // 提供済み（旧: 互換性のため残す）
+  | 'consumed'        // 消費完了（残量ゼロ）
+  | 'expired'         // 期限切れ
+  | 'pending_discard' // 廃棄指示中（Phase 49: 家族→スタッフ通知中）
+  | 'discarded';      // 廃棄完了
 
 export const ITEM_STATUSES: { value: ItemStatus; label: string; color: string; bgColor: string }[] = [
   { value: 'pending', label: '未提供', color: 'text-yellow-700', bgColor: 'bg-yellow-100' },
@@ -86,7 +87,8 @@ export const ITEM_STATUSES: { value: ItemStatus; label: string; color: string; b
   { value: 'served', label: '提供済み', color: 'text-blue-700', bgColor: 'bg-blue-100' },
   { value: 'consumed', label: '消費完了', color: 'text-green-700', bgColor: 'bg-green-100' },
   { value: 'expired', label: '期限切れ', color: 'text-red-700', bgColor: 'bg-red-100' },
-  { value: 'discarded', label: '廃棄', color: 'text-gray-700', bgColor: 'bg-gray-100' },
+  { value: 'pending_discard', label: '廃棄指示中', color: 'text-orange-700', bgColor: 'bg-orange-100' },
+  { value: 'discarded', label: '廃棄完了', color: 'text-gray-700', bgColor: 'bg-gray-100' },
 ];
 
 // 単位
@@ -207,6 +209,10 @@ export interface CareItem {
   discardedAt?: string;          // 廃棄日時（ISO8601）
   discardedBy?: string;          // 廃棄実行者
   discardReason?: string;        // 廃棄理由
+
+  // Phase 49: 廃棄指示フロー（家族→スタッフ）
+  discardRequestedAt?: string;   // 廃棄指示日時（ISO8601）
+  discardRequestedBy?: string;   // 廃棄指示者（家族）
 
   // 残り対応の実績履歴
   remainingHandlingLogs?: RemainingHandlingLog[];

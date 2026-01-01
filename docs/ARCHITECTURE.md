@@ -495,6 +495,46 @@ Service Workerによるキャッシュで、新バージョンが即座に反映
 | `vite.config.ts` | PWA設定（workbox） |
 | `PWAUpdateNotification.tsx` | 更新通知UIコンポーネント |
 
+### 10.6 廃棄指示フロー（Phase 49）
+
+家族が期限切れ品物の廃棄をスタッフに依頼し、スタッフが完了を確認するフロー。
+
+```mermaid
+sequenceDiagram
+    participant F as 家族
+    participant App as アプリ
+    participant S as スタッフ
+
+    F->>App: 廃棄ボタン押下
+    App->>App: status: pending_discard
+    App-->>F: 「スタッフに通知中...」表示
+    App-->>S: 家族依頼タブにバッジ表示
+
+    S->>App: 注意事項ページを開く
+    App-->>S: 家族依頼タブ（自動選択）
+    App-->>S: 廃棄指示を目立つ色で表示
+
+    S->>App: 廃棄完了ボタン押下
+    App->>App: status: discarded
+    App-->>F: 品物が一覧から消える
+```
+
+#### ステータス遷移
+
+| ステータス | 説明 | 家族側表示 | スタッフ側表示 |
+|------------|------|-----------|---------------|
+| `pending` / `in_progress` | 期限切れ | 廃棄ボタン表示 | - |
+| `pending_discard` | 廃棄指示中 | 「通知中...」表示 | 廃棄指示セクション |
+| `discarded` | 廃棄完了 | 一覧から消える | 一覧から消える |
+
+#### 関連ファイル
+
+| ファイル | 役割 |
+|----------|------|
+| `ExpirationAlert.tsx` | 期限切れアラート（家族側） |
+| `StaffNotesPage.tsx` | 注意事項ページ（スタッフ側） |
+| `useCareItems.ts` | useRequestDiscard / useConfirmDiscard |
+
 ---
 
 ## 11. 開発状況

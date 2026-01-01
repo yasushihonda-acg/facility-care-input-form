@@ -570,21 +570,59 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     remainingQuantity: 10,
     quantity: 10,
     unit: '枚',
-    status: 'pending' as ItemStatus,
-    expirationDate: getDateString(-2), // 2日前に期限切れ → 赤色で目立つ
+    status: 'pending_discard' as ItemStatus, // Phase 49: 廃棄指示中
+    expirationDate: getDateString(-2), // 2日前に期限切れ
     storageMethod: 'room_temp',
     servingMethod: 'as_is' as ServingMethod,
     servingMethodDetail: 'そのまま提供',
     noteToStaff: '1回2枚まで',
-    // 1週間前からスケジュールされているが記録なし＋期限切れ
+    // 廃棄指示フィールド（Phase 49）
+    discardRequestedAt: getDateTimeString(0, 9), // 今日の9時に廃棄指示
+    discardRequestedBy: 'family_user',
+    discardReason: '期限切れのため廃棄',
     servingSchedule: {
       type: 'weekly',
-      startDate: getDateString(-7), // 7日前から週2回予定だったが...
+      startDate: getDateString(-7),
       weekdays: [2, 5], // 火・金
       timeSlot: 'snack',
     } as ServingSchedule,
     createdAt: getDateTimeString(-10),
-    updatedAt: getDateTimeString(-10),
+    updatedAt: getDateTimeString(0),
+  },
+
+  // ===== Phase 49: 廃棄指示フロー テスト用 =====
+  {
+    id: 'demo-item-017',
+    residentId: 'resident-001',
+    userId: 'family-001',
+    itemName: '明治ブルガリアヨーグルト',
+    normalizedName: 'ヨーグルト', // Phase 43.1: 統計用の表示名（ブランド除外）
+    category: 'food' as ItemCategory,
+    sentDate: getDateString(-7),
+    initialQuantity: 4,
+    currentQuantity: 2,
+    remainingQuantity: 2,
+    quantity: 4,
+    unit: '個',
+    status: 'pending_discard' as ItemStatus, // 廃棄指示中
+    expirationDate: getDateString(-1), // 昨日期限切れ
+    storageMethod: 'refrigerated',
+    servingMethod: 'as_is' as ServingMethod,
+    servingMethodDetail: 'そのまま提供',
+    consumptionSummary: {
+      totalServed: 2,
+      totalServedQuantity: 2,
+      totalConsumedQuantity: 1.6,
+      avgConsumptionRate: 80,
+    },
+    consumptionRate: 80,
+    // 廃棄指示フィールド（Phase 49）
+    discardRequestedAt: getDateTimeString(0, 10), // 今日の10時に廃棄指示
+    discardRequestedBy: 'family_user',
+    discardReason: '賞味期限切れのため廃棄をお願いします',
+    remainingHandlingInstruction: 'discarded' as RemainingHandlingInstruction,
+    createdAt: getDateTimeString(-7),
+    updatedAt: getDateTimeString(0),
   },
 ];
 

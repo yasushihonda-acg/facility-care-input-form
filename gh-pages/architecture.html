@@ -444,6 +444,44 @@ graph TB
             </div>
         </section>
 
+        <!-- Flow D: Discard Instruction -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-indigo-500 pb-2">Flow D: 廃棄指示フロー</h2>
+            <p class="text-gray-600 mb-4">家族が期限切れ品物の廃棄をスタッフに依頼するフロー（Phase 49）</p>
+            <div class="bg-white rounded-lg shadow-md p-6 overflow-x-auto">
+                <div class="mermaid">
+sequenceDiagram
+    participant F as 家族
+    participant App as アプリ
+    participant FS as Firestore
+    participant S as スタッフ
+
+    F->>App: 廃棄ボタン押下
+    App->>FS: status: pending_discard
+    App-->>F: 「スタッフに通知中...」表示
+
+    Note over S: 注意事項ページを開く
+    S->>App: 家族依頼タブを確認
+    App->>FS: pending_discard品物取得
+    FS-->>App: 廃棄指示リスト
+    App-->>S: 赤い廃棄指示セクション表示
+
+    S->>App: 廃棄完了ボタン押下
+    App->>FS: status: discarded
+    App-->>F: 品物が一覧から消える
+                </div>
+            </div>
+            <div class="mt-4 bg-red-50 rounded-lg p-4">
+                <h3 class="font-semibold text-red-800 mb-2">ポイント</h3>
+                <ul class="text-sm text-red-700 list-disc list-inside space-y-1">
+                    <li>家族は「廃棄」ボタンを押すと「スタッフに通知中...」表示に変わる</li>
+                    <li>スタッフの注意事項ページに廃棄指示がバッジ付きで表示される</li>
+                    <li>廃棄指示がある場合、家族依頼タブが自動選択される</li>
+                    <li>スタッフが「廃棄完了」を押すと即座に家族側から消える</li>
+                </ul>
+            </div>
+        </section>
+
         <!-- Infrastructure -->
         <section class="mb-12">
             <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-indigo-500 pb-2">インフラ構成</h2>

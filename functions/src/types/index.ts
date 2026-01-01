@@ -484,11 +484,12 @@ export type ConsumptionStatus =
 /** 品物ステータス */
 export type ItemStatus =
   | "pending" // 未提供
-  | "in_progress" // 提供中（一部消費、残量あり）★Phase 9.2
+  | "in_progress" // 提供中（一部消費、残量あり）
   | "served" // 提供済み（旧: 互換性のため残す）
   | "consumed" // 消費完了
   | "expired" // 期限切れ
-  | "discarded"; // 廃棄
+  | "pending_discard" // 廃棄指示中（Phase 49: 家族→スタッフ通知中）
+  | "discarded"; // 廃棄完了
 
 /** 消費サマリー（CareItemに埋め込み） */
 export interface ConsumptionSummary {
@@ -557,6 +558,15 @@ export interface CareItem {
   remainingQuantity: number; // 旧: 互換性のため残す
   createdAt: Timestamp;
   updatedAt: Timestamp;
+
+  // Phase 38.2: 廃棄関連（オプション）
+  discardedAt?: string; // 廃棄日時（ISO8601）
+  discardedBy?: string; // 廃棄実行者
+  discardReason?: string; // 廃棄理由
+
+  // Phase 49: 廃棄指示フロー（家族→スタッフ）
+  discardRequestedAt?: string; // 廃棄指示日時（ISO8601）
+  discardRequestedBy?: string; // 廃棄指示者（家族）
 
   // 残り対応の実績履歴
   remainingHandlingLogs?: RemainingHandlingLog[];

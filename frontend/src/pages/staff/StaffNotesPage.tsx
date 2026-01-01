@@ -1,13 +1,14 @@
 /**
  * スタッフ注意事項ページ
  * Phase 40: スタッフ専用の注意事項管理機能
+ * Phase 49: 廃棄指示フロー対応（家族→スタッフ通知）
  *
  * タブ構成:
  * - 注意事項: スタッフ注意事項のCRUD
- * - 家族依頼: 家族からのタスク一覧（読み取り専用）
+ * - 家族依頼: 家族からのタスク一覧 + 廃棄指示（バッジ付き）
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Layout } from '../../components/Layout';
 import { StaffNoteCard } from '../../components/staff/StaffNoteCard';
 import { StaffNoteModal } from '../../components/staff/StaffNoteModal';
@@ -18,23 +19,21 @@ import {
   useDeleteStaffNote,
 } from '../../hooks/useStaffNotes';
 import { useTasks } from '../../hooks/useTasks';
+import { usePendingDiscardItems, useConfirmDiscard } from '../../hooks/useCareItems';
 import { useDemoMode } from '../../hooks/useDemoMode';
 import type { StaffNote, CreateStaffNoteInput } from '../../types/staffNote';
 import type { Task } from '../../types/task';
+import type { CareItem } from '../../types/careItem';
+import { getCategoryIcon, formatDate } from '../../types/careItem';
 
 // デモ用スタッフ名（将来は認証から取得）
 const DEMO_STAFF_NAME = 'スタッフA';
 
 // タブ定義
 type TabValue = 'notes' | 'tasks';
-const TABS: { value: TabValue; label: string; icon: string }[] = [
-  { value: 'notes', label: '注意事項', icon: '📋' },
-  { value: 'tasks', label: '家族依頼', icon: '📝' },
-];
 
 export function StaffNotesPage() {
   const isDemo = useDemoMode();
-  const [activeTab, setActiveTab] = useState<TabValue>('notes');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<StaffNote | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -47,6 +46,24 @@ export function StaffNotesPage() {
 
   // 家族依頼（タスク）データ - 全タスクを取得
   const { data: tasksData, isLoading: tasksLoading, error: tasksError } = useTasks({});
+
+  // 廃棄指示中の品物（Phase 49）
+  const { pendingDiscardItems, isLoading: discardLoading } = usePendingDiscardItems();
+  const discardCount = pendingDiscardItems.length;
+
+  // 廃棄指示があれば家族依頼タブをデフォルトに
+  const [activeTab, setActiveTab] = useState<TabValue>('notes');
+  useEffect(() => {
+    if (discardCount > 0 && !discardLoading) {
+      setActiveTab('tasks');
+    }
+  }, [discardCount, discardLoading]);
+
+  // タブ定義（バッジ付き）
+  const TABS: { value: TabValue; label: string; icon: string; badge?: number }[] = [
+    { value: 'notes', label: '注意事項', icon: '📋' },
+    { value: 'tasks', label: '家族依頼', icon: '📝', badge: discardCount > 0 ? discardCount : undefined },
+  ];
 
   // 注意事項の作成/更新
   const handleSubmit = useCallback(async (input: CreateStaffNoteInput) => {
@@ -134,7 +151,7 @@ export function StaffNotesPage() {
             <button
               key={tab.value}
               onClick={() => setActiveTab(tab.value)}
-              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors relative ${
                 activeTab === tab.value
                   ? 'text-primary border-b-2 border-primary'
                   : 'text-gray-500 hover:text-gray-700'
@@ -142,6 +159,12 @@ export function StaffNotesPage() {
             >
               <span className="mr-1">{tab.icon}</span>
               {tab.label}
+              {/* バッジ */}
+              {tab.badge !== undefined && tab.badge > 0 && (
+                <span className="absolute -top-1 right-1/4 px-1.5 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px]">
+                  {tab.badge}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -160,8 +183,10 @@ export function StaffNotesPage() {
         ) : (
           <TasksContent
             tasks={tasksData?.tasks ?? []}
-            isLoading={tasksLoading}
+            isLoading={tasksLoading || discardLoading}
             error={tasksError}
+            pendingDiscardItems={pendingDiscardItems}
+            isDemo={isDemo}
           />
         )}
       </div>
@@ -267,15 +292,20 @@ function NotesContent({
 
 /**
  * 家族依頼（タスク）コンテンツ
+ * Phase 49: 廃棄指示セクションを追加
  */
 function TasksContent({
   tasks,
   isLoading,
   error,
+  pendingDiscardItems,
+  isDemo,
 }: {
   tasks: Task[];
   isLoading: boolean;
   error: Error | null;
+  pendingDiscardItems: CareItem[];
+  isDemo: boolean;
 }) {
   if (isLoading) {
     return (
@@ -293,7 +323,10 @@ function TasksContent({
     );
   }
 
-  if (tasks.length === 0) {
+  const hasDiscardItems = pendingDiscardItems.length > 0;
+  const hasTasks = tasks.length > 0;
+
+  if (!hasDiscardItems && !hasTasks) {
     return (
       <div className="text-center py-12">
         <div className="text-6xl mb-4">📝</div>
@@ -303,10 +336,115 @@ function TasksContent({
   }
 
   return (
-    <div className="space-y-3">
-      {tasks.map((task) => (
-        <TaskCard key={task.id} task={task} />
-      ))}
+    <div className="space-y-4">
+      {/* 廃棄指示セクション（Phase 49） */}
+      {hasDiscardItems && (
+        <DiscardInstructionSection items={pendingDiscardItems} isDemo={isDemo} />
+      )}
+
+      {/* 通常のタスク */}
+      {hasTasks && (
+        <div className="space-y-3">
+          {hasDiscardItems && (
+            <h3 className="text-sm font-semibold text-gray-600 mt-4">その他の依頼</h3>
+          )}
+          {tasks.map((task) => (
+            <TaskCard key={task.id} task={task} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * 廃棄指示セクション（Phase 49）
+ * 目立つ赤枠で廃棄指示を表示
+ */
+function DiscardInstructionSection({
+  items,
+  isDemo,
+}: {
+  items: CareItem[];
+  isDemo: boolean;
+}) {
+  const confirmDiscard = useConfirmDiscard();
+  const [processingId, setProcessingId] = useState<string | null>(null);
+
+  const handleConfirmDiscard = async (item: CareItem) => {
+    if (isDemo) {
+      alert(`${item.itemName}の廃棄を完了しました（デモモード - 実際には変更されません）`);
+      return;
+    }
+
+    setProcessingId(item.id);
+    try {
+      await confirmDiscard.mutateAsync({
+        itemId: item.id,
+        staffName: DEMO_STAFF_NAME,
+      });
+    } catch (error) {
+      console.error('Confirm discard failed:', error);
+      alert('廃棄完了処理に失敗しました');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  return (
+    <div className="bg-red-50 border-2 border-red-300 rounded-xl overflow-hidden">
+      {/* ヘッダー */}
+      <div className="px-4 py-3 bg-red-100 border-b border-red-200">
+        <h2 className="text-base font-bold text-red-800 flex items-center gap-2">
+          <span className="text-xl">🚨</span>
+          廃棄指示（{items.length}件）
+        </h2>
+        <p className="text-xs text-red-600 mt-1">
+          家族から廃棄指示が届いています。確認後「廃棄完了」ボタンを押してください。
+        </p>
+      </div>
+
+      {/* アイテムリスト */}
+      <div className="divide-y divide-red-200">
+        {items.map((item) => (
+          <div key={item.id} className="px-4 py-4 bg-white">
+            <div className="flex items-start gap-3">
+              <span className="text-3xl flex-shrink-0">
+                {getCategoryIcon(item.category)}
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="font-bold text-red-900 text-base">
+                  🗑️ {item.itemName}
+                </div>
+                <div className="text-sm text-red-700 mt-1">
+                  期限: {item.expirationDate ? formatDate(item.expirationDate) : '未設定'}
+                  {item.expirationDate && new Date(item.expirationDate) < new Date() && (
+                    <span className="ml-2 text-xs bg-red-200 px-1.5 py-0.5 rounded">期限切れ</span>
+                  )}
+                </div>
+                <div className="text-sm text-gray-600 mt-1">
+                  <span className="text-gray-500">家族からの指示:</span>{' '}
+                  {item.discardReason || '期限切れのため廃棄'}
+                </div>
+                {item.discardRequestedAt && (
+                  <div className="text-xs text-gray-400 mt-1">
+                    指示日時: {new Date(item.discardRequestedAt).toLocaleString('ja-JP')}
+                  </div>
+                )}
+              </div>
+              <div className="flex-shrink-0">
+                <button
+                  onClick={() => handleConfirmDiscard(item)}
+                  disabled={processingId === item.id}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                >
+                  {processingId === item.id ? '処理中...' : '廃棄完了'}
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

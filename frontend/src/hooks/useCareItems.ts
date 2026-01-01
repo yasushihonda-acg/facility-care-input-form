@@ -325,3 +325,82 @@ export function useDiscardItem() {
     },
   });
 }
+
+/**
+ * 廃棄指示を作成するミューテーションフック（Phase 49）
+ * 家族が期限切れ品物の廃棄をスタッフに依頼する
+ */
+export function useRequestDiscard() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      itemId,
+      reason,
+    }: {
+      itemId: string;
+      reason?: string;
+    }) => {
+      const response = await updateCareItem(itemId, {
+        status: 'pending_discard',
+        discardRequestedAt: new Date().toISOString(),
+        discardRequestedBy: 'family_user',
+        discardReason: reason || '期限切れのため廃棄',
+      } as Partial<CareItem>);
+      if (!response.success || !response.data) {
+        throw new Error(response.error?.message || 'Failed to request discard');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [CARE_ITEMS_KEY] });
+    },
+  });
+}
+
+/**
+ * 廃棄完了を記録するミューテーションフック（Phase 49）
+ * スタッフが廃棄指示を完了する
+ */
+export function useConfirmDiscard() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      itemId,
+      staffName,
+    }: {
+      itemId: string;
+      staffName: string;
+    }) => {
+      const response = await updateCareItem(itemId, {
+        status: 'discarded',
+        discardedAt: new Date().toISOString(),
+        discardedBy: staffName,
+      } as Partial<CareItem>);
+      if (!response.success || !response.data) {
+        throw new Error(response.error?.message || 'Failed to confirm discard');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [CARE_ITEMS_KEY] });
+    },
+  });
+}
+
+/**
+ * 廃棄指示中の品物を取得するフック（Phase 49）
+ * スタッフ側で廃棄指示一覧を表示するために使用
+ */
+export function usePendingDiscardItems() {
+  const { data, isLoading, error } = useCareItems({
+    status: 'pending_discard',
+  });
+
+  return {
+    pendingDiscardItems: data?.items ?? [],
+    isLoading,
+    error,
+  };
+}
