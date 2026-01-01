@@ -190,17 +190,15 @@ export function ViewPage() {
             </div>
           ) : (
             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
-              {/* 年ページネーション */}
-              {availableYears.length > 0 && (
-                <YearPaginator
-                  selectedYear={selectedYear}
-                  availableYears={availableYears}
-                  onYearChange={handleYearChange}
-                />
-              )}
-
-              {/* 月フィルタ + ビュータブ（sticky固定） */}
+              {/* 年・月フィルタ + ビュータブ（sticky固定） */}
               <div className="sticky top-0 z-20 bg-white shadow-sm">
+                {availableYears.length > 0 && (
+                  <YearPaginator
+                    selectedYear={selectedYear}
+                    availableYears={availableYears}
+                    onYearChange={handleYearChange}
+                  />
+                )}
                 <MonthFilter
                   selectedMonth={selectedMonth}
                   monthCounts={monthCounts}
