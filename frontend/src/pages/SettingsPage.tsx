@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useMealFormSettings } from '../hooks/useMealFormSettings';
+import { useSheetList } from '../hooks/usePlanData';
 import type { UpdateMealFormSettingsRequest } from '../types';
-import { testWebhook } from '../api';
+import { testWebhook, syncPlanData } from '../api';
 
 /**
  * グローバル設定ページ
@@ -30,6 +31,11 @@ const TEST_COOLDOWN_MS = 5000;
 
 export function SettingsPage() {
   const { settings, isLoading: isSettingsLoading, saveSettings } = useMealFormSettings();
+  const { lastSyncedAt } = useSheetList();
+
+  // 同期状態
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const [localSettings, setLocalSettings] = useState<UpdateMealFormSettingsRequest>({
     defaultFacility: '',
@@ -124,6 +130,45 @@ export function SettingsPage() {
     setCooldown(true);
     setTimeout(() => setCooldown(false), TEST_COOLDOWN_MS);
   }, []);
+
+  // 全データ同期
+  const handleFullSync = async () => {
+    if (isSyncing) return;
+
+    const confirmed = window.confirm(
+      '全データ同期を実行しますか？\n\n' +
+      '・Google Sheetsから全データを取得します\n' +
+      '・過去データ（2024年9月〜）も含めて同期されます\n' +
+      '・処理に数分かかる場合があります'
+    );
+
+    if (!confirmed) return;
+
+    setIsSyncing(true);
+    setSyncResult(null);
+
+    try {
+      const result = await syncPlanData({ incremental: false });
+      if (result.success && result.data) {
+        setSyncResult({
+          type: 'success',
+          message: `同期完了: ${result.data.totalRecords}件（${result.data.syncedSheets.length}シート）`,
+        });
+      } else {
+        setSyncResult({
+          type: 'error',
+          message: result.error?.message || '同期に失敗しました',
+        });
+      }
+    } catch (error) {
+      setSyncResult({
+        type: 'error',
+        message: error instanceof Error ? error.message : '同期に失敗しました',
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -475,6 +520,63 @@ export function SettingsPage() {
             </div>
             <p className="mt-1 text-xs text-gray-500">食事・水分記録が未入力の場合に通知する時刻</p>
           </div>
+        </div>
+
+        {/* データ同期セクション */}
+        <div className="bg-white rounded-lg p-4 shadow-sm space-y-4">
+          <h2 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            記録データ同期
+          </h2>
+
+          {/* 同期状態 */}
+          <div className="text-sm text-gray-600">
+            <p>最終同期: {lastSyncedAt ? new Date(lastSyncedAt).toLocaleString('ja-JP') : '未取得'}</p>
+            <p className="text-xs text-gray-400 mt-1">
+              自動同期: 毎時0分（差分）/ 毎日3時（完全）
+            </p>
+          </div>
+
+          {/* 同期結果 */}
+          {syncResult && (
+            <div className={`p-3 rounded-lg text-sm ${
+              syncResult.type === 'success'
+                ? 'bg-green-100 text-green-700'
+                : 'bg-red-100 text-red-700'
+            }`}>
+              {syncResult.message}
+            </div>
+          )}
+
+          {/* 全同期ボタン */}
+          <button
+            onClick={handleFullSync}
+            disabled={isSyncing}
+            className="w-full py-2.5 px-4 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {isSyncing ? (
+              <>
+                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                同期中...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                全データ同期
+              </>
+            )}
+          </button>
+
+          <p className="text-xs text-gray-500">
+            ※ 過去データが表示されない場合にクリックしてください
+          </p>
         </div>
 
         {/* 写真保存について */}

@@ -14,11 +14,14 @@ import type {
 
 const API_BASE = 'https://asia-northeast1-facility-care-input-form.cloudfunctions.net';
 
-export async function syncPlanData(): Promise<ApiResponse<SyncPlanDataResponse>> {
+export async function syncPlanData(options?: { incremental?: boolean }): Promise<ApiResponse<SyncPlanDataResponse>> {
   const response = await fetch(`${API_BASE}/syncPlanData`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ triggeredBy: 'manual' }),
+    body: JSON.stringify({
+      triggeredBy: 'manual',
+      incremental: options?.incremental ?? true, // デフォルトは差分同期
+    }),
   });
 
   if (!response.ok) {
