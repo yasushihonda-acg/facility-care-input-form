@@ -158,13 +158,19 @@ interface CorrelationDataPoint {
 }
 
 export function CorrelationTab({ year, month }: CorrelationTabProps) {
-  // 特記事項と排便・排尿シートのデータを取得
-  const { records: specialNotes, isLoading: notesLoading } = useSheetRecords('特記事項');
-  const { records: excretionRecords, isLoading: excretionLoading } = useSheetRecords('排便・排尿');
+  // 特記事項と排便・排尿シートのデータを取得（年フィルタ付き - オンデマンド読み込み）
+  const { records: specialNotes, isLoading: notesLoading } = useSheetRecords({
+    sheetName: '特記事項',
+    year,
+  });
+  const { records: excretionRecords, isLoading: excretionLoading } = useSheetRecords({
+    sheetName: '排便・排尿',
+    year,
+  });
 
   const isLoading = notesLoading || excretionLoading;
 
-  // フィルタリング（マグミットは年月フィルタ、排便は翌日チェック用に全期間）
+  // フィルタリング（月フィルタのみ - サーバーサイドで年フィルタ済み）
   const filteredNotes = useMemo(() =>
     filterByYearMonth(specialNotes, year, month),
     [specialNotes, year, month]
@@ -176,7 +182,8 @@ export function CorrelationTab({ year, month }: CorrelationTabProps) {
     [filteredNotes]
   );
 
-  // 排便データの集計（フィルタなしで全期間取得 - 翌日チェック用）
+  // 排便データの集計（サーバーサイドで年フィルタ済み）
+  // 注: 12/31→1/1の年またぎは翌年データが含まれないため検出されない場合あり
   const bowelData = useMemo(() =>
     aggregateBowelData(excretionRecords),
     [excretionRecords]

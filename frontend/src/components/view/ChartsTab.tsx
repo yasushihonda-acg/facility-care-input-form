@@ -206,11 +206,23 @@ function transformHydrationData(records: PlanDataRecord[]): HydrationDataPoint[]
 }
 
 export function ChartsTab({ year, month }: ChartsTabProps) {
-  // 各シートのデータを取得
-  const { records: vitalRecords, isLoading: vitalLoading } = useSheetRecords('バイタル');
-  const { records: excretionRecords, isLoading: excretionLoading } = useSheetRecords('排便・排尿');
-  const { records: weightRecords, isLoading: weightLoading } = useSheetRecords('体重');
-  const { records: hydrationRecords, isLoading: hydrationLoading } = useSheetRecords('水分摂取量');
+  // 各シートのデータを取得（年フィルタ付き - オンデマンド読み込み）
+  const { records: vitalRecords, isLoading: vitalLoading } = useSheetRecords({
+    sheetName: 'バイタル',
+    year,
+  });
+  const { records: excretionRecords, isLoading: excretionLoading } = useSheetRecords({
+    sheetName: '排便・排尿',
+    year,
+  });
+  const { records: weightRecords, isLoading: weightLoading } = useSheetRecords({
+    sheetName: '体重',
+    year,
+  });
+  const { records: hydrationRecords, isLoading: hydrationLoading } = useSheetRecords({
+    sheetName: '水分摂取量',
+    year,
+  });
 
   const isLoading = vitalLoading || excretionLoading || weightLoading || hydrationLoading;
 
@@ -224,19 +236,19 @@ export function ChartsTab({ year, month }: ChartsTabProps) {
     }
   }, [month]);
 
-  // その年に存在する月を抽出（全シートから）
+  // その年に存在する月を抽出（全シートから - サーバーサイドで年フィルタ済み）
   const availableMonths = useMemo(() => {
     const months = new Set<number>();
     const allRecords = [...vitalRecords, ...excretionRecords, ...weightRecords, ...hydrationRecords];
     allRecords.forEach(record => {
       if (!record.timestamp) return;
-      const match = record.timestamp.match(/^(\d{4})\/(\d{1,2})/);
-      if (match && parseInt(match[1], 10) === year) {
-        months.add(parseInt(match[2], 10));
+      const match = record.timestamp.match(/^\d{4}\/(\d{1,2})/);
+      if (match) {
+        months.add(parseInt(match[1], 10));
       }
     });
     return Array.from(months).sort((a, b) => a - b);
-  }, [vitalRecords, excretionRecords, weightRecords, hydrationRecords, year]);
+  }, [vitalRecords, excretionRecords, weightRecords, hydrationRecords]);
 
   // chartMonthが利用可能でない場合、最新月に修正
   useEffect(() => {
