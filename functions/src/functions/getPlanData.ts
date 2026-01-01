@@ -50,9 +50,42 @@ async function getPlanDataHandler(
 
     // クエリパラメータの取得
     const sheetName = req.query.sheetName as string | undefined;
-    const limit = req.query.limit ?
-      parseInt(req.query.limit as string, 10) :
-      undefined;
+    const yearStr = req.query.year as string | undefined;
+    const monthStr = req.query.month as string | undefined;
+    const limitStr = req.query.limit as string | undefined;
+
+    // パラメータのパース
+    const year = yearStr ? parseInt(yearStr, 10) : undefined;
+    const month = monthStr ? parseInt(monthStr, 10) : undefined;
+    const limit = limitStr ? parseInt(limitStr, 10) : undefined;
+
+    // yearのバリデーション
+    if (year !== undefined && (isNaN(year) || year < 2000 || year > 2100)) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: {
+          code: ErrorCodes.INVALID_REQUEST,
+          message: "year must be a valid year (2000-2100)",
+        },
+        timestamp,
+      };
+      res.status(400).json(response);
+      return;
+    }
+
+    // monthのバリデーション
+    if (month !== undefined && (isNaN(month) || month < 1 || month > 12)) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: {
+          code: ErrorCodes.INVALID_REQUEST,
+          message: "month must be 1-12",
+        },
+        timestamp,
+      };
+      res.status(400).json(response);
+      return;
+    }
 
     // limitのバリデーション
     if (limit !== undefined && (isNaN(limit) || limit < 1)) {
@@ -68,10 +101,10 @@ async function getPlanDataHandler(
       return;
     }
 
-    functions.logger.info("getPlanData started", {sheetName, limit});
+    functions.logger.info("getPlanData started", {sheetName, year, month, limit});
 
     // Firestoreからデータを取得
-    const result = await getPlanData({sheetName, limit});
+    const result = await getPlanData({sheetName, year, month, limit});
 
     // レスポンス用にデータを変換
     const records: PlanDataRecord[] = result.records.map((record) => ({

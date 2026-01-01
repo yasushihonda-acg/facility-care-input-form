@@ -43,6 +43,23 @@ function chunkArray<T>(array: T[], size: number): T[][] {
 }
 
 /**
+ * タイムスタンプ文字列から年月を抽出
+ * 形式: "2024/12/15 09:00" → { year: 2024, month: 12 }
+ *
+ * @param timestamp タイムスタンプ文字列
+ * @returns { year, month } または null
+ */
+export function extractYearMonth(timestamp: string): { year: number; month: number } | null {
+  if (!timestamp) return null;
+  const match = timestamp.match(/^(\d{4})\/(\d{1,2})/);
+  if (!match) return null;
+  return {
+    year: parseInt(match[1], 10),
+    month: parseInt(match[2], 10),
+  };
+}
+
+/**
  * 決定論的ドキュメントIDを生成
  * 同一レコードは常に同じIDを生成 → 重複を原理的に排除
  *
@@ -165,10 +182,14 @@ export async function syncPlanDataFull(
         record.residentName
       );
       const docRef = collection.doc(docId);
+      // 年月を抽出
+      const yearMonth = extractYearMonth(record.timestamp);
       batch.set(docRef, {
         ...record,
         sheetName,
         syncedAt,
+        year: yearMonth?.year || null,
+        month: yearMonth?.month || null,
       });
     });
     await batch.commit();
@@ -214,11 +235,15 @@ export async function syncPlanDataIncremental(
         record.residentName
       );
       const docRef = collection.doc(docId);
+      // 年月を抽出
+      const yearMonth = extractYearMonth(record.timestamp);
       // merge: true で既存なら上書き、なければ新規作成
       batch.set(docRef, {
         ...record,
         sheetName,
         syncedAt,
+        year: yearMonth?.year || null,
+        month: yearMonth?.month || null,
       }, {merge: true});
       insertedCount++;
     });
@@ -258,6 +283,11 @@ export async function syncPlanData(
  */
 interface GetPlanDataOptions {
   sheetName?: string;
+  /** 年で絞り込み（例: 2024） */
+  year?: number;
+  /** 月で絞り込み（1-12）。year指定時のみ有効 */
+  month?: number;
+  /** 取得件数上限（year/month指定時は無制限） */
   limit?: number;
 }
 
@@ -288,15 +318,28 @@ export async function getPlanData(
     query = query.where("sheetName", "==", options.sheetName);
   }
 
+  // 年でフィルタ（Firestoreインデックスクエリ）
+  const hasYearFilter = typeof options.year === "number";
+  const hasMonthFilter = typeof options.month === "number";
+
+  if (hasYearFilter) {
+    query = query.where("year", "==", options.year);
+  }
+  if (hasYearFilter && hasMonthFilter) {
+    query = query.where("month", "==", options.month);
+  }
+
   // タイムスタンプ降順でソート
   query = query.orderBy("timestamp", "desc");
 
-  // 取得件数制限
-  const limit = options.limit || 1000;
-  query = query.limit(limit);
+  // 取得件数制限（年月指定時は無制限）
+  if (!hasYearFilter) {
+    const limit = options.limit || 1000;
+    query = query.limit(limit);
+  }
 
   const snapshot = await query.get();
-  const records: PlanDataWithId[] = [];
+  let records: PlanDataWithId[] = [];
   let lastSyncedAt = "";
 
   snapshot.docs.forEach((doc) => {
@@ -314,6 +357,39 @@ export async function getPlanData(
       }
     }
   });
+
+  // フォールバック: 既存データにyear/monthフィールドがない場合のクライアントサイドフィルタ
+  // 次回完全同期後は不要になる
+  if (hasYearFilter && records.length === 0) {
+    console.log("[getPlanData] Fallback: year/month fields not found, using timestamp filter");
+    // limitなしで再クエリしてクライアントサイドフィルタ
+    let fallbackQuery: admin.firestore.Query = db.collection(COLLECTIONS.PLAN_DATA);
+    if (options.sheetName) {
+      fallbackQuery = fallbackQuery.where("sheetName", "==", options.sheetName);
+    }
+    fallbackQuery = fallbackQuery.orderBy("timestamp", "desc");
+
+    const fallbackSnapshot = await fallbackQuery.get();
+    records = [];
+    fallbackSnapshot.docs.forEach((doc) => {
+      const data = doc.data() as PlanData;
+      // タイムスタンプから年月を抽出してフィルタ
+      const yearMonth = extractYearMonth(data.timestamp);
+      if (yearMonth) {
+        const matchYear = options.year === yearMonth.year;
+        const matchMonth = !hasMonthFilter || options.month === yearMonth.month;
+        if (matchYear && matchMonth) {
+          records.push({...data, id: doc.id});
+          if (data.syncedAt) {
+            const syncedAtStr = data.syncedAt.toDate().toISOString();
+            if (!lastSyncedAt || syncedAtStr > lastSyncedAt) {
+              lastSyncedAt = syncedAtStr;
+            }
+          }
+        }
+      }
+    });
+  }
 
   return {
     records,

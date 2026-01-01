@@ -44,17 +44,29 @@ export function ViewPage() {
     }
   }, [sheets, selectedSheet]);
 
-  // 選択中のシートのレコードを取得
+  // 選択中のシートのレコードを取得（年月フィルタ付き）
+  // 月が選択されている場合のみ月フィルタを適用
   const {
     records,
     isLoading: recordsLoading,
     error: recordsError
+  } = useSheetRecords({
+    sheetName: selectedSheet,
+    year: selectedYear,
+    month: selectedMonth,
+  });
+
+  // 年リスト取得用（年なしで全データのサマリー取得）
+  // これにより利用可能な年を把握
+  const {
+    records: allRecordsForYears,
+    isLoading: yearsLoading,
   } = useSheetRecords(selectedSheet);
 
-  // 年の抽出
+  // 年の抽出（年リスト取得用データから）
   const availableYears = useMemo(() => {
     const years = new Set<number>();
-    records.forEach(record => {
+    allRecordsForYears.forEach(record => {
       if (record.timestamp) {
         const match = record.timestamp.match(/^(\d{4})/);
         if (match) {
@@ -63,7 +75,7 @@ export function ViewPage() {
       }
     });
     return Array.from(years).sort((a, b) => b - a);
-  }, [records]);
+  }, [allRecordsForYears]);
 
   // 初期表示時のみ最新データ年を選択（その後はデータなしの年も選択可能）
   useEffect(() => {
@@ -74,41 +86,29 @@ export function ViewPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [availableYears.length]); // 初期ロード時のみ実行
 
-  // 年でフィルタされたレコード
-  const yearFilteredRecords = useMemo(() => {
-    return records.filter(record => {
-      if (!record.timestamp) return false;
-      const match = record.timestamp.match(/^(\d{4})/);
-      return match && parseInt(match[1], 10) === selectedYear;
-    });
-  }, [records, selectedYear]);
+  // ローディング状態の統合
+  const isRecordsLoading = recordsLoading || yearsLoading;
 
-  // 月ごとの件数
+  // 月ごとの件数（年リスト用データから計算 - 月フィルタの影響を受けない）
   const monthCounts = useMemo(() => {
     const counts: Record<number, number> = {};
-    yearFilteredRecords.forEach(record => {
+    allRecordsForYears.forEach(record => {
       if (record.timestamp) {
-        const match = record.timestamp.match(/^\d{4}\/(\d{1,2})/);
-        if (match) {
-          const month = parseInt(match[1], 10);
-          counts[month] = (counts[month] || 0) + 1;
+        const yearMatch = record.timestamp.match(/^(\d{4})/);
+        if (yearMatch && parseInt(yearMatch[1], 10) === selectedYear) {
+          const monthMatch = record.timestamp.match(/^\d{4}\/(\d{1,2})/);
+          if (monthMatch) {
+            const month = parseInt(monthMatch[1], 10);
+            counts[month] = (counts[month] || 0) + 1;
+          }
         }
       }
     });
     return counts;
-  }, [yearFilteredRecords]);
+  }, [allRecordsForYears, selectedYear]);
 
-  // 年+月でフィルタされたレコード
-  const filteredRecords = useMemo(() => {
-    if (selectedMonth === null) {
-      return yearFilteredRecords;
-    }
-    return yearFilteredRecords.filter(record => {
-      if (!record.timestamp) return false;
-      const match = record.timestamp.match(/^\d{4}\/(\d{1,2})/);
-      return match && parseInt(match[1], 10) === selectedMonth;
-    });
-  }, [yearFilteredRecords, selectedMonth]);
+  // サーバーサイドでフィルタ済みのレコードを使用
+  const filteredRecords = records;
 
   const handleTabClick = (sheetName: string) => {
     setSelectedSheet(sheetName);
@@ -258,7 +258,7 @@ export function ViewPage() {
 
               {/* テーブルエリア */}
               <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-                {recordsLoading && (
+                {isRecordsLoading && (
                   <div className="flex-1 flex items-center justify-center">
                     <LoadingSpinner message="レコードを読み込み中..." />
                   </div>
@@ -273,7 +273,7 @@ export function ViewPage() {
                   </div>
                 )}
 
-                {!recordsLoading && !recordsError && selectedSheetInfo && (
+                {!isRecordsLoading && !recordsError && selectedSheetInfo && (
                   <DataTable
                     records={filteredRecords}
                     headers={selectedSheetInfo.headers}

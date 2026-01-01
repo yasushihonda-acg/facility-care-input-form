@@ -2,10 +2,24 @@ import { useQuery } from '@tanstack/react-query';
 import { getPlanData } from '../api';
 import type { SheetSummary, PlanDataRecord } from '../types';
 
-export function usePlanData(sheetName?: string) {
+interface UsePlanDataOptions {
+  sheetName?: string;
+  year?: number;
+  month?: number | null;
+}
+
+export function usePlanData(options?: UsePlanDataOptions | string) {
+  // 後方互換性: 文字列の場合はsheetNameとして扱う
+  const normalizedOptions: UsePlanDataOptions | undefined =
+    typeof options === 'string' ? { sheetName: options } : options;
+
   return useQuery({
-    queryKey: ['planData', sheetName],
-    queryFn: () => getPlanData(sheetName),
+    queryKey: ['planData', normalizedOptions?.sheetName, normalizedOptions?.year, normalizedOptions?.month],
+    queryFn: () => getPlanData({
+      sheetName: normalizedOptions?.sheetName,
+      year: normalizedOptions?.year,
+      month: normalizedOptions?.month ?? undefined,
+    }),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 15 * 60 * 1000, // 15 minutes (formerly cacheTime)
   });
@@ -27,13 +41,23 @@ export function useSheetList(): {
   };
 }
 
-export function useSheetRecords(sheetName: string): {
+interface UseSheetRecordsOptions {
+  sheetName: string;
+  year?: number;
+  month?: number | null;
+}
+
+export function useSheetRecords(options: UseSheetRecordsOptions | string): {
   records: PlanDataRecord[];
   totalCount: number;
   isLoading: boolean;
   error: string | null;
 } {
-  const { data, isLoading, error } = usePlanData(sheetName);
+  // 後方互換性: 文字列の場合はsheetNameとして扱う
+  const normalizedOptions: UseSheetRecordsOptions =
+    typeof options === 'string' ? { sheetName: options } : options;
+
+  const { data, isLoading, error } = usePlanData(normalizedOptions);
 
   return {
     records: data?.data?.records ?? [],

@@ -28,10 +28,28 @@ export async function syncPlanData(): Promise<ApiResponse<SyncPlanDataResponse>>
   return response.json();
 }
 
-export async function getPlanData(sheetName?: string): Promise<ApiResponse<GetPlanDataResponse>> {
+interface GetPlanDataOptions {
+  sheetName?: string;
+  year?: number;
+  month?: number;
+}
+
+export async function getPlanData(options?: GetPlanDataOptions | string): Promise<ApiResponse<GetPlanDataResponse>> {
   const url = new URL(`${API_BASE}/getPlanData`);
-  if (sheetName) {
-    url.searchParams.set('sheetName', sheetName);
+
+  // 後方互換性: 文字列の場合はsheetNameとして扱う
+  if (typeof options === 'string') {
+    url.searchParams.set('sheetName', options);
+  } else if (options) {
+    if (options.sheetName) {
+      url.searchParams.set('sheetName', options.sheetName);
+    }
+    if (options.year !== undefined) {
+      url.searchParams.set('year', options.year.toString());
+    }
+    if (options.month !== undefined) {
+      url.searchParams.set('month', options.month.toString());
+    }
   }
 
   const response = await fetch(url.toString());

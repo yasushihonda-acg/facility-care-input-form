@@ -279,6 +279,10 @@ export interface PlanData {
   headers: string[];
   /** Firestore同期日時 */
   syncedAt: Timestamp;
+  /** タイムスタンプから抽出した年（Firestoreクエリ用） */
+  year?: number;
+  /** タイムスタンプから抽出した月（Firestoreクエリ用） */
+  month?: number;
 }
 
 // =============================================================================

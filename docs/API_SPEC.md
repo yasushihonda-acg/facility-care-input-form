@@ -573,20 +573,27 @@ GET /getCarePhotos?residentId=resident-001&date=2025-12-19&mealTime=snack
 
 ### 4.5 GET /getPlanData
 
-Firestoreに同期済みの記録データを取得します。シート名でフィルタ可能。
+Firestoreに同期済みの記録データを取得します。シート名・年・月でフィルタ可能。
 
 #### リクエスト
 
 ```http
 GET /getPlanData
 GET /getPlanData?sheetName=バイタル
-GET /getPlanData?sheetName=バイタル&limit=50
+GET /getPlanData?sheetName=バイタル&year=2024&month=12
 ```
 
 | パラメータ | 型 | 必須 | 説明 |
 |------------|-----|------|------|
 | `sheetName` | string | No | シート名で絞り込み（未指定時は全シートのサマリーを返す） |
-| `limit` | number | No | 取得件数上限（デフォルト: 1000） |
+| `year` | number | No | 年で絞り込み（例: 2024）。sheetName指定時のみ有効 |
+| `month` | number | No | 月で絞り込み（1-12）。year指定時のみ有効 |
+| `limit` | number | No | 取得件数上限（デフォルト: 1000、year/month指定時は無制限）|
+
+**フィルタ動作**:
+- `year` のみ指定: その年の全レコードを取得
+- `year` + `month` 指定: その年月のレコードを取得
+- フィルタなし: 最新1000件（従来動作）
 
 #### レスポンス（シート名未指定 = サマリーモード）
 
