@@ -37,6 +37,46 @@
       ]
     },
     {
+      "collectionGroup": "plan_data",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "sheetName",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "year",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamp",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "plan_data",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "sheetName",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "year",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "month",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamp",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "care_items",
       "queryScope": "COLLECTION",
       "fields": [
