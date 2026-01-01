@@ -199,20 +199,18 @@ export function ViewPage() {
                 />
               )}
 
-              {/* 月フィルタ（sticky固定） */}
+              {/* 月フィルタ + ビュータブ（sticky固定） */}
               <div className="sticky top-0 z-20 bg-white shadow-sm">
                 <MonthFilter
                   selectedMonth={selectedMonth}
                   monthCounts={monthCounts}
                   onMonthChange={setSelectedMonth}
                 />
+                <ViewTabNavigation
+                  activeTab={activeViewTab}
+                  onTabChange={setActiveViewTab}
+                />
               </div>
-
-              {/* ビュータブ（データ/相関分析/グラフ） */}
-              <ViewTabNavigation
-                activeTab={activeViewTab}
-                onTabChange={setActiveViewTab}
-              />
 
               {/* 相関分析タブ */}
               {activeViewTab === 'correlation' && (

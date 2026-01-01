@@ -266,17 +266,25 @@ export function ChartsTab({ year, month }: ChartsTabProps) {
         {vitalData.length === 0 ? (
           <p className="text-gray-500 text-center py-8">データがありません</p>
         ) : (
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={vitalData}>
+          <ResponsiveContainer width="100%" height={350}>
+            <LineChart data={vitalData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" fontSize={12} />
-              <YAxis yAxisId="temp" orientation="left" domain={[35, 40]} fontSize={12} />
-              <YAxis yAxisId="bp" orientation="right" domain={[40, 200]} fontSize={12} />
+              <XAxis
+                dataKey="date"
+                fontSize={10}
+                interval="preserveStartEnd"
+                tick={{ fontSize: 10 }}
+              />
+              <YAxis yAxisId="temp" orientation="left" domain={[35, 40]} fontSize={10} width={30} />
+              <YAxis yAxisId="bp" orientation="right" domain={[40, 200]} fontSize={10} width={35} />
               <Tooltip />
-              <Legend />
+              <Legend
+                wrapperStyle={{ fontSize: 11, paddingTop: 10 }}
+                iconSize={10}
+              />
               <Line yAxisId="temp" type="monotone" dataKey="temperature" stroke="#ff7300" name="体温" dot={{ r: 2 }} />
-              <Line yAxisId="bp" type="monotone" dataKey="systolic" stroke="#8884d8" name="収縮期血圧" dot={{ r: 2 }} />
-              <Line yAxisId="bp" type="monotone" dataKey="diastolic" stroke="#82ca9d" name="拡張期血圧" dot={{ r: 2 }} />
+              <Line yAxisId="bp" type="monotone" dataKey="systolic" stroke="#8884d8" name="最高血圧" dot={{ r: 2 }} />
+              <Line yAxisId="bp" type="monotone" dataKey="diastolic" stroke="#82ca9d" name="最低血圧" dot={{ r: 2 }} />
               <Line yAxisId="bp" type="monotone" dataKey="pulse" stroke="#ffc658" name="脈拍" dot={{ r: 2 }} />
               <Line yAxisId="bp" type="monotone" dataKey="spo2" stroke="#00C49F" name="SpO2" dot={{ r: 2 }} />
             </LineChart>
@@ -293,15 +301,15 @@ export function ChartsTab({ year, month }: ChartsTabProps) {
         {excretionData.length === 0 ? (
           <p className="text-gray-500 text-center py-8">データがありません</p>
         ) : (
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={excretionData}>
+          <ResponsiveContainer width="100%" height={280}>
+            <LineChart data={excretionData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" fontSize={12} />
-              <YAxis domain={[0, 'auto']} fontSize={12} />
+              <XAxis dataKey="date" fontSize={10} interval="preserveStartEnd" tick={{ fontSize: 10 }} />
+              <YAxis domain={[0, 'auto']} fontSize={10} width={30} />
               <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="bowelCount" stroke="#8B4513" name="排便回数" dot={{ r: 2 }} />
-              <Line type="monotone" dataKey="urineCount" stroke="#4169E1" name="排尿回数" dot={{ r: 2 }} />
+              <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} iconSize={10} />
+              <Line type="monotone" dataKey="bowelCount" stroke="#8B4513" name="排便" dot={{ r: 2 }} />
+              <Line type="monotone" dataKey="urineCount" stroke="#4169E1" name="排尿" dot={{ r: 2 }} />
             </LineChart>
           </ResponsiveContainer>
         )}
@@ -318,13 +326,13 @@ export function ChartsTab({ year, month }: ChartsTabProps) {
           {weightData.length === 0 ? (
             <p className="text-gray-500 text-center py-8">データがありません</p>
           ) : (
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={weightData}>
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={weightData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" fontSize={12} />
-                <YAxis domain={['dataMin - 5', 'dataMax + 5']} fontSize={12} />
+                <XAxis dataKey="date" fontSize={10} interval="preserveStartEnd" tick={{ fontSize: 10 }} />
+                <YAxis domain={['dataMin - 5', 'dataMax + 5']} fontSize={10} width={35} />
                 <Tooltip />
-                <Legend />
+                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 5 }} iconSize={10} />
                 <Line type="monotone" dataKey="weight" stroke="#6B7280" name="体重(kg)" dot={{ r: 2 }} />
               </LineChart>
             </ResponsiveContainer>
@@ -340,14 +348,14 @@ export function ChartsTab({ year, month }: ChartsTabProps) {
           {hydrationData.length === 0 ? (
             <p className="text-gray-500 text-center py-8">データがありません</p>
           ) : (
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={hydrationData}>
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={hydrationData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" fontSize={12} />
-                <YAxis domain={[0, 'auto']} fontSize={12} />
+                <XAxis dataKey="date" fontSize={10} interval="preserveStartEnd" tick={{ fontSize: 10 }} />
+                <YAxis domain={[0, 'auto']} fontSize={10} width={40} />
                 <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="totalAmount" stroke="#3B82F6" name="水分量(cc)" dot={{ r: 2 }} />
+                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 5 }} iconSize={10} />
+                <Line type="monotone" dataKey="totalAmount" stroke="#3B82F6" name="水分(cc)" dot={{ r: 2 }} />
               </LineChart>
             </ResponsiveContainer>
           )}
