@@ -42,6 +42,19 @@ function getDisplayDate(dateKey: string): string {
   return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
 }
 
+
+// 日付を1日進める
+function getNextDate(dateKey: string): string {
+  const parts = dateKey.split('/');
+  if (parts.length < 3) return '';
+  const date = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  date.setDate(date.getDate() + 1);
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}/${m}/${d}`;
+}
+
 // マグミットを含むレコードの日付を抽出
 function extractMagnesiumDates(specialNotes: PlanDataRecord[]): Map<string, { time: string; note: string }> {
   const dates = new Map<string, { time: string; note: string }>();
@@ -128,11 +141,20 @@ interface CorrelationDataPoint {
   hasMagnesium: boolean;
   magnesiumTime: string;
   magnesiumNote: string;
-  hasBowel: boolean;
-  bowelCount: number;
-  bowelTimes: string;
-  bowelDetails: string;
-  bowelNotes: string;  // 排便・排尿シートの特記事項
+  // 当日の排便
+  hasBowelSameDay: boolean;
+  bowelCountSameDay: number;
+  bowelTimesSameDay: string;
+  bowelNotesSameDay: string;
+  // 翌日の排便
+  hasBowelNextDay: boolean;
+  bowelCountNextDay: number;
+  bowelTimesNextDay: string;
+  bowelNotesNextDay: string;
+  nextDayDate: string;
+  nextDayDisplayDate: string;
+  // 判定結果（当日または翌日に排便あり）
+  hasEffect: boolean;
 }
 
 export function CorrelationTab({ year, month }: CorrelationTabProps) {
@@ -142,15 +164,10 @@ export function CorrelationTab({ year, month }: CorrelationTabProps) {
 
   const isLoading = notesLoading || excretionLoading;
 
-  // フィルタリング
+  // フィルタリング（マグミットは年月フィルタ、排便は翌日チェック用に全期間）
   const filteredNotes = useMemo(() =>
     filterByYearMonth(specialNotes, year, month),
     [specialNotes, year, month]
-  );
-
-  const filteredExcretion = useMemo(() =>
-    filterByYearMonth(excretionRecords, year, month),
-    [excretionRecords, year, month]
   );
 
   // マグミット日付の抽出
@@ -159,30 +176,45 @@ export function CorrelationTab({ year, month }: CorrelationTabProps) {
     [filteredNotes]
   );
 
-  // 排便データの集計
+  // 排便データの集計（フィルタなしで全期間取得 - 翌日チェック用）
   const bowelData = useMemo(() =>
-    aggregateBowelData(filteredExcretion),
-    [filteredExcretion]
+    aggregateBowelData(excretionRecords),
+    [excretionRecords]
   );
 
-  // 相関データの生成
+  // 相関データの生成（当日＋翌日チェック）
   const correlationData = useMemo(() => {
     const data: CorrelationDataPoint[] = [];
 
     // マグミット服用日をベースにデータを生成
     magnesiumDates.forEach((magInfo, dateKey) => {
-      const bowel = bowelData.get(dateKey);
+      const nextDateKey = getNextDate(dateKey);
+      const bowelSameDay = bowelData.get(dateKey);
+      const bowelNextDay = bowelData.get(nextDateKey);
+
+      const hasBowelSameDay = bowelSameDay?.hasBowel || false;
+      const hasBowelNextDay = bowelNextDay?.hasBowel || false;
+
       data.push({
         date: dateKey,
         displayDate: getDisplayDate(dateKey),
         hasMagnesium: true,
         magnesiumTime: magInfo.time,
         magnesiumNote: magInfo.note,
-        hasBowel: bowel?.hasBowel || false,
-        bowelCount: bowel?.count || 0,
-        bowelTimes: bowel?.times.join(', ') || '',
-        bowelDetails: bowel?.details.join(' / ') || '',
-        bowelNotes: bowel?.notes.join(' / ') || '',
+        // 当日
+        hasBowelSameDay,
+        bowelCountSameDay: bowelSameDay?.count || 0,
+        bowelTimesSameDay: bowelSameDay?.times.join(', ') || '',
+        bowelNotesSameDay: bowelSameDay?.notes.join(' / ') || '',
+        // 翌日
+        hasBowelNextDay,
+        bowelCountNextDay: bowelNextDay?.count || 0,
+        bowelTimesNextDay: bowelNextDay?.times.join(', ') || '',
+        bowelNotesNextDay: bowelNextDay?.notes.join(' / ') || '',
+        nextDayDate: nextDateKey,
+        nextDayDisplayDate: getDisplayDate(nextDateKey),
+        // 効果判定（当日または翌日に排便あり）
+        hasEffect: hasBowelSameDay || hasBowelNextDay,
       });
     });
 
@@ -190,11 +222,18 @@ export function CorrelationTab({ year, month }: CorrelationTabProps) {
     return data.sort((a, b) => b.date.localeCompare(a.date));
   }, [magnesiumDates, bowelData]);
 
-  // 相関率の計算
+  // 相関率の計算（当日または翌日に排便ありの割合）
   const correlationRate = useMemo(() => {
     if (correlationData.length === 0) return 0;
-    const withBowel = correlationData.filter(d => d.hasBowel).length;
-    return Math.round((withBowel / correlationData.length) * 100);
+    const withEffect = correlationData.filter(d => d.hasEffect).length;
+    return Math.round((withEffect / correlationData.length) * 100);
+  }, [correlationData]);
+
+  // 当日のみの相関率（参考値）
+  const sameDayRate = useMemo(() => {
+    if (correlationData.length === 0) return 0;
+    const sameDayOnly = correlationData.filter(d => d.hasBowelSameDay).length;
+    return Math.round((sameDayOnly / correlationData.length) * 100);
   }, [correlationData]);
 
   if (isLoading) {
@@ -227,12 +266,12 @@ export function CorrelationTab({ year, month }: CorrelationTabProps) {
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 mb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">マグミット服用後の排便率</p>
+                  <p className="text-sm text-gray-600">服用後の排便率（当日〜翌日）</p>
                   <p className="text-3xl font-bold text-primary">{correlationRate}%</p>
                 </div>
                 <div className="text-right text-sm text-gray-500">
-                  <p>{correlationData.filter(d => d.hasBowel).length} / {correlationData.length} 日</p>
-                  <p>排便あり / マグミット服用日</p>
+                  <p>{correlationData.filter(d => d.hasEffect).length} / {correlationData.length} 回</p>
+                  <p className="text-xs text-gray-400">当日のみ: {sameDayRate}%</p>
                 </div>
               </div>
             </div>
@@ -242,43 +281,55 @@ export function CorrelationTab({ year, month }: CorrelationTabProps) {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-gray-50 border-b">
-                    <th className="text-left p-2 font-medium">日付</th>
-                    <th className="text-left p-2 font-medium">マグミット</th>
-                    <th className="text-left p-2 font-medium">排便</th>
-                    <th className="text-left p-2 font-medium hidden md:table-cell">特記事項</th>
+                    <th className="text-left p-2 font-medium">服用日</th>
+                    <th className="text-left p-2 font-medium">時刻</th>
+                    <th className="text-left p-2 font-medium">当日</th>
+                    <th className="text-left p-2 font-medium">翌日</th>
+                    <th className="text-center p-2 font-medium">効果</th>
                   </tr>
                 </thead>
                 <tbody>
                   {correlationData.map((row) => (
-                    <tr key={row.date} className="border-b hover:bg-gray-50">
+                    <tr key={row.date} className={`border-b hover:bg-gray-50 ${row.hasEffect ? '' : 'bg-red-50'}`}>
                       <td className="p-2 font-medium">{row.displayDate}</td>
+                      <td className="p-2 text-gray-600">{row.magnesiumTime || '-'}</td>
                       <td className="p-2">
-                        <span className="text-green-600">✓ {row.magnesiumTime || '服用'}</span>
-                      </td>
-                      <td className="p-2">
-                        {row.hasBowel ? (
-                          <div>
-                            <span className="text-green-600">
-                              ✓ {row.bowelTimes || 'あり'}
-                              {row.bowelCount > 1 && ` (${row.bowelCount}回)`}
-                            </span>
-                          </div>
+                        {row.hasBowelSameDay ? (
+                          <span className="text-green-600">
+                            ✓ {row.bowelTimesSameDay || 'あり'}
+                            {row.bowelCountSameDay > 1 && ` (${row.bowelCountSameDay}回)`}
+                          </span>
                         ) : (
                           <span className="text-gray-400">なし</span>
                         )}
                       </td>
-                      <td className="p-2 text-gray-500 text-xs hidden md:table-cell max-w-[250px]">
-                        {row.bowelNotes ? (
-                          <div className="truncate" title={row.bowelNotes}>
-                            {row.bowelNotes}
-                          </div>
-                        ) : '-'}
+                      <td className="p-2">
+                        {row.hasBowelNextDay ? (
+                          <span className="text-blue-600">
+                            ✓ {row.nextDayDisplayDate} {row.bowelTimesNextDay || ''}
+                            {row.bowelCountNextDay > 1 && ` (${row.bowelCountNextDay}回)`}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">なし</span>
+                        )}
+                      </td>
+                      <td className="p-2 text-center">
+                        {row.hasEffect ? (
+                          <span className="text-green-600 font-bold">○</span>
+                        ) : (
+                          <span className="text-red-500 font-bold">✗</span>
+                        )}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+
+            {/* 注釈 */}
+            <p className="text-xs text-gray-400 mt-4">
+              ※ マグミット（酸化マグネシウム）は服用後8〜12時間で効果が出るため、翌日までの排便を確認しています
+            </p>
           </>
         )}
       </div>
