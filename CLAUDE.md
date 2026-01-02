@@ -52,7 +52,7 @@
 - 変更完了後、上記6ファイルへの影響を**自動判断**
 - 影響がある場合は**指示なしで更新**
 - 影響がない場合は更新しない（過剰更新を避ける）
-- 判断に迷う場合は更新する（安全側に倒す）
+- **重複を避ける**: 同じ情報は1箇所のみに記載し、他は参照リンク
 
 ---
 
@@ -94,3 +94,4 @@ git add -A && git commit -m "変更内容" && git push origin main
 | API仕様 | `docs/API_SPEC.md` |
 | システム設計 | `docs/ARCHITECTURE.md` |
 | 業務ルール | `docs/BUSINESS_RULES.md` |
+| データ構造 | `docs/DATA_MODEL.md` |
