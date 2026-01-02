@@ -168,7 +168,7 @@ test.describe('Phase 49: 廃棄指示フロー', () => {
   });
 
   test.describe('DISCARD-04x: UI表示確認', () => {
-    test('DISCARD-040: 期限切れなしの場合は緑バナーが表示される', async ({ page }) => {
+    test('DISCARD-040: 期限切れなしの場合は緑バナーが表示される', async () => {
       // 期限切れ品物がない状態をテスト（本番APIでテストする場合）
       // デモモードでは常に期限切れ品物があるのでスキップ
       test.skip();

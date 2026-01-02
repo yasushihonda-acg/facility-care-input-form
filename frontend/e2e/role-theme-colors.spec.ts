@@ -53,29 +53,6 @@ async function getDataRole(page: Page): Promise<string> {
   });
 }
 
-/**
- * フッターのアクティブタブの背景色を取得するヘルパー
- */
-async function getActiveTabBgColor(page: Page): Promise<string | null> {
-  // bg-primary クラスを持つアクティブなNavLinkを探す
-  const activeTab = page.locator('nav a').filter({ has: page.locator('.bg-primary') }).first();
-  if (await activeTab.count() === 0) {
-    // または直接背景色がprimaryのタブを探す
-    const navLinks = page.locator('nav a');
-    const count = await navLinks.count();
-    for (let i = 0; i < count; i++) {
-      const link = navLinks.nth(i);
-      const bgColor = await link.evaluate((el) => getComputedStyle(el).backgroundColor);
-      // 白でない背景色（アクティブタブ）を見つける
-      if (bgColor !== 'rgb(255, 255, 255)' && bgColor !== 'rgba(0, 0, 0, 0)') {
-        return bgColor;
-      }
-    }
-    return null;
-  }
-  return await activeTab.evaluate((el) => getComputedStyle(el).backgroundColor);
-}
-
 test.describe('Phase 39: ロール別ベースカラー整合性', () => {
 
   test.describe('1. スタッフ（本番）: /staff/*', () => {

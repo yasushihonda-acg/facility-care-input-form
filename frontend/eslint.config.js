@@ -27,6 +27,13 @@ export default defineConfig([
       'react-hooks/purity': 'warn',
       // 依存配列の厳格チェック（意図的な省略がある場合もあるため警告に）
       'react-hooks/exhaustive-deps': 'warn',
+      // 未使用変数: _プレフィックスは許可
+      '@typescript-eslint/no-unused-vars': ['error', {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+      }],
+      // React Compiler memoization: 厳格すぎるため警告に
+      'react-hooks/preserve-manual-memoization': 'warn',
     },
   },
 ])

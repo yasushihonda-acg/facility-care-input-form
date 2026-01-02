@@ -32,16 +32,6 @@ function isDescending(dates: Date[]): boolean {
   return true;
 }
 
-// 配列が昇順かどうかを確認
-function isAscending(dates: Date[]): boolean {
-  for (let i = 1; i < dates.length; i++) {
-    if (dates[i].getTime() < dates[i - 1].getTime()) {
-      return false;
-    }
-  }
-  return true;
-}
-
 test.describe('記録閲覧ページ ソート機能', () => {
   test.beforeEach(async ({ page }) => {
     // 記録閲覧ページにアクセス
@@ -155,7 +145,7 @@ test.describe('記録閲覧ページ ソート機能', () => {
     });
 
     // 同じ日のグループがあれば、その中で降順になっていることを確認
-    for (const [dateKey, dates] of Object.entries(dateGroups)) {
+    for (const [, dates] of Object.entries(dateGroups)) {
       if (dates.length >= 2) {
         expect(isDescending(dates)).toBe(true);
       }

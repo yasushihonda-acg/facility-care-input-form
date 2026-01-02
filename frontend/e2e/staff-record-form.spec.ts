@@ -20,10 +20,6 @@ test.describe('Phase 15: スタッフ用記録入力フォーム', () => {
     test('STAFF-001: タブが表示されない（品物から記録のみ）', async ({ page }) => {
       await page.goto(`${BASE_URL}/demo/staff/input/meal`);
 
-      // タブが存在しないことを確認
-      const mealTab = page.locator('text=食事');
-      const itemTab = page.locator('text=品物から記録');
-
       // タブUIが存在しない（またはタブ切替ボタンがない）
       await expect(page.locator('[role="tablist"]')).toHaveCount(0);
     });
@@ -630,9 +626,6 @@ test.describe('Phase 15: スタッフ用記録入力フォーム', () => {
       // ページ読み込み完了を待つ
       await expect(page.locator('button:has-text("提供記録")').first()).toBeVisible({ timeout: 10000 });
 
-      // グループヘッダーが正しい順序で表示される
-      const groupHeaders = page.locator('h3');
-
       // グループが存在することを確認（順序は今日提供予定 → 期限が近い → その他の品物）
       // 少なくとも品物リストのセクションが表示されている
       const itemSection = page.locator('text=品物から間食記録').or(page.locator('text=品物から記録'));
@@ -765,12 +758,6 @@ test.describe('Phase 15: スタッフ用記録入力フォーム', () => {
       await expect(recordHeader).toBeVisible();
     });
 
-    // Phase 31: タブ切替はもうできないためスキップ
-    test.skip('STAFF-082: タブ切り替えが可能【廃止】', async ({ page }) => {
-      // Phase 31でタブ切替機能は廃止されました
-      // カテゴリに応じてフォームが固定表示されます
-    });
-
     // Phase 31: 飲み物カテゴリは自動的に水分フォームが表示される
     test('STAFF-083: 飲み物カテゴリで水分量入力フィールドが表示される', async ({ page }) => {
       await page.goto(`${BASE_URL}/demo/staff/input/meal`);
@@ -898,11 +885,6 @@ test.describe('Phase 15: スタッフ用記録入力フォーム', () => {
       const dialog = page.locator('[role="dialog"]');
       await expect(dialog).toBeVisible();
 
-      // 特記事項フィールドに初期値が入っている（placeholder ではなく value）
-      const noteField = dialog.locator('textarea').filter({ hasText: '【ケアに関すること】' }).or(
-        dialog.locator('textarea[data-testid="note-field"]')
-      );
-
       // 特記事項のテキストエリアを探す
       const noteTextarea = dialog.locator('label:has-text("特記事項") + textarea, label:has-text("特記事項") ~ textarea');
       if (await noteTextarea.count() > 0) {
@@ -910,12 +892,6 @@ test.describe('Phase 15: スタッフ用記録入力フォーム', () => {
         expect(value).toContain('【ケアに関すること】');
         expect(value).toContain('【ACPiece】');
       }
-    });
-
-    // Phase 31: タブUIは廃止され、固定ヘッダーに変更
-    test.skip('STAFF-088: 両タブでタブUIが表示される【廃止】', async ({ page }) => {
-      // Phase 31でタブUIは廃止されました
-      // カテゴリに応じて固定ヘッダーが表示されます
     });
 
     // Phase 31: タブ→固定ヘッダーに変更

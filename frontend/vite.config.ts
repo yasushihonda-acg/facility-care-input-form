@@ -11,6 +11,19 @@ export default defineConfig({
   define: {
     __BUILD_TIMESTAMP__: JSON.stringify(buildTimestamp),
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // 大きなライブラリを分離
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-charts': ['recharts'],
+          'vendor-markdown': ['react-markdown', 'remark-gfm'],
+          'vendor-query': ['@tanstack/react-query'],
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     tailwindcss(),

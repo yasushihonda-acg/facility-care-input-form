@@ -42,12 +42,12 @@ test.describe('FIFO-002/003: FIFOガイド（間食提供時）', () => {
   // Note: スタッフ画面のFIFOWarningは本番Firestoreデータに依存
   // デモデータではテストが難しいため、コンポーネントの存在確認のみ
 
-  test.skip('スタッフ食事入力で同一品物が複数ある場合にFIFOWarningが表示される（本番データ必要）', async ({ page }) => {
+  test.skip('スタッフ食事入力で同一品物が複数ある場合にFIFOWarningが表示される（本番データ必要）', async () => {
     // このテストは本番データが必要なためスキップ
     // @see docs/FIFO_DESIGN_SPEC.md - 手動テスト推奨
   });
 
-  test.skip('FIFOWarningに「推奨」マークが表示される（本番データ必要）', async ({ page }) => {
+  test.skip('FIFOWarningに「推奨」マークが表示される（本番データ必要）', async () => {
     // このテストは本番データが必要なためスキップ
     // FIFOWarning.tsxコンポーネントは存在し、推奨マークを表示する設計
   });

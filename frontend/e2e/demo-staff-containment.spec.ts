@@ -6,7 +6,7 @@
  * 設計書: docs/DEMO_STAFF_CONTAINMENT.md
  */
 
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 /**
  * URLがデモ環境内であることを検証するヘルパー

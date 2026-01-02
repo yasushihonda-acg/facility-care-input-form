@@ -159,7 +159,7 @@ export function SnackSection({
           {/* FIFOガイド（同じ品物が複数ある場合）*/}
           {/* docs/FIFO_DESIGN_SPEC.md セクション4.2に基づく */}
           {Array.from(itemsByName.entries())
-            .filter(([_, groupItems]) => groupItems.length > 1)
+            .filter(([, groupItems]) => groupItems.length > 1)
             .map(([itemName, groupItems]) => (
               <FIFOWarning
                 key={itemName}
