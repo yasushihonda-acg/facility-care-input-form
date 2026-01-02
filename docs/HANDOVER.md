@@ -1,6 +1,6 @@
 # 引き継ぎドキュメント
 
-> 最終更新: 2026-01-01
+> 最終更新: 2026-01-02
 
 ## クイックスタート（5分で開発開始）
 
@@ -144,6 +144,7 @@ firebase deploy --only functions --debug
 | `docs/ARCHITECTURE.md` | システム設計・データフロー |
 | `docs/API_SPEC.md` | API仕様（全エンドポイント） |
 | `docs/BUSINESS_RULES.md` | 業務ルール・投稿ID規則 |
+| `docs/DATA_MODEL.md` | Firestore構造・型定義 |
 | `docs/archive/` | 過去のPhase仕様書 |
 
 ---
@@ -235,4 +236,4 @@ Phase 1〜49まで完了。詳細は `git log` を参照。
 - **Phase 48**: ViewPage機能拡張 - 相関分析タブ（マグミット×排便相関率）、グラフタブ（バイタル/排泄/体重/水分 - Recharts）、年月タブsticky固定、モバイル最適化
 - **Phase 49**: 廃棄指示フロー - 家族が期限切れ品物の廃棄をスタッフに依頼（pending_discard）、スタッフ注意事項ページにバッジ表示・廃棄完了ボタン
 
-E2Eテスト: 424件定義
+E2Eテスト: 439件定義
