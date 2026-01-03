@@ -105,25 +105,35 @@ firebase deploy --only functions
 git checkout -b <type>/<short-description>
 # 例: feat/add-feature, fix/bug-name, docs/update-readme
 
-# 2. コミット
+# 2. ビルド + スモークテスト（必須）
+cd frontend && npm run build
+npm run preview -- --port 4173 &
+# → http://localhost:4173 で変更箇所を目視確認
+# 確認後: lsof -ti:4173 | xargs kill
+
+# 3. E2Eテストで検証（目視より確実）
+npx playwright test e2e/<関連テスト>.spec.ts
+# CSSプロパティ等は目視では判断しにくいため自動テスト推奨
+
+# 4. コミット
 git add -A
 git commit -m "feat/fix/docs: 変更内容"
 
-# 3. Push & PR作成
+# 4. Push & PR作成
 git push -u origin <branch-name>
 gh pr create --title "タイトル" --body "## Summary\n- 変更点\n\n## Test plan\n- [x] テスト内容"
 
-# 4. PR内容を表示（レビュー用）
+# 5. PR内容を表示（レビュー用）
 gh pr view <number>
 gh pr diff <number>
 
-# 5. ユーザー承認後にマージ
+# 6. ユーザー承認後にマージ
 gh pr merge <number> --squash --delete-branch
 
-# 6. mainに戻る
+# 7. mainに戻る
 git checkout main && git pull
 
-# 7. CI/CD確認
+# 8. CI/CD確認
 gh run list --limit 3
 ```
 
