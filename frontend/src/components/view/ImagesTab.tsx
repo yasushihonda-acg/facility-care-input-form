@@ -100,8 +100,10 @@ export function ImagesTab({ year, month }: ImagesTabProps) {
     hasNextPage,
     error,
     isConfigured,
+    hasAccessToken,
     settings,
     fetchNextPage,
+    refreshToken,
   } = useChatImages();
 
   // 年月フィルタ適用
@@ -128,6 +130,30 @@ export function ImagesTab({ year, month }: ImagesTabProps) {
           <div className="mt-4 text-xs text-amber-600">
             現在の設定: 利用者ID={settings.residentId || '未設定'}, スペースID={settings.spaceId || '未設定'}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // アクセストークンがない場合の表示
+  if (!hasAccessToken) {
+    return (
+      <div className="p-8 text-center">
+        <div className="max-w-md mx-auto bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <p className="text-4xl mb-4">🔑</p>
+          <h3 className="text-lg font-semibold text-blue-800 mb-2">
+            認証が必要です
+          </h3>
+          <p className="text-blue-700 text-sm mb-4">
+            Google Chatの画像を取得するにはアクセストークンが必要です。
+            ボタンをクリックして認証してください。
+          </p>
+          <button
+            onClick={() => refreshToken()}
+            className="inline-block px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            🔄 認証してトークンを取得
+          </button>
         </div>
       </div>
     );
