@@ -191,22 +191,23 @@ async function syncChatImagesHandler(
 
     functions.logger.info(`[syncChatImages] Fetched ${messages.length} messages from Chat API`);
 
-    // デバッグ: 最初の3件のメッセージ構造をログ出力
-    for (let i = 0; i < Math.min(3, messages.length); i++) {
-      const msg = messages[i];
-      functions.logger.info(`[syncChatImages] Sample message ${i + 1}:`, {
-        name: msg.name,
-        hasText: !!msg.text,
-        textPreview: msg.text?.substring(0, 100),
-        attachment: msg.attachment,
-        attachedGifs: msg.attachedGifs,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        cards: (msg as any).cards,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        cardsV2: (msg as any).cardsV2,
-        // Check all keys
-        allKeys: Object.keys(msg),
-      });
+    // デバッグ: ID7282を含むメッセージと「画像」を含むメッセージを探す
+    let foundTarget = 0;
+    for (const msg of messages) {
+      const text = msg.text || "";
+      // ID7282のメッセージ、または「画像」を含むメッセージをログ出力（最大5件）
+      if ((text.includes(`ID${residentId}`) || text.includes("画像")) && foundTarget < 5) {
+        functions.logger.info(`[syncChatImages] Found relevant message (${foundTarget + 1}):`, {
+          name: msg.name,
+          textPreview: text.substring(0, 300),
+          hasAttachment: !!msg.attachment,
+          attachmentCount: msg.attachment?.length || 0,
+          sender: msg.sender,
+          thread: msg.thread,
+          allKeys: Object.keys(msg),
+        });
+        foundTarget++;
+      }
     }
 
     let synced = 0;
