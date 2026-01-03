@@ -180,24 +180,19 @@ UI表示（ViewPage/HomePageフッター）:
 - Firestore/Storageセキュリティルール更新（認証必須）
 - OAuth未審査アプリ: kinuekamachi@gmail.comは警告表示→「詳細」→「進む」で利用可
 
-### Phase 52.3: Chat画像同期（調査中）
+### Phase 52.3: Chat画像同期（完了）
 **目的**: Chat経由の画像をFirestoreに保存し、全認証ユーザーが閲覧可能に
 
-**現状**:
-- syncChatImages API実装済み
-- Chat APIからメッセージ取得成功（1000件）
-- しかし画像0件同期
+**実装済み機能**:
+- cardsV2形式メッセージからのテキスト抽出（JSON.stringifyアプローチ）
+- ページネーション対応（古いメッセージ2025年も取得可能）
+- chatContentにUI表示用テキスト保存（JSONなし）
+- 方法C: API失敗時のみ再認証バナー表示（トークン期限50分→23時間に緩和）
 
-**発見した問題**:
-1. Chat APIは`attachment`フィールドを返さない（Webhook投稿の場合）
-2. 画像はFirebase Storage URL OR Google Proxy URLとしてテキスト内に投稿
-3. 現在の実装はFirebase Storage URLを正規表現で抽出
-4. Google Proxy URL (`lh3.googleusercontent.com/proxy/...`) は未対応
-
-**次のアクション候補**:
-- Firebase Console Logsで`messagesWithStorageUrls`カウンタを確認
-- Google Proxy URLも抽出対象に追加検討
-- メッセージテキスト内のURL形式を詳細調査
+**技術詳細**:
+- getAllTextFromMessage(): msg.text + JSON.stringify(cardsV2)を結合
+- extractReadableTextFromCards(): 読みやすいテキストのみ抽出
+- needsReauthフラグ: 認証エラー時のみtrue、成功時リセット
 
 ## E2Eテスト
 444件定義（Phase 52まで）
