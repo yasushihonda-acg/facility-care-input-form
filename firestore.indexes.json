@@ -23,6 +23,24 @@
       ]
     },
     {
+      "collectionGroup": "care_photos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "residentId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "source",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "uploadedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "plan_data",
       "queryScope": "COLLECTION",
       "fields": [
