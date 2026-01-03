@@ -218,9 +218,9 @@ async function syncChatImagesHandler(
         // 画像URLを取得（downloadUri優先、なければthumbnailUri）
         const imageUrl = attachment.downloadUri ||
           attachment.thumbnailUri ||
-          (attachment.driveDataRef?.driveFileId
-            ? `https://drive.google.com/uc?id=${attachment.driveDataRef.driveFileId}&export=view`
-            : "");
+          (attachment.driveDataRef?.driveFileId ?
+            `https://drive.google.com/uc?id=${attachment.driveDataRef.driveFileId}&export=view` :
+            "");
 
         if (!imageUrl) {
           functions.logger.warn(`[syncChatImages] No URL for attachment in message ${messageId}`);
