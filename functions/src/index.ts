@@ -203,3 +203,9 @@ export {
 
 export {getChatImages} from "./functions/getChatImages";
 export {syncChatImages} from "./functions/syncChatImages";
+
+// =============================================================================
+// OAuthトークン管理（Phase 53）
+// =============================================================================
+
+export {exchangeOAuthCode, checkOAuthToken, getOAuthUrl} from "./functions/oauthToken";

@@ -2,7 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { useMealFormSettings } from '../hooks/useMealFormSettings';
 import { useSheetList } from '../hooks/usePlanData';
 import type { UpdateMealFormSettingsRequest } from '../types';
-import { testWebhook, syncPlanData } from '../api';
+import {
+  testWebhook,
+  syncPlanData,
+  checkOAuthTokenStatus,
+  exchangeOAuthCodeForToken,
+  getOAuthAuthorizationUrl,
+} from '../api';
 
 /**
  * グローバル設定ページ
@@ -94,6 +100,13 @@ export function SettingsPage() {
   const [importantWebhookCooldown, setImportantWebhookCooldown] = useState(false);
   const [familyNotifyWebhookCooldown, setFamilyNotifyWebhookCooldown] = useState(false);
 
+  // OAuth トークン状態（Phase 53）
+  const [oauthTokenConfigured, setOauthTokenConfigured] = useState<boolean | null>(null);
+  const [oauthTokenUpdatedAt, setOauthTokenUpdatedAt] = useState<string | null>(null);
+  const [oauthLoading, setOauthLoading] = useState(false);
+  const [oauthError, setOauthError] = useState<string | null>(null);
+  const [oauthSuccess, setOauthSuccess] = useState<string | null>(null);
+
   // 設定読み込み時に同期
   useEffect(() => {
     if (!isSettingsLoading && settings) {
@@ -110,6 +123,71 @@ export function SettingsPage() {
       });
     }
   }, [isSettingsLoading, settings]);
+
+  // OAuthトークン状態確認（Phase 53）
+  const checkOAuthStatus = useCallback(async () => {
+    try {
+      const response = await checkOAuthTokenStatus();
+      if (response.success && response.data) {
+        setOauthTokenConfigured(response.data.configured);
+        setOauthTokenUpdatedAt(response.data.updatedAt);
+      }
+    } catch (error) {
+      console.error('[SettingsPage] OAuth status check failed:', error);
+    }
+  }, []);
+
+  // ページ読み込み時にOAuth状態確認 & 認可コード処理
+  useEffect(() => {
+    checkOAuthStatus();
+
+    // URLから認可コードを取得して処理
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    if (code) {
+      // URLからcodeパラメータを削除
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+
+      // 認可コードをトークンに交換
+      (async () => {
+        setOauthLoading(true);
+        setOauthError(null);
+        try {
+          const response = await exchangeOAuthCodeForToken(code);
+          if (response.success) {
+            setOauthSuccess('認証トークンを保存しました');
+            await checkOAuthStatus();
+            setTimeout(() => setOauthSuccess(null), 5000);
+          } else {
+            setOauthError('トークン交換に失敗しました');
+          }
+        } catch (error) {
+          setOauthError(error instanceof Error ? error.message : 'トークン交換に失敗しました');
+        } finally {
+          setOauthLoading(false);
+        }
+      })();
+    }
+  }, [checkOAuthStatus]);
+
+  // OAuth認可開始（Phase 53）
+  const handleStartOAuth = useCallback(async () => {
+    setOauthLoading(true);
+    setOauthError(null);
+    try {
+      const response = await getOAuthAuthorizationUrl();
+      if (response.success && response.data?.authUrl) {
+        // Googleの認可画面にリダイレクト
+        window.location.href = response.data.authUrl;
+      } else {
+        setOauthError('認可URLの取得に失敗しました');
+      }
+    } catch (error) {
+      setOauthError(error instanceof Error ? error.message : '認可URLの取得に失敗しました');
+      setOauthLoading(false);
+    }
+  }, []);
 
   // Webhookテスト関数
   const handleTestWebhook = useCallback(async (
@@ -721,6 +799,108 @@ export function SettingsPage() {
               <span>両方の項目を入力すると画像タブが利用可能になります</span>
             </div>
           )}
+        </div>
+
+        {/* Chat画像同期 認証設定セクション（Phase 53） */}
+        <div className="bg-white rounded-lg p-4 shadow-sm space-y-4">
+          <h2 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
+            Chat画像同期 認証設定
+          </h2>
+
+          <p className="text-xs text-gray-500">
+            Google Chatスペースから画像を自動同期するための認証設定です。
+            一度設定すれば、ユーザーがログインしなくても画像が同期されます。
+          </p>
+
+          {/* 認証状態表示 */}
+          {oauthTokenConfigured === null ? (
+            <div className="p-3 bg-gray-50 rounded-lg text-xs text-gray-500 flex items-center gap-2">
+              <svg className="animate-spin h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>認証状態を確認中...</span>
+            </div>
+          ) : oauthTokenConfigured ? (
+            <div className="p-3 bg-green-50 rounded-lg text-xs text-green-700 flex items-center gap-2">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <div>
+                <span className="font-medium">認証済み</span>
+                {oauthTokenUpdatedAt && (
+                  <span className="ml-2 text-gray-500">
+                    （{new Date(oauthTokenUpdatedAt).toLocaleString('ja-JP')}）
+                  </span>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="p-3 bg-yellow-50 rounded-lg text-xs text-yellow-700 flex items-center gap-2">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>認証が必要です</span>
+            </div>
+          )}
+
+          {/* エラー表示 */}
+          {oauthError && (
+            <div className="p-3 bg-red-50 rounded-lg text-xs text-red-700 flex items-center gap-2">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              <span>{oauthError}</span>
+            </div>
+          )}
+
+          {/* 成功表示 */}
+          {oauthSuccess && (
+            <div className="p-3 bg-green-50 rounded-lg text-xs text-green-700 flex items-center gap-2">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span>{oauthSuccess}</span>
+            </div>
+          )}
+
+          {/* 認証ボタン */}
+          <button
+            onClick={handleStartOAuth}
+            disabled={oauthLoading}
+            className="w-full py-2.5 px-4 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {oauthLoading ? (
+              <>
+                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                処理中...
+              </>
+            ) : oauthTokenConfigured ? (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                認証を更新
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                </svg>
+                Googleアカウントで認証
+              </>
+            )}
+          </button>
+
+          <p className="text-xs text-gray-500">
+            ※ 管理者がChatスペースへのアクセス権限を持つGoogleアカウントで認証してください。
+          </p>
         </div>
 
         {/* データ同期セクション */}

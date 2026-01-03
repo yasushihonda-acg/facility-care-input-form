@@ -1456,11 +1456,11 @@ export async function getChatImages(
  * POST /syncChatImages
  *
  * @param options - リクエストオプション
- * @param accessToken - ユーザーのOAuthアクセストークン（必須）
+ * @param accessToken - ユーザーのOAuthアクセストークン（オプション、なければバックエンドで保存済みトークンを使用）
  */
 export async function syncChatImages(
   options: { spaceId: string; residentId: string; limit?: number; year?: number },
-  accessToken: string
+  accessToken?: string | null  // Phase 53: オプショナル（バックエンドで保存済みトークンを使用）
 ): Promise<ApiResponse<{
   synced: number;
   updated: number;
@@ -1468,18 +1468,96 @@ export async function syncChatImages(
   total: number;
   photos: CarePhoto[];
 }>> {
+  // Phase 53: accessTokenがある場合のみAuthorizationヘッダーを追加
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
+
   const response = await fetch(`${API_BASE}/syncChatImages`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${accessToken}`,
-    },
+    headers,
     body: JSON.stringify(options),
   });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.error?.message || `Failed to sync chat images: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+// =============================================================================
+// OAuth Token Management (Phase 53)
+// =============================================================================
+
+/**
+ * OAuthトークンの状態を確認
+ * GET /checkOAuthToken
+ */
+export async function checkOAuthTokenStatus(): Promise<ApiResponse<{
+  configured: boolean;
+  updatedAt: string | null;
+  message: string;
+}>> {
+  const response = await fetch(`${API_BASE}/checkOAuthToken`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to check token: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 認可コードをトークンに交換して保存
+ * POST /exchangeOAuthCode
+ */
+export async function exchangeOAuthCodeForToken(code: string): Promise<ApiResponse<{
+  message: string;
+}>> {
+  const response = await fetch(`${API_BASE}/exchangeOAuthCode`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ code }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Failed to exchange code: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * OAuth認可URLを取得
+ * GET /getOAuthUrl
+ */
+export async function getOAuthAuthorizationUrl(): Promise<ApiResponse<{
+  authUrl: string;
+}>> {
+  const response = await fetch(`${API_BASE}/getOAuthUrl`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Failed to get OAuth URL: ${response.statusText}`);
   }
 
   return response.json();

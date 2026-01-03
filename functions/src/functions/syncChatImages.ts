@@ -306,13 +306,26 @@ async function syncChatImagesHandler(
     }
 
     // Authorizationヘッダーからアクセストークン取得
+    // ヘッダーがない場合は保存済みトークンを使用
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    let accessToken: string | null = null;
+    let tokenSource = "header";
+
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      accessToken = authHeader.replace("Bearer ", "");
+    } else {
+      // 保存済みトークンを取得（Phase 53）
+      const {getStoredAccessToken} = await import("./oauthToken");
+      accessToken = await getStoredAccessToken();
+      tokenSource = "stored";
+    }
+
+    if (!accessToken) {
       const response: ApiResponse<null> = {
         success: false,
         error: {
           code: ErrorCodes.UNAUTHORIZED,
-          message: "Authorization header with Bearer token is required",
+          message: "アクセストークンがありません。設定ページでChat同期用トークンを保存してください。",
         },
         timestamp,
       };
@@ -320,7 +333,7 @@ async function syncChatImagesHandler(
       return;
     }
 
-    const accessToken = authHeader.replace("Bearer ", "");
+    functions.logger.info(`[syncChatImages] Using ${tokenSource} token`);
     const body = req.body as SyncChatImagesRequest;
     const {spaceId, residentId, limit = 100, year} = body;
 
