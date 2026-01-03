@@ -32,12 +32,13 @@ export async function listSpaceMessages(
   spaceId: string,
   accessToken: string,
   pageToken?: string,
-  pageSize: number = 100
+  pageSize: number = 100,
+  filter?: string
 ): Promise<{
   messages: chat_v1.Schema$Message[];
   nextPageToken?: string;
 }> {
-  functions.logger.info(`[ChatApiService] Fetching messages from space: ${spaceId}`);
+  functions.logger.info(`[ChatApiService] Fetching messages from space: ${spaceId}`, {filter});
 
   const chat = getChatClientWithOAuth(accessToken);
 
@@ -45,6 +46,7 @@ export async function listSpaceMessages(
     parent: `spaces/${spaceId}`,
     pageSize,
     pageToken,
+    filter,
     // 最新のメッセージから取得
     orderBy: "createTime desc",
   });

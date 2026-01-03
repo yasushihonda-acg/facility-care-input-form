@@ -177,12 +177,17 @@ async function syncChatImagesHandler(
     );
 
     // Chat APIからメッセージ取得
+    // residentIdを含むメッセージのみをフィルタ（Chat API filter構文）
+    // Note: Chat APIのfilterは限定的。text検索ができない場合はクライアント側でフィルタ
     const {messages} = await listSpaceMessages(
       spaceId,
       accessToken,
       undefined,
-      limit
+      limit,
+      undefined // filter - Chat APIはtext検索をサポートしないため使用しない
     );
+
+    functions.logger.info(`[syncChatImages] Looking for messages containing ID${residentId}`);
 
     functions.logger.info(`[syncChatImages] Fetched ${messages.length} messages from Chat API`);
 
