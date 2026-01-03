@@ -116,6 +116,29 @@ function extractGenericImageUrls(text: string): string[] {
 }
 
 /**
+ * attachmentから画像URLを抽出
+ * Chat APIのattachmentは thumbnailUri / downloadUri を持つ
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractImageUrlsFromAttachments(attachments: any[]): string[] {
+  const urls: string[] = [];
+  if (!attachments || !Array.isArray(attachments)) return urls;
+
+  for (const attachment of attachments) {
+    // thumbnailUri が優先（軽量）
+    if (attachment?.thumbnailUri) {
+      urls.push(attachment.thumbnailUri);
+    }
+    // downloadUri も収集（フォールバック用）
+    if (attachment?.downloadUri) {
+      urls.push(attachment.downloadUri);
+    }
+  }
+
+  return urls;
+}
+
+/**
  * cardsV2から画像URLを抽出
  * 構造: cardsV2[].card.sections[].widgets[].image.imageUrl
  */
@@ -159,25 +182,34 @@ function extractImageUrlsFromCards(cardsV2: any[]): string[] {
 }
 
 /**
- * すべての画像URLを抽出（優先順位: Firebase Storage > Google Proxy > Generic）
+ * すべての画像URLを抽出
+ * 優先順位: Firebase Storage > cardsV2 > attachment > Google Proxy > Generic
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function extractAllImageUrls(text: string, cardsV2?: any[]): {
+function extractAllImageUrls(text: string, cardsV2?: any[], attachments?: any[]): {
   storageUrls: string[];
   proxyUrls: string[];
   genericUrls: string[];
   cardUrls: string[];
+  attachmentUrls: string[];
   allUrls: string[];
 } {
   const storageUrls = extractStorageUrls(text);
   const proxyUrls = extractProxyUrls(text);
   const genericUrls = extractGenericImageUrls(text);
   const cardUrls = extractImageUrlsFromCards(cardsV2 || []);
+  const attachmentUrls = extractImageUrlsFromAttachments(attachments || []);
 
   // 重複を除去して結合
-  const allUrls = [...new Set([...storageUrls, ...proxyUrls, ...genericUrls, ...cardUrls])];
+  const allUrls = [...new Set([
+    ...storageUrls,
+    ...cardUrls,
+    ...attachmentUrls,
+    ...proxyUrls,
+    ...genericUrls,
+  ])];
 
-  return {storageUrls, proxyUrls, genericUrls, cardUrls, allUrls};
+  return {storageUrls, proxyUrls, genericUrls, cardUrls, attachmentUrls, allUrls};
 }
 
 /**
@@ -298,6 +330,7 @@ async function syncChatImagesHandler(
     let proxyUrlCount = 0;
     let genericUrlCount = 0;
     let cardUrlCount = 0;
+    let attachmentUrlCount = 0;
     let matchedResidentMessages = 0;
 
     // デバッグ: 最初の10件のメッセージ内容をログ出力
@@ -373,6 +406,36 @@ async function syncChatImagesHandler(
       });
     }
 
+    // attachmentを持つメッセージを検索（直接添付された画像）
+    const attachmentMessages = messages.filter((m) =>
+      m.attachment && m.attachment.length > 0
+    );
+    functions.logger.info(
+      `[syncChatImages] Found ${attachmentMessages.length} messages with attachments`
+    );
+
+    // attachmentメッセージの詳細をログ出力（最大5件）
+    for (let idx = 0; idx < Math.min(5, attachmentMessages.length); idx++) {
+      const msg = attachmentMessages[idx];
+      const attUrls = extractImageUrlsFromAttachments(msg.attachment || []);
+      functions.logger.info(`[syncChatImages] Attachment Message ${idx + 1}:`, {
+        name: msg.name,
+        createTime: msg.createTime,
+        textPreview: msg.text?.substring(0, 200),
+        attachmentCount: msg.attachment?.length || 0,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        attachmentDetails: msg.attachment?.map((a: any) => ({
+          name: a.name,
+          contentName: a.contentName,
+          contentType: a.contentType,
+          hasThumbnail: !!a.thumbnailUri,
+          hasDownload: !!a.downloadUri,
+        })),
+        extractedAttachmentUrls: attUrls,
+        hasTargetId: (msg.text || "").includes(`ID${residentId}`),
+      });
+    }
+
     // Firebase Storage URLメッセージの詳細をログ出力
     for (let idx = 0; idx < Math.min(10, storageUrlMessages.length); idx++) {
       const msg = storageUrlMessages[idx];
@@ -413,8 +476,8 @@ async function syncChatImagesHandler(
       const formattedText = msg.formattedText || "";
       const combinedText = `${text} ${formattedText}`;
 
-      // すべての画像URLを抽出（テキスト + cardsV2）
-      const urls = extractAllImageUrls(combinedText, msg.cardsV2);
+      // すべての画像URLを抽出（テキスト + cardsV2 + attachment）
+      const urls = extractAllImageUrls(combinedText, msg.cardsV2, msg.attachment);
 
       // サンプルログ用（URLを含むメッセージのみ記録）
       if (sampleMessages.length < 20 && urls.allUrls.length > 0) {
@@ -433,6 +496,7 @@ async function syncChatImagesHandler(
       proxyUrlCount += urls.proxyUrls.length;
       genericUrlCount += urls.genericUrls.length;
       cardUrlCount += urls.cardUrls.length;
+      attachmentUrlCount += urls.attachmentUrls.length;
 
       // メッセージテキストから利用者IDを確認
       if (!text.includes(`ID${residentId}`)) continue;
@@ -443,14 +507,16 @@ async function syncChatImagesHandler(
       const postId = extractPostId(text);
       const tags = extractTags(text);
 
-      // 優先順位: Firebase Storage > cardsV2 > Google Proxy > Generic
+      // 優先順位: Firebase Storage > cardsV2 > attachment > Google Proxy > Generic
       const imageUrls = urls.storageUrls.length > 0 ?
         urls.storageUrls :
         urls.cardUrls.length > 0 ?
           urls.cardUrls :
-          urls.proxyUrls.length > 0 ?
-            urls.proxyUrls :
-            urls.genericUrls;
+          urls.attachmentUrls.length > 0 ?
+            urls.attachmentUrls :
+            urls.proxyUrls.length > 0 ?
+              urls.proxyUrls :
+              urls.genericUrls;
 
       // 各URLを処理
       for (let i = 0; i < imageUrls.length; i++) {
@@ -538,6 +604,7 @@ async function syncChatImagesHandler(
       proxyUrlCount,
       genericUrlCount,
       cardUrlCount,
+      attachmentUrlCount,
       matchedResidentMessages,
       synced,
       skipped,
