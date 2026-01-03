@@ -31,7 +31,39 @@ const TEST_COOLDOWN_MS = 5000;
 
 export function SettingsPage() {
   const { settings, isLoading: isSettingsLoading, saveSettings } = useMealFormSettings();
-  const { lastSyncedAt } = useSheetList();
+  const { sheets, lastSyncedAt } = useSheetList();
+
+  // シート別アイコン定義（ViewPageと同期）
+  const getSheetIcon = (sheetName: string) => {
+    const icons: Record<string, string> = {
+      '食事': '🍽️',
+      '水分摂取量': '💧',
+      '排便・排尿': '🚻',
+      'バイタル': '❤️',
+      '口腔ケア': '🦷',
+      '内服': '💊',
+      '特記事項': '📝',
+      '血糖値インスリン投与': '💉',
+      '往診録': '🩺',
+      '体重': '⚖️',
+      'カンファレンス録': '👥',
+    };
+    return icons[sheetName] || '📋';
+  };
+
+  // シート表示トグル
+  const toggleSheetVisibility = (sheetName: string) => {
+    setLocalSettings((prev) => {
+      const hiddenSheets = prev.hiddenSheets || [];
+      const isHidden = hiddenSheets.includes(sheetName);
+      return {
+        ...prev,
+        hiddenSheets: isHidden
+          ? hiddenSheets.filter((s) => s !== sheetName)
+          : [...hiddenSheets, sheetName],
+      };
+    });
+  };
 
   // 同期状態
   const [isSyncing, setIsSyncing] = useState(false);
@@ -45,6 +77,7 @@ export function SettingsPage() {
     importantWebhookUrl: '',
     familyNotifyWebhookUrl: '',
     recordCheckHour: 16,
+    hiddenSheets: [],
   });
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -71,6 +104,7 @@ export function SettingsPage() {
         importantWebhookUrl: settings.importantWebhookUrl || '',
         familyNotifyWebhookUrl: settings.familyNotifyWebhookUrl || '',
         recordCheckHour: settings.recordCheckHour ?? 16,
+        hiddenSheets: settings.hiddenSheets ?? [],
       });
     }
   }, [isSettingsLoading, settings]);
@@ -201,6 +235,7 @@ export function SettingsPage() {
         importantWebhookUrl: '',
         familyNotifyWebhookUrl: '',
         recordCheckHour: 16,
+        hiddenSheets: [],
       });
       if (success) {
         setSaveMessage({ type: 'success', text: '設定をクリアしました' });
@@ -213,6 +248,7 @@ export function SettingsPage() {
           importantWebhookUrl: '',
           familyNotifyWebhookUrl: '',
           recordCheckHour: 16,
+          hiddenSheets: [],
         });
         setTimeout(() => setSaveMessage(null), 3000);
       } else {
@@ -520,6 +556,85 @@ export function SettingsPage() {
             </div>
             <p className="mt-1 text-xs text-gray-500">食事・水分記録が未入力の場合に通知する時刻</p>
           </div>
+        </div>
+
+        {/* 記録閲覧 表示設定セクション */}
+        <div className="bg-white rounded-lg p-4 shadow-sm space-y-4">
+          <h2 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            記録閲覧 表示設定
+          </h2>
+
+          <p className="text-xs text-gray-500">
+            記録閲覧ページで表示するシートを選択します。
+            チェックを外したシートは非表示になります。
+          </p>
+
+          {/* シートリスト */}
+          <div className="space-y-2">
+            {sheets.length > 0 ? (
+              sheets.map((sheet) => {
+                const isVisible = !(localSettings.hiddenSheets || []).includes(sheet.sheetName);
+                return (
+                  <label
+                    key={sheet.sheetName}
+                    className={`
+                      flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all
+                      ${isVisible
+                        ? 'border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50'
+                        : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
+                      }
+                    `}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isVisible}
+                      onChange={() => toggleSheetVisibility(sheet.sheetName)}
+                      className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                    />
+                    <span className="text-lg">{getSheetIcon(sheet.sheetName)}</span>
+                    <span className={`flex-1 text-sm ${isVisible ? 'text-gray-700' : 'text-gray-400'}`}>
+                      {sheet.sheetName}
+                    </span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                      isVisible ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-200 text-gray-400'
+                    }`}>
+                      {sheet.recordCount}件
+                    </span>
+                  </label>
+                );
+              })
+            ) : (
+              <div className="text-center py-4 text-gray-400 text-sm">
+                データを同期すると、シート一覧が表示されます
+              </div>
+            )}
+          </div>
+
+          {sheets.length > 0 && (
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setLocalSettings((prev) => ({ ...prev, hiddenSheets: [] }))}
+                className="flex-1 py-2 px-3 text-xs bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                すべて表示
+              </button>
+              <button
+                type="button"
+                onClick={() => setLocalSettings((prev) => ({
+                  ...prev,
+                  hiddenSheets: sheets.map((s) => s.sheetName),
+                }))}
+                className="flex-1 py-2 px-3 text-xs bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                すべて非表示
+              </button>
+            </div>
+          )}
         </div>
 
         {/* データ同期セクション */}

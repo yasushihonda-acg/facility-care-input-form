@@ -117,6 +117,8 @@ export interface MealFormSettings {
   familyNotifyWebhookUrl?: string;
   /** 記録チェック通知時間（0-23、デフォルト16）(Phase 30.1) */
   recordCheckHour?: number;
+  /** 非表示シート名の配列 (Phase 50) */
+  hiddenSheets?: string[];
   updatedAt: string;
 }
 
@@ -129,6 +131,7 @@ export interface UpdateMealFormSettingsRequest {
   importantWebhookUrl?: string;
   familyNotifyWebhookUrl?: string;
   recordCheckHour?: number;
+  hiddenSheets?: string[];
 }
 
 // =============================================================================
