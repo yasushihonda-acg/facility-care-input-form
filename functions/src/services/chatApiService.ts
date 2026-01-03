@@ -51,12 +51,44 @@ export async function listSpaceMessages(
     orderBy: "createTime desc",
   });
 
+  const messages = response.data.messages || [];
+
   functions.logger.info(
-    `[ChatApiService] Fetched ${response.data.messages?.length || 0} messages`
+    `[ChatApiService] Fetched ${messages.length} messages`
   );
 
+  // デバッグ: 最初の5件のメッセージの全フィールドをログ出力
+  const sampleCount = Math.min(5, messages.length);
+  for (let i = 0; i < sampleCount; i++) {
+    const msg = messages[i];
+    functions.logger.info(`[ChatApiService] Message ${i + 1} structure:`, {
+      name: msg.name,
+      allKeys: Object.keys(msg),
+      hasText: !!msg.text,
+      textLength: msg.text?.length || 0,
+      textPreview: msg.text?.substring(0, 300),
+      hasFormattedText: !!msg.formattedText,
+      hasCards: !!(msg.cards && msg.cards.length > 0),
+      hasCardsV2: !!(msg.cardsV2 && msg.cardsV2.length > 0),
+      hasAttachment: !!(msg.attachment && msg.attachment.length > 0),
+      attachmentCount: msg.attachment?.length || 0,
+      hasAccessoryWidgets: !!(msg.accessoryWidgets && msg.accessoryWidgets.length > 0),
+      sender: msg.sender,
+      createTime: msg.createTime,
+      // 添付ファイルの詳細
+      attachmentDetails: msg.attachment?.map((a) => ({
+        name: a.name,
+        contentName: a.contentName,
+        contentType: a.contentType,
+        thumbnailUri: a.thumbnailUri,
+        downloadUri: a.downloadUri,
+        source: a.source,
+      })),
+    });
+  }
+
   return {
-    messages: response.data.messages || [],
+    messages,
     nextPageToken: response.data.nextPageToken || undefined,
   };
 }
