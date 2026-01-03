@@ -325,12 +325,14 @@ async function syncChatImagesHandler(
     const {spaceId, residentId, limit = 100, year} = body;
 
     // 年指定がある場合、Chat APIフィルター用の日付範囲を構築
+    // Note: Chat APIはAND条件をサポートしていないため、上限のみ指定
+    // 下限はJavaScript側でフィルタリング
     let createTimeFilter: string | undefined;
+    let yearStartTimestamp: number | undefined;
     if (year) {
-      // 指定年の1月1日〜翌年1月1日の範囲でフィルタ
-      const startDate = `${year}-01-01T00:00:00Z`;
       const endDate = `${year + 1}-01-01T00:00:00Z`;
-      createTimeFilter = `createTime >= "${startDate}" AND createTime < "${endDate}"`;
+      createTimeFilter = `createTime < "${endDate}"`;
+      yearStartTimestamp = new Date(`${year}-01-01T00:00:00Z`).getTime();
     }
 
     if (!spaceId || !residentId) {
@@ -414,7 +416,20 @@ async function syncChatImagesHandler(
       if (allMessages.length >= limit) break;
     } while (pageToken && pageCount < maxPages);
 
-    const messages: chat_v1.Schema$Message[] = allMessages;
+    // 年指定がある場合、指定年より前のメッセージを除外
+    // (Chat APIフィルターは上限のみ指定しているため、下限はここでフィルタ)
+    let messages: chat_v1.Schema$Message[] = allMessages;
+    if (yearStartTimestamp) {
+      const beforeFilter = messages.length;
+      messages = messages.filter((m) => {
+        if (!m.createTime) return false;
+        const msgTime = new Date(m.createTime).getTime();
+        return msgTime >= yearStartTimestamp;
+      });
+      functions.logger.info(
+        `[syncChatImages] Year filter: ${beforeFilter} -> ${messages.length} messages (removed ${beforeFilter - messages.length} older)`
+      );
+    }
     functions.logger.info(
       `[syncChatImages] Fetched total ${messages.length} messages from Chat API (${pageCount} pages)`
     );
