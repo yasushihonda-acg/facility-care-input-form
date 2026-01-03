@@ -22,6 +22,9 @@ import {
 const RESIDENT_ID_PATTERN = /\(ID(\d+)\)/;
 const RESIDENT_ID_PATTERN_ALT = /ID(\d+)/;
 
+// Firebase Storage URLパターン（shiota-test-9またはfacility-care-input-form）
+const FIREBASE_STORAGE_URL_PATTERN = /https:\/\/firebasestorage\.googleapis\.com\/v0\/b\/[^/]+\/o\/[^?\s]+\?alt=media(?:&token=[^?\s]+)?/g;
+
 // 投稿IDパターン
 const POST_ID_PATTERN = /【投稿ID】[：:]\s*(\w+)/;
 
@@ -78,6 +81,13 @@ function extractPostId(text: string): string | undefined {
  */
 function extractTags(text: string): string[] {
   return text.match(TAG_PATTERN) || [];
+}
+
+/**
+ * メッセージからFirebase Storage URLを抽出
+ */
+function extractStorageUrls(text: string): string[] {
+  return text.match(FIREBASE_STORAGE_URL_PATTERN) || [];
 }
 
 /**
@@ -177,85 +187,51 @@ async function syncChatImagesHandler(
     );
 
     // Chat APIからメッセージ取得
-    // residentIdを含むメッセージのみをフィルタ（Chat API filter構文）
-    // Note: Chat APIのfilterは限定的。text検索ができない場合はクライアント側でフィルタ
     const {messages} = await listSpaceMessages(
       spaceId,
       accessToken,
       undefined,
       limit,
-      undefined // filter - Chat APIはtext検索をサポートしないため使用しない
+      undefined
     );
 
-    functions.logger.info(`[syncChatImages] Looking for messages containing ID${residentId}`);
-
     functions.logger.info(`[syncChatImages] Fetched ${messages.length} messages from Chat API`);
-
-    // デバッグ: ID7282を含むメッセージと「画像」を含むメッセージを探す
-    let foundTarget = 0;
-    for (const msg of messages) {
-      const text = msg.text || "";
-      // ID7282のメッセージ、または「画像」を含むメッセージをログ出力（最大5件）
-      if ((text.includes(`ID${residentId}`) || text.includes("画像")) && foundTarget < 5) {
-        functions.logger.info(`[syncChatImages] Found relevant message (${foundTarget + 1}):`, {
-          name: msg.name,
-          textPreview: text.substring(0, 300),
-          hasAttachment: !!msg.attachment,
-          attachmentCount: msg.attachment?.length || 0,
-          sender: msg.sender,
-          thread: msg.thread,
-          allKeys: Object.keys(msg),
-        });
-        foundTarget++;
-      }
-    }
 
     let synced = 0;
     let skipped = 0;
     const newPhotos: CarePhoto[] = [];
 
     // デバッグ用カウンター
-    let noAttachmentCount = 0;
-    let noResidentIdMatchCount = 0;
-    let imageAttachmentCount = 0;
-    const extractedResidentIds: string[] = [];
+    let messagesWithStorageUrls = 0;
+    let urlsFound = 0;
+    let matchedResidentMessages = 0;
 
-    // 各メッセージを処理
+    // 各メッセージを処理 - テキスト内のFirebase Storage URLを探す
     for (const msg of messages) {
-      // 添付ファイルがない場合はスキップ
-      if (!msg.attachment || msg.attachment.length === 0) {
-        noAttachmentCount++;
-        continue;
-      }
+      const text = msg.text || "";
+
+      // テキスト内のFirebase Storage URLを抽出
+      const storageUrls = extractStorageUrls(text);
+      if (storageUrls.length === 0) continue;
+
+      messagesWithStorageUrls++;
+      urlsFound += storageUrls.length;
 
       // メッセージテキストから利用者IDを確認
-      const msgResidentId = msg.text ? extractResidentId(msg.text) : undefined;
+      const msgResidentId = extractResidentId(text);
+      if (!msgResidentId || msgResidentId !== residentId) continue;
 
-      // デバッグ: 最初の10件の抽出結果をログ
-      if (extractedResidentIds.length < 10) {
-        extractedResidentIds.push(
-          `text="${(msg.text || "").substring(0, 50)}..." → extracted="${msgResidentId || "null"}"`
-        );
-      }
-
-      if (!msgResidentId || msgResidentId !== residentId) {
-        noResidentIdMatchCount++;
-        continue;
-      }
+      matchedResidentMessages++;
 
       // メタデータ抽出
-      const staffName = msg.text ? extractStaffName(msg.text) : undefined;
-      const postId = msg.text ? extractPostId(msg.text) : undefined;
-      const tags = msg.text ? extractTags(msg.text) : [];
+      const staffName = extractStaffName(text);
+      const postId = extractPostId(text);
+      const tags = extractTags(text);
 
-      // 各添付ファイルを処理
-      for (const attachment of msg.attachment) {
-        // 画像以外はスキップ
-        if (!attachment.contentType?.startsWith("image/")) continue;
-
-        imageAttachmentCount++;
-
-        const messageId = msg.name || `msg_${Date.now()}`;
+      // 各URLを処理
+      for (let i = 0; i < storageUrls.length; i++) {
+        const imageUrl = storageUrls[i];
+        const messageId = `${msg.name || "unknown"}_img${i}`;
 
         // 既に保存済みならスキップ
         if (existingMessageIds.has(messageId)) {
@@ -263,24 +239,24 @@ async function syncChatImagesHandler(
           continue;
         }
 
-        // 画像URLを取得（downloadUri優先、なければthumbnailUri）
-        const imageUrl = attachment.downloadUri ||
-          attachment.thumbnailUri ||
-          (attachment.driveDataRef?.driveFileId ?
-            `https://drive.google.com/uc?id=${attachment.driveDataRef.driveFileId}&export=view` :
-            "");
-
-        if (!imageUrl) {
-          functions.logger.warn(`[syncChatImages] No URL for attachment in message ${messageId}`);
-          continue;
-        }
-
-        // Firestoreにメタデータを保存（画像はダウンロードしない）
+        // Firestoreにメタデータを保存
         const photoRef = db.collection("care_photos").doc();
         const photoId = photoRef.id;
 
         const date = new Date(msg.createTime || Date.now());
         const dateStr = date.toISOString().split("T")[0];
+
+        // URLからファイル名を抽出（エンコードされたパスをデコード）
+        let fileName = `chat_${photoId}.jpg`;
+        try {
+          const urlPath = new URL(imageUrl).pathname;
+          const encodedFileName = urlPath.split("/o/")[1]?.split("?")[0];
+          if (encodedFileName) {
+            fileName = decodeURIComponent(encodedFileName).split("/").pop() || fileName;
+          }
+        } catch {
+          // URL解析失敗時はデフォルトファイル名を使用
+        }
 
         const carePhoto: CarePhoto & {
           chatMessageId: string;
@@ -293,8 +269,8 @@ async function syncChatImagesHandler(
           mealTime: "snack",
           photoUrl: imageUrl,
           storagePath: "", // リンクのみなのでstoragePath不要
-          fileName: attachment.contentName || `chat_${photoId}`,
-          mimeType: attachment.contentType || "image/jpeg",
+          fileName,
+          mimeType: "image/jpeg", // Storage URLからは判断できないためデフォルト
           fileSize: 0, // リンクのみなのでサイズ不明
           staffId: "chat_import",
           staffName,
@@ -303,7 +279,7 @@ async function syncChatImagesHandler(
           source: "google_chat",
           chatMessageId: messageId,
           chatTags: tags,
-          chatContent: msg.text || undefined,
+          chatContent: text.substring(0, 500), // 長いテキストは切り詰め
         };
 
         await photoRef.set(carePhoto);
@@ -312,7 +288,7 @@ async function syncChatImagesHandler(
         synced++;
 
         functions.logger.info(
-          `[syncChatImages] Saved image link: ${photoId}, URL: ${imageUrl.substring(0, 50)}...`
+          `[syncChatImages] Saved image link: ${photoId}, URL: ${imageUrl.substring(0, 80)}...`
         );
       }
     }
@@ -333,12 +309,12 @@ async function syncChatImagesHandler(
     // デバッグサマリー
     functions.logger.info("[syncChatImages] Debug Summary:", {
       totalMessages: messages.length,
-      noAttachmentCount,
-      messagesWithAttachments: messages.length - noAttachmentCount,
-      noResidentIdMatchCount,
-      imageAttachmentCount,
+      messagesWithStorageUrls,
+      urlsFound,
+      matchedResidentMessages,
+      synced,
+      skipped,
       targetResidentId: residentId,
-      sampleExtractedIds: extractedResidentIds,
     });
 
     functions.logger.info(
