@@ -10,6 +10,7 @@ import * as functions from "firebase-functions";
 import {Request, Response} from "express";
 import {getFirestore} from "firebase-admin/firestore";
 import * as admin from "firebase-admin";
+import {chat_v1} from "googleapis";
 import {FUNCTIONS_CONFIG} from "../config/sheets";
 import {listSpaceMessages} from "../services/chatApiService";
 import {
@@ -40,8 +41,9 @@ const POST_ID_PATTERN = /【投稿ID】[：:]\s*(\w+)/;
 // タグパターン（#特記事項📝, #重要⚠️ など）
 const TAG_PATTERN = /#[^\s#]+/g;
 
-// 記録者パターン
-const STAFF_NAME_PATTERN = /記録者[：:]\s*([^\n]+)/;
+// 記録者パターン（JSON内のエスケープ文字に対応）
+// cardsV2をJSON.stringifyした場合、改行は\\nになるため、それ以外の文字をマッチ
+const STAFF_NAME_PATTERN = /記録者\s*[：:]\s*([^"\\]+)/;
 
 interface SyncChatImagesRequest {
   spaceId: string;
@@ -137,6 +139,75 @@ function extractImageUrlsFromAttachments(attachments: any[]): string[] {
   }
 
   return urls;
+}
+
+/**
+ * メッセージからテキスト全体を取得（msg.text + cardsV2のJSON）
+ * シンプルにJSON.stringifyして正規表現を直接適用できるようにする
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getAllTextFromMessage(msg: {text?: string | null; cardsV2?: any[]}): string {
+  let combinedText = msg.text || "";
+
+  // cardsV2がある場合はJSON.stringifyして追加
+  // 正規表現はこの文字列に対して直接適用可能
+  if (msg.cardsV2 && Array.isArray(msg.cardsV2) && msg.cardsV2.length > 0) {
+    combinedText += " " + JSON.stringify(msg.cardsV2);
+  }
+
+  return combinedText;
+}
+
+/**
+ * cardsV2から人間が読みやすいテキストを抽出
+ * JSON文字列ではなく、テキスト内容のみを返す
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractReadableTextFromCards(cardsV2: any[]): string {
+  if (!cardsV2 || !Array.isArray(cardsV2) || cardsV2.length === 0) return "";
+
+  const texts: string[] = [];
+
+  try {
+    const cardString = JSON.stringify(cardsV2);
+
+    // "text":"..." のパターンを抽出
+    const textMatches = cardString.match(/"text"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"/g) || [];
+
+    for (const match of textMatches) {
+      const valueMatch = match.match(/"text"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"/);
+      if (valueMatch && valueMatch[1]) {
+        try {
+          // JSONエスケープをデコード
+          const decoded = JSON.parse(`"${valueMatch[1]}"`);
+          if (decoded && decoded.trim()) {
+            texts.push(decoded);
+          }
+        } catch {
+          texts.push(valueMatch[1]);
+        }
+      }
+    }
+  } catch {
+    // パース失敗時は空文字
+  }
+
+  return texts.join("\n");
+}
+
+/**
+ * 表示用のチャット内容を取得（JSON文字列なしの読みやすい形式）
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getDisplayableContent(msg: {text?: string | null; cardsV2?: any[]}): string {
+  const plainText = msg.text || "";
+  const cardText = extractReadableTextFromCards(msg.cardsV2 || []);
+
+  // 両方を結合（重複を避けるため、plainTextが空でない場合のみ改行で区切る）
+  if (plainText && cardText) {
+    return `${plainText}\n${cardText}`;
+  }
+  return plainText || cardText;
 }
 
 /**
@@ -301,17 +372,39 @@ async function syncChatImagesHandler(
       `[syncChatImages] Found ${existingMessageIds.size} existing chat images, ${existingPhotoUrls.size} unique URLs`
     );
 
-    // Chat APIからメッセージ取得
+    // Chat APIからメッセージ取得（ページネーションで全件取得）
     // Note: Chat APIはテキスト検索フィルタをサポートしていないため全件取得
-    const {messages} = await listSpaceMessages(
-      spaceId,
-      accessToken,
-      undefined,
-      limit,
-      undefined // filterはcreateTime/thread.nameのみサポート
-    );
+    const allMessages: chat_v1.Schema$Message[] = [];
+    let pageToken: string | undefined;
+    let pageCount = 0;
+    const maxPages = Math.ceil(limit / 100); // limitに基づいてページ数を制限
 
-    functions.logger.info(`[syncChatImages] Fetched ${messages.length} messages from Chat API`);
+    do {
+      const result = await listSpaceMessages(
+        spaceId,
+        accessToken,
+        pageToken,
+        100, // ページあたり最大100件
+        undefined // filterはcreateTime/thread.nameのみサポート
+      );
+
+      allMessages.push(...result.messages);
+      pageToken = result.nextPageToken;
+      pageCount++;
+
+      functions.logger.info(
+        `[syncChatImages] Page ${pageCount}: fetched ${result.messages.length} messages, ` +
+        `total: ${allMessages.length}, hasMore: ${!!pageToken}`
+      );
+
+      // 指定されたlimitに達したら終了
+      if (allMessages.length >= limit) break;
+    } while (pageToken && pageCount < maxPages);
+
+    const messages: chat_v1.Schema$Message[] = allMessages;
+    functions.logger.info(
+      `[syncChatImages] Fetched total ${messages.length} messages from Chat API (${pageCount} pages)`
+    );
 
     let synced = 0;
     let updated = 0; // 既存画像のメタデータ更新カウント
@@ -365,6 +458,7 @@ async function syncChatImagesHandler(
     // ※最古のメッセージではなく、IDを含むメッセージを優先
     const threadIdMessageMap = new Map<string, {
       text: string;
+      displayableContent: string; // UI表示用（JSONなし）
       createTime: string;
       staffName?: string;
       postId?: string;
@@ -377,18 +471,22 @@ async function syncChatImagesHandler(
       const threadName = (msg as any).thread?.name;
       if (!threadName) continue;
 
-      const text = msg.text || "";
+      // msg.text + cardsV2のJSON全体を結合（正規表現で直接検索可能）
+      const combinedText = getAllTextFromMessage(msg);
+      // UI表示用の読みやすいテキスト
+      const displayableContent = getDisplayableContent(msg);
       const createTime = msg.createTime || "";
 
       // 同じスレッドに複数のIDメッセージがある場合は最古を採用
       const existing = threadIdMessageMap.get(threadName);
       if (!existing || createTime < existing.createTime) {
         threadIdMessageMap.set(threadName, {
-          text,
+          text: combinedText,
+          displayableContent,
           createTime,
-          staffName: extractStaffName(text),
-          postId: extractPostId(text),
-          tags: extractTags(text),
+          staffName: extractStaffName(combinedText),
+          postId: extractPostId(combinedText),
+          tags: extractTags(combinedText),
         });
       }
     }
@@ -396,6 +494,20 @@ async function syncChatImagesHandler(
     functions.logger.info(
       `[syncChatImages] Built thread ID message map: ${threadIdMessageMap.size} threads with ID`
     );
+
+    // デバッグ: 最初の3件のIDメッセージ内容を出力
+    let debugCount = 0;
+    for (const [threadName, meta] of threadIdMessageMap.entries()) {
+      if (debugCount >= 3) break;
+      functions.logger.info(`[syncChatImages] ID-Msg content ${debugCount + 1}:`, {
+        thread: threadName,
+        textPreview: meta.text.substring(0, 300),
+        staffName: meta.staffName,
+        postId: meta.postId,
+        tags: meta.tags,
+      });
+      debugCount++;
+    }
 
     // マッチしたメッセージの詳細を出力（最大5件、スレッド情報含む）
     for (let idx = 0; idx < Math.min(5, matchingMessages.length); idx++) {
@@ -601,7 +713,8 @@ async function syncChatImagesHandler(
       const staffName = parentMeta?.staffName || extractStaffName(text);
       const postId = parentMeta?.postId || extractPostId(text);
       const tags = parentMeta?.tags || extractTags(text);
-      const parentText = parentMeta?.text || text;
+      // UI表示用（JSONなしの読みやすいテキスト）
+      const parentDisplayableContent = parentMeta?.displayableContent || text;
       const parentCreateTime = parentMeta?.createTime || msg.createTime;
 
       // 優先順位: Firebase Storage URL（JSON全体から抽出）を優先
@@ -637,7 +750,7 @@ async function syncChatImagesHandler(
             staffName,
             postId,
             chatTags: tags,
-            chatContent: parentText.substring(0, 500),
+            chatContent: parentDisplayableContent.substring(0, 500), // UI表示用テキスト
             chatMessageId: messageId,
             updatedAt: new Date().toISOString(), // 更新日時を記録
           });
@@ -688,7 +801,7 @@ async function syncChatImagesHandler(
           source: "google_chat",
           chatMessageId: messageId,
           chatTags: tags,
-          chatContent: parentText.substring(0, 500), // 親メッセージの内容を保存
+          chatContent: parentDisplayableContent.substring(0, 500), // UI表示用テキスト
         };
 
         await photoRef.set(carePhoto);
