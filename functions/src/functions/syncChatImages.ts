@@ -274,7 +274,7 @@ async function syncChatImagesHandler(
 
     const db = getFirestore();
 
-    // 既存の画像をチェック（chatMessageIdで重複排除）
+    // 既存の画像をチェック（chatMessageId + photoUrl で重複排除）
     const existingSnapshot = await db
       .collection("care_photos")
       .where("residentId", "==", residentId)
@@ -282,15 +282,19 @@ async function syncChatImagesHandler(
       .get();
 
     const existingMessageIds = new Set<string>();
+    const existingPhotoUrls = new Set<string>();
     existingSnapshot.docs.forEach((doc) => {
       const data = doc.data();
       if (data.chatMessageId) {
         existingMessageIds.add(data.chatMessageId);
       }
+      if (data.photoUrl) {
+        existingPhotoUrls.add(data.photoUrl);
+      }
     });
 
     functions.logger.info(
-      `[syncChatImages] Found ${existingMessageIds.size} existing chat images`
+      `[syncChatImages] Found ${existingMessageIds.size} existing chat images, ${existingPhotoUrls.size} unique URLs`
     );
 
     // Chat APIからメッセージ取得
@@ -496,9 +500,8 @@ async function syncChatImagesHandler(
       });
     }
 
-    // 各メッセージを処理 - すべての画像URLパターンを探す
-    // 注: 画像メッセージとIDメッセージが別々の場合があるため、
-    // Firebase Storage URLを含む全メッセージを対象とする
+    // 各メッセージを処理 - ID含むスレッドに属する画像のみ同期
+    // スレッドベースフィルタリング: IDメッセージと同じスレッドにある画像のみ対象
     for (const msg of messages) {
       const text = msg.text || "";
       const formattedText = msg.formattedText || "";
@@ -535,8 +538,13 @@ async function syncChatImagesHandler(
       cardUrlCount += urls.cardUrls.length;
       attachmentUrlCount += urls.attachmentUrls.length;
 
-      // Firebase Storage URLを含むメッセージは全て同期対象
-      // （画像メッセージにIDが含まれない場合があるため、ID一致は条件から除外）
+      // スレッドベースフィルタリング: IDメッセージと同じスレッドに属するか確認
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const msgThreadName = (msg as any).thread?.name;
+      if (!msgThreadName || !idThreads.has(msgThreadName)) {
+        // IDを含むスレッドに属さない画像はスキップ
+        continue;
+      }
       matchedResidentMessages++;
 
       // メタデータ抽出
@@ -561,11 +569,14 @@ async function syncChatImagesHandler(
         const imageUrl = imageUrls[i];
         const messageId = `${msg.name || "unknown"}_img${i}`;
 
-        // 既に保存済みならスキップ
-        if (existingMessageIds.has(messageId)) {
+        // 既に保存済みならスキップ（messageId または URL で重複チェック）
+        if (existingMessageIds.has(messageId) || existingPhotoUrls.has(imageUrl)) {
           skipped++;
           continue;
         }
+
+        // 同一セッション内での重複も防ぐ（URLをセットに追加）
+        existingPhotoUrls.add(imageUrl);
 
         // Firestoreにメタデータを保存
         const photoRef = db.collection("care_photos").doc();
