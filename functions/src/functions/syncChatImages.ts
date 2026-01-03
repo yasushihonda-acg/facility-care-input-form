@@ -116,22 +116,68 @@ function extractGenericImageUrls(text: string): string[] {
 }
 
 /**
+ * cardsV2から画像URLを抽出
+ * 構造: cardsV2[].card.sections[].widgets[].image.imageUrl
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractImageUrlsFromCards(cardsV2: any[]): string[] {
+  const urls: string[] = [];
+  if (!cardsV2 || !Array.isArray(cardsV2)) return urls;
+
+  for (const cardWrapper of cardsV2) {
+    const card = cardWrapper?.card;
+    if (!card?.sections) continue;
+
+    for (const section of card.sections) {
+      if (!section?.widgets) continue;
+
+      for (const widget of section.widgets) {
+        // image.imageUrl をチェック
+        if (widget?.image?.imageUrl) {
+          urls.push(widget.image.imageUrl);
+        }
+        // decoratedText.icon.iconUrl もチェック
+        if (widget?.decoratedText?.icon?.iconUrl) {
+          urls.push(widget.decoratedText.icon.iconUrl);
+        }
+        // buttonList の中のボタンのリンクもチェック
+        if (widget?.buttonList?.buttons) {
+          for (const button of widget.buttonList.buttons) {
+            if (button?.onClick?.openLink?.url) {
+              const url = button.onClick.openLink.url;
+              if (url.includes("firebasestorage.googleapis.com")) {
+                urls.push(url);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return urls;
+}
+
+/**
  * すべての画像URLを抽出（優先順位: Firebase Storage > Google Proxy > Generic）
  */
-function extractAllImageUrls(text: string): {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractAllImageUrls(text: string, cardsV2?: any[]): {
   storageUrls: string[];
   proxyUrls: string[];
   genericUrls: string[];
+  cardUrls: string[];
   allUrls: string[];
 } {
   const storageUrls = extractStorageUrls(text);
   const proxyUrls = extractProxyUrls(text);
   const genericUrls = extractGenericImageUrls(text);
+  const cardUrls = extractImageUrlsFromCards(cardsV2 || []);
 
   // 重複を除去して結合
-  const allUrls = [...new Set([...storageUrls, ...proxyUrls, ...genericUrls])];
+  const allUrls = [...new Set([...storageUrls, ...proxyUrls, ...genericUrls, ...cardUrls])];
 
-  return {storageUrls, proxyUrls, genericUrls, allUrls};
+  return {storageUrls, proxyUrls, genericUrls, cardUrls, allUrls};
 }
 
 /**
@@ -251,6 +297,7 @@ async function syncChatImagesHandler(
     let storageUrlCount = 0;
     let proxyUrlCount = 0;
     let genericUrlCount = 0;
+    let cardUrlCount = 0;
     let matchedResidentMessages = 0;
 
     // デバッグ: 最初の10件のメッセージ内容をログ出力
@@ -273,11 +320,15 @@ async function syncChatImagesHandler(
     // マッチしたメッセージの詳細を出力（最大20件）
     for (let idx = 0; idx < Math.min(20, matchingMessages.length); idx++) {
       const msg = matchingMessages[idx];
+      const cardUrls = extractImageUrlsFromCards(msg.cardsV2 || []);
       functions.logger.info(`[syncChatImages] Matched Message ${idx + 1}:`, {
         name: msg.name,
         createTime: msg.createTime,
         textLength: msg.text?.length || 0,
         textPreview: msg.text?.substring(0, 600),
+        hasCardsV2: !!(msg.cardsV2 && msg.cardsV2.length > 0),
+        cardsV2Count: msg.cardsV2?.length || 0,
+        cardUrls,
         hasAttachment: !!(msg.attachment && msg.attachment.length > 0),
         attachmentCount: msg.attachment?.length || 0,
         allKeys: Object.keys(msg),
@@ -297,8 +348,30 @@ async function syncChatImagesHandler(
       (m.text || "").includes("firebasestorage.googleapis.com")
     );
     functions.logger.info(
-      `[syncChatImages] Found ${storageUrlMessages.length} messages containing Firebase Storage URL`
+      `[syncChatImages] Found ${storageUrlMessages.length} messages containing Firebase Storage URL in text`
     );
+
+    // cardsV2を持つメッセージを検索（カード形式の投稿）
+    const cardMessages = messages.filter((m) =>
+      m.cardsV2 && m.cardsV2.length > 0
+    );
+    functions.logger.info(
+      `[syncChatImages] Found ${cardMessages.length} messages with cardsV2`
+    );
+
+    // cardsV2メッセージの詳細をログ出力（最大5件）
+    for (let idx = 0; idx < Math.min(5, cardMessages.length); idx++) {
+      const msg = cardMessages[idx];
+      const cardUrls = extractImageUrlsFromCards(msg.cardsV2 || []);
+      functions.logger.info(`[syncChatImages] Card Message ${idx + 1}:`, {
+        name: msg.name,
+        createTime: msg.createTime,
+        textPreview: msg.text?.substring(0, 200),
+        cardsV2Count: msg.cardsV2?.length || 0,
+        extractedCardUrls: cardUrls,
+        hasTargetId: (msg.text || "").includes(`ID${residentId}`),
+      });
+    }
 
     // Firebase Storage URLメッセージの詳細をログ出力
     for (let idx = 0; idx < Math.min(10, storageUrlMessages.length); idx++) {
@@ -340,8 +413,8 @@ async function syncChatImagesHandler(
       const formattedText = msg.formattedText || "";
       const combinedText = `${text} ${formattedText}`;
 
-      // すべての画像URLを抽出
-      const urls = extractAllImageUrls(combinedText);
+      // すべての画像URLを抽出（テキスト + cardsV2）
+      const urls = extractAllImageUrls(combinedText, msg.cardsV2);
 
       // サンプルログ用（URLを含むメッセージのみ記録）
       if (sampleMessages.length < 20 && urls.allUrls.length > 0) {
@@ -359,6 +432,7 @@ async function syncChatImagesHandler(
       storageUrlCount += urls.storageUrls.length;
       proxyUrlCount += urls.proxyUrls.length;
       genericUrlCount += urls.genericUrls.length;
+      cardUrlCount += urls.cardUrls.length;
 
       // メッセージテキストから利用者IDを確認
       if (!text.includes(`ID${residentId}`)) continue;
@@ -369,12 +443,14 @@ async function syncChatImagesHandler(
       const postId = extractPostId(text);
       const tags = extractTags(text);
 
-      // 優先順位: Firebase Storage > Google Proxy > Generic
+      // 優先順位: Firebase Storage > cardsV2 > Google Proxy > Generic
       const imageUrls = urls.storageUrls.length > 0 ?
         urls.storageUrls :
-        urls.proxyUrls.length > 0 ?
-          urls.proxyUrls :
-          urls.genericUrls;
+        urls.cardUrls.length > 0 ?
+          urls.cardUrls :
+          urls.proxyUrls.length > 0 ?
+            urls.proxyUrls :
+            urls.genericUrls;
 
       // 各URLを処理
       for (let i = 0; i < imageUrls.length; i++) {
@@ -461,6 +537,7 @@ async function syncChatImagesHandler(
       storageUrlCount,
       proxyUrlCount,
       genericUrlCount,
+      cardUrlCount,
       matchedResidentMessages,
       synced,
       skipped,
