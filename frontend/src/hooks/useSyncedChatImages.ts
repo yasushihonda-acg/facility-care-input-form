@@ -29,8 +29,8 @@ export interface UseSyncedChatImagesResult {
   lastSyncResult: { synced: number; updated: number; skipped: number } | null;
   /** 再認証が必要かどうか（API失敗時にtrue） */
   needsReauth: boolean;
-  /** Chatスペースから同期を実行 */
-  sync: () => Promise<void>;
+  /** Chatスペースから同期を実行（yearを指定すると特定年のメッセージのみ同期） */
+  sync: (year?: number) => Promise<void>;
   /** 再取得 */
   refetch: () => void;
   /** 設定値 */
@@ -100,9 +100,9 @@ export function useSyncedChatImages(): UseSyncedChatImagesResult {
     gcTime: 15 * 60 * 1000,
   });
 
-  // 同期実行
-  const sync = useCallback(async () => {
-    console.log('[useSyncedChatImages] sync() called', { canSync, accessToken: !!accessToken, spaceId, residentId });
+  // 同期実行（yearを指定すると特定年のメッセージのみ同期）
+  const sync = useCallback(async (year?: number) => {
+    console.log('[useSyncedChatImages] sync() called', { canSync, accessToken: !!accessToken, spaceId, residentId, year });
     if (!canSync || !accessToken || !spaceId || !residentId) {
       console.log('[useSyncedChatImages] sync() aborted - missing requirements');
       setSyncError('同期にはログインとChat設定が必要です');
@@ -113,9 +113,9 @@ export function useSyncedChatImages(): UseSyncedChatImagesResult {
     setSyncError(null);
 
     try {
-      console.log('[useSyncedChatImages] Calling syncChatImages API...');
+      console.log('[useSyncedChatImages] Calling syncChatImages API...', { year });
       const response = await syncChatImages(
-        { spaceId, residentId, limit: 1000 }, // 1000件取得してID7282を含むメッセージを探す
+        { spaceId, residentId, limit: 1000, year }, // yearを指定すると特定年のみ
         accessToken
       );
       console.log('[useSyncedChatImages] syncChatImages response:', response);

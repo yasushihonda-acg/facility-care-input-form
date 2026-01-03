@@ -49,6 +49,8 @@ interface SyncChatImagesRequest {
   spaceId: string;
   residentId: string;
   limit?: number;
+  /** フィルタリングする年（例: 2025）。指定時はその年のメッセージのみ取得 */
+  year?: number;
 }
 
 interface SyncResult {
@@ -320,7 +322,16 @@ async function syncChatImagesHandler(
 
     const accessToken = authHeader.replace("Bearer ", "");
     const body = req.body as SyncChatImagesRequest;
-    const {spaceId, residentId, limit = 100} = body;
+    const {spaceId, residentId, limit = 100, year} = body;
+
+    // 年指定がある場合、Chat APIフィルター用の日付範囲を構築
+    let createTimeFilter: string | undefined;
+    if (year) {
+      // 指定年の1月1日〜翌年1月1日の範囲でフィルタ
+      const startDate = `${year}-01-01T00:00:00Z`;
+      const endDate = `${year + 1}-01-01T00:00:00Z`;
+      createTimeFilter = `createTime >= "${startDate}" AND createTime < "${endDate}"`;
+    }
 
     if (!spaceId || !residentId) {
       const response: ApiResponse<null> = {
@@ -336,7 +347,8 @@ async function syncChatImagesHandler(
     }
 
     functions.logger.info(
-      `[syncChatImages] Starting sync for resident ${residentId} from space ${spaceId}`
+      `[syncChatImages] Starting sync for resident ${residentId} from space ${spaceId}` +
+      (year ? ` (year: ${year}, filter: ${createTimeFilter})` : " (all years)")
     );
 
     // Firebase Admin初期化
@@ -373,11 +385,12 @@ async function syncChatImagesHandler(
     );
 
     // Chat APIからメッセージ取得（ページネーションで全件取得）
-    // Note: Chat APIはテキスト検索フィルタをサポートしていないため全件取得
+    // Note: Chat APIはcreateTime/thread.nameフィルタのみサポート
     const allMessages: chat_v1.Schema$Message[] = [];
     let pageToken: string | undefined;
     let pageCount = 0;
-    const maxPages = Math.ceil(limit / 100); // limitに基づいてページ数を制限
+    // 年指定がある場合はより多くのページを許可（古いメッセージが少ない可能性）
+    const maxPages = year ? 50 : Math.ceil(limit / 100);
 
     do {
       const result = await listSpaceMessages(
@@ -385,7 +398,7 @@ async function syncChatImagesHandler(
         accessToken,
         pageToken,
         100, // ページあたり最大100件
-        undefined // filterはcreateTime/thread.nameのみサポート
+        createTimeFilter // 年指定がある場合はcreateTimeでフィルタ
       );
 
       allMessages.push(...result.messages);

@@ -1459,7 +1459,7 @@ export async function getChatImages(
  * @param accessToken - ユーザーのOAuthアクセストークン（必須）
  */
 export async function syncChatImages(
-  options: { spaceId: string; residentId: string; limit?: number },
+  options: { spaceId: string; residentId: string; limit?: number; year?: number },
   accessToken: string
 ): Promise<ApiResponse<{
   synced: number;

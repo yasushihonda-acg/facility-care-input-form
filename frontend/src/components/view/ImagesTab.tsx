@@ -172,7 +172,7 @@ export function ImagesTab({ year, month }: ImagesTabProps) {
           <p className="text-red-700 text-sm mb-4">{error}</p>
           {canSync && (
             <button
-              onClick={sync}
+              onClick={() => sync(year)}
               className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
             >
               再試行
@@ -223,10 +223,10 @@ export function ImagesTab({ year, month }: ImagesTabProps) {
           {/* 手動同期ボタン（アクセス可能な場合のみ） */}
           {canSync && (
             <button
-              onClick={sync}
+              onClick={() => sync(year)}
               disabled={isSyncing}
               className="px-3 py-1.5 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 disabled:opacity-50"
-              title="Chatスペースから最新を取得"
+              title={`${year}年のChatメッセージから取得`}
             >
               🔄 同期
             </button>
@@ -261,7 +261,7 @@ export function ImagesTab({ year, month }: ImagesTabProps) {
           <p>この期間の画像はありません</p>
           {canSync && (
             <button
-              onClick={sync}
+              onClick={() => sync(year)}
               className="mt-4 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
             >
               🔄 Chatスペースから取得
