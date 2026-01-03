@@ -95,12 +95,48 @@ async function checkAllowedUser(email: string): Promise<boolean> {
   }
 }
 
+// アクセストークンのsessionStorageキー
+const ACCESS_TOKEN_KEY = 'google_access_token';
+const TOKEN_EXPIRY_KEY = 'google_token_expiry';
+
+// トークンをsessionStorageに保存
+function saveAccessToken(token: string) {
+  sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
+  // 50分後に期限切れ（実際は1時間だが、余裕を持たせる）
+  const expiry = Date.now() + 50 * 60 * 1000;
+  sessionStorage.setItem(TOKEN_EXPIRY_KEY, expiry.toString());
+}
+
+// トークンをsessionStorageから取得（期限切れチェック付き）
+function loadAccessToken(): string | null {
+  const token = sessionStorage.getItem(ACCESS_TOKEN_KEY);
+  const expiry = sessionStorage.getItem(TOKEN_EXPIRY_KEY);
+
+  if (!token || !expiry) return null;
+
+  // 期限切れチェック
+  if (Date.now() > parseInt(expiry, 10)) {
+    sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_EXPIRY_KEY);
+    return null;
+  }
+
+  return token;
+}
+
+// トークンをクリア
+function clearAccessToken() {
+  sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+  sessionStorage.removeItem(TOKEN_EXPIRY_KEY);
+}
+
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAllowed, setIsAllowed] = useState(false);
   const [isCheckingPermission, setIsCheckingPermission] = useState(false);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
+  // 初期値をsessionStorageから復元
+  const [accessToken, setAccessToken] = useState<string | null>(() => loadAccessToken());
   const [error, setError] = useState<string | null>(null);
 
   // 認証状態の監視
@@ -142,10 +178,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const provider = createGoogleProvider();
       const result = await signInWithPopup(auth, provider);
 
-      // OAuth アクセストークンを取得
+      // OAuth アクセストークンを取得・保存
       const credential = GoogleAuthProvider.credentialFromResult(result);
       if (credential?.accessToken) {
         setAccessToken(credential.accessToken);
+        saveAccessToken(credential.accessToken);
       }
     } catch (err) {
       console.error('サインインエラー:', err);
@@ -168,6 +205,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       await firebaseSignOut(auth);
       setAccessToken(null);
+      clearAccessToken();
       setIsAllowed(false);
       setError(null);
     } catch (err) {
@@ -187,6 +225,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (credential?.accessToken) {
         setAccessToken(credential.accessToken);
+        saveAccessToken(credential.accessToken);
         return credential.accessToken;
       }
       return null;
