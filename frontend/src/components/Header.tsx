@@ -5,9 +5,11 @@ interface HeaderProps {
   title: string;
   showBack?: boolean;
   onBack?: () => void;
+  /** ヘッダーを画面上部に固定するか（デフォルト: false） */
+  sticky?: boolean;
 }
 
-export function Header({ title, showBack, onBack }: HeaderProps) {
+export function Header({ title, showBack, onBack, sticky = false }: HeaderProps) {
   const { sync, isSyncing, canSync, cooldownRemaining, lastSyncedAt } = useSync();
   const [showToast, setShowToast] = useState(false);
   const prevSyncingRef = useRef(isSyncing);
@@ -39,7 +41,7 @@ export function Header({ title, showBack, onBack }: HeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-20 bg-gradient-to-r from-primary to-primary-dark text-white shadow-header">
+      <header className={`${sticky ? 'sticky top-0' : ''} z-20 bg-gradient-to-r from-primary to-primary-dark text-white shadow-header`}>
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             {showBack && (

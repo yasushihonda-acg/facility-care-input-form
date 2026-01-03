@@ -159,7 +159,7 @@ export function ViewPage() {
 
   return (
     <Layout>
-      <Header title="介護記録ビューア" />
+      <Header title="介護記録ビューア" sticky />
 
       {/* エラー表示 */}
       {sheetsError && (
