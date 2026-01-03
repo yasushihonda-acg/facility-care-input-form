@@ -1411,14 +1411,19 @@ export async function chatWithRecords(
 
 // =============================================================================
 // Phase 51: Google Chat画像取得
+// Phase 52: OAuth対応 - アクセストークンをAuthorizationヘッダーで送信
 // =============================================================================
 
 /**
  * Google Chatスペースから画像付きメッセージを取得
  * GET /getChatImages
+ *
+ * @param options - リクエストオプション
+ * @param accessToken - ユーザーのOAuthアクセストークン（必須）
  */
 export async function getChatImages(
-  options: GetChatImagesRequest
+  options: GetChatImagesRequest,
+  accessToken: string
 ): Promise<ApiResponse<GetChatImagesResponse>> {
   const url = new URL(`${API_BASE}/getChatImages`);
   url.searchParams.set('spaceId', options.spaceId);
@@ -1430,7 +1435,11 @@ export async function getChatImages(
     url.searchParams.set('limit', options.limit.toString());
   }
 
-  const response = await fetch(url.toString());
+  const response = await fetch(url.toString(), {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+    },
+  });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));

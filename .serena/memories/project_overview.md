@@ -171,8 +171,16 @@ UI表示（ViewPage/HomePageフッター）:
 - 最終同期時間: APIレスポンス（getPlanData.lastSyncedAt）から取得
 - 次回同期時間: 次の正時（00分）までの残り時間を計算
 
+## Phase 52: Firebase Authentication & OAuth Chat API（2026-01-03）
+- Firebase Authentication導入（Googleログイン）
+- 許可リスト（aozora-cg.comドメイン + kinuekamachi@gmail.com）
+- Chat APIをOAuth対応に変更（ユーザートークンでアクセス）
+- care_photosにsourceフィールド追加（direct_upload / google_chat）
+- E2Eテスト認証バイパス（VITE_E2E_TEST環境変数）
+- Firestore/Storageセキュリティルール更新（認証必須）
+
 ## E2Eテスト
-444件定義（Phase 50まで）
+444件定義（Phase 52まで）
 
 ## Phase 50: 記録閲覧シート表示設定（2026-01-03）
 - 設定ページ（/settings）に「記録閲覧 表示設定」セクション追加

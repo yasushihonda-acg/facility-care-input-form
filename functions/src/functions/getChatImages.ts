@@ -171,6 +171,7 @@ function findRelatedTextMessage(
 
 /**
  * getChatImages 関数本体
+ * Phase 52: OAuth対応 - AuthorizationヘッダーからアクセストークンO取得
  */
 async function getChatImagesHandler(
   req: Request,
@@ -179,10 +180,10 @@ async function getChatImagesHandler(
   const timestamp = new Date().toISOString();
 
   try {
-    // CORS対応
+    // CORS対応（Authorizationヘッダーを許可）
     res.set("Access-Control-Allow-Origin", "*");
     res.set("Access-Control-Allow-Methods", "GET, OPTIONS");
-    res.set("Access-Control-Allow-Headers", "Content-Type");
+    res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
     if (req.method === "OPTIONS") {
       res.status(204).send("");
@@ -201,6 +202,23 @@ async function getChatImagesHandler(
       res.status(405).json(response);
       return;
     }
+
+    // Phase 52: Authorizationヘッダーからアクセストークン取得
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: {
+          code: ErrorCodes.UNAUTHORIZED,
+          message: "Authorization header with Bearer token is required",
+        },
+        timestamp,
+      };
+      res.status(401).json(response);
+      return;
+    }
+
+    const accessToken = authHeader.replace("Bearer ", "");
 
     // クエリパラメータの取得
     const spaceId = req.query.spaceId as string | undefined;
@@ -228,9 +246,10 @@ async function getChatImagesHandler(
       `[getChatImages] Fetching images for resident ${residentId} from space ${spaceId}`
     );
 
-    // Chat APIからメッセージ取得
+    // Chat APIからメッセージ取得（OAuthトークン使用）
     const {messages, nextPageToken} = await listSpaceMessages(
       spaceId,
+      accessToken,
       pageToken,
       limit
     );
@@ -261,15 +280,23 @@ async function getChatImagesHandler(
 
     // Chat API特有のエラーハンドリング
     let userMessage = errorMessage;
+    let statusCode = 500;
+
     if (errorMessage.includes("PERMISSION_DENIED")) {
       userMessage =
-        "チャットスペースへのアクセス権限がありません。サービスアカウントをスペースに招待してください。";
+        "チャットスペースへのアクセス権限がありません。ログイン中のアカウントがスペースのメンバーか確認してください。";
     } else if (errorMessage.includes("NOT_FOUND")) {
       userMessage =
         "指定されたチャットスペースが見つかりません。スペースIDを確認してください。";
-    } else if (errorMessage.includes("UNAUTHENTICATED")) {
+    } else if (errorMessage.includes("UNAUTHENTICATED") ||
+               errorMessage.includes("invalid_token")) {
       userMessage =
-        "Google Chat APIの認証に失敗しました。サービスアカウントの設定を確認してください。";
+        "認証トークンが無効または期限切れです。再度ログインしてください。";
+      statusCode = 401;
+    } else if (errorMessage.includes("invalid_grant")) {
+      userMessage =
+        "アクセストークンが期限切れです。再度ログインしてください。";
+      statusCode = 401;
     }
 
     const response: ApiResponse<null> = {
@@ -281,7 +308,7 @@ async function getChatImagesHandler(
       timestamp,
     };
 
-    res.status(500).json(response);
+    res.status(statusCode).json(response);
   }
 }
 

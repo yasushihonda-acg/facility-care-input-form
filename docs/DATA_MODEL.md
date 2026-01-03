@@ -2,7 +2,7 @@
 status: working
 scope: data
 owner: core-team
-last_reviewed: 2025-12-23
+last_reviewed: 2026-01-03
 links:
   - docs/archive/SHEET_A_STRUCTURE.md
   - docs/archive/SHEET_B_STRUCTURE.md
@@ -106,12 +106,15 @@ PWAからの入力データを保存するシート。
 
 | コレクション | 用途 | 主要フィールド |
 |--------------|------|----------------|
+| `allowed_domains` | ドメイン許可リスト（Phase 52） | {domain}: { allowed: true } |
+| `allowed_emails` | メール許可リスト（Phase 52） | {email_key}: { allowed: true } |
 | `settings` | アプリ設定 | webhookUrl, driveSettings |
 | `items` | 品物マスタ | name, category, isActive, remainingHandlingLogs |
 | `tasks` | タスク管理 | title, status, dueDate |
 | `presets` | プリセット（いつもの指示） | name, category, instruction, matchConfig |
 | `prohibitions` | 禁止ルール | itemId, reason |
 | `careItems` | ケア記録 | recordDate, mealType, items |
+| `care_photos` | 写真メタデータ（Phase 17/52） | photoUrl, residentId, source |
 | `chat_messages` | チャットメッセージ | content, sender, timestamp |
 | `staffNotes` | スタッフ注意事項（Phase 40） | content, priority, startDate, endDate |
 
@@ -319,6 +322,73 @@ plan_data_summaries
 
 ---
 
+## 5.4 認証許可リストコレクション（Phase 52）
+
+認証許可ユーザーの管理。2つのコレクションで構成。
+
+### allowed_domains（ドメイン許可）
+
+```
+allowed_domains/
+└── {domain}/              # 例: aozora-cg.com
+    └── { allowed: true }
+```
+
+### allowed_emails（個別メール許可）
+
+```
+allowed_emails/
+└── {email_key}/          # 例: kinuekamachi@gmail_com（.を_に置換）
+    └── { allowed: true }
+```
+
+### 注意事項
+
+- Firestoreはドキュメント名に`.`を含められないため、メールアドレスの`.`は`_`に置換
+- フロントエンド（AuthContext）とセキュリティルール（firestore.rules）の両方で同一ロジックを実装
+- 管理はCLIまたはFirebase Consoleから行う
+
+---
+
+## 5.5 care_photosコレクション（Phase 17/52: 写真メタデータ）
+
+ケア写真のメタデータを管理。
+
+### 構造
+
+```typescript
+// Firestore: care_photos/{photoId}
+interface CarePhoto {
+  photoId: string;
+  residentId: string;
+  date: string;              // YYYY-MM-DD
+  mealTime: string;          // breakfast/lunch/dinner/snack
+  photoUrl: string;
+  storagePath: string;
+  fileName: string;
+  mimeType: string;
+  fileSize: number;
+  staffId: string;
+  staffName?: string;
+  uploadedAt: string;        // ISO8601
+  postId?: string;
+
+  // Phase 52追加
+  source?: 'direct_upload' | 'google_chat';  // 写真のソース
+}
+```
+
+### sourceフィールド
+
+| 値 | 説明 |
+|-----|------|
+| `direct_upload` | アプリから直接アップロード（デフォルト） |
+| `google_chat` | Google Chatスペースから取得 |
+
+後方互換性のため、既存データはsource未設定（取得時に`direct_upload`としてフォールバック）。
+
+---
+
 ## 6. エンティティ関連図
 
 ```
@@ -358,6 +428,7 @@ plan_data_summaries
 
 | 日付 | 変更内容 |
 |------|----------|
+| 2026-01-03 | Phase 52: allowed_users, care_photos.source追加、認証フロー追加 |
 | 2025-12-24 | Phase 42: RemainingHandlingLog型・残り対応タブ仕様追加 |
 | 2025-12-23 | Phase 41設計を削除（既存フォーム構造と不整合のためリバート） |
 | 2025-12-23 | Phase 40: staffNotesコレクション追加 |
