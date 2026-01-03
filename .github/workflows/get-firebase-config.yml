@@ -1,0 +1,27 @@
+name: Get Firebase Config
+
+on:
+  workflow_dispatch:
+
+jobs:
+  get-config:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: List Firebase Apps
+        run: firebase apps:list --project facility-care-input-form || echo "No apps found"
+
+      - name: Get Web SDK Config
+        run: firebase apps:sdkconfig WEB --project facility-care-input-form || echo "Failed to get config"
