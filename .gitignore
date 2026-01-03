@@ -29,3 +29,4 @@ firebase-debug.*.log
 # Playwright test results
 test-results/
 playwright-report/
+.envrc
