@@ -207,6 +207,12 @@ export interface UpdateMealFormSettingsRequest {
 // =============================================================================
 
 /**
+ * 写真のソース（取得元）
+ * Phase 52で追加
+ */
+export type CarePhotoSource = 'direct_upload' | 'google_chat';
+
+/**
  * 写真メタデータ（Firestore care_photos コレクション）
  */
 export interface CarePhoto {
@@ -223,6 +229,8 @@ export interface CarePhoto {
   staffName?: string;
   uploadedAt: string;
   postId?: string;
+  /** 写真のソース（Phase 52追加、後方互換のためオプション） */
+  source?: CarePhotoSource;
 }
 
 /**

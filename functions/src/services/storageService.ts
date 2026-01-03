@@ -18,6 +18,12 @@ const STORAGE_CONFIG = {
 };
 
 /**
+ * 写真のソース（取得元）
+ * Phase 52で追加
+ */
+export type CarePhotoSource = "direct_upload" | "google_chat";
+
+/**
  * 写真メタデータ（Firestore care_photos コレクション）
  */
 export interface CarePhotoMetadata {
@@ -34,6 +40,8 @@ export interface CarePhotoMetadata {
   staffName?: string;
   uploadedAt: string;
   postId?: string;
+  /** 写真のソース（Phase 52追加） */
+  source: CarePhotoSource;
 }
 
 /**
@@ -77,6 +85,7 @@ export function getExtensionFromMimeType(mimeType: string): string {
 
 /**
  * Firebase Storage に写真をアップロードし、Firestoreにメタデータを保存
+ * @param source - 写真のソース（Phase 52追加、デフォルト: direct_upload）
  */
 export async function uploadCarePhotoToStorage(
   buffer: Buffer,
@@ -85,7 +94,8 @@ export async function uploadCarePhotoToStorage(
   staffId: string,
   mealTime: string = "snack",
   date?: string,
-  staffName?: string
+  staffName?: string,
+  source: CarePhotoSource = "direct_upload"
 ): Promise<StorageUploadResult> {
   // 日付デフォルト: 今日
   const targetDate = date || new Date().toISOString().split("T")[0];
@@ -143,6 +153,7 @@ export async function uploadCarePhotoToStorage(
     staffId,
     staffName,
     uploadedAt: new Date().toISOString(),
+    source,
   };
 
   await photoRef.set({

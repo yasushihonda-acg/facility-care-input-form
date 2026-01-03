@@ -1,6 +1,6 @@
 # 引き継ぎドキュメント
 
-> 最終更新: 2026-01-02
+> 最終更新: 2026-01-03
 
 ## クイックスタート（5分で開発開始）
 
@@ -224,7 +224,7 @@ frontend/src/
 
 ## 開発履歴
 
-Phase 1〜49まで完了。詳細は `git log` を参照。
+Phase 1〜52まで完了。詳細は `git log` を参照。
 
 - **Phase 43.1**: 品物名正規化AI（Gemini 2.5 Flash Lite）- 統計用の基準品目名を自動提案
 - **Phase 44**: 品物登録フォームからプリセット編集・新規追加が可能に
@@ -235,5 +235,8 @@ Phase 1〜49まで完了。詳細は `git log` を参照。
 - **Phase 47**: AIチャットMarkdownレンダリング強化 - react-markdown導入、テーブル・箇条書き・太字対応
 - **Phase 48**: ViewPage機能拡張 - 相関分析タブ（マグミット×排便相関率）、グラフタブ（バイタル/排泄/体重/水分 - Recharts）、年月タブsticky固定、モバイル最適化
 - **Phase 49**: 廃棄指示フロー - 家族が期限切れ品物の廃棄をスタッフに依頼（pending_discard）、スタッフ注意事項ページにバッジ表示・廃棄完了ボタン
+- **Phase 50**: ViewPageシート表示設定 - 閲覧したいシートを個別にON/OFF可能に
+- **Phase 51**: Google Chat画像タブ - Chatスペースから画像を取得して表示
+- **Phase 52**: Firebase Authentication導入 - Googleログイン認証、許可リスト（aozora-cg.com + 個別アカウント）、OAuth対応Chat API
 
-E2Eテスト: 437件定義
+E2Eテスト: 444件定義

@@ -1,5 +1,6 @@
 /**
  * Phase 51: Google Chat画像取得フック
+ * Phase 52: OAuth対応 - ログインユーザーのアクセストークンでChat APIにアクセス
  *
  * Google Chatスペースから利用者IDでフィルタした画像を取得
  */
@@ -7,6 +8,7 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { getChatImages } from '../api';
 import { useMealFormSettings } from './useMealFormSettings';
+import { useAuth } from '../contexts/AuthContext';
 import type { ChatImageMessage } from '../types';
 
 export interface UseChatImagesOptions {
@@ -29,6 +31,8 @@ export interface UseChatImagesResult {
   error: string | null;
   /** 設定済みフラグ（residentIdとspaceIdが両方設定されている） */
   isConfigured: boolean;
+  /** アクセストークン利用可能フラグ */
+  hasAccessToken: boolean;
   /** 設定値 */
   settings: {
     residentId: string | undefined;
@@ -38,16 +42,22 @@ export interface UseChatImagesResult {
   refetch: () => void;
   /** 次ページを読み込み */
   fetchNextPage: () => void;
+  /** アクセストークンを再取得 */
+  refreshToken: () => Promise<string | null>;
 }
 
 /**
  * Google Chat画像取得フック
+ * Phase 52: OAuth対応 - ログインユーザーのアクセストークンでChat APIにアクセス
  *
  * @param options - オプション
  * @returns 画像データとローディング状態
  */
 export function useChatImages(options: UseChatImagesOptions = {}): UseChatImagesResult {
   const { enabled = true, pageSize = 50 } = options;
+
+  // 認証情報を取得
+  const { accessToken, refreshAccessToken } = useAuth();
 
   // 設定を取得
   const { settings: formSettings, isLoading: isLoadingSettings } = useMealFormSettings();
@@ -59,6 +69,9 @@ export function useChatImages(options: UseChatImagesOptions = {}): UseChatImages
   // 設定が完了しているか
   const isConfigured = Boolean(residentId && spaceId);
 
+  // アクセストークンが利用可能か
+  const hasAccessToken = Boolean(accessToken);
+
   // 画像を取得（無限スクロール対応）
   const {
     data,
@@ -69,17 +82,23 @@ export function useChatImages(options: UseChatImagesOptions = {}): UseChatImages
     refetch,
     fetchNextPage,
   } = useInfiniteQuery({
-    queryKey: ['chatImages', spaceId, residentId],
+    queryKey: ['chatImages', spaceId, residentId, accessToken],
     queryFn: async ({ pageParam }) => {
       if (!spaceId || !residentId) {
         throw new Error('spaceId and residentId are required');
       }
-      const response = await getChatImages({
-        spaceId,
-        residentId,
-        pageToken: pageParam,
-        limit: pageSize,
-      });
+      if (!accessToken) {
+        throw new Error('アクセストークンがありません。再度ログインしてください。');
+      }
+      const response = await getChatImages(
+        {
+          spaceId,
+          residentId,
+          pageToken: pageParam,
+          limit: pageSize,
+        },
+        accessToken
+      );
       if (!response.success) {
         throw new Error(response.error?.message || 'Failed to fetch images');
       }
@@ -87,7 +106,8 @@ export function useChatImages(options: UseChatImagesOptions = {}): UseChatImages
     },
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage?.nextPageToken,
-    enabled: enabled && isConfigured && !isLoadingSettings,
+    // アクセストークンがない場合はクエリを無効化
+    enabled: enabled && isConfigured && !isLoadingSettings && hasAccessToken,
     staleTime: 5 * 60 * 1000, // 5分
     gcTime: 15 * 60 * 1000, // 15分
   });
@@ -102,11 +122,13 @@ export function useChatImages(options: UseChatImagesOptions = {}): UseChatImages
     hasNextPage: hasNextPage ?? false,
     error: error instanceof Error ? error.message : null,
     isConfigured,
+    hasAccessToken,
     settings: {
       residentId,
       spaceId,
     },
     refetch,
     fetchNextPage,
+    refreshToken: refreshAccessToken,
   };
 }

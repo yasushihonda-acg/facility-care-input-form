@@ -2,7 +2,7 @@
 status: canonical
 scope: core
 owner: core-team
-last_reviewed: 2025-12-23
+last_reviewed: 2026-01-03
 ---
 
 # システムアーキテクチャ設計書
@@ -16,22 +16,53 @@ last_reviewed: 2025-12-23
 - 実績の入力（食事介助記録など）
 - 要望の送信（ご家族からの詳細なケア要望）
 
-**フェーズ**: プロトタイプ / 機能検証（Dev Mode）
+**フェーズ**: 本番運用（Phase 52 認証導入済み）
 
 ---
 
-## 2. 開発モード (Dev Mode) 方針
+## 2. 認証・認可 (Phase 52)
 
-> **重要**: 本フェーズでは機能検証を優先し、認証機能は実装しません。
+Firebase Authentication によるGoogleログイン認証を実装済み。
 
-| 項目 | 設定 |
-|------|------|
-| Firebase Authentication | 未実装 |
-| Cloud Run functions | `--allow-unauthenticated` |
-| Firestore Security Rules | `allow read, write: if true;` |
-| ユーザー識別 | リクエストボディで `userId` / `staffId` を受け取る |
+### 認証フロー
 
-**リスク認識**: 本設定は検証環境専用です。本番環境への移行時には必ず認証・認可を実装すること。
+```
+1. アプリ起動 → Firebase Auth状態チェック
+2. 未認証 → LoginPage表示
+3. Googleログイン実行（OAuthスコープ: Chat API含む）
+4. ログイン成功 → 許可リストチェック
+5. 許可あり → アプリ表示 / 許可なし → エラー表示
+```
+
+### 許可リスト
+
+| タイプ | 値 | 説明 |
+|--------|-----|------|
+| ドメイン許可 | `@aozora-cg.com` | 組織ドメイン全体を許可 |
+| 個別許可 | `kinuekamachi@gmail.com` | 個別アカウント |
+
+Firestore構造:
+```
+allowed_users/
+├── domains/
+│   └── aozora-cg.com: { allowed: true }
+└── emails/
+    └── kinuekamachi@gmail_com: { allowed: true }
+```
+
+### セキュリティルール
+
+| サービス | ルール |
+|----------|--------|
+| Firestore | 認証必須 + 許可リストチェック |
+| Firebase Storage | 認証必須 |
+| Cloud Functions | CORS許可（フロントエンドからのみ） |
+
+### OAuthスコープ
+
+Google Chat APIアクセス用に以下のスコープを取得:
+- `https://www.googleapis.com/auth/chat.spaces.readonly`
+- `https://www.googleapis.com/auth/chat.messages.readonly`
 
 ---
 
@@ -209,7 +240,12 @@ AIに渡すコンテキスト: 月次要約 + 関連週次要約 + 関連日次�
 ```mermaid
 graph TD
     subgraph "Client Layer"
-        APP[Mobile App<br/>Flutter/React Native]
+        APP[PWA App<br/>React + Vite]
+    end
+
+    subgraph "Auth Layer - Firebase Auth"
+        AUTH[Firebase Authentication<br/>Google OAuth]
+        ALLOW[(allowed_users<br/>許可リスト)]
     end
 
     subgraph "API Layer - Cloud Run functions"
@@ -217,6 +253,7 @@ graph TD
         FUNC_CARE[submitCareRecord<br/>実績入力]
         FUNC_ITEM[submitCareItem<br/>品物管理]
         FUNC_IMG[uploadCareImage<br/>画像連携]
+        FUNC_CHAT[getChatImages<br/>Chat画像取得]
     end
 
     subgraph "Data Layer"
@@ -228,13 +265,20 @@ graph TD
         SHEET_A[/"Sheet A (Read-Only)<br/>ID: ...DkfG-w<br/>【記録の結果/参照】"/]
         SHEET_B[/"Sheet B (Write-Only)<br/>ID: ...DGHV0<br/>【実績入力先】"/]
         BOT[Existing GAS Bot<br/>Google Chat通知]
+        CHAT[Google Chat API]
     end
 
-    %% Client to Functions (No Auth)
-    APP -->|"POST (No Auth)"| FUNC_SYNC
-    APP -->|"POST (No Auth)"| FUNC_CARE
-    APP -->|"POST (No Auth)"| FUNC_ITEM
-    APP -->|"POST (No Auth)"| FUNC_IMG
+    %% Authentication Flow
+    APP -->|"Google Login"| AUTH
+    AUTH -->|"Check"| ALLOW
+    AUTH -->|"OAuth Token"| APP
+
+    %% Client to Functions (Authenticated)
+    APP -->|"POST (Auth)"| FUNC_SYNC
+    APP -->|"POST (Auth)"| FUNC_CARE
+    APP -->|"POST (Auth)"| FUNC_ITEM
+    APP -->|"POST (Auth)"| FUNC_IMG
+    APP -->|"GET (Bearer Token)"| FUNC_CHAT
 
     %% Flow A: Read-Only Sync
     FUNC_SYNC -->|"Read Only"| SHEET_A
@@ -246,6 +290,9 @@ graph TD
 
     %% Flow C: Item Management
     FUNC_ITEM -->|"Write"| FS
+
+    %% Chat Images (OAuth)
+    FUNC_CHAT -->|"User OAuth Token"| CHAT
 
     %% Image Flow
     FUNC_IMG -->|"Upload"| STORAGE
