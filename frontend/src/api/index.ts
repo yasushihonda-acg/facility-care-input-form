@@ -1463,6 +1463,7 @@ export async function syncChatImages(
   accessToken: string
 ): Promise<ApiResponse<{
   synced: number;
+  updated: number;
   skipped: number;
   total: number;
   photos: CarePhoto[];

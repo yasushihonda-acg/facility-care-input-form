@@ -26,7 +26,7 @@ export interface UseSyncedChatImagesResult {
   /** 同期中フラグ */
   isSyncing: boolean;
   /** 最後の同期結果 */
-  lastSyncResult: { synced: number; skipped: number } | null;
+  lastSyncResult: { synced: number; updated: number; skipped: number } | null;
   /** Chatスペースから同期を実行 */
   sync: () => Promise<void>;
   /** 再取得 */
@@ -65,7 +65,7 @@ export function useSyncedChatImages(): UseSyncedChatImagesResult {
 
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
-  const [lastSyncResult, setLastSyncResult] = useState<{ synced: number; skipped: number } | null>(null);
+  const [lastSyncResult, setLastSyncResult] = useState<{ synced: number; updated: number; skipped: number } | null>(null);
 
   // 自動同期が実行済みかどうか（セッション中1回のみ）
   const hasSyncedRef = useRef(false);
@@ -120,6 +120,7 @@ export function useSyncedChatImages(): UseSyncedChatImagesResult {
       if (response.success && response.data) {
         setLastSyncResult({
           synced: response.data.synced,
+          updated: response.data.updated || 0,
           skipped: response.data.skipped,
         });
         // キャッシュを更新
