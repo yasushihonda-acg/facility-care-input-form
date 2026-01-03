@@ -90,7 +90,7 @@ export function ImagesTab({ year, month }: ImagesTabProps) {
   const [selectedPhoto, setSelectedPhoto] = useState<CarePhoto | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const { user, refreshAccessToken, accessToken } = useAuth();
+  const { user, refreshAccessToken } = useAuth();
 
   const {
     photos,
@@ -100,6 +100,7 @@ export function ImagesTab({ year, month }: ImagesTabProps) {
     canSync,
     isSyncing,
     lastSyncResult,
+    needsReauth,
     sync,
     settings,
   } = useSyncedChatImages();
@@ -184,20 +185,20 @@ export function ImagesTab({ year, month }: ImagesTabProps) {
 
   return (
     <div className="p-4">
-      {/* トークン期限切れ警告バナー */}
-      {user && isConfigured && !accessToken && (
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+      {/* 再認証が必要な場合のみバナー表示（方法C: API失敗時のみ） */}
+      {user && isConfigured && needsReauth && (
+        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 text-blue-700">
+            <div className="flex items-center gap-2 text-amber-700">
               <span>🔑</span>
               <span className="text-sm">
-                Chatスペースから画像を同期するには再認証が必要です
+                セッションが期限切れです。再認証すると同期できます
               </span>
             </div>
             <button
               onClick={handleRefreshToken}
               disabled={isRefreshing}
-              className="px-3 py-1.5 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+              className="px-3 py-1.5 text-sm bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50"
             >
               {isRefreshing ? '認証中...' : '🔐 再認証'}
             </button>

@@ -102,8 +102,9 @@ const TOKEN_EXPIRY_KEY = 'google_token_expiry';
 // トークンをsessionStorageに保存
 function saveAccessToken(token: string) {
   sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
-  // 50分後に期限切れ（実際は1時間だが、余裕を持たせる）
-  const expiry = Date.now() + 50 * 60 * 1000;
+  // 23時間後に期限切れ（実際は1時間だが、API失敗時のみ再認証するため長めに設定）
+  // 方法C: トークン期限切れはAPI失敗で検知し、その時のみ再認証を要求
+  const expiry = Date.now() + 23 * 60 * 60 * 1000;
   sessionStorage.setItem(TOKEN_EXPIRY_KEY, expiry.toString());
 }
 
