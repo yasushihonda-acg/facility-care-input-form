@@ -66,22 +66,7 @@
 ### PRレビュー（todoに必ず含める）
 - 作業開始時のtodoに「PRレビュー依頼」を必ず含める
 - `gh pr create` 後、ユーザーに確認を求める
-- ユーザー承認後に `gh pr merge`
-
-```bash
-# 1. featureブランチ作成
-git checkout -b fix/issue-name
-
-# 2. 作業・コミット
-git add -A && git commit -m "変更内容"
-
-# 3. pushしてPR作成
-git push -u origin fix/issue-name
-gh pr create --title "タイトル" --body "説明"
-
-# 4. レビュー・マージ（承認後）
-gh pr merge --squash --delete-branch
-```
+- ユーザー承認後に `gh pr merge --squash --delete-branch`
 
 ### 本番デプロイ（自動）
 - mainへのマージで GitHub Actions が自動デプロイ
@@ -100,16 +85,3 @@ gh pr merge --squash --delete-branch
 - `functions/.env` をGitにコミットしない
 - 新規サービスアカウントを作成しない（統一SA: `facility-care-sa`）
 - 認証なしのまま本番運用しない（現在はDev Mode）
-
----
-
-## 5. 参照先
-
-| 情報 | 参照先 |
-|------|--------|
-| クイックスタート | `docs/HANDOVER.md` |
-| 環境・アカウント設定 | `docs/SETUP.md` |
-| API仕様 | `docs/API_SPEC.md` |
-| システム設計 | `docs/ARCHITECTURE.md` |
-| 業務ルール | `docs/BUSINESS_RULES.md` |
-| データ構造 | `docs/DATA_MODEL.md` |
