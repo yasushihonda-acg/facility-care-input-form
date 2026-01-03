@@ -53,7 +53,8 @@ export function useSyncedChatImages(): UseSyncedChatImagesResult {
   const spaceId = chatSettings?.spaceId;
 
   const isConfigured = Boolean(residentId);
-  const canSync = Boolean(accessToken && spaceId && residentId);
+  // Phase 53: バックエンドで保存済みトークンを使用するため、accessToken不要
+  const canSync = Boolean(spaceId && residentId);
 
   // デバッグログ（Phase 52.3）
   console.log('[useSyncedChatImages] Debug:', {
@@ -101,11 +102,12 @@ export function useSyncedChatImages(): UseSyncedChatImagesResult {
   });
 
   // 同期実行（yearを指定すると特定年のメッセージのみ同期）
+  // Phase 53: バックエンドで保存済みトークンを使用するため、accessToken不要
   const sync = useCallback(async (year?: number) => {
     console.log('[useSyncedChatImages] sync() called', { canSync, accessToken: !!accessToken, spaceId, residentId, year });
-    if (!canSync || !accessToken || !spaceId || !residentId) {
+    if (!canSync || !spaceId || !residentId) {
       console.log('[useSyncedChatImages] sync() aborted - missing requirements');
-      setSyncError('同期にはログインとChat設定が必要です');
+      setSyncError('同期にはChat設定が必要です');
       return;
     }
 
@@ -150,9 +152,9 @@ export function useSyncedChatImages(): UseSyncedChatImagesResult {
     } finally {
       setIsSyncing(false);
     }
-  }, [canSync, accessToken, spaceId, residentId, queryClient]);
+  }, [canSync, spaceId, residentId, queryClient, accessToken]);
 
-  // 自動同期: アクセストークンがある場合、ページ読み込み時に1回だけ同期
+  // 自動同期: 設定が完了していれば、ページ読み込み時に1回だけ同期（Phase 53）
   useEffect(() => {
     console.log('[useSyncedChatImages] Auto-sync check:', {
       canSync,
