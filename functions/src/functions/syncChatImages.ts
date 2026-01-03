@@ -1,15 +1,14 @@
 /**
  * POST /syncChatImages
- * Google ChatスペースからOAuth経由で画像を取得しFirestoreに保存 (Phase 52)
+ * Google ChatスペースからOAuth経由で画像リンクを取得しFirestoreに保存 (Phase 52)
  *
- * Chat画像をcare_photosコレクションに保存することで、
- * Chatスペースにアクセスできないユーザーでも閲覧可能にする
+ * 画像はダウンロードせず、リンクのみを保存
+ * Chat APIのdownloadUri/thumbnailUriはトークン付きで公開アクセス可能な場合がある
  */
 
 import * as functions from "firebase-functions";
 import {Request, Response} from "express";
 import {getFirestore} from "firebase-admin/firestore";
-import {getStorage} from "firebase-admin/storage";
 import * as admin from "firebase-admin";
 import {FUNCTIONS_CONFIG} from "../config/sheets";
 import {listSpaceMessages} from "../services/chatApiService";
@@ -31,8 +30,6 @@ const TAG_PATTERN = /#[^\s#]+/g;
 
 // 記録者パターン
 const STAFF_NAME_PATTERN = /記録者[：:]\s*([^\n]+)/;
-
-const STORAGE_BUCKET = "facility-care-input-form.appspot.com";
 
 interface SyncChatImagesRequest {
   spaceId: string;
@@ -84,86 +81,8 @@ function extractTags(text: string): string[] {
 }
 
 /**
- * 画像URLから画像をダウンロード
- */
-async function downloadImage(
-  imageUrl: string,
-  accessToken: string
-): Promise<{buffer: Buffer; contentType: string} | null> {
-  try {
-    const response = await fetch(imageUrl, {
-      headers: {
-        "Authorization": `Bearer ${accessToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      functions.logger.warn(`Failed to download image: ${response.status}`);
-      return null;
-    }
-
-    const contentType = response.headers.get("content-type") || "image/jpeg";
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    return {buffer, contentType};
-  } catch (error) {
-    functions.logger.error("Error downloading image:", error);
-    return null;
-  }
-}
-
-/**
- * 画像をFirebase Storageにアップロード
- */
-async function uploadToStorage(
-  buffer: Buffer,
-  contentType: string,
-  residentId: string,
-  messageId: string,
-  timestamp: string
-): Promise<{photoUrl: string; storagePath: string; fileName: string}> {
-  // Firebase Admin SDKが初期化されていなければ初期化
-  if (admin.apps.length === 0) {
-    admin.initializeApp();
-  }
-
-  const bucket = getStorage().bucket(STORAGE_BUCKET);
-
-  // ファイル名生成
-  const date = new Date(timestamp);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const extension = contentType.includes("png") ? ".png" : ".jpg";
-  const safeMessageId = messageId.replace(/[^a-zA-Z0-9]/g, "_");
-  const fileName = `chat_${residentId}_${safeMessageId}${extension}`;
-  const storagePath = `care-photos/${year}/${month}/${fileName}`;
-
-  const file = bucket.file(storagePath);
-
-  await file.save(buffer, {
-    metadata: {
-      contentType,
-      metadata: {
-        residentId,
-        source: "google_chat",
-        originalMessageId: messageId,
-        date: `${year}-${month}-${day}`,
-      },
-    },
-  });
-
-  // 公開URLを生成
-  const baseUrl = "https://firebasestorage.googleapis.com/v0/b";
-  const encodedPath = encodeURIComponent(storagePath);
-  const photoUrl = `${baseUrl}/${STORAGE_BUCKET}/o/${encodedPath}?alt=media`;
-
-  return {photoUrl, storagePath, fileName};
-}
-
-/**
  * syncChatImages 関数本体
+ * 画像リンクのみをFirestoreに保存（ダウンロードなし）
  */
 async function syncChatImagesHandler(
   req: Request,
@@ -231,9 +150,14 @@ async function syncChatImagesHandler(
       `[syncChatImages] Starting sync for resident ${residentId} from space ${spaceId}`
     );
 
+    // Firebase Admin初期化
+    if (admin.apps.length === 0) {
+      admin.initializeApp();
+    }
+
     const db = getFirestore();
 
-    // 既存の画像をチェック（messageIdで重複排除）
+    // 既存の画像をチェック（chatMessageIdで重複排除）
     const existingSnapshot = await db
       .collection("care_photos")
       .where("residentId", "==", residentId)
@@ -291,35 +215,19 @@ async function syncChatImagesHandler(
           continue;
         }
 
-        // 画像URLを取得
-        let imageUrl = "";
-        if (attachment.attachmentDataRef?.resourceName) {
-          imageUrl = `https://chat.googleapis.com/v1/${attachment.attachmentDataRef.resourceName}?alt=media`;
-        } else if (attachment.downloadUri) {
-          imageUrl = attachment.downloadUri;
-        } else if (attachment.driveDataRef?.driveFileId) {
-          imageUrl = `https://drive.google.com/uc?id=${attachment.driveDataRef.driveFileId}&export=view`;
-        }
+        // 画像URLを取得（downloadUri優先、なければthumbnailUri）
+        const imageUrl = attachment.downloadUri ||
+          attachment.thumbnailUri ||
+          (attachment.driveDataRef?.driveFileId
+            ? `https://drive.google.com/uc?id=${attachment.driveDataRef.driveFileId}&export=view`
+            : "");
 
-        if (!imageUrl) continue;
-
-        // 画像をダウンロード
-        const downloaded = await downloadImage(imageUrl, accessToken);
-        if (!downloaded) {
-          functions.logger.warn(`Failed to download: ${imageUrl}`);
+        if (!imageUrl) {
+          functions.logger.warn(`[syncChatImages] No URL for attachment in message ${messageId}`);
           continue;
         }
 
-        // Firebase Storageにアップロード
-        const {photoUrl, storagePath, fileName} = await uploadToStorage(
-          downloaded.buffer,
-          downloaded.contentType,
-          residentId,
-          messageId,
-          msg.createTime || new Date().toISOString()
-        );
-
-        // Firestoreにメタデータを保存
+        // Firestoreにメタデータを保存（画像はダウンロードしない）
         const photoRef = db.collection("care_photos").doc();
         const photoId = photoRef.id;
 
@@ -334,12 +242,12 @@ async function syncChatImagesHandler(
           photoId,
           residentId,
           date: dateStr,
-          mealTime: "snack", // Chatからの画像はsnackとして分類
-          photoUrl,
-          storagePath,
-          fileName,
-          mimeType: downloaded.contentType,
-          fileSize: downloaded.buffer.length,
+          mealTime: "snack",
+          photoUrl: imageUrl,
+          storagePath: "", // リンクのみなのでstoragePath不要
+          fileName: attachment.contentName || `chat_${photoId}`,
+          mimeType: attachment.contentType || "image/jpeg",
+          fileSize: 0, // リンクのみなのでサイズ不明
           staffId: "chat_import",
           staffName,
           uploadedAt: new Date().toISOString(),
@@ -355,7 +263,9 @@ async function syncChatImagesHandler(
         newPhotos.push(carePhoto);
         synced++;
 
-        functions.logger.info(`[syncChatImages] Saved image: ${photoId}`);
+        functions.logger.info(
+          `[syncChatImages] Saved image link: ${photoId}, URL: ${imageUrl.substring(0, 50)}...`
+        );
       }
     }
 
@@ -363,6 +273,7 @@ async function syncChatImagesHandler(
     const allPhotosSnapshot = await db
       .collection("care_photos")
       .where("residentId", "==", residentId)
+      .where("source", "==", "google_chat")
       .orderBy("uploadedAt", "desc")
       .limit(200)
       .get();
@@ -431,7 +342,7 @@ async function syncChatImagesHandler(
 export const syncChatImages = functions
   .region(FUNCTIONS_CONFIG.REGION)
   .runWith({
-    timeoutSeconds: 300, // 5分（画像ダウンロード・アップロードに時間がかかる）
-    memory: "1GB",
+    timeoutSeconds: 60, // リンクのみなので短くできる
+    memory: "256MB",
   })
   .https.onRequest(syncChatImagesHandler);
