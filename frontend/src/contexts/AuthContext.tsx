@@ -60,12 +60,11 @@ interface AuthProviderProps {
 
 /**
  * 許可リストをチェック
- * Firestore allowed_users コレクションを参照
+ * Firestore コレクションを参照
  *
  * 構造:
- * allowed_users/
- *   domains/{domain}: { allowed: true }
- *   emails/{email_key}: { email: "user@example.com", allowed: true }
+ * allowed_domains/{domain}: { allowed: true }
+ * allowed_emails/{email_key}: { allowed: true }
  *
  * email_key はメールアドレスの "." を "_" に置換した文字列
  */
@@ -74,16 +73,16 @@ async function checkAllowedUser(email: string): Promise<boolean> {
     // ドメインを抽出
     const domain = email.split('@')[1];
 
-    // ドメイン許可をチェック（allowed_users/domains/{domain}）
-    const domainDoc = await getDoc(doc(db, 'allowed_users', 'domains', domain));
+    // ドメイン許可をチェック（allowed_domains/{domain}）
+    const domainDoc = await getDoc(doc(db, 'allowed_domains', domain));
     if (domainDoc.exists() && domainDoc.data()?.allowed) {
       return true;
     }
 
-    // 個別メール許可をチェック（allowed_users/emails/{email_key}）
+    // 個別メール許可をチェック（allowed_emails/{email_key}）
     // Firestoreはドキュメント名に "." を含められないため、"_" に置換
     const emailKey = email.replace(/\./g, '_');
-    const emailDoc = await getDoc(doc(db, 'allowed_users', 'emails', emailKey));
+    const emailDoc = await getDoc(doc(db, 'allowed_emails', emailKey));
     if (emailDoc.exists() && emailDoc.data()?.allowed) {
       return true;
     }

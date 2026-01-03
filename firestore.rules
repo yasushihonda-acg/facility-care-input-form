@@ -7,12 +7,11 @@ service cloud.firestore {
      *
      * 許可条件:
      * - @aozora-cg.com ドメインのユーザー
-     * - allowed_users/emails/{email} に登録されたユーザー
+     * - allowed_emails/{email_key} に登録されたユーザー
      *
      * 許可リスト構造:
-     * allowed_users/
-     *   domains/{domain}: { allowed: true }
-     *   emails/{email_key}: { email: "user@example.com", allowed: true }
+     * allowed_domains/{domain}: { allowed: true }
+     * allowed_emails/{email_key}: { allowed: true }
      *
      * ※ email_key はメールアドレスの "." を "_" に置換した文字列
      */
@@ -23,12 +22,12 @@ service cloud.firestore {
       let domain = email.split('@')[1];
 
       // ドメインが許可されているかチェック
-      let domainAllowed = exists(/databases/$(database)/documents/allowed_users/domains/$(domain));
+      let domainAllowed = exists(/databases/$(database)/documents/allowed_domains/$(domain));
 
       // 個別メールが許可されているかチェック
       // Firestoreはドキュメント名に "." を含められないため、"_" に置換
       let emailKey = email.replace('.', '_');
-      let emailAllowed = exists(/databases/$(database)/documents/allowed_users/emails/$(emailKey));
+      let emailAllowed = exists(/databases/$(database)/documents/allowed_emails/$(emailKey));
 
       return domainAllowed || emailAllowed;
     }
@@ -39,9 +38,14 @@ service cloud.firestore {
     }
 
     // 許可リストは常に読み取り可能（認証チェック時に必要）
-    match /allowed_users/{document=**} {
+    match /allowed_domains/{domain} {
       allow read: if request.auth != null;
-      allow write: if false; // 管理者のみ（Consoleから操作）
+      allow write: if false; // 管理者のみ（CLIから操作）
+    }
+
+    match /allowed_emails/{emailKey} {
+      allow read: if request.auth != null;
+      allow write: if false; // 管理者のみ（CLIから操作）
     }
 
     // 設定は認証済みユーザーのみ
