@@ -106,7 +106,8 @@ PWAからの入力データを保存するシート。
 
 | コレクション | 用途 | 主要フィールド |
 |--------------|------|----------------|
-| `allowed_users` | 認証許可リスト（Phase 52） | domains/emails サブコレクション |
+| `allowed_domains` | ドメイン許可リスト（Phase 52） | {domain}: { allowed: true } |
+| `allowed_emails` | メール許可リスト（Phase 52） | {email_key}: { allowed: true } |
 | `settings` | アプリ設定 | webhookUrl, driveSettings |
 | `items` | 品物マスタ | name, category, isActive, remainingHandlingLogs |
 | `tasks` | タスク管理 | title, status, dueDate |
@@ -321,27 +322,31 @@ plan_data_summaries
 
 ---
 
-## 5.4 allowed_usersコレクション（Phase 52: 認証許可リスト）
+## 5.4 認証許可リストコレクション（Phase 52）
 
-認証許可ユーザーの管理。
+認証許可ユーザーの管理。2つのコレクションで構成。
 
-### 構造
+### allowed_domains（ドメイン許可）
 
 ```
-allowed_users/
-├── domains/               # ドメイン許可（サブコレクション）
-│   └── {domain}/         # 例: aozora-cg.com
-│       └── { allowed: true }
-└── emails/               # 個別メール許可（サブコレクション）
-    └── {email_key}/      # 例: kinuekamachi@gmail_com（.を_に置換）
-        └── { email: "kinuekamachi@gmail.com", allowed: true }
+allowed_domains/
+└── {domain}/              # 例: aozora-cg.com
+    └── { allowed: true }
+```
+
+### allowed_emails（個別メール許可）
+
+```
+allowed_emails/
+└── {email_key}/          # 例: kinuekamachi@gmail_com（.を_に置換）
+    └── { allowed: true }
 ```
 
 ### 注意事項
 
 - Firestoreはドキュメント名に`.`を含められないため、メールアドレスの`.`は`_`に置換
 - フロントエンド（AuthContext）とセキュリティルール（firestore.rules）の両方で同一ロジックを実装
-- 管理はFirebase Consoleから手動で行う
+- 管理はCLIまたはFirebase Consoleから行う
 
 ---
 
