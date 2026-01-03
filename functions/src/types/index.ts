@@ -347,6 +347,70 @@ export const ErrorCodes = {
 // Global Settings Types (for meal form defaults)
 // =============================================================================
 
+// =============================================================================
+// Phase 51: Google Chat画像閲覧設定
+// =============================================================================
+
+/**
+ * 画像閲覧設定（Google Chatスペースからの取得用）
+ */
+export interface ChatImageSettings {
+  /** 対象利用者ID（例: "7282"）- ID7282のような形式から数字部分のみ */
+  residentId: string;
+  /** Google ChatスペースID（例: "AAAAL1Foxd8"）- SpaceURLの末尾部分 */
+  spaceId: string;
+}
+
+/**
+ * Google Chatから取得した画像メッセージ
+ */
+export interface ChatImageMessage {
+  /** メッセージID */
+  messageId: string;
+  /** 利用者ID */
+  residentId: string;
+  /** 投稿日時（ISO8601） */
+  timestamp: string;
+  /** 画像URL */
+  imageUrl: string;
+  /** サムネイルURL（存在する場合） */
+  thumbnailUrl?: string;
+  /** コンテンツタイプ（例: image/jpeg） */
+  contentType: string;
+  /** ファイル名 */
+  fileName?: string;
+  /** 関連するテキストメッセージ（近接時刻で紐付け） */
+  relatedTextMessage?: {
+    /** メッセージ本文 */
+    content: string;
+    /** 投稿ID（例: NTC20260103061218028942） */
+    postId?: string;
+    /** 記録者名 */
+    staffName?: string;
+    /** タグ（例: ["#特記事項📝", "#重要⚠️"]） */
+    tags?: string[];
+  };
+}
+
+/**
+ * getChatImages APIリクエスト
+ */
+export interface GetChatImagesRequest {
+  spaceId: string;
+  residentId: string;
+  pageToken?: string;
+  limit?: number;
+}
+
+/**
+ * getChatImages APIレスポンス
+ */
+export interface GetChatImagesResponse {
+  images: ChatImageMessage[];
+  nextPageToken?: string;
+  totalCount?: number;
+}
+
 /**
  * 食事入力フォームのグローバル初期値設定
  * 全ユーザーに等しく適用される
@@ -368,6 +432,8 @@ export interface MealFormSettings {
   recordCheckHour?: number;
   /** 非表示シート名の配列 (Phase 50) */
   hiddenSheets?: string[];
+  /** 画像閲覧設定 (Phase 51) */
+  chatImageSettings?: ChatImageSettings;
   /** 最終更新日時 */
   updatedAt: string;
 }
@@ -385,6 +451,8 @@ export interface UpdateMealFormSettingsRequest {
   familyNotifyWebhookUrl?: string;
   recordCheckHour?: number;
   hiddenSheets?: string[];
+  /** 画像閲覧設定 (Phase 51) */
+  chatImageSettings?: ChatImageSettings;
 }
 
 // =============================================================================

@@ -1,9 +1,9 @@
 /**
  * ViewTabNavigation - 記録閲覧ページのメインタブナビゲーション
- * データ / 相関分析 / グラフ の3タブを切り替える
+ * データ / 相関分析 / グラフ / 画像 の4タブを切り替える
  */
 
-export type ViewTabType = 'data' | 'correlation' | 'charts';
+export type ViewTabType = 'data' | 'correlation' | 'charts' | 'images';
 
 interface ViewTabNavigationProps {
   activeTab: ViewTabType;
@@ -14,6 +14,7 @@ const VIEW_TABS: { id: ViewTabType; label: string; icon: string }[] = [
   { id: 'data', label: 'データ', icon: '📊' },
   { id: 'correlation', label: '相関分析', icon: '🔗' },
   { id: 'charts', label: 'グラフ', icon: '📈' },
+  { id: 'images', label: '画像', icon: '🖼️' },
 ];
 
 export function ViewTabNavigation({ activeTab, onTabChange }: ViewTabNavigationProps) {
