@@ -458,36 +458,46 @@ async function syncChatImagesHandler(
     }
 
     // 各メッセージを処理 - すべての画像URLパターンを探す
+    // 注: 画像メッセージとIDメッセージが別々の場合があるため、
+    // Firebase Storage URLを含む全メッセージを対象とする
     for (const msg of messages) {
       const text = msg.text || "";
       const formattedText = msg.formattedText || "";
       const combinedText = `${text} ${formattedText}`;
 
-      // すべての画像URLを抽出（テキスト + cardsV2 + attachment）
+      // JSON全体から画像URLを検索（cardsV2内のURLも取得）
+      const rawJson = JSON.stringify(msg);
+
+      // すべての画像URLを抽出（テキスト + cardsV2 + attachment + JSON全体）
       const urls = extractAllImageUrls(combinedText, msg.cardsV2, msg.attachment);
 
+      // JSON全体からFirebase Storage URLを追加検索
+      const jsonStorageUrls = rawJson.match(
+        /https?:\/\/firebasestorage\.googleapis\.com[^\s"'\\]*/g
+      ) || [];
+      const allJsonUrls = [...new Set([...urls.allUrls, ...jsonStorageUrls])];
+
       // サンプルログ用（URLを含むメッセージのみ記録）
-      if (sampleMessages.length < 20 && urls.allUrls.length > 0) {
+      if (sampleMessages.length < 20 && allJsonUrls.length > 0) {
         sampleMessages.push({
           name: msg.name || "unknown",
           textPreview: text.substring(0, 500),
-          urls,
-          hasId: text.includes(`ID${residentId}`),
+          urls: {...urls, allUrls: allJsonUrls},
+          hasId: rawJson.includes(`ID${residentId}`),
         });
       }
 
-      if (urls.allUrls.length === 0) continue;
+      if (allJsonUrls.length === 0) continue;
 
       messagesWithAnyUrls++;
-      storageUrlCount += urls.storageUrls.length;
+      storageUrlCount += jsonStorageUrls.length;
       proxyUrlCount += urls.proxyUrls.length;
       genericUrlCount += urls.genericUrls.length;
       cardUrlCount += urls.cardUrls.length;
       attachmentUrlCount += urls.attachmentUrls.length;
 
-      // メッセージ全体（cardsV2含む）から利用者IDを確認
-      const rawJson = JSON.stringify(msg);
-      if (!rawJson.includes(`ID${residentId}`)) continue;
+      // Firebase Storage URLを含むメッセージは全て同期対象
+      // （画像メッセージにIDが含まれない場合があるため、ID一致は条件から除外）
       matchedResidentMessages++;
 
       // メタデータ抽出
@@ -495,9 +505,10 @@ async function syncChatImagesHandler(
       const postId = extractPostId(text);
       const tags = extractTags(text);
 
-      // 優先順位: Firebase Storage > cardsV2 > attachment > Google Proxy > Generic
-      const imageUrls = urls.storageUrls.length > 0 ?
-        urls.storageUrls :
+      // 優先順位: Firebase Storage URL（JSON全体から抽出）を優先
+      // 次にcardsV2, attachment, Google Proxy, Genericの順
+      const imageUrls = jsonStorageUrls.length > 0 ?
+        jsonStorageUrls :
         urls.cardUrls.length > 0 ?
           urls.cardUrls :
           urls.attachmentUrls.length > 0 ?
