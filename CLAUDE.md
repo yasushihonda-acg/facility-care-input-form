@@ -61,7 +61,12 @@
 ### ブランチ戦略（必須）
 - **mainへ直接pushしない**
 - featureブランチで作業し、PRを作成
-- Claudeが `gh pr view` でレビュー確認後にマージ
+- PRレビュー後にマージ（ユーザー承認を待つ）
+
+### PRレビュー（todoに必ず含める）
+- 作業開始時のtodoに「PRレビュー依頼」を必ず含める
+- `gh pr create` 後、ユーザーに確認を求める
+- ユーザー承認後に `gh pr merge`
 
 ```bash
 # 1. featureブランチ作成
