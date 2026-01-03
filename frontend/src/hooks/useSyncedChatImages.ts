@@ -53,6 +53,16 @@ export function useSyncedChatImages(): UseSyncedChatImagesResult {
   const isConfigured = Boolean(residentId);
   const canSync = Boolean(accessToken && spaceId && residentId);
 
+  // デバッグログ（Phase 52.3）
+  console.log('[useSyncedChatImages] Debug:', {
+    accessToken: accessToken ? `${accessToken.substring(0, 20)}...` : null,
+    spaceId,
+    residentId,
+    isConfigured,
+    canSync,
+    isLoadingSettings,
+  });
+
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [lastSyncResult, setLastSyncResult] = useState<{ synced: number; skipped: number } | null>(null);
@@ -89,7 +99,9 @@ export function useSyncedChatImages(): UseSyncedChatImagesResult {
 
   // 同期実行
   const sync = useCallback(async () => {
+    console.log('[useSyncedChatImages] sync() called', { canSync, accessToken: !!accessToken, spaceId, residentId });
     if (!canSync || !accessToken || !spaceId || !residentId) {
+      console.log('[useSyncedChatImages] sync() aborted - missing requirements');
       setSyncError('同期にはログインとChat設定が必要です');
       return;
     }
@@ -98,10 +110,12 @@ export function useSyncedChatImages(): UseSyncedChatImagesResult {
     setSyncError(null);
 
     try {
+      console.log('[useSyncedChatImages] Calling syncChatImages API...');
       const response = await syncChatImages(
         { spaceId, residentId, limit: 200 },
         accessToken
       );
+      console.log('[useSyncedChatImages] syncChatImages response:', response);
 
       if (response.success && response.data) {
         setLastSyncResult({
@@ -114,6 +128,7 @@ export function useSyncedChatImages(): UseSyncedChatImagesResult {
         throw new Error(response.error?.message || 'Sync failed');
       }
     } catch (err) {
+      console.error('[useSyncedChatImages] sync error:', err);
       const message = err instanceof Error ? err.message : '同期に失敗しました';
       setSyncError(message);
     } finally {
@@ -123,7 +138,14 @@ export function useSyncedChatImages(): UseSyncedChatImagesResult {
 
   // 自動同期: アクセストークンがある場合、ページ読み込み時に1回だけ同期
   useEffect(() => {
+    console.log('[useSyncedChatImages] Auto-sync check:', {
+      canSync,
+      hasSynced: hasSyncedRef.current,
+      isSyncing,
+      isLoadingSettings,
+    });
     if (canSync && !hasSyncedRef.current && !isSyncing && !isLoadingSettings) {
+      console.log('[useSyncedChatImages] Starting auto-sync...');
       hasSyncedRef.current = true;
       sync();
     }
