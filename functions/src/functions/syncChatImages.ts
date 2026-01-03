@@ -284,6 +284,25 @@ async function syncChatImagesHandler(
       });
     }
 
+    // 📷を含むメッセージを検索（画像付き投稿）
+    const photoMessages = messages.filter((m) =>
+      (m.text || "").includes("📷")
+    );
+    functions.logger.info(
+      `[syncChatImages] Found ${photoMessages.length} messages containing 📷 emoji`
+    );
+
+    // 📷メッセージの詳細をログ出力（最大10件）
+    for (let idx = 0; idx < Math.min(10, photoMessages.length); idx++) {
+      const msg = photoMessages[idx];
+      functions.logger.info(`[syncChatImages] Photo Message ${idx + 1}:`, {
+        name: msg.name,
+        createTime: msg.createTime,
+        textPreview: msg.text?.substring(0, 800),
+        hasStorageUrl: (msg.text || "").includes("firebasestorage.googleapis.com"),
+      });
+    }
+
     // 最初の5件のメッセージも出力（ID関係なく構造確認用）
     functions.logger.info("[syncChatImages] First 5 messages (any ID):");
     for (let idx = 0; idx < Math.min(5, messages.length); idx++) {
