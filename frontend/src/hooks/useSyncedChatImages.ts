@@ -27,6 +27,8 @@ export interface UseSyncedChatImagesResult {
   isSyncing: boolean;
   /** 最後の同期結果 */
   lastSyncResult: { synced: number; updated: number; skipped: number } | null;
+  /** 再認証が必要かどうか（API失敗時にtrue） */
+  needsReauth: boolean;
   /** Chatスペースから同期を実行 */
   sync: () => Promise<void>;
   /** 再取得 */
@@ -66,6 +68,7 @@ export function useSyncedChatImages(): UseSyncedChatImagesResult {
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [lastSyncResult, setLastSyncResult] = useState<{ synced: number; updated: number; skipped: number } | null>(null);
+  const [needsReauth, setNeedsReauth] = useState(false);
 
   // 自動同期が実行済みかどうか（セッション中1回のみ）
   const hasSyncedRef = useRef(false);
@@ -123,6 +126,8 @@ export function useSyncedChatImages(): UseSyncedChatImagesResult {
           updated: response.data.updated || 0,
           skipped: response.data.skipped,
         });
+        // 同期成功時は再認証フラグをリセット
+        setNeedsReauth(false);
         // キャッシュを更新
         queryClient.invalidateQueries({ queryKey: ['syncedChatImages', residentId] });
       } else {
@@ -132,6 +137,16 @@ export function useSyncedChatImages(): UseSyncedChatImagesResult {
       console.error('[useSyncedChatImages] sync error:', err);
       const message = err instanceof Error ? err.message : '同期に失敗しました';
       setSyncError(message);
+
+      // 認証エラーの場合は再認証フラグを立てる
+      const isAuthError = message.includes('認証') ||
+        message.includes('401') ||
+        message.includes('UNAUTHENTICATED') ||
+        message.includes('invalid_token') ||
+        message.includes('再度ログイン');
+      if (isAuthError) {
+        setNeedsReauth(true);
+      }
     } finally {
       setIsSyncing(false);
     }
@@ -163,6 +178,7 @@ export function useSyncedChatImages(): UseSyncedChatImagesResult {
     canSync,
     isSyncing,
     lastSyncResult,
+    needsReauth,
     sync,
     refetch,
     settings: {
