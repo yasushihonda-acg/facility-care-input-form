@@ -360,9 +360,10 @@ async function syncChatImagesHandler(
       `[syncChatImages] ID messages span ${idThreads.size} unique threads`
     );
 
-    // スレッドごとの親メッセージ（最古のメッセージ）をマッピング
-    // 画像保存時に親メッセージからメタデータ（日付、記録者等）を取得するため
-    const threadParentMap = new Map<string, {
+    // スレッドごとのIDメッセージ（ID7282を含むメッセージ）をマッピング
+    // 画像保存時にIDメッセージからメタデータ（日付、記録者等）を取得するため
+    // ※最古のメッセージではなく、IDを含むメッセージを優先
+    const threadIdMessageMap = new Map<string, {
       text: string;
       createTime: string;
       staffName?: string;
@@ -370,7 +371,8 @@ async function syncChatImagesHandler(
       tags: string[];
     }>();
 
-    for (const msg of messages) {
+    // IDを含むメッセージのみマップに登録
+    for (const msg of matchingMessages) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const threadName = (msg as any).thread?.name;
       if (!threadName) continue;
@@ -378,10 +380,10 @@ async function syncChatImagesHandler(
       const text = msg.text || "";
       const createTime = msg.createTime || "";
 
-      // 既存のエントリと比較し、より古いメッセージを親とする
-      const existing = threadParentMap.get(threadName);
+      // 同じスレッドに複数のIDメッセージがある場合は最古を採用
+      const existing = threadIdMessageMap.get(threadName);
       if (!existing || createTime < existing.createTime) {
-        threadParentMap.set(threadName, {
+        threadIdMessageMap.set(threadName, {
           text,
           createTime,
           staffName: extractStaffName(text),
@@ -392,7 +394,7 @@ async function syncChatImagesHandler(
     }
 
     functions.logger.info(
-      `[syncChatImages] Built thread parent map: ${threadParentMap.size} threads`
+      `[syncChatImages] Built thread ID message map: ${threadIdMessageMap.size} threads with ID`
     );
 
     // マッチしたメッセージの詳細を出力（最大5件、スレッド情報含む）
@@ -593,7 +595,7 @@ async function syncChatImagesHandler(
 
       // メタデータ抽出: スレッドの親メッセージから取得（画像メッセージ自体には情報がない）
       // msgThreadName は上記のフィルタリングで既に取得済み
-      const parentMeta = msgThreadName ? threadParentMap.get(msgThreadName) : undefined;
+      const parentMeta = msgThreadName ? threadIdMessageMap.get(msgThreadName) : undefined;
 
       // 親メッセージのメタデータを優先、なければ現在のメッセージから取得
       const staffName = parentMeta?.staffName || extractStaffName(text);
