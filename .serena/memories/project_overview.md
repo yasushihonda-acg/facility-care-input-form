@@ -178,6 +178,26 @@ UI表示（ViewPage/HomePageフッター）:
 - care_photosにsourceフィールド追加（direct_upload / google_chat）
 - E2Eテスト認証バイパス（VITE_E2E_TEST環境変数）
 - Firestore/Storageセキュリティルール更新（認証必須）
+- OAuth未審査アプリ: kinuekamachi@gmail.comは警告表示→「詳細」→「進む」で利用可
+
+### Phase 52.3: Chat画像同期（調査中）
+**目的**: Chat経由の画像をFirestoreに保存し、全認証ユーザーが閲覧可能に
+
+**現状**:
+- syncChatImages API実装済み
+- Chat APIからメッセージ取得成功（1000件）
+- しかし画像0件同期
+
+**発見した問題**:
+1. Chat APIは`attachment`フィールドを返さない（Webhook投稿の場合）
+2. 画像はFirebase Storage URL OR Google Proxy URLとしてテキスト内に投稿
+3. 現在の実装はFirebase Storage URLを正規表現で抽出
+4. Google Proxy URL (`lh3.googleusercontent.com/proxy/...`) は未対応
+
+**次のアクション候補**:
+- Firebase Console Logsで`messagesWithStorageUrls`カウンタを確認
+- Google Proxy URLも抽出対象に追加検討
+- メッセージテキスト内のURL形式を詳細調査
 
 ## E2Eテスト
 444件定義（Phase 52まで）

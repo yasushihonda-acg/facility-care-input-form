@@ -58,8 +58,9 @@ interface SyncResult {
 
 /**
  * メッセージから利用者IDを抽出
+ * API filterでフィルタリングするため現在未使用
  */
-function extractResidentId(text: string): string | undefined {
+function _extractResidentId(text: string): string | undefined {
   const match = text.match(RESIDENT_ID_PATTERN);
   if (match) return match[1];
 
@@ -68,6 +69,7 @@ function extractResidentId(text: string): string | undefined {
 
   return undefined;
 }
+void _extractResidentId; // 未使用警告回避
 
 /**
  * メッセージから記録者名を抽出
@@ -228,13 +230,17 @@ async function syncChatImagesHandler(
       `[syncChatImages] Found ${existingMessageIds.size} existing chat images`
     );
 
-    // Chat APIからメッセージ取得
+    // Chat APIからメッセージ取得（ID{residentId}を含むメッセージのみ）
+    // Chat API filter: text:xxx でテキストに含むメッセージを検索
+    const filter = `text:ID${residentId}`;
+    functions.logger.info(`[syncChatImages] Using filter: ${filter}`);
+
     const {messages} = await listSpaceMessages(
       spaceId,
       accessToken,
       undefined,
       limit,
-      undefined
+      filter
     );
 
     functions.logger.info(`[syncChatImages] Fetched ${messages.length} messages from Chat API`);
@@ -258,6 +264,23 @@ async function syncChatImagesHandler(
       hasId: boolean;
     }> = [];
 
+    // フィルター済みなので全メッセージをログ出力（最大50件）
+    functions.logger.info(`[syncChatImages] Processing ${messages.length} filtered messages`);
+
+    for (let idx = 0; idx < Math.min(50, messages.length); idx++) {
+      const msg = messages[idx];
+      functions.logger.info(`[syncChatImages] Message ${idx + 1}/${messages.length}:`, {
+        name: msg.name,
+        createTime: msg.createTime,
+        hasText: !!msg.text,
+        textLength: msg.text?.length || 0,
+        textPreview: msg.text?.substring(0, 400),
+        hasAttachment: !!(msg.attachment && msg.attachment.length > 0),
+        attachmentCount: msg.attachment?.length || 0,
+        allKeys: Object.keys(msg),
+      });
+    }
+
     // 各メッセージを処理 - すべての画像URLパターンを探す
     for (const msg of messages) {
       const text = msg.text || "";
@@ -267,17 +290,14 @@ async function syncChatImagesHandler(
       // すべての画像URLを抽出
       const urls = extractAllImageUrls(combinedText);
 
-      // サンプルログ用（最初の10件 OR URLを含むメッセージ）
-      if (sampleMessages.length < 10 || urls.allUrls.length > 0) {
-        const hasId = text.includes(`ID${residentId}`);
-        if (sampleMessages.length < 10 || (urls.allUrls.length > 0 && hasId)) {
-          sampleMessages.push({
-            name: msg.name || "unknown",
-            textPreview: text.substring(0, 500),
-            urls,
-            hasId,
-          });
-        }
+      // サンプルログ用
+      if (sampleMessages.length < 20) {
+        sampleMessages.push({
+          name: msg.name || "unknown",
+          textPreview: text.substring(0, 500),
+          urls,
+          hasId: true, // フィルター済みなので必ずtrue
+        });
       }
 
       if (urls.allUrls.length === 0) continue;
@@ -287,10 +307,8 @@ async function syncChatImagesHandler(
       proxyUrlCount += urls.proxyUrls.length;
       genericUrlCount += urls.genericUrls.length;
 
-      // メッセージテキストから利用者IDを確認
-      const msgResidentId = extractResidentId(text);
-      if (!msgResidentId || msgResidentId !== residentId) continue;
-
+      // APIフィルターで既にID{residentId}でフィルター済みなのでスキップ判定は軽くする
+      // ただしURLがない場合は既にスキップ済み
       matchedResidentMessages++;
 
       // メタデータ抽出
