@@ -426,8 +426,9 @@ async function syncChatImagesHandler(
         const msgTime = new Date(m.createTime).getTime();
         return msgTime >= yearStartTimestamp;
       });
+      const removed = beforeFilter - messages.length;
       functions.logger.info(
-        `[syncChatImages] Year filter: ${beforeFilter} -> ${messages.length} messages (removed ${beforeFilter - messages.length} older)`
+        `[syncChatImages] Year filter: ${beforeFilter} -> ${messages.length} (removed ${removed})`
       );
     }
     functions.logger.info(
