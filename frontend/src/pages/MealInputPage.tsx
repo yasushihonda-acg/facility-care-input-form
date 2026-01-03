@@ -27,7 +27,7 @@ export function MealInputPage() {
   return (
     <Layout>
       {/* ヘッダー */}
-      <header className="sticky top-0 z-20 bg-gradient-to-r from-primary to-primary-dark text-white shadow-header">
+      <header className="z-20 bg-gradient-to-r from-primary to-primary-dark text-white shadow-header">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <Link

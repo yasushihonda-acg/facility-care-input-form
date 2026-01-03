@@ -233,7 +233,7 @@ export function ItemManagement() {
   return (
     <Layout title="品物管理" showBackButton>
       {/* ヘッダー */}
-      <div className="bg-white border-b sticky top-0 z-10">
+      <div className="bg-white border-b z-10">
         <div className="flex items-center justify-between px-4 py-3">
           <h1 className="text-lg font-bold flex items-center gap-2">
             <span>📦</span>
