@@ -112,7 +112,7 @@ export function useSyncedChatImages(): UseSyncedChatImagesResult {
     try {
       console.log('[useSyncedChatImages] Calling syncChatImages API...');
       const response = await syncChatImages(
-        { spaceId, residentId, limit: 200 },
+        { spaceId, residentId, limit: 1000 }, // 1000件取得してID7282を含むメッセージを探す
         accessToken
       );
       console.log('[useSyncedChatImages] syncChatImages response:', response);
