@@ -38,26 +38,27 @@ function getNextDate(dateKey: string): string {
   return `${y}/${m}/${d}`;
 }
 
-// マグミットを含むレコードの日付を抽出
-function extractMagnesiumDates(specialNotes: PlanDataRecord[]): Map<string, { time: string; note: string }> {
+// 内服シートからマグミット頓服の日付・時刻を抽出
+function extractMagnesiumDates(medicationRecords: PlanDataRecord[]): Map<string, { time: string; note: string }> {
   const dates = new Map<string, { time: string; note: string }>();
 
-  specialNotes.forEach(record => {
-    // data内の全フィールドを検索
+  medicationRecords.forEach(record => {
+    // 頓服タイミングのレコードのみ対象
+    const timing = record.data['内服はいつのことですか？'] || '';
+    if (!timing.includes('頓服')) return;
+
+    // マグミットを含むかチェック（全角・半角カタカナ・ひらがな対応）
     const values = Object.values(record.data);
-    const hasmagnesium = values.some(v =>
-      v && (v.includes('マグミット') || v.includes('まぐみっと') || v.includes('酸化マグネシウム'))
+    const hasMagnesium = values.some(v =>
+      v && (v.includes('マグミット') || v.includes('ﾏｸﾞﾐｯﾄ') || v.includes('まぐみっと') || v.includes('酸化マグネシウム'))
     );
 
-    if (hasmagnesium) {
+    if (hasMagnesium) {
       const dateKey = getDateKey(record.timestamp);
       if (dateKey) {
-        // 時刻を抽出
-        const timeMatch = record.timestamp.match(/(\d{1,2}:\d{2})/);
-        const time = timeMatch ? timeMatch[1] : '';
-        // 特記事項の内容を取得
-        const noteContent = record.data['特記事項'] || '';
-        dates.set(dateKey, { time, note: noteContent });
+        // 頓服時刻を「何時に頓服薬を飲まれましたか？」フィールドから取得
+        const tonpukuTime = record.data['何時に頓服薬を飲まれましたか？'] || '';
+        dates.set(dateKey, { time: tonpukuTime, note: '' });
       }
     }
   });
@@ -242,16 +243,16 @@ export function CorrelationTab() {
   // ページネーション状態
   const [currentPage, setCurrentPage] = useState(1);
 
-  // 特記事項と排便・排尿シートのデータを取得（全期間）
-  const { records: specialNotes, isLoading: notesLoading } = useSheetRecords('特記事項');
+  // 内服と排便・排尿シートのデータを取得（全期間）
+  const { records: medicationRecords, isLoading: medicationLoading } = useSheetRecords('内服');
   const { records: excretionRecords, isLoading: excretionLoading } = useSheetRecords('排便・排尿');
 
-  const isLoading = notesLoading || excretionLoading;
+  const isLoading = medicationLoading || excretionLoading;
 
-  // マグミット日付の抽出
+  // マグミット頓服の日付・時刻を抽出
   const magnesiumDates = useMemo(() =>
-    extractMagnesiumDates(specialNotes),
-    [specialNotes]
+    extractMagnesiumDates(medicationRecords),
+    [medicationRecords]
   );
 
   // 排便データの集計
