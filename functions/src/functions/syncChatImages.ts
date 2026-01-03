@@ -355,6 +355,41 @@ async function syncChatImagesHandler(
       `[syncChatImages] ID messages span ${idThreads.size} unique threads`
     );
 
+    // スレッドごとの親メッセージ（最古のメッセージ）をマッピング
+    // 画像保存時に親メッセージからメタデータ（日付、記録者等）を取得するため
+    const threadParentMap = new Map<string, {
+      text: string;
+      createTime: string;
+      staffName?: string;
+      postId?: string;
+      tags: string[];
+    }>();
+
+    for (const msg of messages) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const threadName = (msg as any).thread?.name;
+      if (!threadName) continue;
+
+      const text = msg.text || "";
+      const createTime = msg.createTime || "";
+
+      // 既存のエントリと比較し、より古いメッセージを親とする
+      const existing = threadParentMap.get(threadName);
+      if (!existing || createTime < existing.createTime) {
+        threadParentMap.set(threadName, {
+          text,
+          createTime,
+          staffName: extractStaffName(text),
+          postId: extractPostId(text),
+          tags: extractTags(text),
+        });
+      }
+    }
+
+    functions.logger.info(
+      `[syncChatImages] Built thread parent map: ${threadParentMap.size} threads`
+    );
+
     // マッチしたメッセージの詳細を出力（最大5件、スレッド情報含む）
     for (let idx = 0; idx < Math.min(5, matchingMessages.length); idx++) {
       const msg = matchingMessages[idx];
@@ -551,10 +586,16 @@ async function syncChatImagesHandler(
       }
       matchedResidentMessages++;
 
-      // メタデータ抽出
-      const staffName = extractStaffName(text);
-      const postId = extractPostId(text);
-      const tags = extractTags(text);
+      // メタデータ抽出: スレッドの親メッセージから取得（画像メッセージ自体には情報がない）
+      // msgThreadName は上記のフィルタリングで既に取得済み
+      const parentMeta = msgThreadName ? threadParentMap.get(msgThreadName) : undefined;
+
+      // 親メッセージのメタデータを優先、なければ現在のメッセージから取得
+      const staffName = parentMeta?.staffName || extractStaffName(text);
+      const postId = parentMeta?.postId || extractPostId(text);
+      const tags = parentMeta?.tags || extractTags(text);
+      const parentText = parentMeta?.text || text;
+      const parentCreateTime = parentMeta?.createTime || msg.createTime;
 
       // 優先順位: Firebase Storage URL（JSON全体から抽出）を優先
       // 次にcardsV2, attachment, Google Proxy, Genericの順
@@ -589,7 +630,8 @@ async function syncChatImagesHandler(
         const photoRef = db.collection("care_photos").doc();
         const photoId = photoRef.id;
 
-        const date = new Date(msg.createTime || Date.now());
+        // 親メッセージの日時を使用（スレッド開始時刻 = 記録日時）
+        const date = new Date(parentCreateTime || msg.createTime || Date.now());
         const dateStr = date.toISOString().split("T")[0];
 
         // URLからファイル名を抽出（エンコードされたパスをデコード）
@@ -625,7 +667,7 @@ async function syncChatImagesHandler(
           source: "google_chat",
           chatMessageId: messageId,
           chatTags: tags,
-          chatContent: text.substring(0, 500), // 長いテキストは切り詰め
+          chatContent: parentText.substring(0, 500), // 親メッセージの内容を保存
         };
 
         await photoRef.set(carePhoto);
