@@ -58,20 +58,33 @@
 
 ## 3. Git・デプロイルール
 
-### コミット・Push（必須）
-作業完了時は必ずコミット＆リモートへpushすること。
+### ブランチ戦略（必須）
+- **mainへ直接pushしない**
+- featureブランチで作業し、PRを作成
+- Claudeが `gh pr view` でレビュー確認後にマージ
 
 ```bash
-git add -A && git commit -m "変更内容" && git push origin main
+# 1. featureブランチ作成
+git checkout -b fix/issue-name
+
+# 2. 作業・コミット
+git add -A && git commit -m "変更内容"
+
+# 3. pushしてPR作成
+git push -u origin fix/issue-name
+gh pr create --title "タイトル" --body "説明"
+
+# 4. レビュー・マージ（承認後）
+gh pr merge --squash --delete-branch
 ```
 
 ### 本番デプロイ（自動）
-- `git push origin main` で GitHub Actions が自動デプロイ
+- mainへのマージで GitHub Actions が自動デプロイ
 - 手動 `firebase deploy` は不要
 - デプロイ確認: `gh run list --limit 3`
 
 ### GitHub Pages
-- `gh-pages/` の変更も `git push origin main` で自動デプロイ
+- `gh-pages/` の変更も mainマージで自動デプロイ
 - ワークフロー: `.github/workflows/gh-pages.yml`
 
 ---
