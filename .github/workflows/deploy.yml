@@ -39,6 +39,15 @@ jobs:
         working-directory: functions
         run: npm run build
 
+      - name: Create functions .env file
+        working-directory: functions
+        run: |
+          cat > .env << EOF
+          GOOGLE_OAUTH_CLIENT_ID=${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
+          GOOGLE_OAUTH_CLIENT_SECRET=${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
+          GOOGLE_OAUTH_REDIRECT_URI=${{ secrets.GOOGLE_OAUTH_REDIRECT_URI }}
+          EOF
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
