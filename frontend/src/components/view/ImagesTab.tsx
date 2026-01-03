@@ -8,6 +8,7 @@
 
 import { useState } from 'react';
 import { useSyncedChatImages } from '../../hooks/useSyncedChatImages';
+import { useAuth } from '../../contexts/AuthContext';
 import type { CarePhoto } from '../../types';
 
 interface ImagesTabProps {
@@ -87,6 +88,9 @@ function groupByDate(photos: CarePhoto[]): Map<string, CarePhoto[]> {
 export function ImagesTab({ year, month }: ImagesTabProps) {
   const [displayMode, setDisplayMode] = useState<DisplayMode>('gallery');
   const [selectedPhoto, setSelectedPhoto] = useState<CarePhoto | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const { user, refreshAccessToken, accessToken } = useAuth();
 
   const {
     photos,
@@ -102,6 +106,20 @@ export function ImagesTab({ year, month }: ImagesTabProps) {
 
   // 年月フィルタ適用
   const filteredPhotos = filterByYearMonth(photos, year, month);
+
+  // トークン再取得
+  const handleRefreshToken = async () => {
+    setIsRefreshing(true);
+    try {
+      const newToken = await refreshAccessToken();
+      if (newToken) {
+        // トークン取得成功 - syncは自動的に実行される（useSyncedChatImagesのuseEffect）
+        console.log('[ImagesTab] Token refreshed, sync will trigger automatically');
+      }
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // 未設定時の表示
   if (!isConfigured) {
@@ -166,6 +184,27 @@ export function ImagesTab({ year, month }: ImagesTabProps) {
 
   return (
     <div className="p-4">
+      {/* トークン期限切れ警告バナー */}
+      {user && isConfigured && !accessToken && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-blue-700">
+              <span>🔑</span>
+              <span className="text-sm">
+                Chatスペースから画像を同期するには再認証が必要です
+              </span>
+            </div>
+            <button
+              onClick={handleRefreshToken}
+              disabled={isRefreshing}
+              className="px-3 py-1.5 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+            >
+              {isRefreshing ? '認証中...' : '🔐 再認証'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ヘッダー: 件数・同期ステータス・表示モード */}
       <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
         <div className="flex items-center gap-2">
