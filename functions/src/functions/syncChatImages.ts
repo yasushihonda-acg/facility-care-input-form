@@ -186,6 +186,24 @@ async function syncChatImagesHandler(
 
     functions.logger.info(`[syncChatImages] Fetched ${messages.length} messages from Chat API`);
 
+    // デバッグ: 最初の3件のメッセージ構造をログ出力
+    for (let i = 0; i < Math.min(3, messages.length); i++) {
+      const msg = messages[i];
+      functions.logger.info(`[syncChatImages] Sample message ${i + 1}:`, {
+        name: msg.name,
+        hasText: !!msg.text,
+        textPreview: msg.text?.substring(0, 100),
+        attachment: msg.attachment,
+        attachedGifs: msg.attachedGifs,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        cards: (msg as any).cards,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        cardsV2: (msg as any).cardsV2,
+        // Check all keys
+        allKeys: Object.keys(msg),
+      });
+    }
+
     let synced = 0;
     let skipped = 0;
     const newPhotos: CarePhoto[] = [];
