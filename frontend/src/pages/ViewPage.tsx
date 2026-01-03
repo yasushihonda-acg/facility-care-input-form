@@ -7,7 +7,7 @@ import { YearPaginator } from '../components/YearPaginator';
 import { MonthFilter } from '../components/MonthFilter';
 import { Layout } from '../components/Layout';
 import { ChatFloatingButton, ChatDrawer } from '../components/chat';
-import { ViewTabNavigation, ChartsTab, CorrelationTab, type ViewTabType } from '../components/view';
+import { ViewTabNavigation, ChartsTab, CorrelationTab, ImagesTab, type ViewTabType } from '../components/view';
 import { useSheetList, useSheetRecords } from '../hooks/usePlanData';
 import { useChatWithRecords } from '../hooks/useChatWithRecords';
 import { useDemoMode } from '../hooks/useDemoMode';
@@ -226,6 +226,11 @@ export function ViewPage() {
               {/* グラフタブ */}
               {activeViewTab === 'charts' && (
                 <ChartsTab year={selectedYear} month={selectedMonth} />
+              )}
+
+              {/* 画像タブ（Phase 51） */}
+              {activeViewTab === 'images' && (
+                <ImagesTab year={selectedYear} month={selectedMonth} />
               )}
 
               {/* データタブ - シートタブバー */}

@@ -133,6 +133,7 @@ https://asia-northeast1-facility-care-input-form.cloudfunctions.net
 | POST | `/createStaffNote` | スタッフ注意事項を作成 | Phase 40 | ✅ |
 | PUT | `/updateStaffNote` | スタッフ注意事項を更新 | Phase 40 | ✅ |
 | DELETE | `/deleteStaffNote` | スタッフ注意事項を削除 | Phase 40 | ✅ |
+| GET | `/getChatImages` | Chat画像メッセージを取得 | Phase 51 | ✅ |
 | POST | `/submitCareRecord` | ケア実績を入力 (deprecated) | Flow B | ❌ |
 
 > **デモ版**: PWAで使用するエンドポイント
@@ -1700,10 +1701,58 @@ interface GenerateSummaryResponse {
 
 ---
 
+### 4.51 GET /getChatImages
+
+Google Chatスペースからメッセージをフィルタリングし、画像付きメッセージを取得します。
+
+#### クエリパラメータ
+
+| パラメータ | 型 | 必須 | 説明 |
+|------------|-----|------|------|
+| spaceId | string | Yes | Google ChatスペースID（例: "AAAAL1Foxd8"） |
+| residentId | string | Yes | 対象利用者ID（例: "7282"） |
+| pageToken | string | No | ページネーショントークン |
+| limit | number | No | 取得件数（デフォルト: 100） |
+
+#### レスポンス
+
+```typescript
+interface GetChatImagesResponse {
+  images: ChatImageMessage[];
+  nextPageToken?: string;
+  totalCount: number;
+}
+
+interface ChatImageMessage {
+  messageId: string;
+  residentId: string;
+  timestamp: string;            // ISO 8601形式
+  imageUrl: string;             // 画像URL
+  thumbnailUrl?: string;        // サムネイルURL
+  contentType: string;          // 例: "image/jpeg"
+  fileName?: string;            // 元ファイル名
+  relatedTextMessage?: {        // 関連テキストメッセージ（5分以内に投稿されたもの）
+    content: string;
+    postId?: string;
+    staffName?: string;
+    tags?: string[];            // 例: ["#特記事項📝", "#重要⚠️"]
+  };
+}
+```
+
+#### エラーコード
+
+| コード | 説明 |
+|--------|------|
+| CHAT_API_ERROR | Google Chat APIエラー（権限不足、スペース未検出等） |
+
+---
+
 ## 6. 変更履歴
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
+| 2026-01-03 | 1.20.0 | Phase 51: getChatImages API追加（Google Chat画像取得） |
 | 2025-12-29 | 1.19.0 | Phase 46: 階層的要約API追加（getSummaries/generateSummary）、chatWithRecords maxOutputTokens 4096に変更 |
 | 2025-12-28 | 1.18.1 | Phase 45.1: chatWithRecordsにインメモリキャッシュ追加（7秒短縮） |
 | 2025-12-28 | 1.18.0 | Phase 45: chatWithRecords API追加（記録閲覧AIチャットボット） |

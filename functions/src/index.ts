@@ -196,3 +196,9 @@ export {
   updateStaffNote,
   deleteStaffNote,
 } from "./functions/staffNotes";
+
+// =============================================================================
+// Google Chat画像取得（Phase 51）
+// =============================================================================
+
+export {getChatImages} from "./functions/getChatImages";

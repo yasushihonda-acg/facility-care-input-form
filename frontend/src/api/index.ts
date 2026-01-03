@@ -6,6 +6,8 @@ import type {
   SubmitMealRecordResponse,
   MealFormSettings,
   UpdateMealFormSettingsRequest,
+  GetChatImagesRequest,
+  GetChatImagesResponse,
 } from '../types';
 import type {
   ChatWithRecordsRequest,
@@ -1402,6 +1404,37 @@ export async function chatWithRecords(
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.error?.message || `Chat failed: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+// =============================================================================
+// Phase 51: Google Chat画像取得
+// =============================================================================
+
+/**
+ * Google Chatスペースから画像付きメッセージを取得
+ * GET /getChatImages
+ */
+export async function getChatImages(
+  options: GetChatImagesRequest
+): Promise<ApiResponse<GetChatImagesResponse>> {
+  const url = new URL(`${API_BASE}/getChatImages`);
+  url.searchParams.set('spaceId', options.spaceId);
+  url.searchParams.set('residentId', options.residentId);
+  if (options.pageToken) {
+    url.searchParams.set('pageToken', options.pageToken);
+  }
+  if (options.limit) {
+    url.searchParams.set('limit', options.limit.toString());
+  }
+
+  const response = await fetch(url.toString());
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to get chat images: ${response.statusText}`);
   }
 
   return response.json();

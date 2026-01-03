@@ -78,6 +78,7 @@ export function SettingsPage() {
     familyNotifyWebhookUrl: '',
     recordCheckHour: 16,
     hiddenSheets: [],
+    chatImageSettings: undefined,
   });
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -105,6 +106,7 @@ export function SettingsPage() {
         familyNotifyWebhookUrl: settings.familyNotifyWebhookUrl || '',
         recordCheckHour: settings.recordCheckHour ?? 16,
         hiddenSheets: settings.hiddenSheets ?? [],
+        chatImageSettings: settings.chatImageSettings,
       });
     }
   }, [isSettingsLoading, settings]);
@@ -633,6 +635,90 @@ export function SettingsPage() {
               >
                 すべて非表示
               </button>
+            </div>
+          )}
+        </div>
+
+        {/* 画像閲覧設定セクション (Phase 51) */}
+        <div className="bg-white rounded-lg p-4 shadow-sm space-y-4">
+          <h2 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <svg className="w-4 h-4 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            画像閲覧設定
+          </h2>
+
+          <p className="text-xs text-gray-500">
+            Google Chatスペースから画像を取得するための設定です。
+            記録閲覧ページの「画像」タブで表示されます。
+          </p>
+
+          {/* 対象利用者ID */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              対象利用者ID
+            </label>
+            <input
+              type="text"
+              value={localSettings.chatImageSettings?.residentId || ''}
+              onChange={(e) =>
+                setLocalSettings((prev) => ({
+                  ...prev,
+                  chatImageSettings: {
+                    residentId: e.target.value,
+                    spaceId: prev.chatImageSettings?.spaceId || '',
+                  },
+                }))
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm"
+              placeholder="例: 7282"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              利用者名に含まれるID番号を入力（例: 「ID7282」の場合は「7282」）
+            </p>
+          </div>
+
+          {/* Google ChatスペースID */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Google ChatスペースID
+            </label>
+            <input
+              type="text"
+              value={localSettings.chatImageSettings?.spaceId || ''}
+              onChange={(e) =>
+                setLocalSettings((prev) => ({
+                  ...prev,
+                  chatImageSettings: {
+                    residentId: prev.chatImageSettings?.residentId || '',
+                    spaceId: e.target.value,
+                  },
+                }))
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm"
+              placeholder="例: AAAAL1Foxd8"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Google ChatスペースのURLから取得（例: https://chat.google.com/room/<strong>AAAAL1Foxd8</strong>）
+            </p>
+          </div>
+
+          {/* 設定状態表示 */}
+          {localSettings.chatImageSettings?.residentId && localSettings.chatImageSettings?.spaceId ? (
+            <div className="p-3 bg-green-50 rounded-lg text-xs text-green-700 flex items-center gap-2">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span>
+                画像タブが利用可能です（ID: {localSettings.chatImageSettings.residentId}）
+              </span>
+            </div>
+          ) : (
+            <div className="p-3 bg-gray-50 rounded-lg text-xs text-gray-500 flex items-center gap-2">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>両方の項目を入力すると画像タブが利用可能になります</span>
             </div>
           )}
         </div>
