@@ -26,6 +26,14 @@ const RESIDENT_ID_PATTERN_ALT = /ID(\d+)/;
 // eslint-disable-next-line max-len
 const FIREBASE_STORAGE_URL_PATTERN = /https:\/\/firebasestorage\.googleapis\.com\/v0\/b\/[^/]+\/o\/[^?\s]+\?alt=media(?:&token=[^?\s]+)?/g;
 
+// Google Proxy URLパターン（Chat経由の画像）
+// eslint-disable-next-line max-len
+const GOOGLE_PROXY_URL_PATTERN = /https:\/\/lh3\.googleusercontent\.com\/[^\s"'<>]+/g;
+
+// 汎用画像URLパターン（jpg, jpeg, png, gif, webp）
+// eslint-disable-next-line max-len
+const GENERIC_IMAGE_URL_PATTERN = /https?:\/\/[^\s"'<>]+\.(?:jpg|jpeg|png|gif|webp)(?:\?[^\s"'<>]*)?/gi;
+
 // 投稿IDパターン
 const POST_ID_PATTERN = /【投稿ID】[：:]\s*(\w+)/;
 
@@ -89,6 +97,39 @@ function extractTags(text: string): string[] {
  */
 function extractStorageUrls(text: string): string[] {
   return text.match(FIREBASE_STORAGE_URL_PATTERN) || [];
+}
+
+/**
+ * メッセージからGoogle Proxy URLを抽出
+ */
+function extractProxyUrls(text: string): string[] {
+  return text.match(GOOGLE_PROXY_URL_PATTERN) || [];
+}
+
+/**
+ * メッセージから汎用画像URLを抽出
+ */
+function extractGenericImageUrls(text: string): string[] {
+  return text.match(GENERIC_IMAGE_URL_PATTERN) || [];
+}
+
+/**
+ * すべての画像URLを抽出（優先順位: Firebase Storage > Google Proxy > Generic）
+ */
+function extractAllImageUrls(text: string): {
+  storageUrls: string[];
+  proxyUrls: string[];
+  genericUrls: string[];
+  allUrls: string[];
+} {
+  const storageUrls = extractStorageUrls(text);
+  const proxyUrls = extractProxyUrls(text);
+  const genericUrls = extractGenericImageUrls(text);
+
+  // 重複を除去して結合
+  const allUrls = [...new Set([...storageUrls, ...proxyUrls, ...genericUrls])];
+
+  return {storageUrls, proxyUrls, genericUrls, allUrls};
 }
 
 /**
@@ -203,20 +244,48 @@ async function syncChatImagesHandler(
     const newPhotos: CarePhoto[] = [];
 
     // デバッグ用カウンター
-    let messagesWithStorageUrls = 0;
-    let urlsFound = 0;
+    let messagesWithAnyUrls = 0;
+    let storageUrlCount = 0;
+    let proxyUrlCount = 0;
+    let genericUrlCount = 0;
     let matchedResidentMessages = 0;
 
-    // 各メッセージを処理 - テキスト内のFirebase Storage URLを探す
+    // デバッグ: 最初の10件のメッセージ内容をログ出力
+    const sampleMessages: Array<{
+      name: string;
+      textPreview: string;
+      urls: ReturnType<typeof extractAllImageUrls>;
+      hasId: boolean;
+    }> = [];
+
+    // 各メッセージを処理 - すべての画像URLパターンを探す
     for (const msg of messages) {
       const text = msg.text || "";
+      const formattedText = msg.formattedText || "";
+      const combinedText = `${text} ${formattedText}`;
 
-      // テキスト内のFirebase Storage URLを抽出
-      const storageUrls = extractStorageUrls(text);
-      if (storageUrls.length === 0) continue;
+      // すべての画像URLを抽出
+      const urls = extractAllImageUrls(combinedText);
 
-      messagesWithStorageUrls++;
-      urlsFound += storageUrls.length;
+      // サンプルログ用（最初の10件 OR URLを含むメッセージ）
+      if (sampleMessages.length < 10 || urls.allUrls.length > 0) {
+        const hasId = text.includes(`ID${residentId}`);
+        if (sampleMessages.length < 10 || (urls.allUrls.length > 0 && hasId)) {
+          sampleMessages.push({
+            name: msg.name || "unknown",
+            textPreview: text.substring(0, 500),
+            urls,
+            hasId,
+          });
+        }
+      }
+
+      if (urls.allUrls.length === 0) continue;
+
+      messagesWithAnyUrls++;
+      storageUrlCount += urls.storageUrls.length;
+      proxyUrlCount += urls.proxyUrls.length;
+      genericUrlCount += urls.genericUrls.length;
 
       // メッセージテキストから利用者IDを確認
       const msgResidentId = extractResidentId(text);
@@ -229,9 +298,16 @@ async function syncChatImagesHandler(
       const postId = extractPostId(text);
       const tags = extractTags(text);
 
+      // 優先順位: Firebase Storage > Google Proxy > Generic
+      const imageUrls = urls.storageUrls.length > 0 ?
+        urls.storageUrls :
+        urls.proxyUrls.length > 0 ?
+          urls.proxyUrls :
+          urls.genericUrls;
+
       // 各URLを処理
-      for (let i = 0; i < storageUrls.length; i++) {
-        const imageUrl = storageUrls[i];
+      for (let i = 0; i < imageUrls.length; i++) {
+        const imageUrl = imageUrls[i];
         const messageId = `${msg.name || "unknown"}_img${i}`;
 
         // 既に保存済みならスキップ
@@ -310,12 +386,30 @@ async function syncChatImagesHandler(
     // デバッグサマリー
     functions.logger.info("[syncChatImages] Debug Summary:", {
       totalMessages: messages.length,
-      messagesWithStorageUrls,
-      urlsFound,
+      messagesWithAnyUrls,
+      storageUrlCount,
+      proxyUrlCount,
+      genericUrlCount,
       matchedResidentMessages,
       synced,
       skipped,
       targetResidentId: residentId,
+    });
+
+    // サンプルメッセージをログ出力（URLの有無を確認するため）
+    functions.logger.info("[syncChatImages] Sample Messages:", {
+      count: sampleMessages.length,
+      samples: sampleMessages.slice(0, 5).map((s) => ({
+        name: s.name,
+        textPreview: s.textPreview.substring(0, 200),
+        hasId: s.hasId,
+        urlCounts: {
+          storage: s.urls.storageUrls.length,
+          proxy: s.urls.proxyUrls.length,
+          generic: s.urls.genericUrls.length,
+        },
+        sampleUrls: s.urls.allUrls.slice(0, 2),
+      })),
     });
 
     functions.logger.info(
