@@ -260,8 +260,13 @@ export interface UploadCareImageResponse {
  */
 export interface GetCarePhotosRequest {
   residentId: string;
-  date: string;
+  /** 日付（オプション、指定なしで全期間） */
+  date?: string;
   mealTime?: string;
+  /** ソースフィルタ（'direct_upload' | 'google_chat'） */
+  source?: CarePhotoSource;
+  /** 取得件数上限 */
+  limit?: number;
 }
 
 /**

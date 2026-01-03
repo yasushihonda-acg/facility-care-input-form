@@ -201,8 +201,10 @@ export async function getCarePhotos(
 ): Promise<ApiResponse<GetCarePhotosResponse>> {
   const url = new URL(`${API_BASE}/getCarePhotos`);
   url.searchParams.set('residentId', params.residentId);
-  url.searchParams.set('date', params.date);
+  if (params.date) url.searchParams.set('date', params.date);
   if (params.mealTime) url.searchParams.set('mealTime', params.mealTime);
+  if (params.source) url.searchParams.set('source', params.source);
+  if (params.limit) url.searchParams.set('limit', params.limit.toString());
 
   const response = await fetch(url.toString());
 
@@ -1444,6 +1446,39 @@ export async function getChatImages(
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.error?.message || `Failed to get chat images: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Google Chatスペースから画像を同期してFirestoreに保存
+ * POST /syncChatImages
+ *
+ * @param options - リクエストオプション
+ * @param accessToken - ユーザーのOAuthアクセストークン（必須）
+ */
+export async function syncChatImages(
+  options: { spaceId: string; residentId: string; limit?: number },
+  accessToken: string
+): Promise<ApiResponse<{
+  synced: number;
+  skipped: number;
+  total: number;
+  photos: CarePhoto[];
+}>> {
+  const response = await fetch(`${API_BASE}/syncChatImages`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(options),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to sync chat images: ${response.statusText}`);
   }
 
   return response.json();

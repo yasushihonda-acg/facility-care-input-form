@@ -177,24 +177,47 @@ export async function uploadCarePhotoToStorage(
 
 /**
  * 写真メタデータを取得
+ * @param residentId - 利用者ID（必須）
+ * @param date - 日付（オプション、指定なしで全期間）
+ * @param mealTime - 食事時間（オプション）
+ * @param source - ソースフィルタ（オプション: 'direct_upload' | 'google_chat'）
+ * @param limit - 取得件数上限（デフォルト: 200）
  */
 export async function getCarePhotos(
   residentId: string,
-  date: string,
-  mealTime?: string
+  date?: string,
+  mealTime?: string,
+  source?: string,
+  limit: number = 200
 ): Promise<CarePhotoMetadata[]> {
   const db = getFirestore();
 
-  let query = db
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let query: any = db
     .collection("care_photos")
-    .where("residentId", "==", residentId)
-    .where("date", "==", date);
+    .where("residentId", "==", residentId);
 
+  // 日付フィルタ（指定された場合のみ）
+  if (date) {
+    query = query.where("date", "==", date);
+  }
+
+  // 食事時間フィルタ
   if (mealTime) {
     query = query.where("mealTime", "==", mealTime);
   }
 
-  const snapshot = await query.orderBy("uploadedAt", "desc").get();
+  // ソースフィルタ
+  if (source) {
+    query = query.where("source", "==", source);
+  }
 
-  return snapshot.docs.map((doc) => doc.data() as CarePhotoMetadata);
+  const snapshot = await query
+    .orderBy("uploadedAt", "desc")
+    .limit(limit)
+    .get();
+
+  return snapshot.docs.map(
+    (doc: FirebaseFirestore.QueryDocumentSnapshot) => doc.data() as CarePhotoMetadata
+  );
 }

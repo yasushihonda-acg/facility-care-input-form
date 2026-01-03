@@ -1,15 +1,14 @@
 /**
- * ImagesTab - Google Chat画像表示タブ（Phase 51）
+ * ImagesTab - Google Chat画像表示タブ（Phase 52）
  *
- * 設定済みの利用者ID・スペースIDに基づき画像を取得・表示
- * - ギャラリー / タイムライン / テーブル の3モード
- * - 画像クリックで拡大表示
- * - 関連テキスト情報（タグ、記録者、特記事項等）表示
+ * Firestoreに保存された画像を表示
+ * - アクセストークンがあるユーザーは自動的にChatスペースから同期
+ * - 全ユーザーがFirestoreの画像を閲覧可能
  */
 
 import { useState } from 'react';
-import { useChatImages } from '../../hooks/useChatImages';
-import type { ChatImageMessage } from '../../types';
+import { useSyncedChatImages } from '../../hooks/useSyncedChatImages';
+import type { CarePhoto } from '../../types';
 
 interface ImagesTabProps {
   year: number;
@@ -25,55 +24,51 @@ const DISPLAY_MODES: { id: DisplayMode; label: string; icon: string }[] = [
 ];
 
 /**
- * 日付文字列からDate取得（JST考慮）
+ * 日付文字列からDate取得
  */
-function parseTimestamp(timestamp: string): Date {
-  return new Date(timestamp);
+function parseDate(dateStr: string): Date {
+  return new Date(dateStr);
 }
 
 /**
  * 年月でフィルタ
  */
 function filterByYearMonth(
-  images: ChatImageMessage[],
+  photos: CarePhoto[],
   year: number,
   month: number | null
-): ChatImageMessage[] {
-  return images.filter((img) => {
-    const date = parseTimestamp(img.timestamp);
-    const imgYear = date.getFullYear();
-    const imgMonth = date.getMonth() + 1;
+): CarePhoto[] {
+  return photos.filter((photo) => {
+    const date = parseDate(photo.date);
+    const photoYear = date.getFullYear();
+    const photoMonth = date.getMonth() + 1;
 
     if (month === null) {
-      return imgYear === year;
+      return photoYear === year;
     }
-    return imgYear === year && imgMonth === month;
+    return photoYear === year && photoMonth === month;
   });
 }
 
 /**
  * 日時フォーマット
  */
-function formatDateTime(timestamp: string): string {
-  const date = parseTimestamp(timestamp);
-  return date.toLocaleString('ja-JP', {
+function formatDateTime(dateStr: string): string {
+  const date = parseDate(dateStr);
+  return date.toLocaleDateString('ja-JP', {
     month: 'numeric',
     day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
   });
 }
 
 /**
  * 日付でグループ化
  */
-function groupByDate(
-  images: ChatImageMessage[]
-): Map<string, ChatImageMessage[]> {
-  const groups = new Map<string, ChatImageMessage[]>();
+function groupByDate(photos: CarePhoto[]): Map<string, CarePhoto[]> {
+  const groups = new Map<string, CarePhoto[]>();
 
-  for (const img of images) {
-    const date = parseTimestamp(img.timestamp);
+  for (const photo of photos) {
+    const date = parseDate(photo.date);
     const key = date.toLocaleDateString('ja-JP', {
       year: 'numeric',
       month: 'long',
@@ -83,7 +78,7 @@ function groupByDate(
     if (!groups.has(key)) {
       groups.set(key, []);
     }
-    groups.get(key)!.push(img);
+    groups.get(key)!.push(photo);
   }
 
   return groups;
@@ -91,23 +86,22 @@ function groupByDate(
 
 export function ImagesTab({ year, month }: ImagesTabProps) {
   const [displayMode, setDisplayMode] = useState<DisplayMode>('gallery');
-  const [selectedImage, setSelectedImage] = useState<ChatImageMessage | null>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<CarePhoto | null>(null);
 
   const {
-    images,
+    photos,
     isLoading,
-    isFetchingNextPage,
-    hasNextPage,
     error,
     isConfigured,
-    hasAccessToken,
+    canSync,
+    isSyncing,
+    lastSyncResult,
+    sync,
     settings,
-    fetchNextPage,
-    refreshToken,
-  } = useChatImages();
+  } = useSyncedChatImages();
 
   // 年月フィルタ適用
-  const filteredImages = filterByYearMonth(images, year, month);
+  const filteredPhotos = filterByYearMonth(photos, year, month);
 
   // 未設定時の表示
   if (!isConfigured) {
@@ -119,7 +113,7 @@ export function ImagesTab({ year, month }: ImagesTabProps) {
             画像閲覧設定が必要です
           </h3>
           <p className="text-amber-700 text-sm mb-4">
-            Google Chatの画像を表示するには、設定ページで利用者IDとチャットスペースIDを設定してください。
+            Google Chatの画像を表示するには、設定ページで利用者IDを設定してください。
           </p>
           <a
             href="/settings"
@@ -135,36 +129,14 @@ export function ImagesTab({ year, month }: ImagesTabProps) {
     );
   }
 
-  // アクセストークンがない場合の表示
-  if (!hasAccessToken) {
-    return (
-      <div className="p-8 text-center">
-        <div className="max-w-md mx-auto bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <p className="text-4xl mb-4">🔑</p>
-          <h3 className="text-lg font-semibold text-blue-800 mb-2">
-            認証が必要です
-          </h3>
-          <p className="text-blue-700 text-sm mb-4">
-            Google Chatの画像を取得するにはアクセストークンが必要です。
-            ボタンをクリックして認証してください。
-          </p>
-          <button
-            onClick={() => refreshToken()}
-            className="inline-block px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-          >
-            🔄 認証してトークンを取得
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ローディング中
-  if (isLoading) {
+  // ローディング中（同期中も含む）
+  if (isLoading || isSyncing) {
     return (
       <div className="p-8 text-center">
         <div className="animate-spin inline-block w-8 h-8 border-4 border-gray-300 border-t-primary rounded-full mb-4" />
-        <p className="text-gray-500">画像を読み込み中...</p>
+        <p className="text-gray-500">
+          {isSyncing ? 'Chatスペースから同期中...' : '画像を読み込み中...'}
+        </p>
       </div>
     );
   }
@@ -176,9 +148,17 @@ export function ImagesTab({ year, month }: ImagesTabProps) {
         <div className="max-w-md mx-auto bg-red-50 border border-red-200 rounded-lg p-6">
           <p className="text-4xl mb-4">⚠️</p>
           <h3 className="text-lg font-semibold text-red-800 mb-2">
-            画像の取得に失敗しました
+            エラーが発生しました
           </h3>
-          <p className="text-red-700 text-sm">{error}</p>
+          <p className="text-red-700 text-sm mb-4">{error}</p>
+          {canSync && (
+            <button
+              onClick={sync}
+              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+            >
+              再試行
+            </button>
+          )}
         </div>
       </div>
     );
@@ -186,74 +166,90 @@ export function ImagesTab({ year, month }: ImagesTabProps) {
 
   return (
     <div className="p-4">
-      {/* 表示モード切り替え */}
-      <div className="flex justify-between items-center mb-4">
-        <div className="text-sm text-gray-500">
-          {filteredImages.length}件の画像
-          {month ? ` (${year}年${month}月)` : ` (${year}年)`}
+      {/* ヘッダー: 件数・同期ステータス・表示モード */}
+      <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-500">
+            {filteredPhotos.length}件の画像
+            {month ? ` (${year}年${month}月)` : ` (${year}年)`}
+          </span>
+          {lastSyncResult && (
+            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+              +{lastSyncResult.synced}件同期
+            </span>
+          )}
         </div>
-        <div className="flex gap-1">
-          {DISPLAY_MODES.map((mode) => (
+        <div className="flex items-center gap-2">
+          {/* 手動同期ボタン（アクセス可能な場合のみ） */}
+          {canSync && (
             <button
-              key={mode.id}
-              onClick={() => setDisplayMode(mode.id)}
-              className={`
-                px-3 py-1.5 text-sm rounded-lg transition-all
-                ${displayMode === mode.id
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }
-              `}
-              title={mode.label}
+              onClick={sync}
+              disabled={isSyncing}
+              className="px-3 py-1.5 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 disabled:opacity-50"
+              title="Chatスペースから最新を取得"
             >
-              <span className="mr-1">{mode.icon}</span>
-              <span className="hidden sm:inline">{mode.label}</span>
+              🔄 同期
             </button>
-          ))}
+          )}
+          {/* 表示モード切り替え */}
+          <div className="flex gap-1">
+            {DISPLAY_MODES.map((mode) => (
+              <button
+                key={mode.id}
+                onClick={() => setDisplayMode(mode.id)}
+                className={`
+                  px-3 py-1.5 text-sm rounded-lg transition-all
+                  ${displayMode === mode.id
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }
+                `}
+                title={mode.label}
+              >
+                <span className="mr-1">{mode.icon}</span>
+                <span className="hidden sm:inline">{mode.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* 画像がない場合 */}
-      {filteredImages.length === 0 ? (
+      {filteredPhotos.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
           <p className="text-4xl mb-4">📷</p>
           <p>この期間の画像はありません</p>
+          {canSync && (
+            <button
+              onClick={sync}
+              className="mt-4 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
+            >
+              🔄 Chatスペースから取得
+            </button>
+          )}
         </div>
       ) : (
         <>
           {/* ギャラリーモード */}
           {displayMode === 'gallery' && (
-            <GalleryView images={filteredImages} onSelect={setSelectedImage} />
+            <GalleryView photos={filteredPhotos} onSelect={setSelectedPhoto} />
           )}
 
           {/* タイムラインモード */}
           {displayMode === 'timeline' && (
-            <TimelineView images={filteredImages} onSelect={setSelectedImage} />
+            <TimelineView photos={filteredPhotos} onSelect={setSelectedPhoto} />
           )}
 
           {/* テーブルモード */}
           {displayMode === 'table' && (
-            <TableView images={filteredImages} onSelect={setSelectedImage} />
+            <TableView photos={filteredPhotos} onSelect={setSelectedPhoto} />
           )}
         </>
       )}
 
-      {/* もっと読み込む */}
-      {hasNextPage && (
-        <div className="text-center mt-4">
-          <button
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50"
-          >
-            {isFetchingNextPage ? '読み込み中...' : 'もっと読み込む'}
-          </button>
-        </div>
-      )}
-
       {/* 画像拡大モーダル */}
-      {selectedImage && (
-        <ImageModal image={selectedImage} onClose={() => setSelectedImage(null)} />
+      {selectedPhoto && (
+        <PhotoModal photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
       )}
     </div>
   );
@@ -263,32 +259,32 @@ export function ImagesTab({ year, month }: ImagesTabProps) {
 // サブコンポーネント
 // ============================================================================
 
-interface ImageViewProps {
-  images: ChatImageMessage[];
-  onSelect: (image: ChatImageMessage) => void;
+interface PhotoViewProps {
+  photos: CarePhoto[];
+  onSelect: (photo: CarePhoto) => void;
 }
 
 /**
  * ギャラリービュー
  */
-function GalleryView({ images, onSelect }: ImageViewProps) {
+function GalleryView({ photos, onSelect }: PhotoViewProps) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-      {images.map((img) => (
+      {photos.map((photo) => (
         <button
-          key={img.messageId}
-          onClick={() => onSelect(img)}
+          key={photo.photoId}
+          onClick={() => onSelect(photo)}
           className="aspect-square bg-gray-100 rounded-lg overflow-hidden hover:opacity-80 transition-opacity relative group"
         >
           <img
-            src={img.thumbnailUrl || img.imageUrl}
+            src={photo.photoUrl}
             alt=""
             className="w-full h-full object-cover"
             loading="lazy"
           />
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <p className="text-white text-xs truncate">
-              {formatDateTime(img.timestamp)}
+              {formatDateTime(photo.date)}
             </p>
           </div>
         </button>
@@ -300,28 +296,28 @@ function GalleryView({ images, onSelect }: ImageViewProps) {
 /**
  * タイムラインビュー
  */
-function TimelineView({ images, onSelect }: ImageViewProps) {
-  const grouped = groupByDate(images);
+function TimelineView({ photos, onSelect }: PhotoViewProps) {
+  const grouped = groupByDate(photos);
 
   return (
     <div className="space-y-6">
-      {Array.from(grouped.entries()).map(([dateStr, dateImages]) => (
+      {Array.from(grouped.entries()).map(([dateStr, datePhotos]) => (
         <div key={dateStr}>
           <h3 className="text-sm font-semibold text-gray-700 mb-2 sticky top-0 bg-white py-1">
             📅 {dateStr}
           </h3>
           <div className="space-y-3 pl-4 border-l-2 border-gray-200">
-            {dateImages.map((img) => (
+            {datePhotos.map((photo) => (
               <div
-                key={img.messageId}
+                key={photo.photoId}
                 className="flex gap-3 bg-gray-50 rounded-lg p-3"
               >
                 <button
-                  onClick={() => onSelect(img)}
+                  onClick={() => onSelect(photo)}
                   className="w-20 h-20 flex-shrink-0 bg-gray-200 rounded overflow-hidden hover:opacity-80 transition-opacity"
                 >
                   <img
-                    src={img.thumbnailUrl || img.imageUrl}
+                    src={photo.photoUrl}
                     alt=""
                     className="w-full h-full object-cover"
                     loading="lazy"
@@ -329,28 +325,12 @@ function TimelineView({ images, onSelect }: ImageViewProps) {
                 </button>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-gray-500 mb-1">
-                    {formatDateTime(img.timestamp)}
+                    {formatDateTime(photo.date)}
                   </p>
-                  {img.relatedTextMessage && (
-                    <>
-                      {img.relatedTextMessage.staffName && (
-                        <p className="text-sm text-gray-700">
-                          📝 {img.relatedTextMessage.staffName}
-                        </p>
-                      )}
-                      {img.relatedTextMessage.tags && img.relatedTextMessage.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {img.relatedTextMessage.tags.map((tag, i) => (
-                            <span
-                              key={i}
-                              className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </>
+                  {photo.staffName && (
+                    <p className="text-sm text-gray-700">
+                      📝 {photo.staffName}
+                    </p>
                   )}
                 </div>
               </div>
@@ -365,28 +345,28 @@ function TimelineView({ images, onSelect }: ImageViewProps) {
 /**
  * テーブルビュー
  */
-function TableView({ images, onSelect }: ImageViewProps) {
+function TableView({ photos, onSelect }: PhotoViewProps) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="bg-gray-100">
             <th className="p-2 text-left">画像</th>
-            <th className="p-2 text-left">日時</th>
+            <th className="p-2 text-left">日付</th>
             <th className="p-2 text-left">記録者</th>
-            <th className="p-2 text-left">タグ</th>
+            <th className="p-2 text-left">ソース</th>
           </tr>
         </thead>
         <tbody>
-          {images.map((img) => (
-            <tr key={img.messageId} className="border-b hover:bg-gray-50">
+          {photos.map((photo) => (
+            <tr key={photo.photoId} className="border-b hover:bg-gray-50">
               <td className="p-2">
                 <button
-                  onClick={() => onSelect(img)}
+                  onClick={() => onSelect(photo)}
                   className="w-12 h-12 bg-gray-200 rounded overflow-hidden hover:opacity-80 transition-opacity"
                 >
                   <img
-                    src={img.thumbnailUrl || img.imageUrl}
+                    src={photo.photoUrl}
                     alt=""
                     className="w-full h-full object-cover"
                     loading="lazy"
@@ -394,26 +374,19 @@ function TableView({ images, onSelect }: ImageViewProps) {
                 </button>
               </td>
               <td className="p-2 whitespace-nowrap">
-                {formatDateTime(img.timestamp)}
+                {formatDateTime(photo.date)}
               </td>
               <td className="p-2">
-                {img.relatedTextMessage?.staffName || '-'}
+                {photo.staffName || '-'}
               </td>
               <td className="p-2">
-                {img.relatedTextMessage?.tags?.length ? (
-                  <div className="flex flex-wrap gap-1">
-                    {img.relatedTextMessage.tags.map((tag, i) => (
-                      <span
-                        key={i}
-                        className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  '-'
-                )}
+                <span className={`text-xs px-2 py-0.5 rounded ${
+                  photo.source === 'google_chat'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-gray-100 text-gray-600'
+                }`}>
+                  {photo.source === 'google_chat' ? 'Chat' : '直接'}
+                </span>
               </td>
             </tr>
           ))}
@@ -426,12 +399,18 @@ function TableView({ images, onSelect }: ImageViewProps) {
 /**
  * 画像拡大モーダル
  */
-interface ImageModalProps {
-  image: ChatImageMessage;
+interface PhotoModalProps {
+  photo: CarePhoto;
   onClose: () => void;
 }
 
-function ImageModal({ image, onClose }: ImageModalProps) {
+function PhotoModal({ photo, onClose }: PhotoModalProps) {
+  // 拡張フィールドを取得（型安全のためanyでアクセス）
+  const extendedPhoto = photo as CarePhoto & {
+    chatTags?: string[];
+    chatContent?: string;
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
@@ -443,7 +422,7 @@ function ImageModal({ image, onClose }: ImageModalProps) {
       >
         <div className="relative">
           <img
-            src={image.imageUrl}
+            src={photo.photoUrl}
             alt=""
             className="max-w-full max-h-[70vh] object-contain"
           />
@@ -454,32 +433,34 @@ function ImageModal({ image, onClose }: ImageModalProps) {
             ✕
           </button>
         </div>
-        {image.relatedTextMessage && (
-          <div className="p-4 border-t">
-            <p className="text-sm text-gray-500 mb-2">
-              {formatDateTime(image.timestamp)}
-              {image.relatedTextMessage.staffName &&
-                ` ｜ 記録者: ${image.relatedTextMessage.staffName}`}
+        <div className="p-4 border-t">
+          <p className="text-sm text-gray-500 mb-2">
+            {formatDateTime(photo.date)}
+            {photo.staffName && ` ｜ 記録者: ${photo.staffName}`}
+            {photo.source === 'google_chat' && (
+              <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                Chat経由
+              </span>
+            )}
+          </p>
+          {extendedPhoto.chatTags && extendedPhoto.chatTags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-2">
+              {extendedPhoto.chatTags.map((tag, i) => (
+                <span
+                  key={i}
+                  className="text-sm bg-blue-100 text-blue-700 px-2 py-0.5 rounded"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+          {extendedPhoto.chatContent && (
+            <p className="text-sm text-gray-700 whitespace-pre-wrap line-clamp-5">
+              {extendedPhoto.chatContent}
             </p>
-            {image.relatedTextMessage.tags && image.relatedTextMessage.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1 mb-2">
-                {image.relatedTextMessage.tags.map((tag, i) => (
-                  <span
-                    key={i}
-                    className="text-sm bg-blue-100 text-blue-700 px-2 py-0.5 rounded"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-            {image.relatedTextMessage.content && (
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                {image.relatedTextMessage.content}
-              </p>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
