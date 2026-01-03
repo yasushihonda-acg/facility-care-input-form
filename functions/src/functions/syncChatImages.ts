@@ -326,36 +326,47 @@ async function syncChatImagesHandler(
       hasId: boolean;
     }> = [];
 
-    // ID{residentId}を含むメッセージを抽出してログ出力
+    // ID{residentId}を含むメッセージを抽出（cardsV2内も含めてJSON全体を検索）
     const targetIdPattern = `ID${residentId}`;
-    const matchingMessages = messages.filter((m) =>
-      (m.text || "").includes(targetIdPattern)
-    );
+    const matchingMessages = messages.filter((m) => {
+      const rawJson = JSON.stringify(m);
+      return rawJson.includes(targetIdPattern);
+    });
     functions.logger.info(
-      `[syncChatImages] Found ${matchingMessages.length} messages containing ${targetIdPattern}`
+      `[syncChatImages] Found ${matchingMessages.length} messages containing ${targetIdPattern} (in JSON)`
     );
 
-    // マッチしたメッセージの詳細を出力（最大5件、テキスト内容を表示）
-    for (let idx = 0; idx < Math.min(5, matchingMessages.length); idx++) {
+    // マッチしたメッセージの詳細を出力（最大3件）
+    for (let idx = 0; idx < Math.min(3, matchingMessages.length); idx++) {
       const msg = matchingMessages[idx];
-      const textPreview = msg.text?.substring(0, 800) || "(no text)";
+      const rawJson = JSON.stringify(msg);
+      const hasStorageUrl = rawJson.includes("firebasestorage.googleapis.com");
       functions.logger.info(
-        `[syncChatImages] Matched ${idx + 1} text: ${textPreview}`
+        `[syncChatImages] Matched ${idx + 1}: hasStorageUrl=${hasStorageUrl}, ` +
+        `cardsV2=${msg.cardsV2?.length || 0}, att=${msg.attachment?.length || 0}, ` +
+        `text=${(msg.text || "").substring(0, 100)}`
       );
+      // Firebase Storage URLを含む場合、JSONの一部を出力
+      if (hasStorageUrl) {
+        const urlMatch = rawJson.match(/https:\/\/firebasestorage\.googleapis\.com[^"'\s]*/);
+        functions.logger.info(`[syncChatImages] Found URL: ${urlMatch?.[0]}`);
+      }
     }
 
-    // 📷を含むメッセージを検索（画像付き投稿）
-    const photoMessages = messages.filter((m) =>
-      (m.text || "").includes("📷")
-    );
+    // 📷を含むメッセージを検索（JSON全体）
+    const photoMessages = messages.filter((m) => {
+      const rawJson = JSON.stringify(m);
+      return rawJson.includes("📷");
+    });
     functions.logger.info(
-      `[syncChatImages] Found ${photoMessages.length} messages containing 📷 emoji`
+      `[syncChatImages] Found ${photoMessages.length} messages containing 📷 (in JSON)`
     );
 
-    // Firebase Storage URLを含むメッセージを検索（📷なしの画像も含む）
-    const storageUrlMessages = messages.filter((m) =>
-      (m.text || "").includes("firebasestorage.googleapis.com")
-    );
+    // Firebase Storage URLを含むメッセージを検索（JSON全体）
+    const storageUrlMessages = messages.filter((m) => {
+      const rawJson = JSON.stringify(m);
+      return rawJson.includes("firebasestorage.googleapis.com");
+    });
     functions.logger.info(
       `[syncChatImages] Found ${storageUrlMessages.length} messages containing Firebase Storage URL in text`
     );
@@ -474,8 +485,9 @@ async function syncChatImagesHandler(
       cardUrlCount += urls.cardUrls.length;
       attachmentUrlCount += urls.attachmentUrls.length;
 
-      // メッセージテキストから利用者IDを確認
-      if (!text.includes(`ID${residentId}`)) continue;
+      // メッセージ全体（cardsV2含む）から利用者IDを確認
+      const rawJson = JSON.stringify(msg);
+      if (!rawJson.includes(`ID${residentId}`)) continue;
       matchedResidentMessages++;
 
       // メタデータ抽出
