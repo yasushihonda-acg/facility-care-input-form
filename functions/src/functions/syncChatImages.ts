@@ -669,7 +669,62 @@ async function syncChatImagesHandler(
     await Promise.all(deletePromises);
 
     functions.logger.info(
-      `[syncChatImages] Cleanup complete: ${deleted} orphan images deleted`
+      `[syncChatImages] Orphan cleanup complete: ${deleted} images deleted`
+    );
+
+    // 重複削除: 同じURLを持つドキュメントは最新1件のみ保持
+    let duplicatesDeleted = 0;
+    const duplicateDeletePromises: Promise<void>[] = [];
+
+    // URLごとにドキュメントをグループ化
+    const urlToDocsMap = new Map<string, Array<{
+      id: string;
+      ref: FirebaseFirestore.DocumentReference;
+      uploadedAt: string;
+    }>>();
+
+    for (const doc of existingSnapshot.docs) {
+      const data = doc.data();
+      const photoUrl = data.photoUrl;
+      const uploadedAt = data.uploadedAt || "";
+
+      // 無効なURL（既に削除予定）はスキップ
+      if (!photoUrl || !validPhotoUrls.has(photoUrl)) continue;
+
+      if (!urlToDocsMap.has(photoUrl)) {
+        urlToDocsMap.set(photoUrl, []);
+      }
+      urlToDocsMap.get(photoUrl)!.push({
+        id: doc.id,
+        ref: doc.ref,
+        uploadedAt,
+      });
+    }
+
+    // 重複があるURLを処理
+    for (const [url, docs] of urlToDocsMap.entries()) {
+      if (docs.length <= 1) continue;
+
+      // uploadedAtで降順ソート（最新が先頭）
+      docs.sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt));
+
+      // 最新以外を削除
+      for (let i = 1; i < docs.length; i++) {
+        duplicateDeletePromises.push(
+          docs[i].ref.delete().then(() => {
+            duplicatesDeleted++;
+            functions.logger.info(
+              `[syncChatImages] Deleted duplicate: ${docs[i].id}, URL: ${url.substring(0, 60)}...`
+            );
+          })
+        );
+      }
+    }
+
+    await Promise.all(duplicateDeletePromises);
+
+    functions.logger.info(
+      `[syncChatImages] Duplicate cleanup complete: ${duplicatesDeleted} duplicates deleted`
     );
 
     // 全ての画像を取得して返す
