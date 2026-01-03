@@ -140,45 +140,30 @@ function extractImageUrlsFromAttachments(attachments: any[]): string[] {
 
 /**
  * cardsV2から画像URLを抽出
- * 構造: cardsV2[].card.sections[].widgets[].image.imageUrl
+ * JSON.stringifyしてから正規表現でURLを抽出（構造に依存しない堅牢な方式）
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function extractImageUrlsFromCards(cardsV2: any[]): string[] {
-  const urls: string[] = [];
-  if (!cardsV2 || !Array.isArray(cardsV2)) return urls;
+  if (!cardsV2 || !Array.isArray(cardsV2) || cardsV2.length === 0) return [];
 
-  for (const cardWrapper of cardsV2) {
-    const card = cardWrapper?.card;
-    if (!card?.sections) continue;
+  try {
+    const cardString = JSON.stringify(cardsV2);
 
-    for (const section of card.sections) {
-      if (!section?.widgets) continue;
+    // Firebase Storage URLを抽出
+    const storageUrls = cardString.match(
+      /https?:\/\/firebasestorage\.googleapis\.com[^\s"'\\]*/g
+    ) || [];
 
-      for (const widget of section.widgets) {
-        // image.imageUrl をチェック
-        if (widget?.image?.imageUrl) {
-          urls.push(widget.image.imageUrl);
-        }
-        // decoratedText.icon.iconUrl もチェック
-        if (widget?.decoratedText?.icon?.iconUrl) {
-          urls.push(widget.decoratedText.icon.iconUrl);
-        }
-        // buttonList の中のボタンのリンクもチェック
-        if (widget?.buttonList?.buttons) {
-          for (const button of widget.buttonList.buttons) {
-            if (button?.onClick?.openLink?.url) {
-              const url = button.onClick.openLink.url;
-              if (url.includes("firebasestorage.googleapis.com")) {
-                urls.push(url);
-              }
-            }
-          }
-        }
-      }
-    }
+    // 一般的な画像URLも抽出（jpg, png, gif, webp）
+    const imageUrls = cardString.match(
+      /https?:\/\/[^\s"'\\]+\.(jpg|jpeg|png|gif|webp)/gi
+    ) || [];
+
+    // 重複を除去
+    return [...new Set([...storageUrls, ...imageUrls])];
+  } catch (e) {
+    return [];
   }
-
-  return urls;
 }
 
 /**
