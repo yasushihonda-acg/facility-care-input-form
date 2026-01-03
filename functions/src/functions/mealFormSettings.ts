@@ -163,6 +163,8 @@ async function updateMealFormSettingsHandler(
       webhookUrl: body.webhookUrl ?? currentSettings.webhookUrl ?? "",
       importantWebhookUrl: body.importantWebhookUrl ?? currentSettings.importantWebhookUrl ?? "",
       familyNotifyWebhookUrl: body.familyNotifyWebhookUrl ?? currentSettings.familyNotifyWebhookUrl ?? "",
+      recordCheckHour: body.recordCheckHour ?? currentSettings.recordCheckHour ?? 16,
+      hiddenSheets: body.hiddenSheets ?? currentSettings.hiddenSheets ?? [],
       updatedAt: new Date().toISOString(),
     };
 

@@ -11,9 +11,11 @@ import { ViewTabNavigation, ChartsTab, CorrelationTab, type ViewTabType } from '
 import { useSheetList, useSheetRecords } from '../hooks/usePlanData';
 import { useChatWithRecords } from '../hooks/useChatWithRecords';
 import { useDemoMode } from '../hooks/useDemoMode';
+import { useMealFormSettings } from '../hooks/useMealFormSettings';
 
 export function ViewPage() {
-  const { sheets, isLoading: sheetsLoading, error: sheetsError, lastSyncedAt: apiLastSyncedAt } = useSheetList();
+  const { sheets: allSheets, isLoading: sheetsLoading, error: sheetsError, lastSyncedAt: apiLastSyncedAt } = useSheetList();
+  const { settings } = useMealFormSettings();
   const isDemo = useDemoMode();
   const [selectedSheet, setSelectedSheet] = useState<string>('');
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
@@ -21,6 +23,12 @@ export function ViewPage() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [activeViewTab, setActiveViewTab] = useState<ViewTabType>('data');
   const tabsRef = useRef<HTMLDivElement>(null);
+
+  // 非表示シートをフィルタリング
+  const sheets = useMemo(() => {
+    const hiddenSheets = settings?.hiddenSheets ?? [];
+    return allSheets.filter((sheet) => !hiddenSheets.includes(sheet.sheetName));
+  }, [allSheets, settings?.hiddenSheets]);
 
   // AIチャットボット
   const {
