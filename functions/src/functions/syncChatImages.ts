@@ -292,8 +292,27 @@ async function syncChatImagesHandler(
       `[syncChatImages] Found ${photoMessages.length} messages containing 📷 emoji`
     );
 
-    // 📷メッセージの詳細をログ出力（最大10件）
-    for (let idx = 0; idx < Math.min(10, photoMessages.length); idx++) {
+    // Firebase Storage URLを含むメッセージを検索（📷なしの画像も含む）
+    const storageUrlMessages = messages.filter((m) =>
+      (m.text || "").includes("firebasestorage.googleapis.com")
+    );
+    functions.logger.info(
+      `[syncChatImages] Found ${storageUrlMessages.length} messages containing Firebase Storage URL`
+    );
+
+    // Firebase Storage URLメッセージの詳細をログ出力
+    for (let idx = 0; idx < Math.min(10, storageUrlMessages.length); idx++) {
+      const msg = storageUrlMessages[idx];
+      functions.logger.info(`[syncChatImages] Storage URL Message ${idx + 1}:`, {
+        name: msg.name,
+        createTime: msg.createTime,
+        textPreview: msg.text?.substring(0, 1000),
+        hasTargetId: (msg.text || "").includes(`ID${residentId}`),
+      });
+    }
+
+    // 📷メッセージの詳細もログ出力（最大5件）
+    for (let idx = 0; idx < Math.min(5, photoMessages.length); idx++) {
       const msg = photoMessages[idx];
       functions.logger.info(`[syncChatImages] Photo Message ${idx + 1}:`, {
         name: msg.name,
