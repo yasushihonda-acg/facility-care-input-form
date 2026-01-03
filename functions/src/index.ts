@@ -202,3 +202,4 @@ export {
 // =============================================================================
 
 export {getChatImages} from "./functions/getChatImages";
+export {syncChatImages} from "./functions/syncChatImages";

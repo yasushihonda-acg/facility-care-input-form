@@ -48,8 +48,10 @@ async function getCarePhotosHandler(
 
     // クエリパラメータ取得
     const residentId = req.query.residentId as string;
-    const date = req.query.date as string;
+    const date = req.query.date as string | undefined;
     const mealTime = req.query.mealTime as string | undefined;
+    const source = req.query.source as string | undefined;
+    const limitStr = req.query.limit as string | undefined;
 
     // バリデーション
     if (!residentId) {
@@ -65,21 +67,8 @@ async function getCarePhotosHandler(
       return;
     }
 
-    if (!date) {
-      const response: ApiResponse<null> = {
-        success: false,
-        error: {
-          code: ErrorCodes.MISSING_REQUIRED_FIELD,
-          message: "date is required (format: YYYY-MM-DD)",
-        },
-        timestamp,
-      };
-      res.status(400).json(response);
-      return;
-    }
-
-    // 日付形式バリデーション
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    // 日付形式バリデーション（指定された場合のみ）
+    if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       const response: ApiResponse<null> = {
         success: false,
         error: {
@@ -92,14 +81,18 @@ async function getCarePhotosHandler(
       return;
     }
 
+    const limit = limitStr ? parseInt(limitStr, 10) : 200;
+
     functions.logger.info("getCarePhotos started", {
       residentId,
       date,
       mealTime,
+      source,
+      limit,
     });
 
     // Firestoreから写真を取得
-    const photos = await getCarePhotosFromStorage(residentId, date, mealTime);
+    const photos = await getCarePhotosFromStorage(residentId, date, mealTime, source, limit);
 
     const responseData: GetCarePhotosResponse = {
       photos: photos.map((photo) => ({
@@ -116,6 +109,7 @@ async function getCarePhotosHandler(
         staffName: photo.staffName,
         uploadedAt: photo.uploadedAt,
         postId: photo.postId,
+        source: photo.source,
       })),
     };
 
