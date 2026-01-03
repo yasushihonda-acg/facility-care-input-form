@@ -336,21 +336,28 @@ async function syncChatImagesHandler(
       `[syncChatImages] Found ${matchingMessages.length} messages containing ${targetIdPattern} (in JSON)`
     );
 
-    // マッチしたメッセージの詳細を出力（最大3件）
-    for (let idx = 0; idx < Math.min(3, matchingMessages.length); idx++) {
+    // IDメッセージのスレッド情報を収集
+    const idThreads = new Set<string>();
+    matchingMessages.forEach((m) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const threadName = (m as any).thread?.name;
+      if (threadName) idThreads.add(threadName);
+    });
+    functions.logger.info(
+      `[syncChatImages] ID messages span ${idThreads.size} unique threads`
+    );
+
+    // マッチしたメッセージの詳細を出力（最大5件、スレッド情報含む）
+    for (let idx = 0; idx < Math.min(5, matchingMessages.length); idx++) {
       const msg = matchingMessages[idx];
       const rawJson = JSON.stringify(msg);
       const hasStorageUrl = rawJson.includes("firebasestorage.googleapis.com");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const threadName = (msg as any).thread?.name || "no-thread";
       functions.logger.info(
-        `[syncChatImages] Matched ${idx + 1}: hasStorageUrl=${hasStorageUrl}, ` +
-        `cardsV2=${msg.cardsV2?.length || 0}, att=${msg.attachment?.length || 0}, ` +
-        `text=${(msg.text || "").substring(0, 100)}`
+        `[syncChatImages] ID-Msg ${idx + 1}: thread=${threadName}, ` +
+        `hasUrl=${hasStorageUrl}, time=${msg.createTime}`
       );
-      // Firebase Storage URLを含む場合、JSONの一部を出力
-      if (hasStorageUrl) {
-        const urlMatch = rawJson.match(/https:\/\/firebasestorage\.googleapis\.com[^"'\s]*/);
-        functions.logger.info(`[syncChatImages] Found URL: ${urlMatch?.[0]}`);
-      }
     }
 
     // 📷を含むメッセージを検索（JSON全体）
@@ -368,8 +375,40 @@ async function syncChatImagesHandler(
       return rawJson.includes("firebasestorage.googleapis.com");
     });
     functions.logger.info(
-      `[syncChatImages] Found ${storageUrlMessages.length} messages containing Firebase Storage URL in text`
+      `[syncChatImages] Found ${storageUrlMessages.length} messages containing Firebase Storage URL`
     );
+
+    // Storage URLメッセージのスレッド情報を収集
+    const urlThreads = new Set<string>();
+    storageUrlMessages.forEach((m) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const threadName = (m as any).thread?.name;
+      if (threadName) urlThreads.add(threadName);
+    });
+    functions.logger.info(
+      `[syncChatImages] URL messages span ${urlThreads.size} unique threads`
+    );
+
+    // スレッドの重複を確認（IDメッセージとURLメッセージで共通のスレッド）
+    const commonThreads = [...idThreads].filter((t) => urlThreads.has(t));
+    functions.logger.info(
+      `[syncChatImages] Common threads (ID + URL): ${commonThreads.length}`
+    );
+
+    // Storage URLメッセージの詳細をログ出力（最大5件、スレッド情報含む）
+    for (let idx = 0; idx < Math.min(5, storageUrlMessages.length); idx++) {
+      const msg = storageUrlMessages[idx];
+      const rawJson = JSON.stringify(msg);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const threadName = (msg as any).thread?.name || "no-thread";
+      const hasId = rawJson.includes(`ID${residentId}`);
+      const urlMatch = rawJson.match(/https:\/\/firebasestorage\.googleapis\.com[^"'\s]*/);
+      functions.logger.info(
+        `[syncChatImages] URL-Msg ${idx + 1}: thread=${threadName}, ` +
+        `hasId=${hasId}, time=${msg.createTime}, ` +
+        `url=${urlMatch?.[0]?.substring(0, 60)}...`
+      );
+    }
 
     // cardsV2を持つメッセージを検索（カード形式の投稿）
     const cardMessages = messages.filter((m) =>
