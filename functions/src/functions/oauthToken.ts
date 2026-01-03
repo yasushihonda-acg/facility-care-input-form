@@ -292,13 +292,13 @@ export const getOAuthUrlHandler = async (
       "https://www.googleapis.com/auth/chat.messages.readonly",
     ];
 
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+    const authUrl = "https://accounts.google.com/o/oauth2/v2/auth?" +
       `client_id=${encodeURIComponent(clientId)}` +
       `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-      `&response_type=code` +
+      "&response_type=code" +
       `&scope=${encodeURIComponent(scopes.join(" "))}` +
-      `&access_type=offline` +
-      `&prompt=consent`;
+      "&access_type=offline" +
+      "&prompt=consent";
 
     res.status(200).json({
       success: true,
