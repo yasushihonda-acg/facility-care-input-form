@@ -313,6 +313,10 @@ async function syncChatImagesHandler(
     let skipped = 0;
     const newPhotos: CarePhoto[] = [];
 
+    // 有効なURL（IDスレッドに属する画像）を収集
+    // クリーンアップ時にこのセットに含まれないURLは削除対象
+    const validPhotoUrls = new Set<string>();
+
     // デバッグ用カウンター
     let messagesWithAnyUrls = 0;
     let storageUrlCount = 0;
@@ -569,6 +573,9 @@ async function syncChatImagesHandler(
         const imageUrl = imageUrls[i];
         const messageId = `${msg.name || "unknown"}_img${i}`;
 
+        // 有効なURLとしてマーク（クリーンアップ時に保持対象）
+        validPhotoUrls.add(imageUrl);
+
         // 既に保存済みならスキップ（messageId または URL で重複チェック）
         if (existingMessageIds.has(messageId) || existingPhotoUrls.has(imageUrl)) {
           skipped++;
@@ -631,6 +638,39 @@ async function syncChatImagesHandler(
         );
       }
     }
+
+    // クリーンアップ: IDスレッドに属さない既存画像を削除
+    // validPhotoUrls = 今回の同期で有効と判断されたURL（IDスレッドに属するもののみ）
+    let deleted = 0;
+    const deletePromises: Promise<void>[] = [];
+
+    functions.logger.info(
+      `[syncChatImages] Cleanup check: ${existingSnapshot.docs.length} existing, ${validPhotoUrls.size} valid URLs`
+    );
+
+    for (const doc of existingSnapshot.docs) {
+      const data = doc.data();
+      const photoUrl = data.photoUrl;
+
+      // 有効なURLセットに含まれていない場合は削除
+      if (photoUrl && !validPhotoUrls.has(photoUrl)) {
+        deletePromises.push(
+          doc.ref.delete().then(() => {
+            deleted++;
+            functions.logger.info(
+              `[syncChatImages] Deleted orphan image: ${doc.id}, URL: ${photoUrl.substring(0, 60)}...`
+            );
+          })
+        );
+      }
+    }
+
+    // 並列で削除を実行
+    await Promise.all(deletePromises);
+
+    functions.logger.info(
+      `[syncChatImages] Cleanup complete: ${deleted} orphan images deleted`
+    );
 
     // 全ての画像を取得して返す
     const allPhotosSnapshot = await db
