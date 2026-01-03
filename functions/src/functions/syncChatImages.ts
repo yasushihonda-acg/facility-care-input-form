@@ -184,18 +184,40 @@ async function syncChatImagesHandler(
       limit
     );
 
+    functions.logger.info(`[syncChatImages] Fetched ${messages.length} messages from Chat API`);
+
     let synced = 0;
     let skipped = 0;
     const newPhotos: CarePhoto[] = [];
 
+    // デバッグ用カウンター
+    let noAttachmentCount = 0;
+    let noResidentIdMatchCount = 0;
+    let imageAttachmentCount = 0;
+    const extractedResidentIds: string[] = [];
+
     // 各メッセージを処理
     for (const msg of messages) {
       // 添付ファイルがない場合はスキップ
-      if (!msg.attachment || msg.attachment.length === 0) continue;
+      if (!msg.attachment || msg.attachment.length === 0) {
+        noAttachmentCount++;
+        continue;
+      }
 
       // メッセージテキストから利用者IDを確認
       const msgResidentId = msg.text ? extractResidentId(msg.text) : undefined;
-      if (!msgResidentId || msgResidentId !== residentId) continue;
+
+      // デバッグ: 最初の10件の抽出結果をログ
+      if (extractedResidentIds.length < 10) {
+        extractedResidentIds.push(
+          `text="${(msg.text || "").substring(0, 50)}..." → extracted="${msgResidentId || "null"}"`
+        );
+      }
+
+      if (!msgResidentId || msgResidentId !== residentId) {
+        noResidentIdMatchCount++;
+        continue;
+      }
 
       // メタデータ抽出
       const staffName = msg.text ? extractStaffName(msg.text) : undefined;
@@ -206,6 +228,8 @@ async function syncChatImagesHandler(
       for (const attachment of msg.attachment) {
         // 画像以外はスキップ
         if (!attachment.contentType?.startsWith("image/")) continue;
+
+        imageAttachmentCount++;
 
         const messageId = msg.name || `msg_${Date.now()}`;
 
@@ -281,6 +305,17 @@ async function syncChatImagesHandler(
     const allPhotos = allPhotosSnapshot.docs.map(
       (doc) => doc.data() as CarePhoto
     );
+
+    // デバッグサマリー
+    functions.logger.info("[syncChatImages] Debug Summary:", {
+      totalMessages: messages.length,
+      noAttachmentCount,
+      messagesWithAttachments: messages.length - noAttachmentCount,
+      noResidentIdMatchCount,
+      imageAttachmentCount,
+      targetResidentId: residentId,
+      sampleExtractedIds: extractedResidentIds,
+    });
 
     functions.logger.info(
       `[syncChatImages] Sync complete: ${synced} synced, ${skipped} skipped`
