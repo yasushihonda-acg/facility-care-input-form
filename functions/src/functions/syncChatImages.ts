@@ -315,7 +315,7 @@ async function syncChatImagesHandler(
 
     let synced = 0;
     let updated = 0; // 既存画像のメタデータ更新カウント
-    let skipped = 0;
+    const skipped = 0; // 現在は更新ロジックのためスキップなし
     const newPhotos: CarePhoto[] = [];
 
     // 有効なURL（IDスレッドに属する画像）を収集
