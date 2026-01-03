@@ -335,22 +335,13 @@ async function syncChatImagesHandler(
       `[syncChatImages] Found ${matchingMessages.length} messages containing ${targetIdPattern}`
     );
 
-    // マッチしたメッセージの詳細を出力（最大20件）
-    for (let idx = 0; idx < Math.min(20, matchingMessages.length); idx++) {
+    // マッチしたメッセージの詳細を出力（最大5件、テキスト内容を表示）
+    for (let idx = 0; idx < Math.min(5, matchingMessages.length); idx++) {
       const msg = matchingMessages[idx];
-      const cardUrls = extractImageUrlsFromCards(msg.cardsV2 || []);
-      functions.logger.info(`[syncChatImages] Matched Message ${idx + 1}:`, {
-        name: msg.name,
-        createTime: msg.createTime,
-        textLength: msg.text?.length || 0,
-        textPreview: msg.text?.substring(0, 600),
-        hasCardsV2: !!(msg.cardsV2 && msg.cardsV2.length > 0),
-        cardsV2Count: msg.cardsV2?.length || 0,
-        cardUrls,
-        hasAttachment: !!(msg.attachment && msg.attachment.length > 0),
-        attachmentCount: msg.attachment?.length || 0,
-        allKeys: Object.keys(msg),
-      });
+      const textPreview = msg.text?.substring(0, 800) || "(no text)";
+      functions.logger.info(
+        `[syncChatImages] Matched ${idx + 1} text: ${textPreview}`
+      );
     }
 
     // 📷を含むメッセージを検索（画像付き投稿）
