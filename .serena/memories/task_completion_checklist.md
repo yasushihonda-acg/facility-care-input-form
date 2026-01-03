@@ -97,21 +97,42 @@ firebase deploy --only functions
 
 ## Git操作 (必須)
 
-> **重要**: 作業完了時は必ずコミット＆pushすること
+> **重要**: mainへ直接pushしない。featureブランチ→PR→マージ
 
+### PRフロー（定型）
 ```bash
-# 1. 変更確認
-git status
+# 1. featureブランチ作成
+git checkout -b <type>/<short-description>
+# 例: feat/add-feature, fix/bug-name, docs/update-readme
 
 # 2. コミット
 git add -A
 git commit -m "feat/fix/docs: 変更内容"
 
-# 3. Push
-git push origin main
+# 3. Push & PR作成
+git push -u origin <branch-name>
+gh pr create --title "タイトル" --body "## Summary\n- 変更点\n\n## Test plan\n- [x] テスト内容"
 
-# 4. CI/CD確認
+# 4. PR内容を表示（レビュー用）
+gh pr view <number>
+gh pr diff <number>
+
+# 5. ユーザー承認後にマージ
+gh pr merge <number> --squash --delete-branch
+
+# 6. mainに戻る
+git checkout main && git pull
+
+# 7. CI/CD確認
 gh run list --limit 3
+```
+
+### PRレビュー時の出力テンプレート
+```
+PR作成後、以下を提示：
+1. PR URL
+2. 差分内容（gh pr diff）
+3. 「問題なければマージしますか？」と明確に確認
 ```
 
 ## ドキュメント更新
