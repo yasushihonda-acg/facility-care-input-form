@@ -48,3 +48,30 @@ for (const page of stickyPages) {
     expect(position).toBe('sticky');
   });
 }
+
+// ViewPageでスクロール後もヘッダーが画面上部に固定されていることを確認
+test('ViewPage: スクロール後もヘッダーが画面上部に固定されている', async ({ page }) => {
+  await page.goto(`${BASE_URL}/view`);
+  await page.waitForLoadState('networkidle');
+
+  const header = page.locator('header').first();
+  await expect(header).toBeVisible();
+
+  // スクロール前のヘッダー位置を記録
+  const initialBox = await header.boundingBox();
+  expect(initialBox).not.toBeNull();
+
+  // メインコンテンツ内でスクロール（Layoutのmain要素）
+  await page.evaluate(() => {
+    const main = document.querySelector('main');
+    if (main) main.scrollBy(0, 500);
+  });
+  await page.waitForTimeout(300);
+
+  // スクロール後のヘッダー位置を確認
+  const afterScrollBox = await header.boundingBox();
+  expect(afterScrollBox).not.toBeNull();
+
+  // ヘッダーのy座標が変わっていない（画面上部に固定されている）
+  expect(afterScrollBox!.y).toBe(initialBox!.y);
+});

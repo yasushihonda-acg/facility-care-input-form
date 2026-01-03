@@ -158,7 +158,7 @@ export function ViewPage() {
   const selectedSheetInfo = sheets.find(s => s.sheetName === selectedSheet);
 
   return (
-    <Layout>
+    <Layout stickyHeader>
       <Header title="介護記録ビューア" sticky />
 
       {/* エラー表示 */}
