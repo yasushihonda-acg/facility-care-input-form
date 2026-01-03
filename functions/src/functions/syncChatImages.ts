@@ -23,6 +23,7 @@ const RESIDENT_ID_PATTERN = /\(ID(\d+)\)/;
 const RESIDENT_ID_PATTERN_ALT = /ID(\d+)/;
 
 // Firebase Storage URLパターン（shiota-test-9またはfacility-care-input-form）
+// eslint-disable-next-line max-len
 const FIREBASE_STORAGE_URL_PATTERN = /https:\/\/firebasestorage\.googleapis\.com\/v0\/b\/[^/]+\/o\/[^?\s]+\?alt=media(?:&token=[^?\s]+)?/g;
 
 // 投稿IDパターン
