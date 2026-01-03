@@ -51,6 +51,7 @@ interface SyncChatImagesRequest {
 
 interface SyncResult {
   synced: number;
+  updated: number; // 既存画像のメタデータ更新件数
   skipped: number;
   total: number;
   photos: CarePhoto[];
@@ -282,16 +283,19 @@ async function syncChatImagesHandler(
       .get();
 
     const existingMessageIds = new Set<string>();
-    const existingPhotoUrls = new Set<string>();
+    // URL → ドキュメント参照のマップ（メタデータ更新用）
+    const existingPhotoUrlsMap = new Map<string, FirebaseFirestore.DocumentReference>();
     existingSnapshot.docs.forEach((doc) => {
       const data = doc.data();
       if (data.chatMessageId) {
         existingMessageIds.add(data.chatMessageId);
       }
       if (data.photoUrl) {
-        existingPhotoUrls.add(data.photoUrl);
+        existingPhotoUrlsMap.set(data.photoUrl, doc.ref);
       }
     });
+    // 互換性のためSetも維持
+    const existingPhotoUrls = new Set(existingPhotoUrlsMap.keys());
 
     functions.logger.info(
       `[syncChatImages] Found ${existingMessageIds.size} existing chat images, ${existingPhotoUrls.size} unique URLs`
@@ -310,6 +314,7 @@ async function syncChatImagesHandler(
     functions.logger.info(`[syncChatImages] Fetched ${messages.length} messages from Chat API`);
 
     let synced = 0;
+    let updated = 0; // 既存画像のメタデータ更新カウント
     let skipped = 0;
     const newPhotos: CarePhoto[] = [];
 
@@ -617,22 +622,36 @@ async function syncChatImagesHandler(
         // 有効なURLとしてマーク（クリーンアップ時に保持対象）
         validPhotoUrls.add(imageUrl);
 
-        // 既に保存済みならスキップ（messageId または URL で重複チェック）
-        if (existingMessageIds.has(messageId) || existingPhotoUrls.has(imageUrl)) {
-          skipped++;
+        // 親メッセージの日時を使用（スレッド開始時刻 = 記録日時）
+        const date = new Date(parentCreateTime || msg.createTime || Date.now());
+        const dateStr = date.toISOString().split("T")[0];
+
+        // 既存画像がある場合はメタデータを更新
+        const existingDocRef = existingPhotoUrlsMap.get(imageUrl);
+        if (existingDocRef) {
+          // メタデータのみ更新（親メッセージから取得した情報で上書き）
+          await existingDocRef.update({
+            date: dateStr,
+            staffName,
+            postId,
+            chatTags: tags,
+            chatContent: parentText.substring(0, 500),
+            chatMessageId: messageId,
+            updatedAt: new Date().toISOString(), // 更新日時を記録
+          });
+          updated++;
+          functions.logger.info(
+            `[syncChatImages] Updated metadata: ${existingDocRef.id}, date=${dateStr}, staffName=${staffName}`
+          );
           continue;
         }
 
         // 同一セッション内での重複も防ぐ（URLをセットに追加）
         existingPhotoUrls.add(imageUrl);
 
-        // Firestoreにメタデータを保存
+        // Firestoreにメタデータを保存（新規）
         const photoRef = db.collection("care_photos").doc();
         const photoId = photoRef.id;
-
-        // 親メッセージの日時を使用（スレッド開始時刻 = 記録日時）
-        const date = new Date(parentCreateTime || msg.createTime || Date.now());
-        const dateStr = date.toISOString().split("T")[0];
 
         // URLからファイル名を抽出（エンコードされたパスをデコード）
         let fileName = `chat_${photoId}.jpg`;
@@ -814,11 +833,12 @@ async function syncChatImagesHandler(
     });
 
     functions.logger.info(
-      `[syncChatImages] Sync complete: ${synced} synced, ${skipped} skipped`
+      `[syncChatImages] Sync complete: ${synced} synced, ${updated} updated, ${skipped} skipped`
     );
 
     const result: SyncResult = {
       synced,
+      updated,
       skipped,
       total: allPhotos.length,
       photos: allPhotos,
