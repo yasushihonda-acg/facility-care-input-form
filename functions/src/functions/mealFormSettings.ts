@@ -165,6 +165,7 @@ async function updateMealFormSettingsHandler(
       familyNotifyWebhookUrl: body.familyNotifyWebhookUrl ?? currentSettings.familyNotifyWebhookUrl ?? "",
       recordCheckHour: body.recordCheckHour ?? currentSettings.recordCheckHour ?? 16,
       hiddenSheets: body.hiddenSheets ?? currentSettings.hiddenSheets ?? [],
+      chatImageSettings: body.chatImageSettings ?? currentSettings.chatImageSettings,
       updatedAt: new Date().toISOString(),
     };
 
