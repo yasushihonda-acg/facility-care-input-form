@@ -18,6 +18,8 @@ import {
   SERVING_METHODS,
   ITEM_UNITS,
   REMAINING_HANDLING_INSTRUCTION_OPTIONS,
+  DISCARD_CONDITION_SUGGESTIONS,
+  STORE_CONDITION_SUGGESTIONS,
   formatDate,
   migrateCategory,
 } from '../../types/careItem';
@@ -26,6 +28,7 @@ import type {
   StorageMethod,
   ServingMethod,
   RemainingHandlingInstruction,
+  RemainingHandlingCondition,
   ServingSchedule,
 } from '../../types/careItem';
 import type { CarePreset } from '../../types/family';
@@ -54,6 +57,8 @@ interface EditFormData {
   noteToStaff: string;
   // Phase 33: 残った場合の処置指示
   remainingHandlingInstruction: RemainingHandlingInstruction;
+  /** Phase 54: 処置指示の条件 */
+  remainingHandlingConditions: RemainingHandlingCondition[] | undefined;
   // Phase 36: 構造化スケジュール
   servingSchedule: ServingSchedule | undefined;
 }
@@ -95,6 +100,7 @@ export function ItemEditPage() {
     plannedServeDate: '',
     noteToStaff: '',
     remainingHandlingInstruction: 'none',
+    remainingHandlingConditions: undefined,
     servingSchedule: undefined,
   });
 
@@ -126,6 +132,7 @@ export function ItemEditPage() {
         plannedServeDate: item.plannedServeDate || '',
         noteToStaff: item.noteToStaff || '',
         remainingHandlingInstruction: item.remainingHandlingInstruction || 'none',
+        remainingHandlingConditions: item.remainingHandlingConditions,
         // Phase 36: 構造化スケジュール読み込み
         servingSchedule: item.servingSchedule,
       });
@@ -271,6 +278,8 @@ export function ItemEditPage() {
           noteToStaff: formData.noteToStaff || undefined,
           // Phase 33: 残った場合の処置指示
           remainingHandlingInstruction: formData.remainingHandlingInstruction,
+          // Phase 54: 処置指示の条件
+          remainingHandlingConditions: formData.remainingHandlingConditions,
           // Phase 36: 構造化スケジュール
           servingSchedule: formData.servingSchedule,
         },
@@ -647,29 +656,101 @@ export function ItemEditPage() {
             残った場合の処置指示
           </label>
           <div className="space-y-2">
-            {REMAINING_HANDLING_INSTRUCTION_OPTIONS.map((option) => (
-              <label
-                key={option.value}
-                className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer border transition-colors ${
-                  formData.remainingHandlingInstruction === option.value
-                    ? 'border-primary bg-primary/5'
-                    : 'border-gray-200 hover:bg-gray-50'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="remainingHandlingInstruction"
-                  value={option.value}
-                  checked={formData.remainingHandlingInstruction === option.value}
-                  onChange={handleChange}
-                  className="mt-1 w-4 h-4"
-                />
-                <div>
-                  <span className="font-medium text-sm">{option.label}</span>
-                  <p className="text-xs text-gray-500 mt-0.5">{option.description}</p>
+            {REMAINING_HANDLING_INSTRUCTION_OPTIONS.map((option) => {
+              const isSelected = formData.remainingHandlingInstruction === option.value;
+              const showConditions = isSelected && (option.value === 'discarded' || option.value === 'stored');
+              const suggestions = option.value === 'discarded' ? DISCARD_CONDITION_SUGGESTIONS : STORE_CONDITION_SUGGESTIONS;
+              const conditions = formData.remainingHandlingConditions || [];
+
+              return (
+                <div key={option.value}>
+                  <label
+                    className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer border transition-colors ${
+                      isSelected
+                        ? 'border-primary bg-primary/5'
+                        : 'border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="remainingHandlingInstruction"
+                      value={option.value}
+                      checked={isSelected}
+                      onChange={(e) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          remainingHandlingInstruction: e.target.value as RemainingHandlingInstruction,
+                          remainingHandlingConditions: undefined,
+                        }));
+                      }}
+                      className="mt-1 w-4 h-4"
+                    />
+                    <div>
+                      <span className="font-medium text-sm">{option.label}</span>
+                      <p className="text-xs text-gray-500 mt-0.5">{option.description}</p>
+                    </div>
+                  </label>
+
+                  {/* 条件入力UI（破棄/保存が選択されている場合のみ表示） */}
+                  {showConditions && (
+                    <div className="ml-7 mt-2 pl-4 border-l-2 border-gray-200">
+                      <div className="text-xs text-gray-600 mb-2">条件を追加（任意）:</div>
+                      {conditions.map((cond, index) => (
+                        <div key={index} className="flex items-center gap-2 mb-2">
+                          <input
+                            type="text"
+                            value={cond.condition}
+                            onChange={(e) => {
+                              const newConditions = [...conditions];
+                              newConditions[index] = { condition: e.target.value };
+                              setFormData((prev) => ({
+                                ...prev,
+                                remainingHandlingConditions: newConditions as RemainingHandlingCondition[],
+                              }));
+                            }}
+                            placeholder="条件を入力..."
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            list={`condition-suggestions-${option.value}`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newConditions = conditions.filter((_, i) => i !== index);
+                              setFormData((prev) => ({
+                                ...prev,
+                                remainingHandlingConditions: newConditions.length > 0 ? newConditions as RemainingHandlingCondition[] : undefined,
+                              }));
+                            }}
+                            className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                            title="条件を削除"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                      <datalist id={`condition-suggestions-${option.value}`}>
+                        {suggestions.map((s) => (
+                          <option key={s} value={s} />
+                        ))}
+                      </datalist>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newConditions = [...conditions, { condition: '' }];
+                          setFormData((prev) => ({
+                            ...prev,
+                            remainingHandlingConditions: newConditions as RemainingHandlingCondition[],
+                          }));
+                        }}
+                        className="text-sm text-primary hover:text-primary/80 flex items-center gap-1"
+                      >
+                        <span>＋</span> 条件を追加
+                      </button>
+                    </div>
+                  )}
                 </div>
-              </label>
-            ))}
+              );
+            })}
           </div>
           <p className="mt-2 text-xs text-gray-500">
             ※ 指示がある場合、スタッフは指示通りの対応のみ選択可能になります

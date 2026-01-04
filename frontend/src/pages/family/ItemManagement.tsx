@@ -27,6 +27,7 @@ import {
   getExpirationDisplayText,
   getDaysUntilExpiration,
   STORAGE_METHOD_LABELS,
+  formatRemainingHandlingWithConditions,
 } from '../../types/careItem';
 import type { CareItem } from '../../types/careItem';
 import { ExpirationAlert } from '../../components/family/ExpirationAlert';
@@ -706,8 +707,7 @@ function ItemDetailModal({ item, onClose, onEdit, onDelete }: {
                 <span className="text-lg">🍽️</span>
                 <span className="text-gray-500">残った場合</span>
                 <span className="ml-auto font-medium">
-                  {item.remainingHandlingInstruction === 'stored' ? '保存' :
-                   item.remainingHandlingInstruction === 'discarded' ? '破棄' : '次回確認'}
+                  {formatRemainingHandlingWithConditions(item.remainingHandlingInstruction, item.remainingHandlingConditions)}
                 </span>
               </div>
             )}

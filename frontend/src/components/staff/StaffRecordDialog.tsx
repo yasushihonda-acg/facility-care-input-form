@@ -9,7 +9,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { CareItem } from '../../types/careItem';
 import type { RemainingHandling } from '../../types/consumptionLog';
-import { getCategoryIcon, migrateCategory, getRemainingHandlingInstructionLabel } from '../../types/careItem';
+import { getCategoryIcon, migrateCategory, formatRemainingHandlingWithConditions } from '../../types/careItem';
 import { determineConsumptionStatus, REMAINING_HANDLING_OPTIONS } from '../../types/consumptionLog';
 import { useRecordConsumptionLog } from '../../hooks/useConsumptionLogs';
 import { submitMealRecord, uploadCareImage, submitHydrationRecord } from '../../api';
@@ -634,7 +634,7 @@ export function StaffRecordDialog({
                     <div className="mt-1 flex items-center gap-2">
                       <span className="text-lg">📌</span>
                       <span className="font-semibold text-amber-800">
-                        {getRemainingHandlingInstructionLabel(item.remainingHandlingInstruction)}
+                        {formatRemainingHandlingWithConditions(item.remainingHandlingInstruction, item.remainingHandlingConditions)}
                       </span>
                     </div>
                   </div>
@@ -759,7 +759,7 @@ export function StaffRecordDialog({
                   <div className="mt-1 flex items-center gap-2">
                     <span className="text-lg">📌</span>
                     <span className="font-semibold text-amber-800">
-                      {getRemainingHandlingInstructionLabel(item.remainingHandlingInstruction)}
+                      {formatRemainingHandlingWithConditions(item.remainingHandlingInstruction, item.remainingHandlingConditions)}
                     </span>
                   </div>
                 </div>
