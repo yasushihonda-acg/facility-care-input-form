@@ -194,6 +194,38 @@ UI表示（ViewPage/HomePageフッター）:
 - extractReadableTextFromCards(): 読みやすいテキストのみ抽出
 - needsReauthフラグ: 認証エラー時のみtrue、成功時リセット
 
+## Phase 53: OAuth永続化（2026-01-04）
+
+**重要設計判断**: 管理者が1回認証すれば、全ユーザーがChat画像を閲覧・同期可能
+
+### 仕組み
+1. 管理者（yasushi.honda@aozora-cg.com）が /settings で「Googleアカウントで認証」
+2. 認可コードをCloud Function（exchangeOAuthCode）で交換
+3. リフレッシュトークンをFirestore（oauth_tokens/chat_sync）に保存
+4. 任意のユーザーがChat画像同期時、バックエンドで保存済みトークンを使用
+
+### Firestoreコレクション
+```
+oauth_tokens/
+└── chat_sync
+    ├── refreshToken: string   # Google OAuthリフレッシュトークン
+    ├── accessToken: string    # 最新のアクセストークン
+    ├── expiryDate: number     # 有効期限
+    └── updatedAt: timestamp   # 最終更新日時
+```
+
+### 関連ファイル
+| ファイル | 役割 |
+|----------|------|
+| `functions/src/functions/oauthToken.ts` | トークン交換・保存・取得API |
+| `frontend/src/pages/SettingsPage.tsx` | 管理者認証UI |
+| `frontend/src/hooks/useSyncedChatImages.ts` | 同期フック（トークン不要） |
+
+### GitHub Secrets（CI/CD用）
+- GOOGLE_OAUTH_CLIENT_ID
+- GOOGLE_OAUTH_CLIENT_SECRET
+- GOOGLE_OAUTH_REDIRECT_URI
+
 ## E2Eテスト
 444件定義（Phase 52まで）
 

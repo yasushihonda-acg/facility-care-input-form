@@ -803,6 +803,14 @@ async function syncChatImagesHandler(
           continue;
         }
 
+        // 同一セッション内での重複チェック（既に今回のセッションで保存済みならスキップ）
+        if (existingPhotoUrls.has(imageUrl)) {
+          functions.logger.info(
+            `[syncChatImages] Skipping duplicate in session: ${imageUrl.substring(0, 60)}...`
+          );
+          continue;
+        }
+
         // 同一セッション内での重複も防ぐ（URLをセットに追加）
         existingPhotoUrls.add(imageUrl);
 
@@ -858,37 +866,15 @@ async function syncChatImagesHandler(
     }
 
     // クリーンアップ: IDスレッドに属さない既存画像を削除
+    // 注意: 古いメッセージをフェッチしない場合、古い写真が誤って削除される問題があるため
+    // このロジックは無効化。重複削除のみ実行する。
     // validPhotoUrls = 今回の同期で有効と判断されたURL（IDスレッドに属するもののみ）
-    let deleted = 0;
-    const deletePromises: Promise<void>[] = [];
-
     functions.logger.info(
-      `[syncChatImages] Cleanup check: ${existingSnapshot.docs.length} existing, ${validPhotoUrls.size} valid URLs`
+      "[syncChatImages] Orphan cleanup DISABLED: " +
+      `${existingSnapshot.docs.length} existing, ${validPhotoUrls.size} valid URLs`
     );
-
-    for (const doc of existingSnapshot.docs) {
-      const data = doc.data();
-      const photoUrl = data.photoUrl;
-
-      // 有効なURLセットに含まれていない場合は削除
-      if (photoUrl && !validPhotoUrls.has(photoUrl)) {
-        deletePromises.push(
-          doc.ref.delete().then(() => {
-            deleted++;
-            functions.logger.info(
-              `[syncChatImages] Deleted orphan image: ${doc.id}, URL: ${photoUrl.substring(0, 60)}...`
-            );
-          })
-        );
-      }
-    }
-
-    // 並列で削除を実行
-    await Promise.all(deletePromises);
-
-    functions.logger.info(
-      `[syncChatImages] Orphan cleanup complete: ${deleted} images deleted`
-    );
+    // 孤児削除は無効化（古いデータが誤って削除されるのを防ぐ）
+    // 手動クリーンアップが必要な場合は別途対応
 
     // 重複削除: 同じURLを持つドキュメントは最新1件のみ保持
     let duplicatesDeleted = 0;
