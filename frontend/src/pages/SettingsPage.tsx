@@ -5,6 +5,7 @@ import type { UpdateMealFormSettingsRequest } from '../types';
 import {
   testWebhook,
   syncPlanData,
+  syncChatImages,
   checkOAuthTokenStatus,
   exchangeOAuthCodeForToken,
   getOAuthAuthorizationUrl,
@@ -74,6 +75,10 @@ export function SettingsPage() {
   // 同期状態
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // Chat画像同期状態
+  const [isChatImageSyncing, setIsChatImageSyncing] = useState(false);
+  const [chatImageSyncResult, setChatImageSyncResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const [localSettings, setLocalSettings] = useState<UpdateMealFormSettingsRequest>({
     defaultFacility: '',
@@ -281,6 +286,60 @@ export function SettingsPage() {
       });
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  // Chat画像全件同期
+  const handleChatImageFullSync = async () => {
+    if (isChatImageSyncing) return;
+
+    const spaceId = localSettings.chatImageSettings?.spaceId;
+    const residentId = localSettings.chatImageSettings?.residentId;
+
+    if (!spaceId || !residentId) {
+      setChatImageSyncResult({
+        type: 'error',
+        message: '対象利用者IDとスペースIDを設定してください',
+      });
+      return;
+    }
+
+    const confirmed = window.confirm(
+      'Chat画像全件同期を実行しますか？\n\n' +
+      '・2024年以降の全メッセージを取得します\n' +
+      '・存在しない画像は削除されます\n' +
+      '・処理に数分かかる場合があります'
+    );
+
+    if (!confirmed) return;
+
+    setIsChatImageSyncing(true);
+    setChatImageSyncResult(null);
+
+    try {
+      const result = await syncChatImages({
+        spaceId,
+        residentId,
+        fullSync: true,
+      });
+      if (result.success && result.data) {
+        setChatImageSyncResult({
+          type: 'success',
+          message: `同期完了: ${result.data.synced}件同期、${result.data.orphansDeleted || 0}件削除`,
+        });
+      } else {
+        setChatImageSyncResult({
+          type: 'error',
+          message: result.error?.message || '同期に失敗しました',
+        });
+      }
+    } catch (error) {
+      setChatImageSyncResult({
+        type: 'error',
+        message: error instanceof Error ? error.message : '同期に失敗しました',
+      });
+    } finally {
+      setIsChatImageSyncing(false);
     }
   };
 
@@ -901,6 +960,52 @@ export function SettingsPage() {
           <p className="text-xs text-gray-500">
             ※ 管理者がChatスペースへのアクセス権限を持つGoogleアカウントで認証してください。
           </p>
+
+          {/* Chat画像全件同期（認証済みかつ設定済みの場合のみ表示） */}
+          {oauthTokenConfigured && localSettings.chatImageSettings?.spaceId && localSettings.chatImageSettings?.residentId && (
+            <>
+              <div className="border-t border-gray-200 pt-4">
+                <h3 className="text-xs font-medium text-gray-600 mb-2">
+                  Chat画像全件同期
+                </h3>
+                <p className="text-xs text-gray-500 mb-2">
+                  2024年以降の全メッセージから画像を取得し、存在しない画像を削除します。
+                </p>
+
+                {/* 同期結果 */}
+                {chatImageSyncResult && (
+                  <div className={`p-2 rounded-lg text-xs mb-2 ${
+                    chatImageSyncResult.type === 'success'
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-red-100 text-red-700'
+                  }`}>
+                    {chatImageSyncResult.message}
+                  </div>
+                )}
+
+                <button
+                  onClick={handleChatImageFullSync}
+                  disabled={isChatImageSyncing}
+                  className="w-full py-2 px-4 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isChatImageSyncing ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      同期中...
+                    </>
+                  ) : (
+                    <>
+                      <span>🔁</span>
+                      Chat画像全件同期
+                    </>
+                  )}
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
         {/* データ同期セクション */}
