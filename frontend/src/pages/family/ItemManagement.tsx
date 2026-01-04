@@ -20,14 +20,11 @@ import { useCareItems, useDeleteCareItem, useExpiredItems } from '../../hooks/us
 import { useDemoMode } from '../../hooks/useDemoMode';
 import { useSkipDateManager } from '../../hooks/useSkipDates';
 import {
-  getCategoryIcon,
   getStatusLabel,
   getStatusColorClass,
-  formatDate,
   getDaysUntilExpiration,
   getServingMethodLabel,
   getStorageLabel,
-  STORAGE_METHOD_LABELS,
   formatRemainingHandlingWithConditions,
 } from '../../types/careItem';
 import type { CareItem } from '../../types/careItem';
@@ -36,7 +33,7 @@ import { DateNavigator, type DateViewMode } from '../../components/family/DateNa
 import { UnscheduledDatesBanner } from '../../components/family/UnscheduledDatesBanner';
 import { UnscheduledDatesModal } from '../../components/family/UnscheduledDatesModal';
 import { ScheduleDisplay } from '../../components/meal/ScheduleDisplay';
-import { getUnscheduledDates, isScheduledForDate, formatScheduleShort, type ScheduleTypeExclusion } from '../../utils/scheduleUtils';
+import { getUnscheduledDates, isScheduledForDate, type ScheduleTypeExclusion } from '../../utils/scheduleUtils';
 
 // デモ用の入居者ID・ユーザーID（将来は認証から取得）
 const DEMO_RESIDENT_ID = 'resident-001';
@@ -542,7 +539,7 @@ function ItemCard({ item, onDelete, onEdit, onShowDetail }: {
 
 /**
  * 品物詳細モーダルコンポーネント
- * ページ遷移せずにSPA的に詳細を表示
+ * スタッフ用カード（ItemBasedSnackRecord.tsx）と同じ表示形式
  */
 function ItemDetailModal({ item, onClose, onEdit, onDelete }: {
   item: CareItem;
@@ -551,20 +548,9 @@ function ItemDetailModal({ item, onClose, onEdit, onDelete }: {
   onDelete: () => void;
 }) {
   const statusColor = getStatusColorClass(item.status);
-  const categoryIcon = getCategoryIcon(item.category);
-  const hasExpiration = !!item.expirationDate;
-  const daysUntilExpiration = hasExpiration ? getDaysUntilExpiration(item.expirationDate!) : null;
-  const isExpiringSoon = daysUntilExpiration !== null && daysUntilExpiration <= 3 && daysUntilExpiration >= 0;
-  const isExpired = daysUntilExpiration !== null && daysUntilExpiration < 0;
-
-  // 提供スケジュールの表示（後方互換: plannedServeDateへのフォールバック）
-  const scheduleDisplay = formatScheduleShort(item.servingSchedule) ||
-    (item.plannedServeDate ? `📅 ${new Date(item.plannedServeDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}` : '');
-
-  // 在庫計算
-  const initialQty = item.quantity || 1;
-  const remainingQty = item.remainingQuantity || 0;
-  const consumedPercent = ((initialQty - remainingQty) / initialQty) * 100;
+  const daysUntilExpiration = item.expirationDate ? getDaysUntilExpiration(item.expirationDate) : null;
+  const currentQty = item.remainingQuantity ?? item.quantity ?? 0;
+  const initialQty = item.quantity ?? 1;
 
   return (
     <div
@@ -578,14 +564,11 @@ function ItemDetailModal({ item, onClose, onEdit, onDelete }: {
       >
         {/* ヘッダー */}
         <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">{categoryIcon}</span>
-            <div>
-              <h2 className="font-bold text-lg">{item.itemName}</h2>
-              <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${statusColor.bgColor} ${statusColor.color}`}>
-                {getStatusLabel(item.status)}
-              </span>
-            </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="font-bold text-lg">{item.itemName}</h2>
+            <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusColor.bgColor} ${statusColor.color}`}>
+              {getStatusLabel(item.status)}
+            </span>
           </div>
           <button
             onClick={onClose}
@@ -598,132 +581,116 @@ function ItemDetailModal({ item, onClose, onEdit, onDelete }: {
 
         {/* コンテンツ */}
         <div className="p-4 space-y-4">
+          {/* 残量・期限（スタッフ用カードと同じ形式） */}
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <span className="font-medium">残り {currentQty}{item.unit}</span>
+            <span className="text-gray-300">┃</span>
+            {item.expirationDate ? (
+              <span className={
+                daysUntilExpiration !== null && daysUntilExpiration < 0
+                  ? 'text-red-600 font-medium'
+                  : daysUntilExpiration !== null && daysUntilExpiration <= 3
+                    ? 'text-orange-600 font-medium'
+                    : ''
+              }>
+                期限 {new Date(item.expirationDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}
+                {daysUntilExpiration !== null && daysUntilExpiration < 0 && ` (${Math.abs(daysUntilExpiration)}日超過)`}
+                {daysUntilExpiration !== null && daysUntilExpiration >= 0 && daysUntilExpiration <= 3 && ` (あと${daysUntilExpiration}日)`}
+              </span>
+            ) : (
+              <span className="text-gray-400">期限なし</span>
+            )}
+          </div>
+
           {/* 在庫バー */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <div className="flex justify-between text-sm mb-2">
-              <span className="text-gray-600">残量</span>
-              <span className="font-bold">{remainingQty}{item.unit} / {initialQty}{item.unit}</span>
+          <div className="bg-gray-50 rounded-lg p-3">
+            <div className="flex justify-between text-xs text-gray-500 mb-1">
+              <span>消費</span>
+              <span>{currentQty}{item.unit} / {initialQty}{item.unit}</span>
             </div>
-            <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
               <div
-                className={`h-full transition-all ${
-                  consumedPercent >= 80 ? 'bg-red-500' :
-                  consumedPercent >= 50 ? 'bg-yellow-500' : 'bg-blue-500'
-                }`}
-                style={{ width: `${100 - consumedPercent}%` }}
+                className="h-full bg-blue-500 transition-all"
+                style={{ width: `${(currentQty / initialQty) * 100}%` }}
               />
             </div>
           </div>
 
-          {/* 主要情報 */}
-          <div className="space-y-3">
-            {/* 提供予定 - 未設定時は警告表示 */}
-            {scheduleDisplay ? (
-              <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
-                <span className="text-xl">📅</span>
-                <div>
-                  <div className="text-sm text-gray-500">提供予定</div>
-                  <div className="font-medium text-blue-700">{scheduleDisplay}</div>
-                  {item.servingSchedule?.note && (
-                    <div className="text-sm text-gray-600 mt-1">{item.servingSchedule.note}</div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
-                <span className="text-xl">📅</span>
-                <div className="flex-1">
-                  <div className="text-sm text-gray-500">提供予定</div>
-                  <div className="font-medium text-orange-600 flex items-center gap-2">
-                    <span>⚠️ 未設定</span>
-                    <span className="text-xs text-gray-500">（編集から設定できます）</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 賞味期限 - 未設定時は警告表示 */}
-            {hasExpiration ? (
-              <div className={`flex items-start gap-3 p-3 rounded-lg ${
-                isExpired ? 'bg-red-50' : isExpiringSoon ? 'bg-orange-50' : 'bg-gray-50'
-              }`}>
-                <span className="text-xl">🗓️</span>
-                <div>
-                  <div className="text-sm text-gray-500">賞味期限</div>
-                  <div className={`font-medium ${isExpired ? 'text-red-600' : isExpiringSoon ? 'text-orange-600' : ''}`}>
-                    {formatDate(item.expirationDate!)}
-                    {isExpired ? ' (期限切れ) ❌' :
-                     daysUntilExpiration === 0 ? ' (今日) ⚠️' :
-                     isExpiringSoon ? ` (あと${daysUntilExpiration}日) ⚠️` : ''}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
-                <span className="text-xl">🗓️</span>
-                <div className="flex-1">
-                  <div className="text-sm text-gray-500">賞味期限</div>
-                  <div className="font-medium text-orange-600 flex items-center gap-2">
-                    <span>⚠️ 未設定</span>
-                    <span className="text-xs text-gray-500">（不明な場合は空欄でOK）</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 保存方法 */}
-            {item.storageMethod && (
-              <div className="flex items-center gap-3 py-2 border-b">
-                <span className="text-lg">🧊</span>
-                <span className="text-gray-500">保存方法</span>
-                <span className="ml-auto font-medium">{STORAGE_METHOD_LABELS[item.storageMethod]}</span>
-              </div>
-            )}
-
-            {/* 提供方法 */}
-            {item.servingMethod && item.servingMethod !== 'as_is' && (
-              <div className="flex items-start gap-3 py-2 border-b">
-                <span className="text-lg">✂️</span>
-                <div className="flex-1">
-                  <span className="text-gray-500">提供方法</span>
-                  <div className="font-medium">{item.servingMethodDetail || item.servingMethod}</div>
-                </div>
-              </div>
-            )}
-
-            {/* スタッフへの申し送り */}
-            {item.noteToStaff && (
-              <div className="p-3 bg-yellow-50 rounded-lg">
-                <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-                  <span>📝</span>
-                  <span>スタッフへの申し送り</span>
-                </div>
-                <div className="text-sm">{item.noteToStaff}</div>
-              </div>
-            )}
-
-            {/* スタッフからの連絡 */}
-            {item.noteToFamily && (
-              <div className="p-3 bg-blue-50 rounded-lg">
-                <div className="flex items-center gap-2 text-sm text-blue-600 mb-1">
-                  <span>💬</span>
-                  <span>スタッフより</span>
-                </div>
-                <div className="text-sm text-blue-700">{item.noteToFamily}</div>
-              </div>
-            )}
-
-            {/* 残った場合の処置 */}
-            {item.remainingHandlingInstruction && (
-              <div className="flex items-center gap-3 py-2 border-b">
-                <span className="text-lg">🍽️</span>
-                <span className="text-gray-500">残った場合</span>
-                <span className="ml-auto font-medium">
-                  {formatRemainingHandlingWithConditions(item.remainingHandlingInstruction, item.remainingHandlingConditions)}
+          {/* スケジュール表示（スタッフ用カードと同じScheduleDisplayコンポーネント使用） */}
+          {item.servingSchedule ? (
+            <div className="p-3 bg-blue-50 rounded-lg">
+              <ScheduleDisplay schedule={item.servingSchedule} />
+              {item.servingSchedule.note && (
+                <div className="text-sm text-gray-600 mt-2">{item.servingSchedule.note}</div>
+              )}
+            </div>
+          ) : item.plannedServeDate ? (
+            <div className="p-3 bg-blue-50 rounded-lg">
+              <div className="flex items-center gap-1 text-blue-600">
+                <span>📅</span>
+                <span className="font-medium">
+                  {new Date(item.plannedServeDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}
                 </span>
               </div>
+            </div>
+          ) : null}
+
+          {/* 提供方法・保存方法・残り処置（スタッフ用カードと同じタグバッジ形式） */}
+          <div className="flex flex-wrap gap-2">
+            {item.servingMethod && (
+              <span className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-lg">
+                🍽️ {getServingMethodLabel(item.servingMethod)}
+                {item.servingMethodDetail && `: ${item.servingMethodDetail}`}
+              </span>
+            )}
+            {item.storageMethod && (
+              <span className="text-sm bg-green-100 text-green-700 px-3 py-1 rounded-lg">
+                📦 {getStorageLabel(item.storageMethod)}
+              </span>
+            )}
+            {item.remainingHandlingInstruction && (
+              <span className="text-sm bg-yellow-100 text-yellow-700 px-3 py-1 rounded-lg">
+                🔄 残り: {formatRemainingHandlingWithConditions(item.remainingHandlingInstruction, item.remainingHandlingConditions)}
+              </span>
             )}
           </div>
+
+          {/* 家族指示（スタッフ用カードと同じ形式） */}
+          {item.noteToStaff && (
+            <div className="p-3 bg-yellow-50 rounded-lg">
+              <div className="flex items-start gap-2">
+                <span>💬</span>
+                <span className="italic text-gray-700">「{item.noteToStaff}」</span>
+              </div>
+            </div>
+          )}
+
+          {/* スタッフからの連絡 */}
+          {item.noteToFamily && (
+            <div className="p-3 bg-blue-50 rounded-lg">
+              <div className="flex items-center gap-2 text-sm text-blue-600 mb-1">
+                <span>📨</span>
+                <span className="font-medium">スタッフより</span>
+              </div>
+              <div className="text-sm text-blue-700">{item.noteToFamily}</div>
+            </div>
+          )}
+
+          {/* 摂食状況（消費済みの場合） */}
+          {item.status === 'consumed' && item.consumptionRate !== undefined && (
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500">摂食:</span>
+                <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-green-500 transition-all"
+                    style={{ width: `${item.consumptionRate}%` }}
+                  />
+                </div>
+                <span className="text-sm font-medium">{item.consumptionRate}%</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* フッター（アクションボタン） */}
