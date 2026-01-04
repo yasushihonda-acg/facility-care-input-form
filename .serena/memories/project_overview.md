@@ -194,7 +194,7 @@ UI表示（ViewPage/HomePageフッター）:
 - extractReadableTextFromCards(): 読みやすいテキストのみ抽出
 - needsReauthフラグ: 認証エラー時のみtrue、成功時リセット
 
-## Phase 53: OAuth永続化（2026-01-04）
+## Phase 53: OAuth永続化 + fullSyncモード（2026-01-04）
 
 **重要設計判断**: 管理者が1回認証すれば、全ユーザーがChat画像を閲覧・同期可能
 
@@ -225,6 +225,82 @@ oauth_tokens/
 - GOOGLE_OAUTH_CLIENT_ID
 - GOOGLE_OAUTH_CLIENT_SECRET
 - GOOGLE_OAUTH_REDIRECT_URI
+
+### Phase 53.1: fullSyncモード（初回同期と増分同期の分離）
+**目的**: Chat画像同期で初回全件取得と日常的な増分更新を明確に分離
+
+**fullSync=true（全件同期）**:
+- effectiveLimit: 10000件（上限なし相当）
+- Orphan cleanup: 有効（IDスレッドに属さない画像を削除）
+- 用途: 初回同期、データ整理
+
+**fullSync=false（デフォルト）**:
+- effectiveLimit: リクエスト指定値（デフォルト1000）
+- Orphan cleanup: 無効（古いデータを保持）
+- 用途: 日常的な更新
+
+**UI**:
+- 「🔄 同期」ボタン: 最新メッセージのみ取得
+- 「🔁 全件同期」ボタン: 全メッセージ取得（確認ダイアログ付き）
+
+## Chat画像同期（syncChatImages）
+
+### 概要
+Google Chat APIからメッセージを取得し、Firebase Storage URLを含む画像をFirestoreに保存。
+全認証ユーザーがFirestoreから画像を閲覧可能。
+
+### データフロー
+```
+Google Chat API → syncChatImages → Firestore(care_photos) → フロントエンド表示
+```
+
+### IDスレッドフィルタリング
+- 対象: `ID{residentId}` を含むメッセージのスレッド
+- 手順:
+  1. 全メッセージからID含むメッセージを抽出
+  2. そのスレッド名を収集
+  3. 同じスレッドに属する画像URLのみ保存
+- メタデータ: スレッドの親（IDメッセージ）から日付・スタッフ名を取得
+
+### care_photosコレクション
+```typescript
+{
+  photoId: string;
+  residentId: string;
+  date: string;              // YYYY-MM-DD
+  photoUrl: string;          // Firebase Storage URL
+  source: 'google_chat' | 'direct_upload';
+  chatMessageId?: string;    // メッセージID
+  chatContent?: string;      // UI表示用テキスト
+  chatTags?: string[];       // 抽出されたタグ
+  staffName?: string;
+  uploadedAt: string;
+}
+```
+
+### 同期モード（Phase 53.1）
+| モード | limit | Orphan削除 | 用途 |
+|--------|-------|-----------|------|
+| 通常同期 | 1000 | 無効 | 日常的な更新 |
+| 全件同期 | 10000 | 有効 | 初回・データ整理 |
+
+### 過去の問題と解決策
+| 問題 | 原因 | 解決（PR） |
+|------|------|-----------|
+| 重複画像 | 同一セッション内チェック漏れ | existingPhotoUrls.has()追加 (#37) |
+| 古いデータ消失 | Orphan削除が常時有効 | fullSyncフラグで制御 (#38) |
+
+### 関連ファイル
+| ファイル | 役割 |
+|----------|------|
+| `functions/src/functions/syncChatImages.ts` | 同期API |
+| `frontend/src/hooks/useSyncedChatImages.ts` | 同期フック |
+| `frontend/src/components/view/ImagesTab.tsx` | 表示UI |
+
+### トラブルシューティング
+- **画像が表示されない**: Firestoreにデータがあるか確認（source='google_chat'）
+- **古い画像が消えた**: 全件同期を実行して再取得
+- **認証エラー**: 設定ページで管理者が再認証
 
 ## E2Eテスト
 444件定義（Phase 52まで）

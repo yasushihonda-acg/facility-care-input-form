@@ -1,6 +1,6 @@
 # 引き継ぎドキュメント
 
-> 最終更新: 2026-01-03
+> 最終更新: 2026-01-04
 
 ## クイックスタート（5分で開発開始）
 
@@ -26,9 +26,16 @@ cd frontend && npm run dev
 
 ### 3. 変更をデプロイ
 ```bash
-git add -A && git commit -m "変更内容" && git push origin main
-# → GitHub Actionsで自動デプロイ
+# ブランチ作成 → コミット → PR作成
+git checkout -b feat/機能名
+git add -A && git commit -m "変更内容"
+git push -u origin feat/機能名
+gh pr create --fill
+
+# PRマージ後、GitHub Actionsで自動デプロイ
+gh pr merge --squash --delete-branch
 ```
+※ mainへ直接pushしない（CLAUDE.mdルール）
 
 ---
 
