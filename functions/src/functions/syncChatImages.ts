@@ -159,14 +159,25 @@ function extractImageUrlsFromAttachments(attachments: any[]): string[] {
  * メッセージからテキスト全体を取得（msg.text + cardsV2のJSON）
  * シンプルにJSON.stringifyして正規表現を直接適用できるようにする
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function getAllTextFromMessage(msg: {text?: string | null; cardsV2?: any[]}): string {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function getAllTextFromMessage(msg: {
+  text?: string | null;
+  cardsV2?: any[];
+  cards?: any[];
+}): string {
+/* eslint-enable @typescript-eslint/no-explicit-any */
   let combinedText = msg.text || "";
 
   // cardsV2がある場合はJSON.stringifyして追加
   // 正規表現はこの文字列に対して直接適用可能
   if (msg.cardsV2 && Array.isArray(msg.cardsV2) && msg.cardsV2.length > 0) {
     combinedText += " " + JSON.stringify(msg.cardsV2);
+  }
+
+  // cards（V1形式）がある場合もJSON.stringifyして追加
+  // ACPiece等のBotが送信するメッセージはcards V1形式を使用
+  if (msg.cards && Array.isArray(msg.cards) && msg.cards.length > 0) {
+    combinedText += " " + JSON.stringify(msg.cards);
   }
 
   return combinedText;
@@ -212,16 +223,20 @@ function extractReadableTextFromCards(cardsV2: any[]): string {
 /**
  * 表示用のチャット内容を取得（JSON文字列なしの読みやすい形式）
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function getDisplayableContent(msg: {text?: string | null; cardsV2?: any[]}): string {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function getDisplayableContent(msg: {
+  text?: string | null;
+  cardsV2?: any[];
+  cards?: any[];
+}): string {
+/* eslint-enable @typescript-eslint/no-explicit-any */
   const plainText = msg.text || "";
-  const cardText = extractReadableTextFromCards(msg.cardsV2 || []);
+  const cardV2Text = extractReadableTextFromCards(msg.cardsV2 || []);
+  // cards V1も同じ関数で処理（JSON構造は類似）
+  const cardV1Text = extractReadableTextFromCards(msg.cards || []);
 
-  // 両方を結合（重複を避けるため、plainTextが空でない場合のみ改行で区切る）
-  if (plainText && cardText) {
-    return `${plainText}\n${cardText}`;
-  }
-  return plainText || cardText;
+  const parts = [plainText, cardV2Text, cardV1Text].filter((t) => t.trim());
+  return parts.join("\n");
 }
 
 /**
@@ -527,10 +542,29 @@ async function syncChatImagesHandler(
       const threadName = (msg as any).thread?.name;
       if (!threadName) continue;
 
-      // msg.text + cardsV2のJSON全体を結合（正規表現で直接検索可能）
-      const combinedText = getAllTextFromMessage(msg);
+      // msg.text + cardsV2/cards(V1)のJSON全体を結合（正規表現で直接検索可能）
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const msgAny = msg as any;
+      const combinedText = getAllTextFromMessage({
+        text: msg.text,
+        cardsV2: msg.cardsV2,
+        cards: msgAny.cards,
+      });
+
+      // デバッグ: cards構造を確認
+      if (msgAny.cards && msgAny.cards.length > 0) {
+        functions.logger.info("[syncChatImages] Found cards V1 in ID message:", {
+          thread: threadName,
+          cardsCount: msgAny.cards.length,
+          cardsPreview: JSON.stringify(msgAny.cards).substring(0, 500),
+        });
+      }
       // UI表示用の読みやすいテキスト
-      const displayableContent = getDisplayableContent(msg);
+      const displayableContent = getDisplayableContent({
+        text: msg.text,
+        cardsV2: msg.cardsV2,
+        cards: msgAny.cards,
+      });
       const createTime = msg.createTime || "";
 
       // 同じスレッドに複数のIDメッセージがある場合は最古を採用
