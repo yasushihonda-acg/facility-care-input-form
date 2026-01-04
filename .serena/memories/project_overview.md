@@ -337,6 +337,13 @@ getCareItemsHandlerでFirestoreから取得したデータをレスポンスに�
 - remainingHandlingInstruction（残った場合の処置指示）
 - remainingHandlingConditions（処置指示の条件）
 
+### PR #72-73: 家族用品物UI統一
+品物管理ページのカードと詳細モーダルをスタッフ用カード（ItemBasedSnackRecord.tsx）と同じデザインに統一：
+- ヘッダー: 品物名 + ステータスバッジ（カテゴリアイコン削除）
+- 残量・期限: 「残り X個┃期限 MM/DD」のコンパクト形式
+- タグバッジ: 提供方法🍽️・保存方法📦・残り処置🔄をカラータグ表示
+- 家族指示: 💬「〜」形式
+
 ## Phase 56: sentDate非表示・提供スケジュール必須化（2026-01-04）
 
 ### sentDate（送付日）非表示化
