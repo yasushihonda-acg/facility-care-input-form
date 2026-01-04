@@ -134,6 +134,7 @@ https://asia-northeast1-facility-care-input-form.cloudfunctions.net
 | PUT | `/updateStaffNote` | スタッフ注意事項を更新 | Phase 40 | ✅ |
 | DELETE | `/deleteStaffNote` | スタッフ注意事項を削除 | Phase 40 | ✅ |
 | GET | `/getChatImages` | Chat画像メッセージを取得 | Phase 51 | ✅ |
+| POST | `/syncChatImages` | Chat画像をFirestoreに同期 | Phase 53 | ✅ |
 | POST | `/submitCareRecord` | ケア実績を入力 (deprecated) | Flow B | ❌ |
 
 > **デモ版**: PWAで使用するエンドポイント
@@ -1748,10 +1749,53 @@ interface ChatImageMessage {
 
 ---
 
+### 4.52 POST /syncChatImages
+
+Google ChatスペースからメッセージをフェッチしFirestoreに保存します。Phase 53で追加。
+
+#### リクエストボディ
+
+| パラメータ | 型 | 必須 | 説明 |
+|------------|-----|------|------|
+| spaceId | string | Yes | Google ChatスペースID |
+| residentId | string | Yes | 対象利用者ID |
+| limit | number | No | 取得件数上限（デフォルト: 100） |
+| year | number | No | 特定年のみフィルタ（例: 2025） |
+| fullSync | boolean | No | true: 全件取得+孤児削除、false: 差分のみ（デフォルト） |
+
+#### レスポンス
+
+```typescript
+interface SyncResult {
+  synced: number;           // 新規保存件数
+  updated: number;          // メタデータ更新件数
+  skipped: number;          // スキップ件数
+  orphansDeleted: number;   // 孤児削除件数（fullSync時のみ）
+  duplicatesDeleted: number; // 重複削除件数
+  total: number;            // 保存済み総件数
+  photos: CarePhoto[];      // 保存された画像リスト
+}
+```
+
+#### 認証
+
+- Authorizationヘッダー（Bearer トークン）があれば使用
+- なければFirestoreに保存済みのリフレッシュトークンを使用（Phase 53）
+
+#### エラーコード
+
+| コード | 説明 |
+|--------|------|
+| UNAUTHORIZED | トークンが無効または未設定 |
+| CHAT_API_ERROR | Google Chat APIエラー |
+
+---
+
 ## 6. 変更履歴
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
+| 2026-01-04 | 1.21.0 | Phase 53: syncChatImages API追加（fullSyncモード対応） |
 | 2026-01-03 | 1.20.0 | Phase 51: getChatImages API追加（Google Chat画像取得） |
 | 2025-12-29 | 1.19.0 | Phase 46: 階層的要約API追加（getSummaries/generateSummary）、chatWithRecords maxOutputTokens 4096に変更 |
 | 2025-12-28 | 1.18.1 | Phase 45.1: chatWithRecordsにインメモリキャッシュ追加（7秒短縮） |
