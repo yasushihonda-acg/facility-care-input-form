@@ -597,17 +597,27 @@ async function syncChatImagesHandler(
       `[syncChatImages] Built thread ID message map: ${threadIdMessageMap.size} threads with ID`
     );
 
-    // デバッグ: 最初の3件のIDメッセージ内容を出力
+    // デバッグ: 最初の3件のIDメッセージ内容を出力（文字列形式でログ）
     let debugCount = 0;
     for (const [threadName, meta] of threadIdMessageMap.entries()) {
       if (debugCount >= 3) break;
-      functions.logger.info(`[syncChatImages] ID-Msg content ${debugCount + 1}:`, {
-        thread: threadName,
-        textPreview: meta.text.substring(0, 300),
-        staffName: meta.staffName,
-        postId: meta.postId,
-        tags: meta.tags,
-      });
+      // Cloud Loggingで確実に表示されるよう文字列に変換
+      const hasStaffKeyword = meta.text.includes("記録者");
+      functions.logger.info(
+        `[syncChatImages] ID-Msg content ${debugCount + 1}: ` +
+        `thread=${threadName.substring(0, 50)}, ` +
+        `staffName=${meta.staffName || "undefined"}, ` +
+        `has記録者=${hasStaffKeyword}, ` +
+        `textLen=${meta.text.length}`
+      );
+      // 記録者を含む場合は前後の文字列も出力
+      if (hasStaffKeyword) {
+        const idx = meta.text.indexOf("記録者");
+        const snippet = meta.text.substring(Math.max(0, idx - 10), idx + 30);
+        functions.logger.info(
+          `[syncChatImages] 記録者周辺: "${snippet}"`
+        );
+      }
       debugCount++;
     }
 
@@ -1123,7 +1133,7 @@ async function syncChatImagesHandler(
 export const syncChatImages = functions
   .region(FUNCTIONS_CONFIG.REGION)
   .runWith({
-    timeoutSeconds: 60, // リンクのみなので短くできる
-    memory: "256MB",
+    timeoutSeconds: 540, // fullSync時は800+スレッドを処理するため最大値に設定
+    memory: "512MB", // メモリも増加
   })
   .https.onRequest(syncChatImagesHandler);
