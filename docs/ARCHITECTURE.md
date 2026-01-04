@@ -64,6 +64,85 @@ Google Chat APIアクセス用に以下のスコープを取得:
 - `https://www.googleapis.com/auth/chat.spaces.readonly`
 - `https://www.googleapis.com/auth/chat.messages.readonly`
 
+### Chat画像同期の認証設計 (Phase 53)
+
+**重要な設計判断**: Chat API アクセス用のOAuthトークンは、**管理者が1回だけ認証すれば全ユーザーが利用可能**な仕組みを採用。
+
+#### 背景・課題
+
+| アプローチ | 問題点 |
+|-----------|--------|
+| 個別ユーザー認証 | 各ユーザーがChat APIのOAuth認可が必要、UX悪化 |
+| サービスアカウント | ドメイン全体の委任が必要、セキュリティリスク |
+| **管理者トークン永続化** ✅ | 管理者1回の認証で全員がアクセス可能 |
+
+#### 仕組み
+
+```
+[管理者（yasushi.honda@aozora-cg.com）]
+       │
+       │ 1. /settings で「Googleアカウントで認証」
+       │
+       ▼
+[Google OAuth 2.0]
+       │
+       │ 2. 認可コード発行
+       │
+       ▼
+[Cloud Function: exchangeOAuthCode]
+       │
+       │ 3. リフレッシュトークンをFirestoreに保存
+       │
+       ▼
+[Firestore: oauth_tokens/chat_sync]
+  {
+    refreshToken: "xxx",
+    updatedAt: timestamp
+  }
+
+==========================================
+
+[任意のユーザー]
+       │
+       │ 1. 画像タブを開く / 同期ボタン押下
+       │
+       ▼
+[Cloud Function: syncChatImages]
+       │
+       │ 2. Firestoreからリフレッシュトークンを取得
+       │ 3. アクセストークンを自動更新
+       │ 4. Chat APIで画像取得
+       │
+       ▼
+[Firestore: care_photos]（全ユーザー閲覧可能）
+```
+
+#### Firestoreコレクション
+
+```
+oauth_tokens/
+└── chat_sync
+    ├── refreshToken: string   # Google OAuthリフレッシュトークン
+    ├── accessToken: string    # 最新のアクセストークン（参照用）
+    ├── expiryDate: number     # アクセストークン有効期限
+    ├── updatedAt: timestamp   # 最終更新日時
+    └── updatedBy: string      # 更新者（"manual_auth"）
+```
+
+#### 関連ファイル
+
+| ファイル | 役割 |
+|----------|------|
+| `functions/src/functions/oauthToken.ts` | トークン交換・保存・取得API |
+| `frontend/src/pages/SettingsPage.tsx` | 管理者認証UI |
+| `frontend/src/hooks/useSyncedChatImages.ts` | 同期フック（トークン不要） |
+
+#### セキュリティ考慮事項
+
+- リフレッシュトークンはFirestoreに保存（Firestore Rules で保護）
+- Chat APIスコープは読み取り専用（`readonly`）
+- 認証URLの生成・トークン交換はCloud Functions経由（クライアントシークレット非公開）
+
 ---
 
 ## 3. インフラストラクチャ構成
