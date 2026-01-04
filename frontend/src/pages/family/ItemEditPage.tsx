@@ -261,7 +261,7 @@ export function ItemEditPage() {
     // デモモードの場合: APIを呼ばず、成功メッセージを表示
     if (isDemo) {
       alert('更新しました（デモモード - 実際には更新されません）');
-      navigate(`/demo/family/items/${id}`);
+      navigate(`/demo/family/items`);
       setIsSubmitting(false);
       return;
     }
@@ -290,7 +290,8 @@ export function ItemEditPage() {
           servingSchedule: formData.servingSchedule,
         },
       });
-      navigate(`/family/items/${id}`);
+      alert('更新しました');
+      navigate(`/family/items`);
     } catch (error) {
       console.error('Update failed:', error);
       alert('更新に失敗しました');
@@ -301,7 +302,7 @@ export function ItemEditPage() {
 
   // キャンセル
   const handleCancel = () => {
-    navigate(`${pathPrefix}/family/items/${id}`);
+    navigate(`${pathPrefix}/family/items`);
   };
 
   if (isLoading) {
