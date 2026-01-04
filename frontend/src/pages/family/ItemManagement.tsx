@@ -79,6 +79,13 @@ function filterItemsByDateRange(
       return false;
     }
 
+    // 後方互換: plannedServeDate がある場合はそれでチェック
+    if (item.plannedServeDate) {
+      const plannedDate = new Date(item.plannedServeDate);
+      plannedDate.setHours(0, 0, 0, 0);
+      return plannedDate >= start && plannedDate <= end;
+    }
+
     // スケジュールがない場合は登録日でチェック
     const createdDate = new Date(item.createdAt);
     createdDate.setHours(0, 0, 0, 0);
@@ -399,8 +406,9 @@ function ItemCard({ item, onDelete, onEdit, onShowDetail }: {
   const isExpiringSoon = daysUntilExpiration !== null && daysUntilExpiration <= 3 && daysUntilExpiration >= 0;
   const isExpired = daysUntilExpiration !== null && daysUntilExpiration < 0;
 
-  // 提供スケジュールの短縮表示
-  const scheduleDisplay = formatScheduleShort(item.servingSchedule);
+  // 提供スケジュールの短縮表示（後方互換: plannedServeDateへのフォールバック）
+  const scheduleDisplay = formatScheduleShort(item.servingSchedule) ||
+    (item.plannedServeDate ? `📅 ${new Date(item.plannedServeDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}` : '');
 
   return (
     <div
@@ -539,8 +547,9 @@ function ItemDetailModal({ item, onClose, onEdit, onDelete }: {
   const isExpiringSoon = daysUntilExpiration !== null && daysUntilExpiration <= 3 && daysUntilExpiration >= 0;
   const isExpired = daysUntilExpiration !== null && daysUntilExpiration < 0;
 
-  // 提供スケジュールの表示
-  const scheduleDisplay = formatScheduleShort(item.servingSchedule);
+  // 提供スケジュールの表示（後方互換: plannedServeDateへのフォールバック）
+  const scheduleDisplay = formatScheduleShort(item.servingSchedule) ||
+    (item.plannedServeDate ? `📅 ${new Date(item.plannedServeDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}` : '');
 
   // 在庫計算
   const initialQty = item.quantity || 1;
