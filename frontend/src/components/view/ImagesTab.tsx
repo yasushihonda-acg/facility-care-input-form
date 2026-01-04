@@ -448,11 +448,7 @@ interface PhotoModalProps {
 }
 
 function PhotoModal({ photo, onClose }: PhotoModalProps) {
-  // 拡張フィールドを取得（型安全のためanyでアクセス）
-  const extendedPhoto = photo as CarePhoto & {
-    chatTags?: string[];
-    chatContent?: string;
-  };
+  // CarePhoto型に chatTags, chatContent が追加されたため直接アクセス可能
 
   return (
     <div
@@ -486,9 +482,9 @@ function PhotoModal({ photo, onClose }: PhotoModalProps) {
               </span>
             )}
           </p>
-          {extendedPhoto.chatTags && extendedPhoto.chatTags.length > 0 && (
+          {photo.chatTags && photo.chatTags.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-2">
-              {extendedPhoto.chatTags.map((tag, i) => (
+              {photo.chatTags.map((tag, i) => (
                 <span
                   key={i}
                   className="text-sm bg-blue-100 text-blue-700 px-2 py-0.5 rounded"
@@ -498,9 +494,9 @@ function PhotoModal({ photo, onClose }: PhotoModalProps) {
               ))}
             </div>
           )}
-          {extendedPhoto.chatContent && (
+          {photo.chatContent && (
             <p className="text-sm text-gray-700 whitespace-pre-wrap line-clamp-5">
-              {extendedPhoto.chatContent}
+              {photo.chatContent}
             </p>
           )}
         </div>

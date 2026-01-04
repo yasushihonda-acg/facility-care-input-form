@@ -231,6 +231,12 @@ export interface CarePhoto {
   postId?: string;
   /** 写真のソース（Phase 52追加、後方互換のためオプション） */
   source?: CarePhotoSource;
+  /** Chat APIメッセージID（Phase 52.3追加） */
+  chatMessageId?: string;
+  /** Chatメッセージのタグ（#特記事項📝 など） */
+  chatTags?: string[];
+  /** Chatメッセージの内容（UI表示用テキスト） */
+  chatContent?: string;
 }
 
 /**
