@@ -1,6 +1,20 @@
 {
   "indexes": [
     {
+      "collectionGroup": "care_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "sentDate",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "care_photos",
       "queryScope": "COLLECTION",
       "fields": [
