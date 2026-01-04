@@ -110,6 +110,10 @@ async function getCarePhotosHandler(
         uploadedAt: photo.uploadedAt,
         postId: photo.postId,
         source: photo.source,
+        // Chat画像メタデータ（Phase 52.3追加）
+        chatMessageId: photo.chatMessageId,
+        chatTags: photo.chatTags,
+        chatContent: photo.chatContent,
       })),
     };
 
