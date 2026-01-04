@@ -566,17 +566,29 @@ async function syncChatImagesHandler(
         cards: msgAny.cards,
       });
       const createTime = msg.createTime || "";
+      const newStaffName = extractStaffName(combinedText);
+      const newPostId = extractPostId(combinedText);
+      const newTags = extractTags(combinedText);
 
-      // 同じスレッドに複数のIDメッセージがある場合は最古を採用
+      // 同じスレッドに複数のIDメッセージがある場合の優先順位:
+      // 1. 「記録者」を含むメッセージを優先（画像メッセージより情報が豊富）
+      // 2. 両方に記録者がある場合は最古を採用
+      // 3. 両方に記録者がない場合も最古を採用
       const existing = threadIdMessageMap.get(threadName);
-      if (!existing || createTime < existing.createTime) {
+      const shouldUpdate =
+        !existing ||
+        (!existing.staffName && newStaffName) || // 既存になく新規にある → 更新
+        (existing.staffName && newStaffName && createTime < existing.createTime) || // 両方にある → 最古
+        (!existing.staffName && !newStaffName && createTime < existing.createTime); // 両方にない → 最古
+
+      if (shouldUpdate) {
         threadIdMessageMap.set(threadName, {
           text: combinedText,
           displayableContent,
           createTime,
-          staffName: extractStaffName(combinedText),
-          postId: extractPostId(combinedText),
-          tags: extractTags(combinedText),
+          staffName: newStaffName,
+          postId: newPostId,
+          tags: newTags,
         });
       }
     }
