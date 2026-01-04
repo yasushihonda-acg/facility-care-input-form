@@ -32,7 +32,7 @@ import type {
 } from '../../types/careItem';
 import type { CarePreset } from '../../types/family';
 import { ServingScheduleInput } from '../../components/family/ServingScheduleInput';
-import { scheduleToPlannedDate } from '../../utils/scheduleUtils';
+import { scheduleToPlannedDate, plannedDateToSchedule } from '../../utils/scheduleUtils';
 import { DEMO_PRESETS } from '../../data/demoFamilyData';
 
 // デモ用の入居者ID（将来は認証から取得）
@@ -132,8 +132,8 @@ export function ItemEditPage() {
         noteToStaff: item.noteToStaff || '',
         remainingHandlingInstruction: item.remainingHandlingInstruction || 'none',
         remainingHandlingConditions: item.remainingHandlingConditions,
-        // Phase 36: 構造化スケジュール読み込み
-        servingSchedule: item.servingSchedule,
+        // Phase 36: 構造化スケジュール読み込み（後方互換: plannedServeDateから変換）
+        servingSchedule: item.servingSchedule || plannedDateToSchedule(item.plannedServeDate),
       });
     }
   }, [item]);
@@ -161,6 +161,10 @@ export function ItemEditPage() {
       // 構造化スケジュールからplannedServeDateへの後方互換変換
       plannedServeDate: scheduleToPlannedDate(schedule) || prev.plannedServeDate,
     }));
+    // エラーをクリア
+    if (errors.servingSchedule) {
+      setErrors((prev) => ({ ...prev, servingSchedule: '' }));
+    }
   };
 
   // 品物名正規化（onBlurで呼び出し）
@@ -236,6 +240,9 @@ export function ItemEditPage() {
     }
     if (formData.quantity < 1) {
       newErrors.quantity = '1以上を入力してください';
+    }
+    if (!formData.servingSchedule) {
+      newErrors.servingSchedule = '提供スケジュールを設定してください';
     }
 
     setErrors(newErrors);
@@ -606,10 +613,15 @@ export function ItemEditPage() {
         )}
 
         {/* Phase 36: 提供スケジュール（構造化） */}
-        <ServingScheduleInput
-          value={formData.servingSchedule}
-          onChange={handleScheduleChange}
-        />
+        <div>
+          <ServingScheduleInput
+            value={formData.servingSchedule}
+            onChange={handleScheduleChange}
+          />
+          {errors.servingSchedule && (
+            <p className="mt-1 text-sm text-red-500">{errors.servingSchedule}</p>
+          )}
+        </div>
 
         {/* スタッフへの申し送り */}
         <div>

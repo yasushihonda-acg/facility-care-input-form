@@ -93,18 +93,14 @@ export function ServingScheduleInput({
     onChange({ ...value, startDate: startDate || undefined });
   };
 
-  // スケジュールをクリア
-  const handleClear = () => {
-    onChange(undefined);
-  };
-
   // 初期状態（スケジュール未設定）
   if (!value) {
     return (
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <label className="block text-sm font-medium text-gray-700">提供スケジュール</label>
-          <span className="text-sm text-gray-500">（任意）</span>
+          <label className="block text-sm font-medium text-gray-700">
+            提供スケジュール <span className="text-red-500">*</span>
+          </label>
         </div>
         <button
           type="button"
@@ -122,15 +118,9 @@ export function ServingScheduleInput({
     <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
       {/* ヘッダー */}
       <div className="flex items-center justify-between">
-        <label className="block text-sm font-medium text-gray-700">提供スケジュール</label>
-        <button
-          type="button"
-          onClick={handleClear}
-          disabled={disabled}
-          className="text-sm text-gray-500 hover:text-red-500 transition-colors disabled:opacity-50"
-        >
-          クリア
-        </button>
+        <label className="block text-sm font-medium text-gray-700">
+          提供スケジュール <span className="text-red-500">*</span>
+        </label>
       </div>
 
       {/* スケジュールタイプ選択 */}

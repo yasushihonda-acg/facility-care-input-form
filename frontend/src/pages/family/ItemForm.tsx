@@ -265,6 +265,10 @@ export function ItemForm() {
       newErrors.unit = '単位を入力してください';
     }
 
+    if (!formData.servingSchedule) {
+      newErrors.servingSchedule = '提供スケジュールを設定してください';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -647,23 +651,32 @@ export function ItemForm() {
           )}
 
           {/* 提供スケジュール（Phase 13.1） */}
-          <ServingScheduleInput
-            value={formData.servingSchedule}
-            onChange={(schedule: ServingSchedule | undefined) => {
-              // servingScheduleを更新
-              updateField('servingSchedule', schedule);
-              // 後方互換: once タイプの場合は plannedServeDate も更新
-              const plannedDate = scheduleToPlannedDate(schedule);
-              if (plannedDate !== formData.plannedServeDate) {
-                setFormData((prev) => ({
-                  ...prev,
-                  servingSchedule: schedule,
-                  plannedServeDate: plannedDate,
-                }));
-              }
-            }}
-            disabled={isSubmitting}
-          />
+          <div>
+            <ServingScheduleInput
+              value={formData.servingSchedule}
+              onChange={(schedule: ServingSchedule | undefined) => {
+                // servingScheduleを更新
+                updateField('servingSchedule', schedule);
+                // 後方互換: once タイプの場合は plannedServeDate も更新
+                const plannedDate = scheduleToPlannedDate(schedule);
+                if (plannedDate !== formData.plannedServeDate) {
+                  setFormData((prev) => ({
+                    ...prev,
+                    servingSchedule: schedule,
+                    plannedServeDate: plannedDate,
+                  }));
+                }
+                // エラーをクリア
+                if (errors.servingSchedule) {
+                  setErrors((prev) => ({ ...prev, servingSchedule: '' }));
+                }
+              }}
+              disabled={isSubmitting}
+            />
+            {errors.servingSchedule && (
+              <p className="mt-1 text-sm text-red-500">{errors.servingSchedule}</p>
+            )}
+          </div>
 
           {/* スタッフへの申し送り */}
           <div>
