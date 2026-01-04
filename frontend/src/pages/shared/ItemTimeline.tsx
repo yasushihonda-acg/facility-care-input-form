@@ -151,7 +151,7 @@ export function ItemTimeline() {
               <div className="bg-white rounded-lg shadow-card p-4">
                 <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
                   <span>📦</span>
-                  <span>{formatDateTime(item.sentDate + 'T10:30:00')}</span>
+                  <span>{formatDateTime(item.createdAt)}</span>
                 </div>
                 <p className="font-bold mb-2">家族が登録</p>
                 <div className="text-sm text-gray-600 space-y-1">

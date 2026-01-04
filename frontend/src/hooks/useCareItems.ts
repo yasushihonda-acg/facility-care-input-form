@@ -30,7 +30,7 @@ function sortByExpirationFirst(items: CareItem[]): CareItem[] {
   return [...items].sort((a, b) => {
     // 期限なしは末尾に
     if (!a.expirationDate && !b.expirationDate) {
-      return new Date(a.sentDate).getTime() - new Date(b.sentDate).getTime();
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
     }
     if (!a.expirationDate) return 1;
     if (!b.expirationDate) return -1;
@@ -40,8 +40,8 @@ function sortByExpirationFirst(items: CareItem[]): CareItem[] {
     const expB = new Date(b.expirationDate).getTime();
     if (expA !== expB) return expA - expB;
 
-    // 同じ期限なら送付日が古い順
-    return new Date(a.sentDate).getTime() - new Date(b.sentDate).getTime();
+    // 同じ期限なら登録日が古い順
+    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
   });
 }
 
@@ -67,12 +67,15 @@ function filterDemoCareItems(params: GetCareItemsParams): { items: CareItem[]; t
     items = items.filter(item => item.category === params.category);
   }
 
-  // 日付でフィルタ
+  // 日付でフィルタ（createdAtベース - sentDateはUI非表示）
   if (params.startDate) {
-    items = items.filter(item => item.sentDate >= params.startDate!);
+    items = items.filter(item => item.createdAt >= params.startDate!);
   }
   if (params.endDate) {
-    items = items.filter(item => item.sentDate <= params.endDate!);
+    // endDateの終端を含めるため、翌日と比較
+    const endDatePlusOne = new Date(params.endDate);
+    endDatePlusOne.setDate(endDatePlusOne.getDate() + 1);
+    items = items.filter(item => item.createdAt < endDatePlusOne.toISOString());
   }
 
   // FIFOソート適用

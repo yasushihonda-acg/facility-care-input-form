@@ -151,11 +151,6 @@ export function FamilyMessageDetail() {
             <h2 className="font-bold text-sm text-gray-700 mb-3">家族からの指示</h2>
 
             <div className="space-y-2 text-sm">
-              <div className="flex gap-4">
-                <span className="text-gray-500 w-20">送付日</span>
-                <span>{formatDate(item.sentDate)}</span>
-              </div>
-
               {item.storageMethod && (
                 <div className="flex gap-4">
                   <span className="text-gray-500 w-20">保存方法</span>

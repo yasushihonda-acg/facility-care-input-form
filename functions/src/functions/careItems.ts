@@ -159,9 +159,10 @@ function validateCareItemInput(
     return {valid: false, error: "item.category must be one of: food, drink"};
   }
 
-  // item.sentDate
-  if (!item.sentDate || typeof item.sentDate !== "string") {
-    return {valid: false, error: "item.sentDate is required (YYYY-MM-DD)"};
+  // item.sentDate（オプショナル - UI非表示）
+  // 形式チェックのみ（設定されている場合）
+  if (item.sentDate !== undefined && typeof item.sentDate !== "string") {
+    return {valid: false, error: "item.sentDate must be a string (YYYY-MM-DD) if provided"};
   }
 
   // item.quantity
@@ -477,7 +478,6 @@ async function getCareItemsHandler(
     }
 
     let query = db.collection(CARE_ITEMS_COLLECTION)
-      .orderBy("sentDate", "desc")
       .orderBy("createdAt", "desc");
 
     // フィルタ適用
@@ -501,13 +501,17 @@ async function getCareItemsHandler(
       query = query.where("category", "==", params.category);
     }
 
-    // 日付フィルタ（sentDate）
+    // 日付フィルタ（createdAtに変更 - sentDateはUI非表示）
+    // startDate/endDateパラメータはcreatedAtでフィルタ
     if (params.startDate) {
-      query = query.where("sentDate", ">=", params.startDate);
+      query = query.where("createdAt", ">=", new Date(params.startDate));
     }
 
     if (params.endDate) {
-      query = query.where("sentDate", "<=", params.endDate);
+      // endDateの終端を含めるため、翌日の0時で比較
+      const endDate = new Date(params.endDate);
+      endDate.setDate(endDate.getDate() + 1);
+      query = query.where("createdAt", "<", endDate);
     }
 
     // 総件数取得（ページネーション用）

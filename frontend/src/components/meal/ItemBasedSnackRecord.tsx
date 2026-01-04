@@ -190,8 +190,8 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
       const diff = new Date(a.expirationDate).getTime() - new Date(b.expirationDate).getTime();
       if (diff !== 0) return diff;
     }
-    // 送付日順（古い順）
-    return new Date(a.sentDate).getTime() - new Date(b.sentDate).getTime();
+    // 登録日順（古い順）
+    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
   };
 
   // 今日提供予定タブ用グループ

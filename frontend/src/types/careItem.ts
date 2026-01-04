@@ -200,7 +200,7 @@ export interface CareItem {
   /** 統計用の基準品目名（例: 「森永プリン」→「プリン」）。未設定時はitemNameを使用 */
   normalizedName?: string;
   category: ItemCategory;
-  sentDate: string;              // YYYY-MM-DD
+  sentDate?: string;             // YYYY-MM-DD（オプショナル - UI非表示）
   quantity: number;              // 旧: 互換性のため残す
   unit: string;
   expirationDate?: string;       // YYYY-MM-DD
@@ -272,7 +272,7 @@ export interface CareItemInput {
   /** 統計用の基準品目名（例: 「森永プリン」→「プリン」）。未設定時はitemNameを使用 */
   normalizedName?: string;
   category: ItemCategory;
-  sentDate: string;
+  sentDate?: string;  // オプショナル - UI非表示
   quantity: number;
   unit: string;
   expirationDate?: string;

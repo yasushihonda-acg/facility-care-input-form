@@ -29,11 +29,11 @@ function formatDate(dateStr: string | undefined): string {
 }
 
 /**
- * 送付日をフォーマット
+ * 登録日をフォーマット
  */
-function formatSentDate(dateStr: string): string {
+function formatCreatedDate(dateStr: string): string {
   const date = new Date(dateStr);
-  return `${date.getMonth() + 1}/${date.getDate()}送付`;
+  return `${date.getMonth() + 1}/${date.getDate()}登録`;
 }
 
 /**
@@ -90,7 +90,7 @@ export function FIFOWarning({
               <div className="flex-1 min-w-0">
                 <div className={`flex items-center gap-2 ${compact ? 'text-xs' : 'text-sm'}`}>
                   <span className="text-gray-600">
-                    {formatSentDate(item.sentDate)}
+                    {formatCreatedDate(item.createdAt)}
                   </span>
                   <span className="text-gray-400">|</span>
                   <span className={item.expirationDate ? 'text-gray-800' : 'text-gray-500'}>

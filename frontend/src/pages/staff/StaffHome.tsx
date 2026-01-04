@@ -12,7 +12,6 @@ import { useCareItems } from '../../hooks/useCareItems';
 import {
   getCategoryIcon,
   getDaysUntilExpiration,
-  formatDate,
 } from '../../types/careItem';
 import type { CareItem } from '../../types/careItem';
 
@@ -202,7 +201,6 @@ export function StaffHome() {
                     <div className="flex-1">
                       <p className="font-bold">{item.itemName}</p>
                       <p className="text-sm text-gray-500">
-                        送付: {formatDate(item.sentDate)} |
                         残: {item.remainingQuantity}{item.unit}
                       </p>
                       {item.noteToStaff && (

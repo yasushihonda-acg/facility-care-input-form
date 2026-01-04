@@ -46,9 +46,6 @@ const DEMO_USER_ID = 'family-001';
 // AI提案機能は一時的に非表示（Phase 41）
 const ENABLE_AI_SUGGESTION = false;
 
-// 今日の日付（YYYY-MM-DD形式）
-const getTodayString = () => new Date().toISOString().split('T')[0];
-
 export function ItemForm() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -59,10 +56,10 @@ export function ItemForm() {
   const returnUrl = searchParams.get('returnUrl') || (isDemo ? '/demo/family/items' : '/family/items');
 
   // フォーム状態（Phase 31: デフォルトカテゴリを food に変更）
+  // sentDateはUI非表示（オプショナル）
   const [formData, setFormData] = useState<CareItemInput>({
     itemName: '',
     category: 'food',
-    sentDate: getTodayString(),
     quantity: 1,
     unit: '個',
     servingMethod: 'as_is',
@@ -534,26 +531,8 @@ export function ItemForm() {
             </div>
           </div>
 
-          {/* 送付日・個数 */}
+          {/* 数量 */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="sentDate" className="block text-sm font-medium text-gray-700 mb-1">
-                送付日 <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="sentDate"
-                type="date"
-                value={formData.sentDate}
-                onChange={(e) => updateField('sentDate', e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary ${
-                  errors.sentDate ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
-              {errors.sentDate && (
-                <p className="mt-1 text-sm text-red-500">{errors.sentDate}</p>
-              )}
-            </div>
-
             <div>
               <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
                 数量 <span className="text-red-500">*</span>
