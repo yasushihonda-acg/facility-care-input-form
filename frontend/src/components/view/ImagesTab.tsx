@@ -16,12 +16,11 @@ interface ImagesTabProps {
   month: number | null;
 }
 
-type DisplayMode = 'gallery' | 'timeline' | 'table';
+type DisplayMode = 'gallery' | 'timeline';
 
 const DISPLAY_MODES: { id: DisplayMode; label: string; icon: string }[] = [
   { id: 'gallery', label: 'ギャラリー', icon: '🖼️' },
   { id: 'timeline', label: 'タイムライン', icon: '📅' },
-  { id: 'table', label: 'テーブル', icon: '📋' },
 ];
 
 /**
@@ -282,11 +281,6 @@ export function ImagesTab({ year, month }: ImagesTabProps) {
           {displayMode === 'timeline' && (
             <TimelineView photos={filteredPhotos} onSelect={setSelectedPhoto} />
           )}
-
-          {/* テーブルモード */}
-          {displayMode === 'table' && (
-            <TableView photos={filteredPhotos} onSelect={setSelectedPhoto} />
-          )}
         </>
       )}
 
@@ -381,60 +375,6 @@ function TimelineView({ photos, onSelect }: PhotoViewProps) {
           </div>
         </div>
       ))}
-    </div>
-  );
-}
-
-/**
- * テーブルビュー
- */
-function TableView({ photos, onSelect }: PhotoViewProps) {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="p-2 text-left">画像</th>
-            <th className="p-2 text-left">日付</th>
-            <th className="p-2 text-left">記録者</th>
-            <th className="p-2 text-left">ソース</th>
-          </tr>
-        </thead>
-        <tbody>
-          {photos.map((photo) => (
-            <tr key={photo.photoId} className="border-b hover:bg-gray-50">
-              <td className="p-2">
-                <button
-                  onClick={() => onSelect(photo)}
-                  className="w-12 h-12 bg-gray-200 rounded overflow-hidden hover:opacity-80 transition-opacity"
-                >
-                  <img
-                    src={photo.photoUrl}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                </button>
-              </td>
-              <td className="p-2 whitespace-nowrap">
-                {formatDateTime(photo.date)}
-              </td>
-              <td className="p-2">
-                {photo.staffName || '-'}
-              </td>
-              <td className="p-2">
-                <span className={`text-xs px-2 py-0.5 rounded ${
-                  photo.source === 'google_chat'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'bg-gray-100 text-gray-600'
-                }`}>
-                  {photo.source === 'google_chat' ? 'Chat' : '直接'}
-                </span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }
