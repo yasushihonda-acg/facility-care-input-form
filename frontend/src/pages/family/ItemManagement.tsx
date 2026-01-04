@@ -26,13 +26,14 @@ import {
   formatDate,
   getExpirationDisplayText,
   getDaysUntilExpiration,
+  STORAGE_METHOD_LABELS,
 } from '../../types/careItem';
 import type { CareItem } from '../../types/careItem';
 import { ExpirationAlert } from '../../components/family/ExpirationAlert';
 import { DateNavigator, type DateViewMode } from '../../components/family/DateNavigator';
 import { UnscheduledDatesBanner } from '../../components/family/UnscheduledDatesBanner';
 import { UnscheduledDatesModal } from '../../components/family/UnscheduledDatesModal';
-import { getUnscheduledDates, isScheduledForDate, type ScheduleTypeExclusion } from '../../utils/scheduleUtils';
+import { getUnscheduledDates, isScheduledForDate, formatScheduleShort, type ScheduleTypeExclusion } from '../../utils/scheduleUtils';
 
 // デモ用の入居者ID・ユーザーID（将来は認証から取得）
 const DEMO_RESIDENT_ID = 'resident-001';
@@ -95,10 +96,11 @@ export function ItemManagement() {
   const initialExp = searchParams.get('exp') === '1';
 
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<DateViewMode>('day');
+  const [viewMode, setViewMode] = useState<DateViewMode>('week');
   const [unscheduledPeriod, setUnscheduledPeriod] = useState(initialPeriod);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [showUnscheduledModal, setShowUnscheduledModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<CareItem | null>(null);
   // スケジュールタイプ除外トグル（URLから初期化）
   const [excludeDaily, setExcludeDaily] = useState(initialExD);
   const [excludeWeekly, setExcludeWeekly] = useState(initialExW);
@@ -318,6 +320,7 @@ export function ItemManagement() {
                 item={item}
                 onDelete={() => handleDeleteConfirm(item.id)}
                 onEdit={() => navigate(`${pathPrefix}/family/items/${item.id}/edit`)}
+                onShowDetail={() => setSelectedItem(item)}
               />
             ))}
           </div>
@@ -358,16 +361,36 @@ export function ItemManagement() {
         onMarkAsSkip={handleMarkAsSkip}
         isSkipping={isSkipDateAdding}
       />
+
+      {/* 品物詳細モーダル */}
+      {selectedItem && (
+        <ItemDetailModal
+          item={selectedItem}
+          onClose={() => setSelectedItem(null)}
+          onEdit={() => {
+            setSelectedItem(null);
+            navigate(`${pathPrefix}/family/items/${selectedItem.id}/edit`);
+          }}
+          onDelete={() => {
+            setSelectedItem(null);
+            handleDeleteConfirm(selectedItem.id);
+          }}
+        />
+      )}
     </Layout>
   );
 }
 
 /**
  * 品物カードコンポーネント
+ * 表示優先順: 提供予定 → 賞味期限 → 残量・保存 → 詳細設定
  */
-function ItemCard({ item, onDelete, onEdit }: { item: CareItem; onDelete: () => void; onEdit: () => void }) {
-  const isDemo = useDemoMode();
-  const pathPrefix = isDemo ? '/demo' : '';
+function ItemCard({ item, onDelete, onEdit, onShowDetail }: {
+  item: CareItem;
+  onDelete: () => void;
+  onEdit: () => void;
+  onShowDetail: () => void;
+}) {
   const statusColor = getStatusColorClass(item.status);
   const categoryIcon = getCategoryIcon(item.category);
   const hasExpiration = !!item.expirationDate;
@@ -375,10 +398,14 @@ function ItemCard({ item, onDelete, onEdit }: { item: CareItem; onDelete: () => 
   const isExpiringSoon = daysUntilExpiration !== null && daysUntilExpiration <= 3 && daysUntilExpiration >= 0;
   const isExpired = daysUntilExpiration !== null && daysUntilExpiration < 0;
 
+  // 提供スケジュールの短縮表示
+  const scheduleDisplay = formatScheduleShort(item.servingSchedule);
+
   return (
-    <Link
-      to={`${pathPrefix}/family/items/${item.id}`}
-      className="block bg-white rounded-lg shadow-sm border p-4 hover:shadow-md transition-shadow"
+    <div
+      data-testid="item-card"
+      onClick={onShowDetail}
+      className="block bg-white rounded-lg shadow-sm border p-4 hover:shadow-md transition-shadow cursor-pointer"
     >
       <div className="flex items-start gap-3">
         <div className="text-3xl flex-shrink-0">{categoryIcon}</div>
@@ -392,27 +419,47 @@ function ItemCard({ item, onDelete, onEdit }: { item: CareItem; onDelete: () => 
           </div>
 
           <div className="text-sm text-gray-600 space-y-0.5">
-            <div className="flex gap-4">
-              <span>送付: {formatDate(item.sentDate)}</span>
-              <span>残: {item.remainingQuantity}{item.unit}</span>
-            </div>
+            {/* 提供予定（最優先） */}
+            {scheduleDisplay && (
+              <div className="text-blue-600 font-medium">
+                {scheduleDisplay}
+              </div>
+            )}
 
+            {/* 賞味期限 */}
             {hasExpiration && (
-              <div className={`flex items-center gap-1 ${isExpired ? 'text-red-600' : isExpiringSoon ? 'text-orange-600' : ''}`}>
-                <span>期限:</span>
-                <span className="font-medium">{getExpirationDisplayText(item.expirationDate!)}</span>
+              <div className={`flex items-center gap-1 ${isExpired ? 'text-red-600 font-medium' : isExpiringSoon ? 'text-orange-600 font-medium' : ''}`}>
+                <span>🗓️ 期限:</span>
+                <span>{getExpirationDisplayText(item.expirationDate!)}</span>
                 {isExpiringSoon && !isExpired && <span>⚠️</span>}
                 {isExpired && <span>❌</span>}
               </div>
             )}
 
+            {/* 残量・保存方法 */}
+            <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-gray-500">
+              <span>残: {item.remainingQuantity}{item.unit}</span>
+              {item.storageMethod && (
+                <span>🧊 {STORAGE_METHOD_LABELS[item.storageMethod]}</span>
+              )}
+            </div>
+
+            {/* 提供方法 */}
             {item.servingMethod && item.servingMethod !== 'as_is' && (
               <div className="text-gray-500">
-                提供方法: {item.servingMethodDetail || item.servingMethod}
+                ✂️ {item.servingMethodDetail || item.servingMethod}
+              </div>
+            )}
+
+            {/* スタッフへの申し送り（短縮表示） */}
+            {item.noteToStaff && (
+              <div className="text-gray-500 truncate">
+                📝 {item.noteToStaff.length > 30 ? item.noteToStaff.slice(0, 30) + '...' : item.noteToStaff}
               </div>
             )}
           </div>
 
+          {/* スタッフからの連絡 */}
           {item.noteToFamily && (
             <div className="mt-2 p-2 bg-blue-50 rounded text-sm text-blue-700">
               <span className="font-medium">スタッフより:</span> {item.noteToFamily}
@@ -460,7 +507,198 @@ function ItemCard({ item, onDelete, onEdit }: { item: CareItem; onDelete: () => 
           </div>
         </div>
       )}
-    </Link>
+    </div>
+  );
+}
+
+/**
+ * 品物詳細モーダルコンポーネント
+ * ページ遷移せずにSPA的に詳細を表示
+ */
+function ItemDetailModal({ item, onClose, onEdit, onDelete }: {
+  item: CareItem;
+  onClose: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const statusColor = getStatusColorClass(item.status);
+  const categoryIcon = getCategoryIcon(item.category);
+  const hasExpiration = !!item.expirationDate;
+  const daysUntilExpiration = hasExpiration ? getDaysUntilExpiration(item.expirationDate!) : null;
+  const isExpiringSoon = daysUntilExpiration !== null && daysUntilExpiration <= 3 && daysUntilExpiration >= 0;
+  const isExpired = daysUntilExpiration !== null && daysUntilExpiration < 0;
+
+  // 提供スケジュールの表示
+  const scheduleDisplay = formatScheduleShort(item.servingSchedule);
+
+  // 在庫計算
+  const initialQty = item.quantity || 1;
+  const remainingQty = item.remainingQuantity || 0;
+  const consumedPercent = ((initialQty - remainingQty) / initialQty) * 100;
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <div
+        data-testid="item-detail-modal"
+        className="bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* ヘッダー */}
+        <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">{categoryIcon}</span>
+            <div>
+              <h2 className="font-bold text-lg">{item.itemName}</h2>
+              <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${statusColor.bgColor} ${statusColor.color}`}>
+                {getStatusLabel(item.status)}
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+            aria-label="閉じる"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* コンテンツ */}
+        <div className="p-4 space-y-4">
+          {/* 在庫バー */}
+          <div className="bg-gray-50 rounded-lg p-4">
+            <div className="flex justify-between text-sm mb-2">
+              <span className="text-gray-600">残量</span>
+              <span className="font-bold">{remainingQty}{item.unit} / {initialQty}{item.unit}</span>
+            </div>
+            <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className={`h-full transition-all ${
+                  consumedPercent >= 80 ? 'bg-red-500' :
+                  consumedPercent >= 50 ? 'bg-yellow-500' : 'bg-blue-500'
+                }`}
+                style={{ width: `${100 - consumedPercent}%` }}
+              />
+            </div>
+          </div>
+
+          {/* 主要情報 */}
+          <div className="space-y-3">
+            {/* 提供予定 */}
+            {scheduleDisplay && (
+              <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
+                <span className="text-xl">📅</span>
+                <div>
+                  <div className="text-sm text-gray-500">提供予定</div>
+                  <div className="font-medium text-blue-700">{scheduleDisplay}</div>
+                  {item.servingSchedule?.note && (
+                    <div className="text-sm text-gray-600 mt-1">{item.servingSchedule.note}</div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 賞味期限 */}
+            {hasExpiration && (
+              <div className={`flex items-start gap-3 p-3 rounded-lg ${
+                isExpired ? 'bg-red-50' : isExpiringSoon ? 'bg-orange-50' : 'bg-gray-50'
+              }`}>
+                <span className="text-xl">🗓️</span>
+                <div>
+                  <div className="text-sm text-gray-500">賞味期限</div>
+                  <div className={`font-medium ${isExpired ? 'text-red-600' : isExpiringSoon ? 'text-orange-600' : ''}`}>
+                    {formatDate(item.expirationDate!)}
+                    {isExpired ? ' (期限切れ) ❌' :
+                     daysUntilExpiration === 0 ? ' (今日) ⚠️' :
+                     isExpiringSoon ? ` (あと${daysUntilExpiration}日) ⚠️` : ''}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 保存方法 */}
+            {item.storageMethod && (
+              <div className="flex items-center gap-3 py-2 border-b">
+                <span className="text-lg">🧊</span>
+                <span className="text-gray-500">保存方法</span>
+                <span className="ml-auto font-medium">{STORAGE_METHOD_LABELS[item.storageMethod]}</span>
+              </div>
+            )}
+
+            {/* 提供方法 */}
+            {item.servingMethod && item.servingMethod !== 'as_is' && (
+              <div className="flex items-start gap-3 py-2 border-b">
+                <span className="text-lg">✂️</span>
+                <div className="flex-1">
+                  <span className="text-gray-500">提供方法</span>
+                  <div className="font-medium">{item.servingMethodDetail || item.servingMethod}</div>
+                </div>
+              </div>
+            )}
+
+            {/* 送付日 */}
+            <div className="flex items-center gap-3 py-2 border-b">
+              <span className="text-lg">📦</span>
+              <span className="text-gray-500">送付日</span>
+              <span className="ml-auto">{formatDate(item.sentDate)}</span>
+            </div>
+
+            {/* スタッフへの申し送り */}
+            {item.noteToStaff && (
+              <div className="p-3 bg-yellow-50 rounded-lg">
+                <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
+                  <span>📝</span>
+                  <span>スタッフへの申し送り</span>
+                </div>
+                <div className="text-sm">{item.noteToStaff}</div>
+              </div>
+            )}
+
+            {/* スタッフからの連絡 */}
+            {item.noteToFamily && (
+              <div className="p-3 bg-blue-50 rounded-lg">
+                <div className="flex items-center gap-2 text-sm text-blue-600 mb-1">
+                  <span>💬</span>
+                  <span>スタッフより</span>
+                </div>
+                <div className="text-sm text-blue-700">{item.noteToFamily}</div>
+              </div>
+            )}
+
+            {/* 残った場合の処置 */}
+            {item.remainingHandlingInstruction && (
+              <div className="flex items-center gap-3 py-2 border-b">
+                <span className="text-lg">🍽️</span>
+                <span className="text-gray-500">残った場合</span>
+                <span className="ml-auto font-medium">
+                  {item.remainingHandlingInstruction === 'stored' ? '保存' :
+                   item.remainingHandlingInstruction === 'discarded' ? '破棄' : '次回確認'}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* フッター（アクションボタン） */}
+        <div className="sticky bottom-0 bg-white border-t p-4 flex gap-3">
+          <button
+            onClick={onEdit}
+            className="flex-1 px-4 py-3 bg-primary text-white rounded-lg font-medium hover:opacity-90 transition"
+          >
+            ✏️ 編集
+          </button>
+          <button
+            onClick={onDelete}
+            className="px-4 py-3 border border-red-300 text-red-600 rounded-lg font-medium hover:bg-red-50 transition"
+          >
+            🗑️
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
