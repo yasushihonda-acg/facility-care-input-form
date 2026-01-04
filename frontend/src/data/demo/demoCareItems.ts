@@ -624,6 +624,31 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     createdAt: getDateTimeString(-7),
     updatedAt: getDateTimeString(0),
   },
+
+  // ===== 未設定警告テスト用: 提供予定・賞味期限なし =====
+  {
+    id: 'demo-item-018',
+    residentId: 'resident-001',
+    userId: 'family-001',
+    itemName: '杏仁豆腐（テスト用・未設定項目あり）',
+    normalizedName: '杏仁豆腐',
+    category: 'food' as ItemCategory,
+    sentDate: getDateString(-2),
+    initialQuantity: 3,
+    currentQuantity: 2,
+    remainingQuantity: 2,
+    quantity: 3,
+    unit: '個',
+    status: 'in_progress' as ItemStatus,
+    // expirationDate: なし（未設定警告テスト）
+    storageMethod: 'refrigerated',
+    servingMethod: 'as_is' as ServingMethod,
+    servingMethodDetail: 'そのまま提供',
+    noteToStaff: '自分でなかなか開けない時は開封してください',
+    // servingSchedule: なし（未設定警告テスト）
+    createdAt: getDateTimeString(-2),
+    updatedAt: getDateTimeString(-2),
+  },
 ];
 
 // ===== ヘルパー関数 =====

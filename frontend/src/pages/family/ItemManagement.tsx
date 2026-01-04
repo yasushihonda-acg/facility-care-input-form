@@ -419,20 +419,30 @@ function ItemCard({ item, onDelete, onEdit, onShowDetail }: {
           </div>
 
           <div className="text-sm text-gray-600 space-y-0.5">
-            {/* 提供予定（最優先） */}
-            {scheduleDisplay && (
+            {/* 提供予定（最優先）- 未設定時は警告表示 */}
+            {scheduleDisplay ? (
               <div className="text-blue-600 font-medium">
                 {scheduleDisplay}
               </div>
+            ) : (
+              <div className="text-orange-500 font-medium flex items-center gap-1">
+                <span>📅 提供予定:</span>
+                <span className="bg-orange-100 px-1.5 py-0.5 rounded text-xs">⚠️ 未設定</span>
+              </div>
             )}
 
-            {/* 賞味期限 */}
-            {hasExpiration && (
+            {/* 賞味期限 - 未設定時は警告表示 */}
+            {hasExpiration ? (
               <div className={`flex items-center gap-1 ${isExpired ? 'text-red-600 font-medium' : isExpiringSoon ? 'text-orange-600 font-medium' : ''}`}>
                 <span>🗓️ 期限:</span>
                 <span>{getExpirationDisplayText(item.expirationDate!)}</span>
                 {isExpiringSoon && !isExpired && <span>⚠️</span>}
                 {isExpired && <span>❌</span>}
+              </div>
+            ) : (
+              <div className="text-orange-500 flex items-center gap-1">
+                <span>🗓️ 賞味期限:</span>
+                <span className="bg-orange-100 px-1.5 py-0.5 rounded text-xs">⚠️ 未設定</span>
               </div>
             )}
 
@@ -587,8 +597,8 @@ function ItemDetailModal({ item, onClose, onEdit, onDelete }: {
 
           {/* 主要情報 */}
           <div className="space-y-3">
-            {/* 提供予定 */}
-            {scheduleDisplay && (
+            {/* 提供予定 - 未設定時は警告表示 */}
+            {scheduleDisplay ? (
               <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
                 <span className="text-xl">📅</span>
                 <div>
@@ -599,10 +609,21 @@ function ItemDetailModal({ item, onClose, onEdit, onDelete }: {
                   )}
                 </div>
               </div>
+            ) : (
+              <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                <span className="text-xl">📅</span>
+                <div className="flex-1">
+                  <div className="text-sm text-gray-500">提供予定</div>
+                  <div className="font-medium text-orange-600 flex items-center gap-2">
+                    <span>⚠️ 未設定</span>
+                    <span className="text-xs text-gray-500">（編集から設定できます）</span>
+                  </div>
+                </div>
+              </div>
             )}
 
-            {/* 賞味期限 */}
-            {hasExpiration && (
+            {/* 賞味期限 - 未設定時は警告表示 */}
+            {hasExpiration ? (
               <div className={`flex items-start gap-3 p-3 rounded-lg ${
                 isExpired ? 'bg-red-50' : isExpiringSoon ? 'bg-orange-50' : 'bg-gray-50'
               }`}>
@@ -614,6 +635,17 @@ function ItemDetailModal({ item, onClose, onEdit, onDelete }: {
                     {isExpired ? ' (期限切れ) ❌' :
                      daysUntilExpiration === 0 ? ' (今日) ⚠️' :
                      isExpiringSoon ? ` (あと${daysUntilExpiration}日) ⚠️` : ''}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                <span className="text-xl">🗓️</span>
+                <div className="flex-1">
+                  <div className="text-sm text-gray-500">賞味期限</div>
+                  <div className="font-medium text-orange-600 flex items-center gap-2">
+                    <span>⚠️ 未設定</span>
+                    <span className="text-xs text-gray-500">（不明な場合は空欄でOK）</span>
                   </div>
                 </div>
               </div>
