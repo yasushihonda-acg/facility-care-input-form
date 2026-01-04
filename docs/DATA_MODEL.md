@@ -350,7 +350,7 @@ allowed_emails/
 
 ---
 
-## 5.5 care_photosコレクション（Phase 17/52: 写真メタデータ）
+## 5.5 care_photosコレクション（Phase 17/52/53: 写真メタデータ）
 
 ケア写真のメタデータを管理。
 
@@ -364,17 +364,22 @@ interface CarePhoto {
   date: string;              // YYYY-MM-DD
   mealTime: string;          // breakfast/lunch/dinner/snack
   photoUrl: string;
-  storagePath: string;
+  storagePath: string;       // direct_upload時のみ設定
   fileName: string;
   mimeType: string;
-  fileSize: number;
+  fileSize: number;          // direct_upload時のみ設定
   staffId: string;
-  staffName?: string;
+  staffName?: string;        // 記録者名（取得できない場合あり）
   uploadedAt: string;        // ISO8601
   postId?: string;
 
   // Phase 52追加
   source?: 'direct_upload' | 'google_chat';  // 写真のソース
+
+  // Phase 53追加（source='google_chat'時のみ）
+  chatMessageId?: string;    // Chat APIのメッセージ名（重複防止用）
+  chatTags?: string[];       // 自動抽出タグ（例: ['ID7282', '画像1']）
+  chatContent?: string;      // UI表示用テキスト（最大500文字）
 }
 ```
 
@@ -386,6 +391,16 @@ interface CarePhoto {
 | `google_chat` | Google Chatスペースから取得 |
 
 後方互換性のため、既存データはsource未設定（取得時に`direct_upload`としてフォールバック）。
+
+### Google Chat同期時の制限事項
+
+| フィールド | 取得可否 | 備考 |
+|------------|----------|------|
+| photoUrl | ✅ | Firebase Storage URL |
+| date | ✅ | IDメッセージの投稿日時 |
+| staffName | ⚠️ | IDメッセージ本文に「記録者：〇〇」と記載がある場合のみ |
+| storagePath | ❌ | リンクのみ（空文字） |
+| fileSize | ❌ | 不明（0） |
 
 ---
 

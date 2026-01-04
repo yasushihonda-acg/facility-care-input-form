@@ -1761,7 +1761,21 @@ Google ChatスペースからメッセージをフェッチしFirestoreに保存
 | residentId | string | Yes | 対象利用者ID |
 | limit | number | No | 取得件数上限（デフォルト: 100） |
 | year | number | No | 特定年のみフィルタ（例: 2025） |
-| fullSync | boolean | No | true: 全件取得+孤児削除、false: 差分のみ（デフォルト） |
+| fullSync | boolean | No | true: 全件取得モード、false: 差分のみ（デフォルト） |
+
+#### 同期モードと孤児削除
+
+| モード | orphan削除 | 説明 |
+|--------|------------|------|
+| `fullSync=false` | ❌ | 差分同期。既存データを保護 |
+| `fullSync=true, year=未指定` | ❌ | 全件取得するが、古い年のデータが範囲外になる可能性があるため削除しない |
+| `fullSync=true, year=指定` | ✅ | 指定年の全データを取得するため、孤児判定が正確 |
+
+#### staffName（記録者）の取得制限
+
+- IDメッセージ（`ID{residentId}`を含むメッセージ）の**本文に「記録者：〇〇」と記載がある場合のみ**取得可能
+- 画像カードのメタデータには記録者情報は含まれていない
+- 多くの投稿では記載がないため、`staffName`は`undefined`になる
 
 #### レスポンス
 
@@ -1770,7 +1784,7 @@ interface SyncResult {
   synced: number;           // 新規保存件数
   updated: number;          // メタデータ更新件数
   skipped: number;          // スキップ件数
-  orphansDeleted: number;   // 孤児削除件数（fullSync時のみ）
+  orphansDeleted: number;   // 孤児削除件数（fullSync+year指定時のみ）
   duplicatesDeleted: number; // 重複削除件数
   total: number;            // 保存済み総件数
   photos: CarePhoto[];      // 保存された画像リスト
@@ -1795,6 +1809,7 @@ interface SyncResult {
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
+| 2026-01-04 | 1.21.1 | syncChatImages: orphan削除条件を修正（fullSync+year指定時のみ）、staffName制限事項を追記 |
 | 2026-01-04 | 1.21.0 | Phase 53: syncChatImages API追加（fullSyncモード対応） |
 | 2026-01-03 | 1.20.0 | Phase 51: getChatImages API追加（Google Chat画像取得） |
 | 2025-12-29 | 1.19.0 | Phase 46: 階層的要約API追加（getSummaries/generateSummary）、chatWithRecords maxOutputTokens 4096に変更 |
