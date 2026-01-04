@@ -320,7 +320,13 @@ Google Chat API → syncChatImages → Firestore(care_photos) → フロント�
 - 設定ページの「Chat画像同期 認証設定」セクションに配置
 
 ## E2Eテスト
-459件定義（Phase 53.1まで）
+459件定義（Phase 54まで）
+
+## Phase 54: 残り対応の処置指示に条件追加（2026-01-04）
+- 家族が「破棄してください」「保存してください」選択時に条件を追加可能
+- 例: 「破棄してください（食べかけの場合）」
+- RemainingHandlingCondition型追加
+- formatRemainingHandlingWithConditions()でスタッフ側にも条件表示
 
 ## Phase 50: 記録閲覧シート表示設定（2026-01-03）
 - 設定ページ（/settings）に「記録閲覧 表示設定」セクション追加
