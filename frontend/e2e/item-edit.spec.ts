@@ -74,6 +74,9 @@ test.describe('【Phase 22.1】品物編集機能', () => {
     });
 
     test('ITEM-EDIT-004: 品物名を変更して保存できる（デモモード）', async ({ page }) => {
+      // アラートを自動でOKする
+      page.on('dialog', dialog => dialog.accept());
+
       await page.goto('/demo/family/items/demo-item-001/edit');
       await waitForSpaLoad(page);
 
@@ -88,16 +91,14 @@ test.describe('【Phase 22.1】品物編集機能', () => {
         await submitButton.click();
         await waitForSpaLoad(page);
 
-        // デモモードのアラートまたはリダイレクトを確認
-        await page.waitForTimeout(1000);
-        const currentUrl = page.url();
-        expect(currentUrl).toContain('/demo/');
+        // 品物一覧にリダイレクトされることを確認
+        await expect(page).toHaveURL(/\/demo\/family\/items$/);
       }
     });
 
     // ITEM-EDIT-005: 送付日テストは削除（送付日フィールドはUI非表示）
 
-    test('ITEM-EDIT-006: キャンセルで元の詳細ページに戻る', async ({ page }) => {
+    test('ITEM-EDIT-006: キャンセルで品物一覧に戻る', async ({ page }) => {
       await page.goto('/demo/family/items/demo-item-001/edit');
       await waitForSpaLoad(page);
 
@@ -107,15 +108,15 @@ test.describe('【Phase 22.1】品物編集機能', () => {
         await cancelButton.click();
         await waitForSpaLoad(page);
 
-        // 詳細ページに戻る
-        await expect(page).toHaveURL(/\/demo\/family\/items\/demo-item-001$/);
+        // 品物一覧に戻る
+        await expect(page).toHaveURL(/\/demo\/family\/items$/);
       } else {
         // 戻るリンクを探す
         const backLink = page.getByRole('link', { name: /戻る/ });
         if (await backLink.isVisible()) {
           await backLink.click();
           await waitForSpaLoad(page);
-          await expect(page).toHaveURL(/\/demo\/family\/items/);
+          await expect(page).toHaveURL(/\/demo\/family\/items$/);
         }
       }
     });
