@@ -52,18 +52,36 @@ export function StaffNotesPage() {
   const { pendingDiscardItems, isLoading: discardLoading } = usePendingDiscardItems();
   const discardCount = pendingDiscardItems.length;
 
-  // 廃棄指示があれば家族依頼タブをデフォルトに
+  // 品物操作タスクの件数（Phase 55）
+  const tasks = tasksData?.tasks || [];
+  const itemCreatedCount = tasks.filter((t) => t.taskType === 'item_created').length;
+  const itemUpdatedCount = tasks.filter((t) => t.taskType === 'item_updated').length;
+  const itemDeletedCount = tasks.filter((t) => t.taskType === 'item_deleted').length;
+  const hasItemActionNotifications = itemCreatedCount + itemUpdatedCount + itemDeletedCount > 0;
+
+  // 廃棄指示 or 品物操作通知があれば家族依頼タブをデフォルトに
   const [activeTab, setActiveTab] = useState<TabValue>('notes');
   useEffect(() => {
-    if (discardCount > 0 && !discardLoading) {
+    if ((discardCount > 0 || hasItemActionNotifications) && !discardLoading && !tasksLoading) {
       setActiveTab('tasks');
     }
-  }, [discardCount, discardLoading]);
+  }, [discardCount, hasItemActionNotifications, discardLoading, tasksLoading]);
 
-  // タブ定義（バッジ付き）
-  const TABS: { value: TabValue; label: string; icon: string; badge?: number }[] = [
+  // タブ定義（バッジ付き）- 複数バッジ対応
+  type BadgeInfo = { count: number; color: string };
+  const TABS: { value: TabValue; label: string; icon: string; badges?: BadgeInfo[] }[] = [
     { value: 'notes', label: '注意事項', icon: '📋' },
-    { value: 'tasks', label: '家族依頼', icon: '📝', badge: discardCount > 0 ? discardCount : undefined },
+    {
+      value: 'tasks',
+      label: '家族依頼',
+      icon: '📝',
+      badges: [
+        ...(discardCount > 0 ? [{ count: discardCount, color: 'bg-red-500' }] : []),
+        ...(itemCreatedCount > 0 ? [{ count: itemCreatedCount, color: 'bg-green-500' }] : []),
+        ...(itemUpdatedCount > 0 ? [{ count: itemUpdatedCount, color: 'bg-blue-500' }] : []),
+        ...(itemDeletedCount > 0 ? [{ count: itemDeletedCount, color: 'bg-red-400' }] : []),
+      ],
+    },
   ];
 
   // 注意事項の作成/更新
@@ -160,10 +178,17 @@ export function StaffNotesPage() {
             >
               <span className="mr-1">{tab.icon}</span>
               {tab.label}
-              {/* バッジ */}
-              {tab.badge !== undefined && tab.badge > 0 && (
-                <span className="absolute -top-1 right-1/4 px-1.5 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px]">
-                  {tab.badge}
+              {/* 複数バッジ（Phase 55: 色分け対応） */}
+              {tab.badges && tab.badges.length > 0 && (
+                <span className="absolute -top-1 right-1 flex gap-0.5">
+                  {tab.badges.map((badge, idx) => (
+                    <span
+                      key={idx}
+                      className={`px-1.5 py-0.5 ${badge.color} text-white text-xs font-bold rounded-full min-w-[20px]`}
+                    >
+                      {badge.count}
+                    </span>
+                  ))}
                 </span>
               )}
             </button>
