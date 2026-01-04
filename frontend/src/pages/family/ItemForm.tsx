@@ -256,9 +256,7 @@ export function ItemForm() {
       newErrors.itemName = '品物名を入力してください';
     }
 
-    if (!formData.sentDate) {
-      newErrors.sentDate = '送付日を入力してください';
-    }
+    // 送付日は任意（デフォルト: 今日の日付が自動設定される）
 
     if (formData.quantity < 1) {
       newErrors.quantity = '1以上の数を入力してください';
