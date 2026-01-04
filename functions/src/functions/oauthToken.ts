@@ -255,7 +255,7 @@ export const checkOAuthToken = functions
   .region(FUNCTIONS_CONFIG.REGION)
   .runWith({
     timeoutSeconds: 10,
-    memory: "128MB",
+    memory: "256MB",
   })
   .https.onRequest(checkOAuthTokenHandler);
 
@@ -317,6 +317,6 @@ export const getOAuthUrl = functions
   .region(FUNCTIONS_CONFIG.REGION)
   .runWith({
     timeoutSeconds: 10,
-    memory: "128MB",
+    memory: "256MB",
   })
   .https.onRequest(getOAuthUrlHandler);
