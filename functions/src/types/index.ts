@@ -860,7 +860,10 @@ export type TaskType =
   | "serve_reminder" // 提供リマインダー
   | "restock_alert" // 在庫切れアラート
   | "care_instruction" // ケア指示確認
-  | "custom"; // カスタムタスク
+  | "custom" // カスタムタスク
+  | "item_created" // 品物新規登録（Phase 55）
+  | "item_updated" // 品物編集（Phase 55）
+  | "item_deleted"; // 品物削除（Phase 55）
 
 /** タスクステータス */
 export type TaskStatus =
