@@ -536,7 +536,7 @@ async function syncChatImagesHandler(
       tags: string[];
     }>();
 
-    // IDを含むメッセージのみマップに登録
+    // Pass 1: IDを含むメッセージからマップを構築（基本情報）
     for (const msg of matchingMessages) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const threadName = (msg as any).thread?.name;
@@ -592,6 +592,43 @@ async function syncChatImagesHandler(
         });
       }
     }
+
+    // Pass 2: IDスレッドの全メッセージから記録者を検索
+    // IDを含まないメッセージでも「記録者」を含む場合がある
+    let staffNameFoundCount = 0;
+    for (const msg of messages) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const threadName = (msg as any).thread?.name;
+      if (!threadName || !idThreads.has(threadName)) continue;
+
+      // このスレッドのエントリがなければスキップ（Pass 1で作成されていない）
+      const existing = threadIdMessageMap.get(threadName);
+      if (!existing) continue;
+
+      // 既にstaffNameがあればスキップ
+      if (existing.staffName) continue;
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const msgAny = msg as any;
+      const combinedText = getAllTextFromMessage({
+        text: msg.text,
+        cardsV2: msg.cardsV2,
+        cards: msgAny.cards,
+      });
+
+      const staffName = extractStaffName(combinedText);
+      if (staffName) {
+        // staffNameが見つかったらマップを更新
+        threadIdMessageMap.set(threadName, {
+          ...existing,
+          staffName,
+        });
+        staffNameFoundCount++;
+      }
+    }
+    functions.logger.info(
+      `[syncChatImages] Pass 2: Found staffName in ${staffNameFoundCount} additional threads`
+    );
 
     functions.logger.info(
       `[syncChatImages] Built thread ID message map: ${threadIdMessageMap.size} threads with ID`
