@@ -118,11 +118,57 @@ export const REMAINING_HANDLING_INSTRUCTION_OPTIONS: {
 ];
 
 /**
+ * 処置指示の条件サジェスト（破棄用）
+ */
+export const DISCARD_CONDITION_SUGGESTIONS: string[] = [
+  '食べかけの場合',
+  '開封済みの場合',
+  '賞味期限切れの場合',
+  '常温で長時間放置した場合',
+];
+
+/**
+ * 処置指示の条件サジェスト（保存用）
+ */
+export const STORE_CONDITION_SUGGESTIONS: string[] = [
+  '封を切っていない場合',
+  '皮をむいていない場合',
+  '半分以上残っている場合',
+  '当日中に食べられる場合',
+];
+
+/**
+ * 処置指示の条件
+ */
+export interface RemainingHandlingCondition {
+  condition: string;  // 条件テキスト（サジェストまたは自由記述）
+}
+
+/**
  * 処置指示のラベルを取得
  */
 export function getRemainingHandlingInstructionLabel(instruction: RemainingHandlingInstruction | undefined): string {
   if (!instruction || instruction === 'none') return '指定なし';
   return REMAINING_HANDLING_INSTRUCTION_OPTIONS.find(o => o.value === instruction)?.label ?? '指定なし';
+}
+
+/**
+ * 処置指示と条件を整形して表示用テキストを生成
+ */
+export function formatRemainingHandlingWithConditions(
+  instruction: RemainingHandlingInstruction | undefined,
+  conditions?: RemainingHandlingCondition[]
+): string {
+  if (!instruction || instruction === 'none') return '指定なし';
+
+  const label = getRemainingHandlingInstructionLabel(instruction);
+
+  if (!conditions || conditions.length === 0) {
+    return label;
+  }
+
+  const conditionTexts = conditions.map(c => c.condition).join('、');
+  return `${label}（${conditionTexts}）`;
 }
 
 /**
@@ -174,6 +220,8 @@ export interface CareItem {
 
   // Phase 33: 残った場合の処置指示（家族が設定）
   remainingHandlingInstruction?: RemainingHandlingInstruction;
+  /** Phase 54: 処置指示の条件（例: 食べかけの場合は破棄） */
+  remainingHandlingConditions?: RemainingHandlingCondition[];
 
   // 提供記録（スタッフが入力）- 旧: 互換性のため残す
   actualServeDate?: string;      // YYYY-MM-DD
@@ -236,6 +284,8 @@ export interface CareItemInput {
   noteToStaff?: string;
   // Phase 33: 残った場合の処置指示
   remainingHandlingInstruction?: RemainingHandlingInstruction;
+  /** Phase 54: 処置指示の条件（例: 食べかけの場合は破棄） */
+  remainingHandlingConditions?: RemainingHandlingCondition[];
 }
 
 // スタッフが入力する提供記録

@@ -15,7 +15,7 @@ import {
   getCategoryIcon,
   getServingMethodLabel,
   getStorageLabel,
-  getRemainingHandlingInstructionLabel,
+  formatRemainingHandlingWithConditions,
 } from '../../types/careItem';
 import { StaffRecordDialog } from '../staff/StaffRecordDialog';
 import {
@@ -693,7 +693,7 @@ function ItemCard({ item, highlight, onRecordClick, onDiscardClick }: ItemCardPr
               )}
               {item.remainingHandlingInstruction && (
                 <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">
-                  🔄 残り: {getRemainingHandlingInstructionLabel(item.remainingHandlingInstruction)}
+                  🔄 残り: {formatRemainingHandlingWithConditions(item.remainingHandlingInstruction, item.remainingHandlingConditions)}
                 </span>
               )}
             </div>
@@ -814,7 +814,7 @@ function RemainingItemCard({ item, type, showButtons = true, onRecordClick }: Re
               )}
               {item.remainingHandlingInstruction && (
                 <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">
-                  🔄 残り: {getRemainingHandlingInstructionLabel(item.remainingHandlingInstruction)}
+                  🔄 残り: {formatRemainingHandlingWithConditions(item.remainingHandlingInstruction, item.remainingHandlingConditions)}
                 </span>
               )}
             </div>
