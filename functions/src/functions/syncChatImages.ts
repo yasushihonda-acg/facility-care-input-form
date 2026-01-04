@@ -537,6 +537,7 @@ async function syncChatImagesHandler(
     }>();
 
     // Pass 1: IDを含むメッセージからマップを構築（基本情報）
+    let cardsDebugCount = 0; // cards V1デバッグ用カウンター
     for (const msg of matchingMessages) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const threadName = (msg as any).thread?.name;
@@ -551,13 +552,21 @@ async function syncChatImagesHandler(
         cards: msgAny.cards,
       });
 
-      // デバッグ: cards構造を確認
-      if (msgAny.cards && msgAny.cards.length > 0) {
-        functions.logger.info("[syncChatImages] Found cards V1 in ID message:", {
-          thread: threadName,
-          cardsCount: msgAny.cards.length,
-          cardsPreview: JSON.stringify(msgAny.cards).substring(0, 500),
-        });
+      // デバッグ: cards構造を確認（最初の3件のみ、文字列形式で出力）
+      if (msgAny.cards && msgAny.cards.length > 0 && cardsDebugCount < 3) {
+        const cardsJson = JSON.stringify(msgAny.cards);
+        const has記録者InCards = cardsJson.includes("記録者");
+        functions.logger.info(
+          "[syncChatImages] Cards V1 content: " +
+          `thread=${threadName.substring(0, 50)}, ` +
+          `has記録者=${has記録者InCards}, ` +
+          `cardsLen=${cardsJson.length}`
+        );
+        // 最初の500文字を出力
+        functions.logger.info(
+          `[syncChatImages] Cards preview: ${cardsJson.substring(0, 500)}`
+        );
+        cardsDebugCount++;
       }
       // UI表示用の読みやすいテキスト
       const displayableContent = getDisplayableContent({
