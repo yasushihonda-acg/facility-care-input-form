@@ -20,21 +20,25 @@ test.describe('【Phase 22.1】品物編集機能', () => {
 
   test.describe('デモモード編集テスト', () => {
 
-    test('ITEM-EDIT-001: 編集ボタンが品物詳細に表示される', async ({ page }) => {
+    test('ITEM-EDIT-001: 編集ボタンが品物詳細モーダルに表示される', async ({ page }) => {
       // デモモードの品物一覧へ
       await page.goto('/demo/family/items');
       await waitForSpaLoad(page);
 
-      // 品物カードをクリックして詳細へ
+      // 品物カードをクリックして詳細モーダルを表示
       const itemCard = page.locator('[data-testid="item-card"]').first();
       if (await itemCard.isVisible()) {
         await itemCard.click();
         await waitForSpaLoad(page);
 
-        // 編集ボタンが表示される
-        await expect(page.getByRole('link', { name: /編集/ })).toBeVisible();
+        // モーダルが表示される
+        const modal = page.locator('[data-testid="item-detail-modal"]');
+        await expect(modal).toBeVisible();
+
+        // モーダル内の編集ボタンが表示される
+        await expect(modal.getByRole('button', { name: /編集/ })).toBeVisible();
       } else {
-        // カードがない場合はリンクで遷移
+        // カードがない場合はURL直接アクセスで詳細ページへ遷移
         await page.goto('/demo/family/items/demo-item-001');
         await waitForSpaLoad(page);
         await expect(page.getByRole('link', { name: /編集/ })).toBeVisible();
