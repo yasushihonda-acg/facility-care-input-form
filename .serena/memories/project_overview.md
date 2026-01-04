@@ -320,7 +320,7 @@ Google Chat API → syncChatImages → Firestore(care_photos) → フロント�
 - 設定ページの「Chat画像同期 認証設定」セクションに配置
 
 ## E2Eテスト
-459件定義（Phase 54まで）
+469件定義（Phase 55まで）
 
 ## Phase 54: 残り対応の処置指示に条件追加（2026-01-04）
 - 家族が「破棄してください」「保存してください」選択時に条件を追加可能
