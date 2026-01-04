@@ -245,5 +245,7 @@ Phase 1〜52まで完了。詳細は `git log` を参照。
 - **Phase 50**: ViewPageシート表示設定 - 閲覧したいシートを個別にON/OFF可能に
 - **Phase 51**: Google Chat画像タブ - Chatスペースから画像を取得して表示
 - **Phase 52**: Firebase Authentication導入 - Googleログイン認証、許可リスト（aozora-cg.com + 個別アカウント）、OAuth対応Chat API
+- **Phase 53**: OAuth永続化 - 管理者認証1回で全ユーザーがChat画像同期可能
+- **Phase 53.1**: fullSyncモード - 初回同期と増分同期の分離
 
-E2Eテスト: 444件定義
+E2Eテスト: 455件定義
