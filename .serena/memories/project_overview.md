@@ -302,6 +302,21 @@ Google Chat API → syncChatImages → Firestore(care_photos) → フロント�
 - **古い画像が消えた**: 全件同期を実行して再取得
 - **認証エラー**: 設定ページで管理者が再認証
 
+### 既知の問題（要修正）
+| 問題 | 状態 | 詳細 |
+|------|------|------|
+| 既存画像のメタデータ未更新 | ⚠️ 未解決 | 保存済み画像にstaffName/postId/chatContentが追記されない |
+
+**原因調査ポイント**:
+1. `threadIdMessageMap` が正しく構築されているか（ログ確認）
+2. `existingPhotoUrlsMap` のURL一致条件
+3. `parentMeta` がnullの場合のフォールバック
+
+**期待動作**:
+- 親メッセージ（IDを含む）から: 記録者、投稿ID、タグ、特記事項テキスト
+- 子メッセージ（画像）: Firebase Storage URL
+- 同期時: 既存画像のメタデータを親メッセージ情報で更新
+
 ## E2Eテスト
 444件定義（Phase 52まで）
 
