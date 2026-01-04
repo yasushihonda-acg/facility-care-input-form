@@ -50,7 +50,7 @@ function filterItemsByDateRange(
   const start = new Date(selectedDate);
   start.setHours(0, 0, 0, 0);
 
-  const end = new Date(selectedDate);
+  let end = new Date(selectedDate);
   end.setHours(23, 59, 59, 999);
 
   // 週・月の範囲を設定
@@ -58,7 +58,9 @@ function filterItemsByDateRange(
     const day = start.getDay();
     const diff = day === 0 ? -6 : 1 - day;
     start.setDate(start.getDate() + diff);
-    end.setDate(start.getDate() + 6);
+    // endもstartをベースに計算（月をまたぐ場合の誤計算を防止）
+    end = new Date(start);
+    end.setDate(end.getDate() + 6);
     end.setHours(23, 59, 59, 999);
   } else if (viewMode === 'month') {
     start.setDate(1);
