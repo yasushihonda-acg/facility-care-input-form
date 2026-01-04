@@ -232,23 +232,6 @@ export function ImagesTab({ year, month }: ImagesTabProps) {
               >
                 🔄 同期
               </button>
-              <button
-                onClick={() => {
-                  if (window.confirm(
-                    '全件同期を実行しますか？\n\n' +
-                    '・2024年以降の全メッセージを取得します\n' +
-                    '・存在しない画像は削除されます\n' +
-                    '・処理に数分かかる場合があります'
-                  )) {
-                    sync({ fullSync: true });
-                  }
-                }}
-                disabled={isSyncing}
-                className="px-3 py-1.5 text-sm bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 disabled:opacity-50"
-                title="全メッセージを取得して孤児データを削除"
-              >
-                🔁 全件同期
-              </button>
             </>
           )}
           {/* 表示モード切り替え */}
