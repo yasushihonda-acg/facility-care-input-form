@@ -4,11 +4,14 @@
  * @see docs/ITEM_MANAGEMENT_SPEC.md セクション9.2
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
+import { PresetFormModal } from '../../components/family/PresetFormModal';
 import { useCareItems, useUpdateCareItem } from '../../hooks/useCareItems';
 import { useDemoMode } from '../../hooks/useDemoMode';
+import { usePresets, useCreatePreset, useUpdatePreset } from '../../hooks/usePresets';
+import { normalizeItemName } from '../../api';
 import {
   ITEM_CATEGORIES,
   STORAGE_METHODS,
@@ -25,14 +28,21 @@ import type {
   RemainingHandlingInstruction,
   ServingSchedule,
 } from '../../types/careItem';
+import type { CarePreset } from '../../types/family';
 import { ServingScheduleInput } from '../../components/family/ServingScheduleInput';
 import { scheduleToPlannedDate } from '../../utils/scheduleUtils';
+import { DEMO_PRESETS } from '../../data/demoFamilyData';
 
 // デモ用の入居者ID（将来は認証から取得）
 const DEMO_RESIDENT_ID = 'resident-001';
 
+// デモ用のユーザーID
+const DEMO_USER_ID = 'family-001';
+
 interface EditFormData {
   itemName: string;
+  // Phase 43: 統計用の表示名
+  normalizedName: string;
   category: ItemCategory;
   quantity: number;
   unit: string;
@@ -62,9 +72,19 @@ export function ItemEditPage() {
   const updateItem = useUpdateCareItem();
   const item = data?.items.find((i) => i.id === id);
 
+  // プリセット一覧を取得（本番モードのみAPIを使用）
+  const { data: presetsData } = usePresets({
+    residentId: DEMO_RESIDENT_ID,
+    enabled: !isDemo,
+  });
+  const createPresetMutation = useCreatePreset();
+  const updatePresetMutation = useUpdatePreset();
+  const presets = isDemo ? DEMO_PRESETS : (presetsData?.presets || DEMO_PRESETS);
+
   // フォーム状態（Phase 31: デフォルトカテゴリを food に変更）
   const [formData, setFormData] = useState<EditFormData>({
     itemName: '',
+    normalizedName: '',
     category: 'food',
     quantity: 1,
     unit: '個',
@@ -81,11 +101,21 @@ export function ItemEditPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // プリセット編集・新規追加用state
+  const [editingPreset, setEditingPreset] = useState<CarePreset | null>(null);
+  const [isCreatingPreset, setIsCreatingPreset] = useState(false);
+
+  // 品物名正規化の状態
+  const [isNormalizing, setIsNormalizing] = useState(false);
+  const [normalizedSuggestion, setNormalizedSuggestion] = useState<string | null>(null);
+  const lastNormalizedItemName = useRef<string>('');
+
   // 品物データが取得できたらフォームにセット（旧カテゴリは自動変換）
   useEffect(() => {
     if (item) {
       setFormData({
         itemName: item.itemName || '',
+        normalizedName: item.normalizedName || '',
         category: migrateCategory(item.category || 'food'),
         quantity: item.quantity || 1,
         unit: item.unit || '個',
@@ -127,6 +157,70 @@ export function ItemEditPage() {
     }));
   };
 
+  // 品物名正規化（onBlurで呼び出し）
+  const handleNormalizeItemName = useCallback(async () => {
+    const itemName = formData.itemName.trim();
+
+    // 既に正規化済み、または短すぎる場合はスキップ
+    if (itemName.length < 3 || itemName === lastNormalizedItemName.current) {
+      return;
+    }
+
+    // ユーザーが既に手動で入力している場合はスキップ
+    if (formData.normalizedName && formData.normalizedName !== lastNormalizedItemName.current) {
+      return;
+    }
+
+    setIsNormalizing(true);
+    setNormalizedSuggestion(null);
+
+    try {
+      const response = await normalizeItemName(itemName);
+      if (response.success && response.data) {
+        const { normalizedName, confidence } = response.data;
+        if (normalizedName !== itemName && confidence !== 'low') {
+          setNormalizedSuggestion(normalizedName);
+          lastNormalizedItemName.current = itemName;
+        }
+      }
+    } catch (error) {
+      console.error('品物名正規化エラー:', error);
+    } finally {
+      setIsNormalizing(false);
+    }
+  }, [formData.itemName, formData.normalizedName]);
+
+  // 正規化提案を適用
+  const handleApplyNormalizedName = useCallback(() => {
+    if (normalizedSuggestion) {
+      setFormData((prev) => ({ ...prev, normalizedName: normalizedSuggestion }));
+      setNormalizedSuggestion(null);
+    }
+  }, [normalizedSuggestion]);
+
+  // プリセット（いつもの指示）を適用
+  const handleApplyPreset = useCallback((preset: CarePreset) => {
+    // プリセット名から品物名を抽出（カッコ前の部分）
+    const extractItemName = (presetName: string): string => {
+      const match = presetName.match(/^([^（(]+)/);
+      return match ? match[1].trim() : presetName;
+    };
+
+    const itemName = extractItemName(preset.name);
+
+    setFormData((prev) => ({
+      ...prev,
+      itemName,
+      normalizedName: itemName,
+      ...(preset.itemCategory && { category: preset.itemCategory }),
+      ...(preset.storageMethod && { storageMethod: preset.storageMethod }),
+      servingMethod: preset.servingMethod || 'as_is',
+      servingMethodDetail: preset.servingMethodDetail || preset.processingDetail || '',
+      ...(preset.noteToStaff && { noteToStaff: preset.noteToStaff }),
+      ...(preset.remainingHandlingInstruction && { remainingHandlingInstruction: preset.remainingHandlingInstruction }),
+    }));
+  }, []);
+
   // バリデーション
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -165,6 +259,7 @@ export function ItemEditPage() {
         itemId: item.id,
         updates: {
           itemName: formData.itemName,
+          normalizedName: formData.normalizedName || undefined,
           category: formData.category,
           quantity: formData.quantity,
           unit: formData.unit,
@@ -222,6 +317,69 @@ export function ItemEditPage() {
   return (
     <Layout title="品物を編集" showBackButton>
       <form onSubmit={handleSubmit} className="p-4 pb-24 space-y-6">
+        {/* いつもの指示（プリセット）- 品物名の上に配置 */}
+        <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+          {/* ヘッダー：タイトル + 新規追加ボタン */}
+          <div className="flex items-center justify-between mb-3">
+            <label className="flex items-center gap-2 text-sm font-medium text-amber-700">
+              <span>⚡</span>
+              <span>いつもの指示（プリセット）</span>
+            </label>
+            <button
+              type="button"
+              onClick={() => setIsCreatingPreset(true)}
+              className="text-xs px-2 py-1 text-amber-700 bg-amber-100 hover:bg-amber-200 rounded border border-amber-300 transition-colors"
+            >
+              + 新規追加
+            </button>
+          </div>
+          {/* プリセット一覧 */}
+          <div className="grid grid-cols-3 gap-2">
+            {presets.map((preset) => (
+              <div
+                key={preset.id}
+                className="relative flex flex-col items-center gap-1 p-2 bg-white rounded-lg border border-amber-200 hover:border-amber-400 hover:bg-amber-100 transition-colors text-center group"
+              >
+                {/* 編集アイコン */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingPreset(preset);
+                  }}
+                  className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center text-sm text-gray-400 opacity-40 hover:opacity-100 hover:text-amber-600 group-hover:opacity-100 transition-opacity"
+                  title="編集"
+                >
+                  ✏️
+                </button>
+                {/* クリックで適用 */}
+                <button
+                  type="button"
+                  onClick={() => handleApplyPreset(preset)}
+                  className="w-full flex flex-col items-center gap-1"
+                >
+                  <span className="text-xl">{preset.icon}</span>
+                  <span className="text-xs text-gray-700 line-clamp-2">
+                    {preset.name.replace(/[（(].*/g, '')}
+                  </span>
+                </button>
+              </div>
+            ))}
+          </div>
+          {/* フッター：説明 + 一覧管理リンク */}
+          <div className="flex items-center justify-between mt-2">
+            <p className="text-xs text-amber-600">
+              ※ 選択すると品物名と提供方法詳細が自動入力されます
+            </p>
+            <Link
+              to={isDemo ? '/demo/family/presets' : '/family/presets'}
+              className="text-xs text-amber-700 hover:text-amber-900 underline"
+            >
+              📋 一覧で管理
+            </Link>
+          </div>
+        </div>
+
         {/* 品物名 */}
         <div>
           <label htmlFor="itemName" className="block text-sm font-medium text-gray-700 mb-1">
@@ -233,14 +391,65 @@ export function ItemEditPage() {
             name="itemName"
             value={formData.itemName}
             onChange={handleChange}
+            onBlur={handleNormalizeItemName}
             className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
               errors.itemName ? 'border-red-500' : 'border-gray-300'
             }`}
-            placeholder="例: キウイ"
+            placeholder="例: ぶどう（プリセット以外は手入力）"
           />
           {errors.itemName && (
             <p className="mt-1 text-sm text-red-500">{errors.itemName}</p>
           )}
+        </div>
+
+        {/* 統計用の表示名（Phase 43: 品物名の正規化） */}
+        <div>
+          <label htmlFor="normalizedName" className="block text-sm font-medium text-gray-700 mb-1">
+            <span className="flex items-center gap-1">
+              <span>📊</span>
+              <span>統計での表示名</span>
+              <span className="text-xs text-gray-400 font-normal">（任意）</span>
+              {isNormalizing && (
+                <span className="text-xs text-blue-500 animate-pulse">🔄 AI分析中...</span>
+              )}
+            </span>
+          </label>
+          <input
+            id="normalizedName"
+            name="normalizedName"
+            type="text"
+            value={formData.normalizedName}
+            onChange={handleChange}
+            placeholder={formData.itemName || '品物名と同じ（変更可能）'}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+          />
+          {/* AI提案バナー */}
+          {normalizedSuggestion && !formData.normalizedName && (
+            <button
+              type="button"
+              onClick={handleApplyNormalizedName}
+              className="mt-2 w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-50 text-green-700 border-2 border-green-300 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium"
+            >
+              <span>💡</span>
+              <span>AIの提案: 「{normalizedSuggestion}」を使う</span>
+            </button>
+          )}
+          {/* AI提案のヒント表示（手動入力済みの場合） */}
+          {normalizedSuggestion && formData.normalizedName && normalizedSuggestion !== formData.normalizedName && (
+            <p className="mt-1 text-xs text-blue-500">
+              💡 AI提案: 「{normalizedSuggestion}」
+              <button
+                type="button"
+                onClick={handleApplyNormalizedName}
+                className="ml-2 underline hover:no-underline"
+              >
+                適用
+              </button>
+            </p>
+          )}
+          <p className="mt-1 text-xs text-gray-500">
+            例: 「森永プリン」→「プリン」。同じ種類の品物を同じ名前にすると統計がまとまります。
+          </p>
         </div>
 
         {/* カテゴリ（Phase 31: 2カテゴリに簡素化） */}
@@ -250,25 +459,19 @@ export function ItemEditPage() {
           </label>
           <div className="grid grid-cols-2 gap-3">
             {ITEM_CATEGORIES.map((cat) => (
-              <label
+              <button
                 key={cat.value}
-                className={`flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition ${
+                type="button"
+                onClick={() => setFormData((prev) => ({ ...prev, category: cat.value as ItemCategory }))}
+                className={`flex items-center justify-center gap-2 p-4 rounded-lg border-2 transition-colors ${
                   formData.category === cat.value
-                    ? 'bg-primary text-white border-primary'
-                    : 'bg-white border-gray-300 hover:bg-gray-50'
+                    ? 'border-primary bg-primary/5 text-primary'
+                    : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <input
-                  type="radio"
-                  name="category"
-                  value={cat.value}
-                  checked={formData.category === cat.value}
-                  onChange={handleChange}
-                  className="sr-only"
-                />
                 <span className="text-2xl">{cat.icon}</span>
                 <span className="text-base font-medium">{cat.label}</span>
-              </label>
+              </button>
             ))}
           </div>
         </div>
@@ -354,26 +557,20 @@ export function ItemEditPage() {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             保存方法
           </label>
-          <div className="grid grid-cols-3 gap-2">
-            {STORAGE_METHODS.map((sm) => (
-              <label
-                key={sm.value}
-                className={`flex items-center justify-center px-3 py-2 border rounded-lg cursor-pointer transition text-sm ${
-                  formData.storageMethod === sm.value
-                    ? 'bg-primary text-white border-primary'
-                    : 'bg-white border-gray-300 hover:bg-gray-50'
+          <div className="flex gap-2">
+            {STORAGE_METHODS.map((method) => (
+              <button
+                key={method.value}
+                type="button"
+                onClick={() => setFormData((prev) => ({ ...prev, storageMethod: method.value as StorageMethod }))}
+                className={`flex-1 py-2 px-4 rounded-lg border transition-colors ${
+                  formData.storageMethod === method.value
+                    ? 'border-primary bg-primary/5 text-primary'
+                    : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <input
-                  type="radio"
-                  name="storageMethod"
-                  value={sm.value}
-                  checked={formData.storageMethod === sm.value}
-                  onChange={handleChange}
-                  className="sr-only"
-                />
-                {sm.label}
-              </label>
+                {method.label}
+              </button>
             ))}
           </div>
         </div>
@@ -384,44 +581,40 @@ export function ItemEditPage() {
             提供方法 <span className="text-red-500">*</span>
           </label>
           <div className="grid grid-cols-2 gap-2">
-            {SERVING_METHODS.map((sm) => (
-              <label
-                key={sm.value}
-                className={`flex items-center justify-center px-3 py-2 border rounded-lg cursor-pointer transition text-sm ${
-                  formData.servingMethod === sm.value
-                    ? 'bg-primary text-white border-primary'
-                    : 'bg-white border-gray-300 hover:bg-gray-50'
+            {SERVING_METHODS.map((method) => (
+              <button
+                key={method.value}
+                type="button"
+                onClick={() => setFormData((prev) => ({ ...prev, servingMethod: method.value as ServingMethod }))}
+                className={`py-2 px-4 rounded-lg border transition-colors text-sm ${
+                  formData.servingMethod === method.value
+                    ? 'border-primary bg-primary/5 text-primary'
+                    : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <input
-                  type="radio"
-                  name="servingMethod"
-                  value={sm.value}
-                  checked={formData.servingMethod === sm.value}
-                  onChange={handleChange}
-                  className="sr-only"
-                />
-                {sm.label}
-              </label>
+                {method.label}
+              </button>
             ))}
           </div>
         </div>
 
-        {/* 提供方法詳細 */}
-        <div>
-          <label htmlFor="servingMethodDetail" className="block text-sm font-medium text-gray-700 mb-1">
-            提供方法の詳細
-          </label>
-          <textarea
-            id="servingMethodDetail"
-            name="servingMethodDetail"
-            rows={2}
-            value={formData.servingMethodDetail}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-            placeholder="例: 8等分にカットしてください"
-          />
-        </div>
+        {/* 提供方法の詳細 */}
+        {formData.servingMethod !== 'as_is' && (
+          <div>
+            <label htmlFor="servingMethodDetail" className="block text-sm font-medium text-gray-700 mb-1">
+              提供方法の詳細
+            </label>
+            <textarea
+              id="servingMethodDetail"
+              name="servingMethodDetail"
+              rows={3}
+              value={formData.servingMethodDetail}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-y"
+              placeholder="例: 食べやすい大きさにカットしてください"
+            />
+          </div>
+        )}
 
         {/* Phase 36: 提供スケジュール（構造化） */}
         <ServingScheduleInput
@@ -440,9 +633,12 @@ export function ItemEditPage() {
             rows={3}
             value={formData.noteToStaff}
             onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-            placeholder="スタッフに伝えたいことがあれば記入"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-y"
+            placeholder="例: 好物なのでぜひ食べさせてあげてください"
           />
+          <p className="mt-1 text-xs text-gray-500">
+            ※ 特別な条件（体調不良時は除外など）もここに記載してください
+          </p>
         </div>
 
         {/* Phase 33: 残った場合の処置指示 */}
@@ -498,6 +694,45 @@ export function ItemEditPage() {
           </button>
         </div>
       </form>
+
+      {/* プリセット作成/編集モーダル */}
+      {(isCreatingPreset || editingPreset) && (
+        <PresetFormModal
+          preset={editingPreset}
+          onClose={() => {
+            setIsCreatingPreset(false);
+            setEditingPreset(null);
+          }}
+          onSave={async (input) => {
+            // デモモードの場合: APIを呼ばず、成功メッセージを表示
+            if (isDemo) {
+              const action = editingPreset ? '更新' : '作成';
+              alert(`${action}しました（デモモード - 実際には保存されません）`);
+              setIsCreatingPreset(false);
+              setEditingPreset(null);
+              return;
+            }
+
+            // 本番モードの場合: 通常通りAPI呼び出し
+            if (editingPreset) {
+              await updatePresetMutation.mutateAsync({
+                presetId: editingPreset.id,
+                updates: input,
+              });
+            } else {
+              await createPresetMutation.mutateAsync({
+                residentId: DEMO_RESIDENT_ID,
+                userId: DEMO_USER_ID,
+                preset: input,
+                source: 'manual',
+              });
+            }
+            setIsCreatingPreset(false);
+            setEditingPreset(null);
+          }}
+          isSaving={createPresetMutation.isPending || updatePresetMutation.isPending}
+        />
+      )}
     </Layout>
   );
 }
