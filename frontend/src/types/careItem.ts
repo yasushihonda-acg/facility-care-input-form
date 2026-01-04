@@ -1032,6 +1032,25 @@ export const SERVING_TIME_SLOT_LABELS: Record<ServingTimeSlot, string> = {
   anytime: 'いつでも',
 };
 
+/** 提供タイミングのソート順（朝食時 → 昼食時 → おやつ時 → 夕食時 → いつでも） */
+export const SERVING_TIME_SLOT_ORDER: Record<ServingTimeSlot, number> = {
+  breakfast: 1,
+  lunch: 2,
+  snack: 3,
+  dinner: 4,
+  anytime: 5,
+};
+
+/**
+ * 提供タイミングでソートするための比較関数
+ * @returns ソート順（朝食時 → 昼食時 → おやつ時 → 夕食時 → いつでも → 未設定）
+ */
+export function getServingTimeSlotOrder(item: { servingSchedule?: { timeSlot?: ServingTimeSlot } }): number {
+  const timeSlot = item.servingSchedule?.timeSlot;
+  if (!timeSlot) return 99; // 未設定は最後
+  return SERVING_TIME_SLOT_ORDER[timeSlot] ?? 99;
+}
+
 /** 曜日ラベル（日曜始まり） */
 export const WEEKDAY_LABELS = ['日', '月', '火', '水', '木', '金', '土'];
 

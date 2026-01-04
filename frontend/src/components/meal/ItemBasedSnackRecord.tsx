@@ -16,6 +16,7 @@ import {
   getServingMethodLabel,
   getStorageLabel,
   formatRemainingHandlingWithConditions,
+  getServingTimeSlotOrder,
 } from '../../types/careItem';
 import { StaffRecordDialog } from '../staff/StaffRecordDialog';
 import {
@@ -180,17 +181,23 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
   });
   const items = data?.items ?? [];
 
-  // 共通ソート関数
-  const sortByExpirationAndSentDate = (a: CareItem, b: CareItem) => {
-    // 期限ありを優先
+  // 共通ソート関数（提供タイミング → 期限 → 登録日）
+  const sortByTimingAndExpiration = (a: CareItem, b: CareItem) => {
+    // 1. 提供タイミング順（朝食時 → 昼食時 → おやつ時 → 夕食時 → いつでも → 未設定）
+    const timingDiff = getServingTimeSlotOrder(a) - getServingTimeSlotOrder(b);
+    if (timingDiff !== 0) return timingDiff;
+
+    // 2. 期限ありを優先
     if (a.expirationDate && !b.expirationDate) return -1;
     if (!a.expirationDate && b.expirationDate) return 1;
-    // 期限順
+
+    // 3. 期限順
     if (a.expirationDate && b.expirationDate) {
       const diff = new Date(a.expirationDate).getTime() - new Date(b.expirationDate).getTime();
       if (diff !== 0) return diff;
     }
-    // 登録日順（古い順）
+
+    // 4. 登録日順（古い順）
     return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
   };
 
@@ -211,17 +218,11 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
       groups[group].push(item);
     });
 
-    // 提供漏れは期限切れを優先ソート
-    groups.missedSchedule.sort((a, b) => {
-      const daysA = getDaysUntilExpiration(a) ?? 999;
-      const daysB = getDaysUntilExpiration(b) ?? 999;
-      return daysA - daysB;
-    });
-
-    // その他は通常ソート
-    groups.scheduledToday.sort(sortByExpirationAndSentDate);
-    groups.recordedToday.sort(sortByExpirationAndSentDate);
-    groups.other.sort(sortByExpirationAndSentDate);
+    // 全グループを提供タイミング順でソート
+    groups.missedSchedule.sort(sortByTimingAndExpiration);
+    groups.scheduledToday.sort(sortByTimingAndExpiration);
+    groups.recordedToday.sort(sortByTimingAndExpiration);
+    groups.other.sort(sortByTimingAndExpiration);
 
     return groups;
   }, [items]);

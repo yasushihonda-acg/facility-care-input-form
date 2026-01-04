@@ -26,6 +26,7 @@ import {
   getServingMethodLabel,
   getStorageLabel,
   formatRemainingHandlingWithConditions,
+  getServingTimeSlotOrder,
 } from '../../types/careItem';
 import type { CareItem } from '../../types/careItem';
 import { ExpirationAlert } from '../../components/family/ExpirationAlert';
@@ -165,10 +166,22 @@ export function ItemManagement() {
 
   const deleteItem = useDeleteCareItem();
 
-  // 日付範囲でフィルタリング
+  // 日付範囲でフィルタリング + 提供タイミング順でソート
   const filteredItems = useMemo(() => {
     if (!data?.items) return [];
-    return filterItemsByDateRange(data.items, selectedDate, viewMode);
+    const filtered = filterItemsByDateRange(data.items, selectedDate, viewMode);
+    // 提供タイミング順でソート（朝食時 → 昼食時 → おやつ時 → 夕食時 → いつでも）
+    return filtered.sort((a, b) => {
+      const timingDiff = getServingTimeSlotOrder(a) - getServingTimeSlotOrder(b);
+      if (timingDiff !== 0) return timingDiff;
+      // 同じタイミングなら期限順
+      if (a.expirationDate && b.expirationDate) {
+        return new Date(a.expirationDate).getTime() - new Date(b.expirationDate).getTime();
+      }
+      if (a.expirationDate) return -1;
+      if (b.expirationDate) return 1;
+      return 0;
+    });
   }, [data?.items, selectedDate, viewMode]);
 
   // スケジュールタイプ除外オプション
