@@ -44,7 +44,7 @@ export function ServingScheduleInput({
     // タイプに応じて初期値を設定
     switch (type) {
       case 'once':
-        newSchedule.date = value?.date || today;
+        newSchedule.date = value?.date; // 日付は無記入スタート
         break;
       case 'weekly':
         newSchedule.weekdays = value?.weekdays || [];
