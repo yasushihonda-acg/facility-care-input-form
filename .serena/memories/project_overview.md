@@ -344,6 +344,12 @@ getCareItemsHandlerでFirestoreから取得したデータをレスポンスに�
 - タグバッジ: 提供方法🍽️・保存方法📦・残り処置🔄をカラータグ表示
 - 家族指示: 💬「〜」形式
 
+### PR #74: 品物一覧を提供タイミング順でソート
+スタッフ用記録入力・家族用品物管理で、品物を提供タイミング順にソート表示：
+- ソート順: 朝食時 → 昼食時 → おやつ時 → 夕食時 → いつでも → 未設定
+- careItem.ts: SERVING_TIME_SLOT_ORDER, getServingTimeSlotOrder()追加
+- ItemBasedSnackRecord.tsx, ItemManagement.tsx: ソート適用
+
 ## Phase 56: sentDate非表示・提供スケジュール必須化（2026-01-04）
 
 ### sentDate（送付日）非表示化
