@@ -67,21 +67,11 @@ export function StaffNotesPage() {
     }
   }, [discardCount, hasItemActionNotifications, discardLoading, tasksLoading]);
 
-  // タブ定義（バッジ付き）- 複数バッジ対応
-  type BadgeInfo = { count: number; color: string };
-  const TABS: { value: TabValue; label: string; icon: string; badges?: BadgeInfo[] }[] = [
+  // タブ定義（バッジ付き）
+  const totalNotificationCount = discardCount + itemCreatedCount + itemUpdatedCount + itemDeletedCount;
+  const TABS: { value: TabValue; label: string; icon: string; badge?: number }[] = [
     { value: 'notes', label: '注意事項', icon: '📋' },
-    {
-      value: 'tasks',
-      label: '家族依頼',
-      icon: '📝',
-      badges: [
-        ...(discardCount > 0 ? [{ count: discardCount, color: 'bg-red-500' }] : []),
-        ...(itemCreatedCount > 0 ? [{ count: itemCreatedCount, color: 'bg-green-500' }] : []),
-        ...(itemUpdatedCount > 0 ? [{ count: itemUpdatedCount, color: 'bg-blue-500' }] : []),
-        ...(itemDeletedCount > 0 ? [{ count: itemDeletedCount, color: 'bg-red-400' }] : []),
-      ],
-    },
+    { value: 'tasks', label: '家族依頼', icon: '📝', badge: totalNotificationCount > 0 ? totalNotificationCount : undefined },
   ];
 
   // 注意事項の作成/更新
@@ -178,17 +168,10 @@ export function StaffNotesPage() {
             >
               <span className="mr-1">{tab.icon}</span>
               {tab.label}
-              {/* 複数バッジ（Phase 55: 色分け対応） */}
-              {tab.badges && tab.badges.length > 0 && (
-                <span className="absolute -top-1 right-1 flex gap-0.5">
-                  {tab.badges.map((badge, idx) => (
-                    <span
-                      key={idx}
-                      className={`px-1.5 py-0.5 ${badge.color} text-white text-xs font-bold rounded-full min-w-[20px]`}
-                    >
-                      {badge.count}
-                    </span>
-                  ))}
+              {/* バッジ */}
+              {tab.badge !== undefined && tab.badge > 0 && (
+                <span className="absolute -top-1 right-1/4 px-1.5 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px]">
+                  {tab.badge}
                 </span>
               )}
             </button>
