@@ -42,8 +42,9 @@ const POST_ID_PATTERN = /【投稿ID】[：:]\s*(\w+)/;
 const TAG_PATTERN = /#[^\s#]+/g;
 
 // 記録者パターン（JSON内のエスケープ文字に対応）
-// cardsV2をJSON.stringifyした場合、改行は\\nになるため、それ以外の文字をマッチ
-const STAFF_NAME_PATTERN = /記録者\s*[：:]\s*([^"\\]+)/;
+// 改行(\n)、引用符(")、バックスラッシュ(\)で終端
+// Note: JSON.stringify後は \\n になるため、両方のケースに対応
+const STAFF_NAME_PATTERN = /記録者\s*[：:]\s*([^\n"\\]+)/;
 
 interface SyncChatImagesRequest {
   spaceId: string;
