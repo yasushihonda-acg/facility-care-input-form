@@ -322,6 +322,21 @@ Google Chat API → syncChatImages → Firestore(care_photos) → フロント�
 ## E2Eテスト
 468件定義（Phase 56まで）
 
+## バグ修正（2026-01-05）
+
+### PR #70: 品物編集後のナビゲーション修正
+- 更新成功後に品物一覧（/family/items）へ遷移
+- キャンセル時も品物一覧へ遷移
+- 更新成功時に「更新しました」アラートを表示
+
+### PR #71: getCareItemsの欠落フィールド追加
+getCareItemsHandlerでFirestoreから取得したデータをレスポンスにマッピングする際、
+以下のフィールドが欠落していた問題を修正：
+- servingSchedule（提供スケジュール）
+- normalizedName（正規化された品物名）
+- remainingHandlingInstruction（残った場合の処置指示）
+- remainingHandlingConditions（処置指示の条件）
+
 ## Phase 56: sentDate非表示・提供スケジュール必須化（2026-01-04）
 
 ### sentDate（送付日）非表示化

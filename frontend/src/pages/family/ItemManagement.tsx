@@ -24,8 +24,9 @@ import {
   getStatusLabel,
   getStatusColorClass,
   formatDate,
-  getExpirationDisplayText,
   getDaysUntilExpiration,
+  getServingMethodLabel,
+  getStorageLabel,
   STORAGE_METHOD_LABELS,
   formatRemainingHandlingWithConditions,
 } from '../../types/careItem';
@@ -34,6 +35,7 @@ import { ExpirationAlert } from '../../components/family/ExpirationAlert';
 import { DateNavigator, type DateViewMode } from '../../components/family/DateNavigator';
 import { UnscheduledDatesBanner } from '../../components/family/UnscheduledDatesBanner';
 import { UnscheduledDatesModal } from '../../components/family/UnscheduledDatesModal';
+import { ScheduleDisplay } from '../../components/meal/ScheduleDisplay';
 import { getUnscheduledDates, isScheduledForDate, formatScheduleShort, type ScheduleTypeExclusion } from '../../utils/scheduleUtils';
 
 // デモ用の入居者ID・ユーザーID（将来は認証から取得）
@@ -393,7 +395,7 @@ export function ItemManagement() {
 
 /**
  * 品物カードコンポーネント
- * 表示優先順: 提供予定 → 賞味期限 → 残量・保存 → 詳細設定
+ * スタッフ用カード（ItemBasedSnackRecord.tsx）と同じ表示形式
  */
 function ItemCard({ item, onDelete, onEdit, onShowDetail }: {
   item: CareItem;
@@ -402,80 +404,84 @@ function ItemCard({ item, onDelete, onEdit, onShowDetail }: {
   onShowDetail: () => void;
 }) {
   const statusColor = getStatusColorClass(item.status);
-  const categoryIcon = getCategoryIcon(item.category);
-  const hasExpiration = !!item.expirationDate;
-  const daysUntilExpiration = hasExpiration ? getDaysUntilExpiration(item.expirationDate!) : null;
-  const isExpiringSoon = daysUntilExpiration !== null && daysUntilExpiration <= 3 && daysUntilExpiration >= 0;
-  const isExpired = daysUntilExpiration !== null && daysUntilExpiration < 0;
-
-  // 提供スケジュールの短縮表示（後方互換: plannedServeDateへのフォールバック）
-  const scheduleDisplay = formatScheduleShort(item.servingSchedule) ||
-    (item.plannedServeDate ? `📅 ${new Date(item.plannedServeDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}` : '');
+  const daysUntilExpiration = item.expirationDate ? getDaysUntilExpiration(item.expirationDate) : null;
+  const currentQty = item.remainingQuantity ?? item.quantity ?? 0;
 
   return (
     <div
       data-testid="item-card"
       onClick={onShowDetail}
-      className="block bg-white rounded-lg shadow-sm border p-4 hover:shadow-md transition-shadow cursor-pointer"
+      className="block bg-white rounded-lg shadow-sm border-2 border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer"
     >
-      <div className="flex items-start gap-3">
-        <div className="text-3xl flex-shrink-0">{categoryIcon}</div>
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-bold text-base truncate">{item.itemName}</h3>
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          {/* ヘッダー行: 品物名・ステータス */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-bold text-gray-800">{item.itemName}</span>
             <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusColor.bgColor} ${statusColor.color}`}>
               {getStatusLabel(item.status)}
             </span>
           </div>
 
-          <div className="text-sm text-gray-600 space-y-0.5">
-            {/* 提供予定（最優先）- 未設定時は警告表示 */}
-            {scheduleDisplay ? (
-              <div className="text-blue-600 font-medium">
-                {scheduleDisplay}
-              </div>
-            ) : (
-              <div className="text-orange-500 font-medium flex items-center gap-1">
-                <span>📅 提供予定:</span>
-                <span className="bg-orange-100 px-1.5 py-0.5 rounded text-xs">⚠️ 未設定</span>
-              </div>
-            )}
-
-            {/* 賞味期限 - 未設定時は警告表示 */}
-            {hasExpiration ? (
-              <div className={`flex items-center gap-1 ${isExpired ? 'text-red-600 font-medium' : isExpiringSoon ? 'text-orange-600 font-medium' : ''}`}>
-                <span>🗓️ 期限:</span>
-                <span>{getExpirationDisplayText(item.expirationDate!)}</span>
-                {isExpiringSoon && !isExpired && <span>⚠️</span>}
-                {isExpired && <span>❌</span>}
-              </div>
-            ) : (
-              <div className="text-orange-500 flex items-center gap-1">
-                <span>🗓️ 賞味期限:</span>
-                <span className="bg-orange-100 px-1.5 py-0.5 rounded text-xs">⚠️ 未設定</span>
-              </div>
-            )}
-
-            {/* 残量・保存方法 */}
-            <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-gray-500">
-              <span>残: {item.remainingQuantity}{item.unit}</span>
-              {item.storageMethod && (
-                <span>🧊 {STORAGE_METHOD_LABELS[item.storageMethod]}</span>
+          <div className="mt-2 text-sm text-gray-600 space-y-1">
+            {/* 残量・期限情報（スタッフ用カードと同じ形式） */}
+            <div className="flex items-center gap-2">
+              <span>残り {currentQty}{item.unit}</span>
+              <span className="text-gray-300">┃</span>
+              {item.expirationDate ? (
+                <span className={
+                  daysUntilExpiration !== null && daysUntilExpiration < 0
+                    ? 'text-red-600 font-medium'
+                    : daysUntilExpiration !== null && daysUntilExpiration <= 3
+                      ? 'text-orange-600 font-medium'
+                      : ''
+                }>
+                  期限 {new Date(item.expirationDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}
+                  {daysUntilExpiration !== null && daysUntilExpiration < 0 && ` (${Math.abs(daysUntilExpiration)}日超過)`}
+                  {daysUntilExpiration !== null && daysUntilExpiration >= 0 && daysUntilExpiration <= 3 && ` (あと${daysUntilExpiration}日)`}
+                </span>
+              ) : (
+                <span className="text-gray-400">期限なし</span>
               )}
             </div>
 
-            {/* 提供方法 */}
-            {item.servingMethod && item.servingMethod !== 'as_is' && (
-              <div className="text-gray-500">
-                ✂️ {item.servingMethodDetail || item.servingMethod}
+            {/* スケジュール表示（スタッフ用カードと同じScheduleDisplayコンポーネント使用） */}
+            {item.servingSchedule ? (
+              <ScheduleDisplay schedule={item.servingSchedule} compact />
+            ) : item.plannedServeDate ? (
+              <div className="flex items-center gap-1 text-blue-600">
+                <span>📅</span>
+                <span>
+                  {new Date(item.plannedServeDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}
+                </span>
               </div>
-            )}
+            ) : null}
 
-            {/* スタッフへの申し送り（短縮表示） */}
+            {/* 提供方法・保存方法・残り処置（スタッフ用カードと同じタグバッジ形式） */}
+            <div className="flex flex-wrap gap-2 mt-2">
+              {item.servingMethod && (
+                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                  🍽️ {getServingMethodLabel(item.servingMethod)}
+                  {item.servingMethodDetail && `: ${item.servingMethodDetail}`}
+                </span>
+              )}
+              {item.storageMethod && (
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                  📦 {getStorageLabel(item.storageMethod)}
+                </span>
+              )}
+              {item.remainingHandlingInstruction && (
+                <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">
+                  🔄 残り: {formatRemainingHandlingWithConditions(item.remainingHandlingInstruction, item.remainingHandlingConditions)}
+                </span>
+              )}
+            </div>
+
+            {/* 家族指示（スタッフ用カードと同じ形式） */}
             {item.noteToStaff && (
-              <div className="text-gray-500 truncate">
-                📝 {item.noteToStaff.length > 30 ? item.noteToStaff.slice(0, 30) + '...' : item.noteToStaff}
+              <div className="flex items-start gap-1 text-gray-600 mt-2">
+                <span>💬</span>
+                <span className="italic">「{item.noteToStaff}」</span>
               </div>
             )}
           </div>
@@ -488,7 +494,8 @@ function ItemCard({ item, onDelete, onEdit, onShowDetail }: {
           )}
         </div>
 
-        <div className="flex flex-col gap-1">
+        {/* 編集・削除ボタン */}
+        <div className="flex flex-col gap-1 ml-4">
           <button
             onClick={(e) => {
               e.preventDefault();
@@ -514,6 +521,7 @@ function ItemCard({ item, onDelete, onEdit, onShowDetail }: {
         </div>
       </div>
 
+      {/* 摂食状況バー（消費済みの場合） */}
       {item.status === 'consumed' && item.consumptionRate !== undefined && (
         <div className="mt-3 pt-3 border-t">
           <div className="flex items-center gap-2">
