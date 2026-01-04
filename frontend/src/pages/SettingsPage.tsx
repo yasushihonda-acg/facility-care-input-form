@@ -133,12 +133,21 @@ export function SettingsPage() {
   const checkOAuthStatus = useCallback(async () => {
     try {
       const response = await checkOAuthTokenStatus();
-      if (response.success && response.data) {
-        setOauthTokenConfigured(response.data.configured);
-        setOauthTokenUpdatedAt(response.data.updatedAt);
+      // APIレスポンス形式: {success, configured, updatedAt, message}
+      // Note: dataラッパーなしで直接返される
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data = response as any;
+      if (data.success) {
+        setOauthTokenConfigured(data.configured ?? false);
+        setOauthTokenUpdatedAt(data.updatedAt ?? null);
+      } else {
+        // APIがsuccessでない場合は未設定として扱う
+        setOauthTokenConfigured(false);
       }
     } catch (error) {
       console.error('[SettingsPage] OAuth status check failed:', error);
+      // エラー時も未設定として扱い、ローディングを終了させる
+      setOauthTokenConfigured(false);
     }
   }, []);
 
