@@ -320,7 +320,25 @@ Google Chat API → syncChatImages → Firestore(care_photos) → フロント�
 - 設定ページの「Chat画像同期 認証設定」セクションに配置
 
 ## E2Eテスト
-469件定義（Phase 55まで）
+468件定義（Phase 56まで）
+
+## Phase 56: sentDate非表示・提供スケジュール必須化（2026-01-04）
+
+### sentDate（送付日）非表示化
+- UI: 入力フォーム・一覧・詳細画面から完全削除
+- 型定義: `sentDate?: string` オプショナル化（フロント・バックエンド両方）
+- Firestoreインデックス: sentDate→createdAtに変更
+- ソート/フィルタ: createdAtベースに統一
+
+### plannedServeDate後方互換（PR #66）
+家族用ビューで旧形式（plannedServeDateのみ）の品物も表示可能に:
+- filterItemsByDateRange: servingSchedule → plannedServeDate → createdAt の順でフォールバック
+- ItemCard/ItemDetailModal: scheduleDisplayにplannedServeDateフォールバック追加
+
+### 提供スケジュール必須化（PR #67）
+- ServingScheduleInput: ラベル「（任意）」→「*」、「クリア」ボタン削除
+- ItemEditPage: plannedDateToSchedule()で旧形式から初期化
+- ItemForm/ItemEditPage: バリデーション追加（未設定でエラー）
 
 ## Phase 54: 残り対応の処置指示に条件追加（2026-01-04）
 - 家族が「破棄してください」「保存してください」選択時に条件を追加可能
