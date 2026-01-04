@@ -11,7 +11,10 @@ export type TaskType =
   | 'serve_reminder'      // 提供リマインダー
   | 'restock_alert'       // 在庫切れアラート
   | 'care_instruction'    // ケア指示確認
-  | 'custom';             // カスタムタスク
+  | 'custom'              // カスタムタスク
+  | 'item_created'        // 品物新規登録（Phase 55）
+  | 'item_updated'        // 品物編集（Phase 55）
+  | 'item_deleted';       // 品物削除（Phase 55）
 
 export const TASK_TYPES: { value: TaskType; label: string; icon: string }[] = [
   { value: 'expiration_warning', label: '賞味期限', icon: '⏰' },
@@ -19,7 +22,22 @@ export const TASK_TYPES: { value: TaskType; label: string; icon: string }[] = [
   { value: 'restock_alert', label: '在庫切れ', icon: '📦' },
   { value: 'care_instruction', label: 'ケア指示', icon: '📋' },
   { value: 'custom', label: 'その他', icon: '📝' },
+  { value: 'item_created', label: '新規登録', icon: '➕' },
+  { value: 'item_updated', label: '変更', icon: '✏️' },
+  { value: 'item_deleted', label: '削除', icon: '🗑️' },
 ];
+
+// 品物操作タスクかどうかを判定
+export function isItemActionTask(taskType: TaskType): boolean {
+  return ['item_created', 'item_updated', 'item_deleted'].includes(taskType);
+}
+
+// 品物操作タスクの色設定
+export const ITEM_ACTION_COLORS: Record<string, { label: string; color: string; bgColor: string; icon: string }> = {
+  item_created: { label: '新規', color: 'text-green-700', bgColor: 'bg-green-100', icon: '➕' },
+  item_updated: { label: '変更', color: 'text-blue-700', bgColor: 'bg-blue-100', icon: '✏️' },
+  item_deleted: { label: '削除', color: 'text-red-700', bgColor: 'bg-red-100', icon: '🗑️' },
+};
 
 // タスクステータス
 export type TaskStatus =

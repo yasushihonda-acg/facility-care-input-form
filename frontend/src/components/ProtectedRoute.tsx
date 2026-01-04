@@ -8,6 +8,7 @@
  */
 
 import { type ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { LoginPage } from './LoginPage';
 
@@ -20,6 +21,13 @@ const isE2ETest = import.meta.env.VITE_E2E_TEST === 'true';
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, isLoading, isAllowed, isCheckingPermission } = useAuth();
+  const location = useLocation();
+
+  // デモページは認証不要
+  const isDemoPath = location.pathname.startsWith('/demo');
+  if (isDemoPath) {
+    return <>{children}</>;
+  }
 
   // E2Eテストモードの場合は認証をバイパス
   if (isE2ETest) {
