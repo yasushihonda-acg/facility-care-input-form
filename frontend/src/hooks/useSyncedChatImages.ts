@@ -26,11 +26,21 @@ export interface UseSyncedChatImagesResult {
   /** 同期中フラグ */
   isSyncing: boolean;
   /** 最後の同期結果 */
-  lastSyncResult: { synced: number; updated: number; skipped: number } | null;
+  lastSyncResult: {
+    synced: number;
+    updated: number;
+    skipped: number;
+    orphansDeleted?: number;
+    duplicatesDeleted?: number;
+  } | null;
   /** 再認証が必要かどうか（API失敗時にtrue） */
   needsReauth: boolean;
-  /** Chatスペースから同期を実行（yearを指定すると特定年のメッセージのみ同期） */
-  sync: (year?: number) => Promise<void>;
+  /**
+   * Chatスペースから同期を実行
+   * @param options.year - 特定年のメッセージのみ同期
+   * @param options.fullSync - true: 全件取得+孤児削除、false: 差分のみ（デフォルト）
+   */
+  sync: (options?: { year?: number; fullSync?: boolean }) => Promise<void>;
   /** 再取得 */
   refetch: () => void;
   /** 設定値 */
@@ -68,7 +78,13 @@ export function useSyncedChatImages(): UseSyncedChatImagesResult {
 
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
-  const [lastSyncResult, setLastSyncResult] = useState<{ synced: number; updated: number; skipped: number } | null>(null);
+  const [lastSyncResult, setLastSyncResult] = useState<{
+    synced: number;
+    updated: number;
+    skipped: number;
+    orphansDeleted?: number;
+    duplicatesDeleted?: number;
+  } | null>(null);
   const [needsReauth, setNeedsReauth] = useState(false);
 
   // 自動同期が実行済みかどうか（セッション中1回のみ）
@@ -101,10 +117,15 @@ export function useSyncedChatImages(): UseSyncedChatImagesResult {
     gcTime: 15 * 60 * 1000,
   });
 
-  // 同期実行（yearを指定すると特定年のメッセージのみ同期）
+  // 同期実行
+  // - fullSync=true: 全メッセージ取得 + 孤児削除（初回同期用）
+  // - fullSync=false: 差分のみ（通常同期用、デフォルト）
   // Phase 53: バックエンドで保存済みトークンを使用するため、accessToken不要
-  const sync = useCallback(async (year?: number) => {
-    console.log('[useSyncedChatImages] sync() called', { canSync, accessToken: !!accessToken, spaceId, residentId, year });
+  const sync = useCallback(async (options?: { year?: number; fullSync?: boolean }) => {
+    const { year, fullSync = false } = options || {};
+    console.log('[useSyncedChatImages] sync() called', {
+      canSync, accessToken: !!accessToken, spaceId, residentId, year, fullSync,
+    });
     if (!canSync || !spaceId || !residentId) {
       console.log('[useSyncedChatImages] sync() aborted - missing requirements');
       setSyncError('同期にはChat設定が必要です');
@@ -115,9 +136,15 @@ export function useSyncedChatImages(): UseSyncedChatImagesResult {
     setSyncError(null);
 
     try {
-      console.log('[useSyncedChatImages] Calling syncChatImages API...', { year });
+      console.log('[useSyncedChatImages] Calling syncChatImages API...', { year, fullSync });
       const response = await syncChatImages(
-        { spaceId, residentId, limit: 1000, year }, // yearを指定すると特定年のみ
+        {
+          spaceId,
+          residentId,
+          limit: fullSync ? undefined : 1000, // fullSyncでは上限なし
+          year,
+          fullSync,
+        },
         accessToken
       );
       console.log('[useSyncedChatImages] syncChatImages response:', response);
@@ -127,6 +154,8 @@ export function useSyncedChatImages(): UseSyncedChatImagesResult {
           synced: response.data.synced,
           updated: response.data.updated || 0,
           skipped: response.data.skipped,
+          orphansDeleted: response.data.orphansDeleted,
+          duplicatesDeleted: response.data.duplicatesDeleted,
         });
         // 同期成功時は再認証フラグをリセット
         setNeedsReauth(false);

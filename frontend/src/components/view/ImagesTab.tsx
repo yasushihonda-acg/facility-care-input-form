@@ -172,7 +172,7 @@ export function ImagesTab({ year, month }: ImagesTabProps) {
           <p className="text-red-700 text-sm mb-4">{error}</p>
           {canSync && (
             <button
-              onClick={() => sync(year)}
+              onClick={() => sync({ year })}
               className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
             >
               再試行
@@ -215,21 +215,41 @@ export function ImagesTab({ year, month }: ImagesTabProps) {
           </span>
           {lastSyncResult && (
             <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
-              +{lastSyncResult.synced}件同期
+              +{lastSyncResult.synced}件
+              {lastSyncResult.orphansDeleted ? ` -${lastSyncResult.orphansDeleted}件削除` : ''}
             </span>
           )}
         </div>
         <div className="flex items-center gap-2">
           {/* 手動同期ボタン（アクセス可能な場合のみ） */}
           {canSync && (
-            <button
-              onClick={() => sync(year)}
-              disabled={isSyncing}
-              className="px-3 py-1.5 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 disabled:opacity-50"
-              title={`${year}年のChatメッセージから取得`}
-            >
-              🔄 同期
-            </button>
+            <>
+              <button
+                onClick={() => sync({ year })}
+                disabled={isSyncing}
+                className="px-3 py-1.5 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 disabled:opacity-50"
+                title={`${year}年の最新メッセージを取得`}
+              >
+                🔄 同期
+              </button>
+              <button
+                onClick={() => {
+                  if (window.confirm(
+                    '全件同期を実行しますか？\n\n' +
+                    '・2024年以降の全メッセージを取得します\n' +
+                    '・存在しない画像は削除されます\n' +
+                    '・処理に数分かかる場合があります'
+                  )) {
+                    sync({ fullSync: true });
+                  }
+                }}
+                disabled={isSyncing}
+                className="px-3 py-1.5 text-sm bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 disabled:opacity-50"
+                title="全メッセージを取得して孤児データを削除"
+              >
+                🔁 全件同期
+              </button>
+            </>
           )}
           {/* 表示モード切り替え */}
           <div className="flex gap-1">
@@ -261,7 +281,7 @@ export function ImagesTab({ year, month }: ImagesTabProps) {
           <p>この期間の画像はありません</p>
           {canSync && (
             <button
-              onClick={() => sync(year)}
+              onClick={() => sync({ year })}
               className="mt-4 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
             >
               🔄 Chatスペースから取得

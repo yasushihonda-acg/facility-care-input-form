@@ -51,12 +51,23 @@ interface SyncChatImagesRequest {
   limit?: number;
   /** フィルタリングする年（例: 2025）。指定時はその年のメッセージのみ取得 */
   year?: number;
+  /**
+   * 初回同期モード（fullSync: true）
+   * - 全メッセージをフェッチ（上限なし）
+   * - Orphan削除を実行
+   * 通常同期（fullSync: false、デフォルト）
+   * - 最新メッセージのみフェッチ
+   * - Orphan削除はスキップ
+   */
+  fullSync?: boolean;
 }
 
 interface SyncResult {
   synced: number;
   updated: number; // 既存画像のメタデータ更新件数
   skipped: number;
+  orphansDeleted: number; // fullSync時のみ: 孤児画像削除件数
+  duplicatesDeleted: number; // 重複画像削除件数
   total: number;
   photos: CarePhoto[];
 }
@@ -335,7 +346,7 @@ async function syncChatImagesHandler(
 
     functions.logger.info(`[syncChatImages] Using ${tokenSource} token`);
     const body = req.body as SyncChatImagesRequest;
-    const {spaceId, residentId, limit = 100, year} = body;
+    const {spaceId, residentId, limit = 100, year, fullSync = false} = body;
 
     // 年指定がある場合、Chat APIフィルター用の日付範囲を構築
     // Note: Chat APIはAND条件をサポートしていないため、上限のみ指定
@@ -363,7 +374,8 @@ async function syncChatImagesHandler(
 
     functions.logger.info(
       `[syncChatImages] Starting sync for resident ${residentId} from space ${spaceId}` +
-      (year ? ` (year: ${year}, filter: ${createTimeFilter})` : " (all years)")
+      (year ? ` (year: ${year}, filter: ${createTimeFilter})` : " (all years)") +
+      (fullSync ? " [FULL SYNC MODE]" : "")
     );
 
     // Firebase Admin初期化
@@ -404,8 +416,9 @@ async function syncChatImagesHandler(
     const allMessages: chat_v1.Schema$Message[] = [];
     let pageToken: string | undefined;
     let pageCount = 0;
-    // 年指定がある場合はより多くのページを許可（古いメッセージが少ない可能性）
-    const maxPages = year ? 50 : Math.ceil(limit / 100);
+    // fullSync: 上限なし（10000件まで）、通常: 指定limitまで
+    const effectiveLimit = fullSync ? 10000 : limit;
+    const maxPages = fullSync ? 200 : (year ? 50 : Math.ceil(limit / 100));
 
     do {
       const result = await listSpaceMessages(
@@ -426,7 +439,7 @@ async function syncChatImagesHandler(
       );
 
       // 指定されたlimitに達したら終了
-      if (allMessages.length >= limit) break;
+      if (allMessages.length >= effectiveLimit) break;
     } while (pageToken && pageCount < maxPages);
 
     // 年指定がある場合、指定年より前のメッセージを除外
@@ -866,15 +879,40 @@ async function syncChatImagesHandler(
     }
 
     // クリーンアップ: IDスレッドに属さない既存画像を削除
-    // 注意: 古いメッセージをフェッチしない場合、古い写真が誤って削除される問題があるため
-    // このロジックは無効化。重複削除のみ実行する。
+    // fullSync時のみ実行（全メッセージを取得しているため、孤児判定が正確）
+    // 通常同期時は最新メッセージのみ取得するため、孤児削除すると古いデータが消える
     // validPhotoUrls = 今回の同期で有効と判断されたURL（IDスレッドに属するもののみ）
-    functions.logger.info(
-      "[syncChatImages] Orphan cleanup DISABLED: " +
-      `${existingSnapshot.docs.length} existing, ${validPhotoUrls.size} valid URLs`
-    );
-    // 孤児削除は無効化（古いデータが誤って削除されるのを防ぐ）
-    // 手動クリーンアップが必要な場合は別途対応
+    let orphansDeleted = 0;
+    if (fullSync) {
+      functions.logger.info(
+        "[syncChatImages] Orphan cleanup ENABLED (full sync mode): " +
+        `${existingSnapshot.docs.length} existing, ${validPhotoUrls.size} valid URLs`
+      );
+      const orphanDeletePromises: Promise<void>[] = [];
+      for (const doc of existingSnapshot.docs) {
+        const data = doc.data();
+        const photoUrl = data.photoUrl;
+        if (photoUrl && !validPhotoUrls.has(photoUrl)) {
+          orphanDeletePromises.push(
+            doc.ref.delete().then(() => {
+              orphansDeleted++;
+              functions.logger.info(
+                `[syncChatImages] Deleted orphan: ${doc.id}, ` +
+                `URL: ${photoUrl.substring(0, 60)}...`
+              );
+            })
+          );
+        }
+      }
+      await Promise.all(orphanDeletePromises);
+      functions.logger.info(
+        `[syncChatImages] Orphan cleanup complete: ${orphansDeleted} orphans deleted`
+      );
+    } else {
+      functions.logger.info(
+        "[syncChatImages] Orphan cleanup SKIPPED (incremental sync mode)"
+      );
+    }
 
     // 重複削除: 同じURLを持つドキュメントは最新1件のみ保持
     let duplicatesDeleted = 0;
@@ -983,6 +1021,8 @@ async function syncChatImagesHandler(
       synced,
       updated,
       skipped,
+      orphansDeleted,
+      duplicatesDeleted,
       total: allPhotos.length,
       photos: allPhotos,
     };

@@ -1459,12 +1459,21 @@ export async function getChatImages(
  * @param accessToken - ユーザーのOAuthアクセストークン（オプション、なければバックエンドで保存済みトークンを使用）
  */
 export async function syncChatImages(
-  options: { spaceId: string; residentId: string; limit?: number; year?: number },
+  options: {
+    spaceId: string;
+    residentId: string;
+    limit?: number;
+    year?: number;
+    /** 初回同期モード: 全メッセージ取得 + 孤児削除 */
+    fullSync?: boolean;
+  },
   accessToken?: string | null  // Phase 53: オプショナル（バックエンドで保存済みトークンを使用）
 ): Promise<ApiResponse<{
   synced: number;
   updated: number;
   skipped: number;
+  orphansDeleted: number;
+  duplicatesDeleted: number;
   total: number;
   photos: CarePhoto[];
 }>> {
