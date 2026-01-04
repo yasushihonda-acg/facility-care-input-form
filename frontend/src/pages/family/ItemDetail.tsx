@@ -272,10 +272,6 @@ export function ItemDetail() {
 
             {/* 基本情報 */}
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between py-2 border-t">
-                <span className="text-gray-500">送付日</span>
-                <span>{formatDate(item.sentDate)}</span>
-              </div>
               {hasExpiration && (
                 <div className={`flex justify-between py-2 border-t ${
                   isExpired ? 'text-red-600' : isExpiringSoon ? 'text-orange-600' : ''

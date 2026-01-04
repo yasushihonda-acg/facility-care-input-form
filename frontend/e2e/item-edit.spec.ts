@@ -95,18 +95,7 @@ test.describe('【Phase 22.1】品物編集機能', () => {
       }
     });
 
-    test('ITEM-EDIT-005: 送付日は編集不可', async ({ page }) => {
-      await page.goto('/demo/family/items/demo-item-001/edit');
-      await waitForSpaLoad(page);
-
-      // 送付日フィールドがdisabledまたはreadonly
-      const sentDateInput = page.locator('#sentDate');
-      if (await sentDateInput.isVisible()) {
-        const isDisabled = await sentDateInput.isDisabled();
-        const isReadonly = await sentDateInput.getAttribute('readonly');
-        expect(isDisabled || isReadonly !== null).toBeTruthy();
-      }
-    });
+    // ITEM-EDIT-005: 送付日テストは削除（送付日フィールドはUI非表示）
 
     test('ITEM-EDIT-006: キャンセルで元の詳細ページに戻る', async ({ page }) => {
       await page.goto('/demo/family/items/demo-item-001/edit');

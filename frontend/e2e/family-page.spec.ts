@@ -239,9 +239,8 @@ test.describe('VIEW_ARCHITECTURE_SPEC準拠チェック', () => {
   test('/family/items/new から品物を登録できるフォームがある', async ({ page }) => {
     await page.goto('/family/items/new');
 
-    // 必須項目: 品物名、カテゴリ、送付日、数量、提供方法
+    // 必須項目: 品物名、カテゴリ、数量、提供方法（送付日は非表示）
     await expect(page.locator('#itemName')).toBeVisible();
-    await expect(page.locator('#sentDate')).toBeVisible();
     await expect(page.locator('#quantity')).toBeVisible();
 
     // 登録ボタン

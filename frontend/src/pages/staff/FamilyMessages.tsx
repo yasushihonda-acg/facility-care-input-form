@@ -159,16 +159,15 @@ function FamilyMessageCard({ item }: { item: CareItem }) {
           </div>
 
           <div className="text-sm text-gray-600 space-y-1">
-            {/* 送付日・期限 */}
-            <div className="flex gap-4 flex-wrap">
-              <span>送付: {formatDate(item.sentDate)}</span>
-              {hasExpiration && (
+            {/* 期限 */}
+            {hasExpiration && (
+              <div className="flex gap-4 flex-wrap">
                 <span className={isExpired ? 'text-red-600 font-medium' : isExpiringSoon ? 'text-orange-600 font-medium' : ''}>
                   期限: {formatDate(item.expirationDate!)}
                   {isExpiringSoon && !isExpired && ` (あと${daysUntilExpiration}日)`}
                 </span>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* 在庫バー */}
             <div className="flex items-center gap-2">

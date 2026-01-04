@@ -79,10 +79,10 @@ function filterItemsByDateRange(
       return false;
     }
 
-    // スケジュールがない場合は送付日でチェック
-    const sentDate = new Date(item.sentDate);
-    sentDate.setHours(0, 0, 0, 0);
-    return sentDate >= start && sentDate <= end;
+    // スケジュールがない場合は登録日でチェック
+    const createdDate = new Date(item.createdAt);
+    createdDate.setHours(0, 0, 0, 0);
+    return createdDate >= start && createdDate <= end;
   });
 }
 
@@ -671,13 +671,6 @@ function ItemDetailModal({ item, onClose, onEdit, onDelete }: {
                 </div>
               </div>
             )}
-
-            {/* 送付日 */}
-            <div className="flex items-center gap-3 py-2 border-b">
-              <span className="text-lg">📦</span>
-              <span className="text-gray-500">送付日</span>
-              <span className="ml-auto">{formatDate(item.sentDate)}</span>
-            </div>
 
             {/* スタッフへの申し送り */}
             {item.noteToStaff && (

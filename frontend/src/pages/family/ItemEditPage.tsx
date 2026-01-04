@@ -20,7 +20,6 @@ import {
   REMAINING_HANDLING_INSTRUCTION_OPTIONS,
   DISCARD_CONDITION_SUGGESTIONS,
   STORE_CONDITION_SUGGESTIONS,
-  formatDate,
   migrateCategory,
 } from '../../types/careItem';
 import type {
@@ -483,25 +482,6 @@ export function ItemEditPage() {
               </button>
             ))}
           </div>
-        </div>
-
-        {/* 送付日（編集不可） */}
-        <div>
-          <label htmlFor="sentDate" className="block text-sm font-medium text-gray-700 mb-1">
-            送付日（変更不可）
-          </label>
-          <div className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-600 flex items-center justify-between">
-            <span>{formatDate(item.sentDate)}</span>
-            <span className="text-gray-400">🔒</span>
-          </div>
-          <input
-            type="hidden"
-            id="sentDate"
-            name="sentDate"
-            value={item.sentDate}
-            readOnly
-            disabled
-          />
         </div>
 
         {/* 個数・単位 */}

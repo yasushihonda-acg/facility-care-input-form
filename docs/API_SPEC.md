@@ -757,7 +757,7 @@ Webhook URLの動作確認テスト。管理者が設定保存前にURLの有効
 | `residentId` | string | Yes | 入居者ID |
 | `userId` | string | Yes | 登録した家族ID |
 | `itemName` | string | Yes | 品物名 |
-| `sentDate` | string | Yes | 送付日（YYYY-MM-DD） |
+| `sentDate` | string | No | 送付日（YYYY-MM-DD）※UI非表示・オプショナル |
 | `expirationDate` | string | No | 賞味期限（YYYY-MM-DD） |
 | `quantity` | number | Yes | 個数 |
 | `servingMethod` | enum | Yes | 提供方法（`as_is`, `cut`, `heated`, `cooled`, `processed`, `other`） |
@@ -793,7 +793,7 @@ Webhook URLの動作確認テスト。管理者が設定保存前にURLの有効
 | `itemId` | string | No | 品物IDで単一取得（指定時は他のフィルタは無視） |
 | `residentId` | string | No | 入居者IDで絞り込み |
 | `status` | string | No | ステータスで絞り込み（`pending`, `served`, `consumed`, `expired`, `discarded`） |
-| `sortBy` | string | No | ソート項目（`sentDate`, `expirationDate`, `createdAt`） |
+| `sortBy` | string | No | ソート項目（`expirationDate`, `createdAt`）※デフォルト: `createdAt` |
 | `sortOrder` | string | No | ソート順（`asc`, `desc`） |
 | `limit` | number | No | 取得件数上限（デフォルト: 50） |
 
