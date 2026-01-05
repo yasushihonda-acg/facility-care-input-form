@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react';
 import type { StaffNote, StaffNotePriority, CreateStaffNoteInput } from '../../types/staffNote';
 import { STAFF_NOTE_PRIORITIES } from '../../types/staffNote';
+import { getTodayString, formatDateString } from '../../utils/scheduleUtils';
 
 interface StaffNoteModalProps {
   isOpen: boolean;
@@ -46,11 +47,11 @@ export function StaffNoteModal({
         setContent('');
         setPriority('normal');
         // デフォルト: 今日から1週間
-        const today = new Date().toISOString().split('T')[0];
+        const today = getTodayString();
         const weekLater = new Date();
         weekLater.setDate(weekLater.getDate() + 7);
         setStartDate(today);
-        setEndDate(weekLater.toISOString().split('T')[0]);
+        setEndDate(formatDateString(weekLater));
       }
       setError(null);
     }
@@ -63,11 +64,11 @@ export function StaffNoteModal({
       setEndDate('');
     } else if (!startDate || !endDate) {
       // warning/normalに変更した時、期間が未設定ならデフォルトを設定
-      const today = new Date().toISOString().split('T')[0];
+      const today = getTodayString();
       const weekLater = new Date();
       weekLater.setDate(weekLater.getDate() + 7);
       setStartDate(today);
-      setEndDate(weekLater.toISOString().split('T')[0]);
+      setEndDate(formatDateString(weekLater));
     }
   }, [priority, startDate, endDate]);
 

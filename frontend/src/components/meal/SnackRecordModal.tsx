@@ -14,6 +14,7 @@ import { CONSUMPTION_STATUSES } from '../../types/careItem';
 import { useRecordConsumptionLog } from '../../hooks/useConsumptionLogs';
 import { submitMealRecord } from '../../api';
 import type { SnackRecord } from '../../types/mealForm';
+import { getTodayString } from '../../utils/scheduleUtils';
 
 // 摂食状況の絵文字マッピング
 const CONSUMPTION_EMOJIS: Record<ConsumptionStatus, string> = {
@@ -48,7 +49,7 @@ export function SnackRecordModal({
 
   // フォーム状態
   const [formData, setFormData] = useState({
-    servedDate: new Date().toISOString().split('T')[0],
+    servedDate: getTodayString(),
     servedTime: '',
     mealTime: 'snack' as MealTime | '',
     servedQuantity: 1,
@@ -73,7 +74,7 @@ export function SnackRecordModal({
       const suggestedQuantity = getSuggestedQuantity(item);
 
       setFormData({
-        servedDate: new Date().toISOString().split('T')[0],
+        servedDate: getTodayString(),
         servedTime: new Date().toTimeString().slice(0, 5),
         mealTime: 'snack',
         servedQuantity: Math.min(suggestedQuantity, maxServeQuantity),

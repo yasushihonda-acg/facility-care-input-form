@@ -17,6 +17,7 @@ import { useMealFormSettings } from '../../hooks/useMealFormSettings';
 import { DAY_SERVICE_OPTIONS } from '../../types/mealForm';
 import type { SnackRecord } from '../../types/mealForm';
 import { calculateConsumptionAmounts } from '../../utils/consumptionCalc';
+import { getTodayString } from '../../utils/scheduleUtils';
 
 // Phase 29: タブ種別
 type RecordTab = 'meal' | 'hydration';
@@ -263,7 +264,7 @@ export function StaffRecordDialog({
           residentId: item.residentId,
           image: formData.photo,
           staffName: formData.staffName,
-          date: new Date().toISOString().split('T')[0],
+          date: getTodayString(),
         });
         // ApiResponse<UploadCareImageResponse> からphotoUrlを取得
         photoUrl = uploadResult.data?.photoUrl;
@@ -279,7 +280,7 @@ export function StaffRecordDialog({
 
       await recordMutation.mutateAsync({
         itemId: item.id,
-        servedDate: new Date().toISOString().split('T')[0],
+        servedDate: getTodayString(),
         servedTime: new Date().toTimeString().slice(0, 5),
         mealTime: 'snack', // 品物ベースの記録はすべて間食として消費ログに記録
         servedQuantity: formData.servedQuantity,

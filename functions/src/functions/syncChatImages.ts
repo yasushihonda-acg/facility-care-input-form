@@ -18,6 +18,7 @@ import {
   ErrorCodes,
   CarePhoto,
 } from "../types";
+import {formatDateString} from "../utils/scheduleUtils";
 
 // 利用者IDを正規表現で抽出（ID7282 形式）
 const RESIDENT_ID_PATTERN = /\(ID(\d+)\)/;
@@ -880,7 +881,7 @@ async function syncChatImagesHandler(
 
         // 親メッセージの日時を使用（スレッド開始時刻 = 記録日時）
         const date = new Date(parentCreateTime || msg.createTime || Date.now());
-        const dateStr = date.toISOString().split("T")[0];
+        const dateStr = formatDateString(date);
 
         // 既存画像がある場合はメタデータを更新
         const existingDocRef = existingPhotoUrlsMap.get(imageUrl);

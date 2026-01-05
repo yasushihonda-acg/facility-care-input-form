@@ -9,6 +9,7 @@ import type { MealTime, RecordConsumptionLogRequest, ConsumptionStatus } from '.
 import { MEAL_TIMES, determineConsumptionStatus, calculateConsumptionRate } from '../../types/consumptionLog';
 import { CONSUMPTION_STATUSES } from '../../types/careItem';
 import { useRecordConsumptionLog } from '../../hooks/useConsumptionLogs';
+import { getTodayString } from '../../utils/scheduleUtils';
 
 interface ConsumptionRecordModalProps {
   isOpen: boolean;
@@ -30,7 +31,7 @@ export function ConsumptionRecordModal({
 
   // フォーム状態
   const [formData, setFormData] = useState({
-    servedDate: new Date().toISOString().split('T')[0],
+    servedDate: getTodayString(),
     servedTime: '',
     mealTime: '' as MealTime | '',
     servedQuantity: 1,
@@ -51,7 +52,7 @@ export function ConsumptionRecordModal({
   useEffect(() => {
     if (isOpen) {
       setFormData({
-        servedDate: new Date().toISOString().split('T')[0],
+        servedDate: getTodayString(),
         servedTime: new Date().toTimeString().slice(0, 5),
         mealTime: '',
         servedQuantity: Math.min(1, maxServeQuantity),

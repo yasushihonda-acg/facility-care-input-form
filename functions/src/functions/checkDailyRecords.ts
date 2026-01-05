@@ -17,19 +17,10 @@ import {
   sendToGoogleChat,
   formatNoRecordNotification,
 } from "../services/googleChatService";
+import {getTodayString} from "../utils/scheduleUtils";
 
 /** デフォルト通知時刻（16時） */
 const DEFAULT_CHECK_HOUR = 16;
-
-/**
- * 日付をYYYY-MM-DD形式で取得（JST）
- */
-function getTodayDateString(): string {
-  const now = new Date();
-  // JSTに変換（UTC+9）
-  const jstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
-  return jstNow.toISOString().split("T")[0];
-}
 
 /**
  * 現在の時（JST）を取得
@@ -91,7 +82,7 @@ export const checkDailyRecords = functions
       return {notified: false, reason: "no_webhook_configured"};
     }
 
-    const today = getTodayDateString();
+    const today = getTodayString();
 
     // 日次ログを確認
     const logData = await getDailyRecordLog(today);

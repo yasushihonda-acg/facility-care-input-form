@@ -22,9 +22,20 @@ function getLocalDateString(date: Date = new Date()): string {
 - `ItemBasedSnackRecord.tsx`: `isMissedSchedule`, `isRecordedToday`
 
 ### 対策
-- 日付文字列が必要な場合は`getLocalDateString()`を使う
+- 日付文字列が必要な場合は`getTodayString()`を使う（scheduleUtils.ts）
 - `toISOString()`は避ける（UTC時間になるため）
-- `scheduleUtils.ts`の`formatDateString()`も同様のローカル時間フォーマットを使用
+- `formatDateString()`でローカル時間フォーマット
+
+### 修正済み箇所（PR #77）
+**フロントエンド**:
+- `scheduleUtils.ts`: `getTodayString()`追加
+- `demoFamilyData.ts`, `FamilyDashboard.tsx`, `StaffHome.tsx`
+- `demoStaffNotes.ts`, `useStats.ts`
+
+**バックエンド**:
+- `scheduleUtils.ts`: `getTodayString()`追加（日本時間対応）
+  - `toLocaleDateString('sv-SE', {timeZone: 'Asia/Tokyo'})`使用
+- `getStats.ts`, `taskGenerator.ts`
 
 ---
 

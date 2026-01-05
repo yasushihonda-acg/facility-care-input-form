@@ -8,7 +8,7 @@ import type { ServingSchedule, ScheduleType, ServingTimeSlot } from '../../types
 import { SCHEDULE_TYPE_LABELS, SERVING_TIME_SLOT_LABELS } from '../../types/careItem';
 import { WeekdaySelector } from './WeekdaySelector';
 import { MultipleDatePicker } from './MultipleDatePicker';
-import { formatScheduleDisplay } from '../../utils/scheduleUtils';
+import { formatScheduleDisplay, getTodayString } from '../../utils/scheduleUtils';
 
 interface ServingScheduleInputProps {
   /** 現在のスケジュール値 */
@@ -31,7 +31,7 @@ export function ServingScheduleInput({
   const timeSlots: ServingTimeSlot[] = ['breakfast', 'lunch', 'dinner', 'snack', 'anytime'];
 
   // 今日の日付を取得
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayString();
 
   // スケジュールタイプ変更
   const handleTypeChange = (type: ScheduleType) => {

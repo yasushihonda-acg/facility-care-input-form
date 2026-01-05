@@ -8,18 +8,9 @@
 import * as functions from "firebase-functions";
 import {getFirestore} from "firebase-admin/firestore";
 import {DailyRecordLog} from "../types";
+import {getTodayString} from "../utils/scheduleUtils";
 
 const DAILY_RECORD_LOGS_COLLECTION = "daily_record_logs";
-
-/**
- * 日付をYYYY-MM-DD形式で取得（JST）
- */
-function getTodayDateString(): string {
-  const now = new Date();
-  // JSTに変換（UTC+9）
-  const jstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
-  return jstNow.toISOString().split("T")[0];
-}
 
 /**
  * 日次記録ログを更新
@@ -34,7 +25,7 @@ export async function updateDailyRecordLog(
 ): Promise<void> {
   try {
     const db = getFirestore();
-    const today = getTodayDateString();
+    const today = getTodayString();
     const docRef = db.collection(DAILY_RECORD_LOGS_COLLECTION).doc(today);
 
     const now = new Date().toISOString();

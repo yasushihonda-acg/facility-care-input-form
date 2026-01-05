@@ -21,6 +21,7 @@ import type {
   UpdateTaskRequest,
   UpdateTaskResponse,
 } from "../types";
+import {getTodayString} from "../utils/scheduleUtils";
 
 // Firestoreコレクション名
 const TASKS_COLLECTION = "tasks";
@@ -261,7 +262,7 @@ async function getTasksHandler(req: Request, res: Response): Promise<void> {
     }
 
     // タスク件数を計算
-    const today = new Date().toISOString().split("T")[0];
+    const today = getTodayString();
     const counts: TaskCounts = {
       pending: 0,
       inProgress: 0,

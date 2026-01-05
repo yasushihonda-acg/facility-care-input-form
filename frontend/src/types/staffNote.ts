@@ -3,6 +3,8 @@
  * Phase 40: スタッフ専用の注意事項管理機能
  */
 
+import { getTodayString } from '../utils/scheduleUtils';
+
 // === 列挙型 ===
 
 /** 注意事項の優先度 */
@@ -152,9 +154,7 @@ export function isStaffNoteVisible(note: StaffNote): boolean {
   }
 
   // warning/normalは期間内のみ表示
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayStr = today.toISOString().split('T')[0];
+  const todayStr = getTodayString();
 
   if (note.startDate && note.startDate > todayStr) {
     return false; // 開始日前
