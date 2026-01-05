@@ -1,6 +1,6 @@
 # 引き継ぎドキュメント
 
-> 最終更新: 2026-01-04
+> 最終更新: 2026-01-05
 
 ## クイックスタート（5分で開発開始）
 
@@ -172,7 +172,7 @@ firebase deploy --only functions --debug
 ### スタッフ向け (`/staff`, `/demo/staff`)
 | 機能 | パス | 説明 |
 |------|------|------|
-| 注意事項 | `/staff/notes` | スタッフ用注意事項・家族依頼確認（Phase 40） |
+| 注意事項 | `/staff/notes` | スタッフ用注意事項・廃棄指示確認（Phase 40） |
 | 間食記録入力 | `/staff/input/meal` | 家族からの品物の提供記録入力（写真・Chat通知）、残り対応タブ（破棄済み/保存済みの確認・再提供） |
 | 記録閲覧 | `/view` | 全ケア記録の閲覧（データ/相関分析/グラフ切替） |
 | 統計 | `/stats` | 品物・摂食統計ダッシュボード |
@@ -196,7 +196,7 @@ frontend/src/
 │   │   ├── ItemForm         # 品物登録・編集
 │   │   └── PresetManagement # プリセット管理
 │   ├── staff/               # スタッフ向けページ（Phase 40）
-│   │   └── StaffNotesPage   # 注意事項・家族依頼
+│   │   └── StaffNotesPage   # 注意事項・廃棄指示
 │   ├── MealInputPage        # 間食記録入力フォーム
 │   ├── ViewPage             # 記録閲覧
 │   ├── StatsPage            # 統計
@@ -246,5 +246,6 @@ Phase 1〜52まで完了。詳細は `git log` を参照。
 - **Phase 52**: Firebase Authentication導入 - Googleログイン認証、許可リスト（aozora-cg.com + 個別アカウント）、OAuth対応Chat API
 - **Phase 53**: OAuth永続化 - 管理者認証1回で全ユーザーがChat画像同期可能
 - **Phase 53.1**: fullSyncモード - 初回同期と増分同期の分離
+- **refactor**: タスク機能を完全削除 - sentDateスキーマ変更による不具合解消、品物一覧・Chat Webhookで代替
 
-E2Eテスト: 459件定義
+E2Eテスト: 468件定義
