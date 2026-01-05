@@ -34,7 +34,7 @@ import { DateNavigator, type DateViewMode } from '../../components/family/DateNa
 import { UnscheduledDatesBanner } from '../../components/family/UnscheduledDatesBanner';
 import { UnscheduledDatesModal } from '../../components/family/UnscheduledDatesModal';
 import { ScheduleDisplay } from '../../components/meal/ScheduleDisplay';
-import { getUnscheduledDates, isScheduledForDate, type ScheduleTypeExclusion } from '../../utils/scheduleUtils';
+import { getUnscheduledDates, isScheduledForDate, getMissedScheduleItems, type ScheduleTypeExclusion } from '../../utils/scheduleUtils';
 
 // デモ用の入居者ID・ユーザーID（将来は認証から取得）
 const DEMO_RESIDENT_ID = 'resident-001';
@@ -156,6 +156,12 @@ export function ItemManagement() {
 
   // 期限切れ品物を取得
   const { expiredItems, isLoading: isExpiredLoading } = useExpiredItems(DEMO_RESIDENT_ID);
+
+  // 提供漏れ品物を算出
+  const missedScheduleItems = useMemo(() => {
+    if (!data?.items) return [];
+    return getMissedScheduleItems(data.items);
+  }, [data?.items]);
 
   // スキップ日管理
   const {
@@ -285,6 +291,13 @@ export function ItemManagement() {
       <ExpirationAlert
         expiredItems={expiredItems}
         isLoading={isExpiredLoading}
+      />
+
+      {/* 提供漏れアラート */}
+      <MissedScheduleAlert
+        missedItems={missedScheduleItems}
+        onEdit={(itemId) => navigate(`${pathPrefix}/family/items/${itemId}/edit`)}
+        onShowDetail={(item) => setSelectedItem(item)}
       />
 
       {/* 未設定日サジェスト通知 */}
@@ -720,6 +733,86 @@ function ItemDetailModal({ item, onClose, onEdit, onDelete }: {
           >
             🗑️
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 提供漏れアラートコンポーネント
+ * スケジュール通りに提供されていない品物を表示
+ */
+function MissedScheduleAlert({ missedItems, onEdit, onShowDetail }: {
+  missedItems: CareItem[];
+  onEdit: (itemId: string) => void;
+  onShowDetail: (item: CareItem) => void;
+}) {
+  // 0件の場合は非表示
+  if (missedItems.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mx-4 mt-3">
+      <div className="bg-purple-50 border border-purple-200 rounded-xl overflow-hidden">
+        {/* ヘッダー */}
+        <div className="px-4 py-2 bg-purple-100 border-b border-purple-200">
+          <h2 className="text-sm font-semibold text-purple-800 flex items-center gap-2">
+            <span className="text-lg">📢</span>
+            提供漏れ（{missedItems.length}件）
+          </h2>
+          <p className="text-xs text-purple-600 mt-0.5">
+            スケジュール通りに提供されていません
+          </p>
+        </div>
+
+        {/* アイテムリスト */}
+        <div className="divide-y divide-purple-100">
+          {missedItems.map((item) => (
+            <div
+              key={item.id}
+              onClick={() => onShowDetail(item)}
+              className="px-4 py-3 flex items-center justify-between gap-3 cursor-pointer hover:bg-purple-50/50 transition-colors"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="text-2xl flex-shrink-0">
+                  {item.category === 'food' ? '🍪' : item.category === 'drink' ? '🧃' : '📦'}
+                </span>
+                <div className="min-w-0">
+                  <div className="font-medium text-purple-900 truncate">
+                    {item.itemName}
+                  </div>
+                  <div className="text-xs text-purple-600">
+                    {item.servingSchedule && (
+                      <ScheduleDisplay schedule={item.servingSchedule} compact />
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(item.id);
+                  }}
+                  className="px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-100 rounded-lg hover:bg-purple-200 transition-colors"
+                >
+                  ✏️ 編集
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onShowDetail(item);
+                  }}
+                  className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  詳細
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
