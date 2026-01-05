@@ -90,22 +90,21 @@ export function useSyncedChatImages(): UseSyncedChatImagesResult {
   // 自動同期が実行済みかどうか（セッション中1回のみ）
   const hasSyncedRef = useRef(false);
 
-  // Firestoreから画像を取得（source: 'google_chat' のもの）
+  // Firestoreから画像を取得（全ソース: google_chat + direct_upload）
   const {
     data,
     isLoading: isLoadingPhotos,
     error: fetchError,
     refetch,
   } = useQuery({
-    queryKey: ['syncedChatImages', residentId],
+    queryKey: ['carePhotos', residentId],
     queryFn: async () => {
       if (!residentId) {
         return { photos: [] };
       }
-      // バックエンドで source='google_chat' のみ取得
+      // 全画像を取得（アプリ直接アップロード + Chat経由）
       const response = await getCarePhotos({
         residentId,
-        source: 'google_chat',
       });
       if (!response.success) {
         throw new Error(response.error?.message || 'Failed to fetch photos');
