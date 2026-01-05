@@ -15,6 +15,7 @@ import type {
   Alert,
 } from '../types/stats';
 import { DEMO_ITEM_STATS, DEMO_ALERTS } from '../data/demo';
+import { getTodayString } from '../utils/scheduleUtils';
 
 interface UseStatsOptions {
   residentId?: string;
@@ -38,13 +39,6 @@ interface UseStatsReturn {
   // 操作
   refetch: () => Promise<void>;
   fetchStats: (params?: Partial<GetStatsRequest>) => Promise<void>;
-}
-
-/**
- * 今日の日付をYYYY-MM-DD形式で取得
- */
-function getTodayString(): string {
-  return new Date().toISOString().split('T')[0];
 }
 
 /**

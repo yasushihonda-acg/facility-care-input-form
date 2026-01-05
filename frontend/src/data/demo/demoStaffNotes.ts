@@ -4,13 +4,10 @@
  */
 
 import type { StaffNote } from '../../types/staffNote';
+import { formatDateString, getTodayString } from '../../utils/scheduleUtils';
 
-/**
- * 今日の日付を取得（YYYY-MM-DD）
- */
-function getTodayString(): string {
-  return new Date().toISOString().split('T')[0];
-}
+// Re-export for backwards compatibility (if needed elsewhere)
+export { getTodayString };
 
 /**
  * n日後の日付を取得（YYYY-MM-DD）
@@ -18,7 +15,7 @@ function getTodayString(): string {
 function getDateOffset(days: number): string {
   const date = new Date();
   date.setDate(date.getDate() + days);
-  return date.toISOString().split('T')[0];
+  return formatDateString(date);
 }
 
 /**

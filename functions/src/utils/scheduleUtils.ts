@@ -8,13 +8,23 @@
 import type {ServingSchedule} from "../types";
 
 /**
- * 日付を YYYY-MM-DD 形式でフォーマット
+ * 日付を YYYY-MM-DD 形式でフォーマット（サーバーのローカル時間）
  */
 export function formatDateString(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
+}
+
+/**
+ * 今日の日付を YYYY-MM-DD 形式で取得（日本時間）
+ * Cloud FunctionsはUTCで動作するため、明示的にJSTを指定
+ * 注意: toISOString()はUTC時間を返すため使用しないこと
+ */
+export function getTodayString(): string {
+  // sv-SEロケールはISO 8601形式 (YYYY-MM-DD) を返す
+  return new Date().toLocaleDateString("sv-SE", {timeZone: "Asia/Tokyo"});
 }
 
 /**
