@@ -24,6 +24,7 @@ import {
   isScheduledForTomorrow as checkScheduledForTomorrow,
   getTodayString,
   formatDateString,
+  isAfter16JST,
 } from '../../utils/scheduleUtils';
 import { ScheduleDisplay } from './ScheduleDisplay';
 
@@ -90,15 +91,28 @@ function isRecordedToday(item: CareItem): boolean {
 }
 
 // 過去にスケジュールされていたが記録がない（提供漏れ）を判定
+// 朝食/昼食/おやつは16時以降にチェック、夕食/いつでもは翌日にチェック
 function isMissedSchedule(item: CareItem): boolean {
   if (!item.servingSchedule) return false;
-  // 今日スケジュールされている場合は提供漏れではない
-  if (isScheduledForToday(item)) return false;
+
+  const schedule = item.servingSchedule;
+  const timeSlot = schedule.timeSlot;
+
   // 今日記録済みなら提供漏れではない
   if (isRecordedToday(item)) return false;
 
-  // スケジュールタイプ別に判定
-  const schedule = item.servingSchedule;
+  // 16時以降で朝食/昼食/おやつの場合、今日スケジュールされていれば提供漏れ
+  const isEarlyTimeSlot = timeSlot === 'breakfast' || timeSlot === 'lunch' || timeSlot === 'snack';
+  if (isAfter16JST() && isEarlyTimeSlot) {
+    if (isScheduledForToday(item)) {
+      return true;
+    }
+  } else {
+    // 今日スケジュールされている場合は提供漏れではない（従来の動作）
+    if (isScheduledForToday(item)) return false;
+  }
+
+  // スケジュールタイプ別に判定（過去の日付チェック）
   const todayStr = getLocalDateString();
 
   // once: 提供予定日が過去で、記録がない

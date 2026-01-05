@@ -704,6 +704,19 @@ export function filterItemsByDateRangeAndPattern(
 // =============================================================================
 
 /**
+ * 日本時間で16時以降かどうかを判定
+ * @returns 16時以降ならtrue
+ */
+export function isAfter16JST(): boolean {
+  const now = new Date();
+  // JSTは UTC+9
+  const jstHour = now.getUTCHours() + 9;
+  // 24時を超えた場合の調整
+  const adjustedHour = jstHour >= 24 ? jstHour - 24 : jstHour;
+  return adjustedHour >= 16;
+}
+
+/**
  * 今日記録済みかどうかを判定
  * @param item 品物
  * @returns 今日記録済みならtrue
@@ -719,6 +732,8 @@ export function isRecordedToday(item: CareItem): boolean {
  * スケジュール通りに提供されていない品物を検出
  *
  * 判定条件:
+ * - 朝食/昼食/おやつ: 16時以降なら当日分もチェック
+ * - 夕食/いつでも: 翌日にチェック
  * - once: 提供予定日が過去で、その日以降の記録がない
  * - specific_dates: 過去の提供予定日に記録がない
  * - daily/weekly: 開始日から3日以上経過して記録がない
@@ -728,13 +743,25 @@ export function isRecordedToday(item: CareItem): boolean {
  */
 export function isMissedSchedule(item: CareItem): boolean {
   if (!item.servingSchedule) return false;
-  // 今日スケジュールされている場合は提供漏れではない
-  if (isScheduledForToday(item.servingSchedule)) return false;
+
+  const schedule = item.servingSchedule;
+  const timeSlot = schedule.timeSlot;
+
   // 今日記録済みなら提供漏れではない
   if (isRecordedToday(item)) return false;
 
-  // スケジュールタイプ別に判定
-  const schedule = item.servingSchedule;
+  // 16時以降で朝食/昼食/おやつの場合、今日スケジュールされていれば提供漏れ
+  const isEarlyTimeSlot = timeSlot === 'breakfast' || timeSlot === 'lunch' || timeSlot === 'snack';
+  if (isAfter16JST() && isEarlyTimeSlot) {
+    if (isScheduledForToday(schedule)) {
+      return true;
+    }
+  } else {
+    // 今日スケジュールされている場合は提供漏れではない（従来の動作）
+    if (isScheduledForToday(schedule)) return false;
+  }
+
+  // スケジュールタイプ別に判定（過去の日付チェック）
   const todayStr = getTodayString();
 
   // once: 提供予定日が過去で、記録がない
