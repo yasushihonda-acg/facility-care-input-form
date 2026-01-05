@@ -14,14 +14,10 @@ import {
   getDaysUntilExpiration,
 } from '../../types/careItem';
 import type { CareItem } from '../../types/careItem';
+import { getTodayString } from '../../utils/scheduleUtils';
 
 // デモ用の入居者ID（将来は認証から取得）
 const DEMO_RESIDENT_ID = 'resident-001';
-
-/** 今日の日付を取得 */
-function getTodayString(): string {
-  return new Date().toISOString().split('T')[0];
-}
 
 /** 日付を表示用フォーマット */
 function formatDateDisplay(dateStr: string): string {

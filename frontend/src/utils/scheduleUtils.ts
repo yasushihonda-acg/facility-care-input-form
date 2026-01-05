@@ -9,13 +9,24 @@ import { SERVING_TIME_SLOT_LABELS, WEEKDAY_LABELS } from '../types/careItem';
 import type { UnscheduledDate, DateRangeType, SchedulePatternType } from '../types/skipDate';
 
 /**
- * 日付を YYYY-MM-DD 形式でフォーマット
+ * 日付を YYYY-MM-DD 形式でフォーマット（ローカル時間）
+ * 注意: toISOString()はUTC時間を返すため使用しないこと
+ * @see Serenaメモリ date_handling_pitfalls
  */
 export function formatDateString(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
+}
+
+/**
+ * 今日の日付を YYYY-MM-DD 形式で取得（ローカル時間）
+ * 注意: toISOString()はUTC時間を返すため使用しないこと
+ * @see Serenaメモリ date_handling_pitfalls
+ */
+export function getTodayString(): string {
+  return formatDateString(new Date());
 }
 
 /**

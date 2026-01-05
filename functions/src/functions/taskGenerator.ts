@@ -14,17 +14,22 @@ import type {
   TaskType,
   TaskPriority,
 } from "../types";
-import {isScheduledForToday} from "../utils/scheduleUtils";
+import {
+  isScheduledForToday,
+  getTodayString,
+  formatDateString,
+} from "../utils/scheduleUtils";
 
 // Firestoreコレクション名
 const TASKS_COLLECTION = "tasks";
 const CARE_ITEMS_COLLECTION = "care_items";
 
 /**
- * 日付文字列から日数差を計算
+ * 日付文字列から日数差を計算（日本時間）
  */
 function getDaysUntil(dateString: string): number {
-  const today = new Date();
+  const todayStr = getTodayString();
+  const today = new Date(todayStr);
   today.setHours(0, 0, 0, 0);
   const target = new Date(dateString);
   target.setHours(0, 0, 0, 0);
@@ -33,19 +38,12 @@ function getDaysUntil(dateString: string): number {
 }
 
 /**
- * 日付に日数を加算
+ * 日付に日数を加算（ローカル時間）
  */
 function addDays(date: Date, days: number): string {
   const result = new Date(date);
   result.setDate(result.getDate() + days);
-  return result.toISOString().split("T")[0];
-}
-
-/**
- * 今日の日付をYYYY-MM-DD形式で取得
- */
-function getTodayString(): string {
-  return new Date().toISOString().split("T")[0];
+  return formatDateString(result);
 }
 
 /**

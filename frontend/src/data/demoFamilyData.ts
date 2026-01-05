@@ -14,6 +14,7 @@ import type {
   FamilyUser,
 } from '../types/family';
 import type { ProhibitionRule } from '../types/careItem';
+import { formatDateString, getTodayString as getToday } from '../utils/scheduleUtils';
 
 // ============================================
 // デモユーザー・入居者情報
@@ -204,9 +205,6 @@ export const DEMO_PROHIBITIONS: ProhibitionRule[] = [
 // ============================================
 
 const today = new Date();
-const formatDate = (date: Date): string => {
-  return date.toISOString().split('T')[0];
-};
 
 const yesterday = new Date(today);
 yesterday.setDate(today.getDate() - 1);
@@ -220,7 +218,7 @@ export const DEMO_CARE_INSTRUCTIONS: CareInstruction[] = [
     id: 'demo-001',
     userId: 'family-001',
     residentId: 'resident-001',
-    targetDate: formatDate(today),
+    targetDate: formatDateString(today),
     mealTime: 'lunch',
     menuName: 'キウイ',
     processingDetail:
@@ -228,30 +226,30 @@ export const DEMO_CARE_INSTRUCTIONS: CareInstruction[] = [
     conditions: [{ trigger: 'leftover', action: 'reserve_snack' }],
     priority: 'critical',
     status: 'completed',
-    createdAt: `${formatDate(yesterday)}T18:00:00`,
-    updatedAt: `${formatDate(today)}T12:30:00`,
+    createdAt: `${formatDateString(yesterday)}T18:00:00`,
+    updatedAt: `${formatDateString(today)}T12:30:00`,
   },
   // 今日の夕食 - らっきょう指示（確認済み）
   {
     id: 'demo-002',
     userId: 'family-001',
     residentId: 'resident-001',
-    targetDate: formatDate(today),
+    targetDate: formatDateString(today),
     mealTime: 'dinner',
     menuName: 'らっきょう',
     processingDetail:
       'らっきょうは冷たいまま小皿で提供してください。\n常温で放置しないでください。\n提供直前まで冷蔵庫で保管をお願いします。',
     priority: 'normal',
     status: 'acknowledged',
-    createdAt: `${formatDate(yesterday)}T18:00:00`,
-    updatedAt: `${formatDate(today)}T08:00:00`,
+    createdAt: `${formatDateString(yesterday)}T18:00:00`,
+    updatedAt: `${formatDateString(today)}T08:00:00`,
   },
   // 明日の昼食 - 熟した柿指示（未確認）
   {
     id: 'demo-003',
     userId: 'family-001',
     residentId: 'resident-001',
-    targetDate: formatDate(tomorrow),
+    targetDate: formatDateString(tomorrow),
     mealTime: 'lunch',
     menuName: '熟した柿',
     processingDetail:
@@ -259,8 +257,8 @@ export const DEMO_CARE_INSTRUCTIONS: CareInstruction[] = [
     conditions: [{ trigger: 'no_appetite', action: 'reduce_amount' }],
     priority: 'critical',
     status: 'pending',
-    createdAt: `${formatDate(today)}T09:00:00`,
-    updatedAt: `${formatDate(today)}T09:00:00`,
+    createdAt: `${formatDateString(today)}T09:00:00`,
+    updatedAt: `${formatDateString(today)}T09:00:00`,
   },
 ];
 
@@ -272,25 +270,25 @@ export const DEMO_TIMELINE_ITEMS: TimelineItem[] = [
   // 朝食 - 完了
   {
     id: 'timeline-001',
-    date: formatDate(today),
+    date: formatDateString(today),
     mealTime: 'breakfast',
     status: 'completed',
     mainDishAmount: '8割',
     sideDishAmount: '7割',
     staffName: '田中花子',
-    recordedAt: `${formatDate(today)}T07:45:00`,
+    recordedAt: `${formatDateString(today)}T07:45:00`,
     note: '食欲良好',
   },
   // 昼食 - 完了（指示あり）
   {
     id: 'timeline-002',
-    date: formatDate(today),
+    date: formatDateString(today),
     mealTime: 'lunch',
     status: 'completed',
     mainDishAmount: '全量',
     sideDishAmount: '8割',
     staffName: '佐藤一郎',
-    recordedAt: `${formatDate(today)}T12:30:00`,
+    recordedAt: `${formatDateString(today)}T12:30:00`,
     photoUrl: '/demo-images/kiwi-cut.jpg', // デモ用プレースホルダ
     note: 'キウイ8等分・半月切り、指示通り対応。美味しそうに召し上がりました。',
     instruction: DEMO_CARE_INSTRUCTIONS[0],
@@ -298,18 +296,18 @@ export const DEMO_TIMELINE_ITEMS: TimelineItem[] = [
   // 間食 - 提供済み（重要フラグ）
   {
     id: 'timeline-003',
-    date: formatDate(today),
+    date: formatDateString(today),
     mealTime: 'snack',
     status: 'provided',
     staffName: '山田太郎',
-    recordedAt: `${formatDate(today)}T15:15:00`,
+    recordedAt: `${formatDateString(today)}T15:15:00`,
     note: 'プリン（ご本人希望により追加提供）',
     isImportant: true,
   },
   // 夕食 - 未提供（指示あり）
   {
     id: 'timeline-004',
-    date: formatDate(today),
+    date: formatDateString(today),
     mealTime: 'dinner',
     status: 'pending',
     instruction: DEMO_CARE_INSTRUCTIONS[1],
@@ -321,7 +319,7 @@ export const DEMO_TIMELINE_ITEMS: TimelineItem[] = [
 // ============================================
 
 export const DEMO_EVIDENCE_DATA: EvidenceData = {
-  date: formatDate(today),
+  date: formatDateString(today),
   mealTime: 'lunch',
   plan: {
     menuName: 'キウイ',
@@ -335,7 +333,7 @@ export const DEMO_EVIDENCE_DATA: EvidenceData = {
     // Phase 16: テスト用の実在するダミー画像URL
     photoUrl: 'https://picsum.photos/seed/kiwi/800/600',
     staffName: '田中花子',
-    recordedAt: `${formatDate(today)}T12:15:00`,
+    recordedAt: `${formatDateString(today)}T12:15:00`,
     mealTime: 'lunch',
     mainDishAmount: '8',
     sideDishAmount: '7',
@@ -353,7 +351,7 @@ export const DEMO_EVIDENCE_DATA: EvidenceData = {
  */
 export function getTimelineForDate(date: string): TimelineItem[] {
   // デモでは今日のデータのみ返す
-  const targetDate = formatDate(today);
+  const targetDate = formatDateString(today);
   if (date === targetDate) {
     return DEMO_TIMELINE_ITEMS;
   }
@@ -371,7 +369,7 @@ export function getTimelineForDate(date: string): TimelineItem[] {
  */
 export function getEvidenceData(date: string, mealTime: string): EvidenceData | null {
   // デモでは今日の昼食のみ返す
-  if (date === formatDate(today) && mealTime === 'lunch') {
+  if (date === formatDateString(today) && mealTime === 'lunch') {
     return DEMO_EVIDENCE_DATA;
   }
   return null;
@@ -386,10 +384,9 @@ export function getCareInstructionsForResident(residentId: string): CareInstruct
 
 /**
  * 今日の日付を取得（YYYY-MM-DD形式）
+ * scheduleUtilsからの再エクスポート
  */
-export function getTodayString(): string {
-  return formatDate(today);
-}
+export { getToday as getTodayString };
 
 /**
  * 日付をフォーマット（表示用）

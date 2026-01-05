@@ -18,6 +18,7 @@ import {
   formatDateDisplay,
   DEMO_CARE_INSTRUCTIONS,
 } from '../../data/demoFamilyData';
+import { formatDateString } from '../../utils/scheduleUtils';
 import { useDailyMealRecords } from '../../hooks/useFamilyMealRecords';
 import { useTaskBadgeCount } from '../../hooks/useTasks';
 import { useDemoMode } from '../../hooks/useDemoMode';
@@ -45,13 +46,13 @@ export function FamilyDashboard() {
   const handlePrevDay = () => {
     const date = new Date(selectedDate);
     date.setDate(date.getDate() - 1);
-    setSelectedDate(date.toISOString().split('T')[0]);
+    setSelectedDate(formatDateString(date));
   };
 
   const handleNextDay = () => {
     const date = new Date(selectedDate);
     date.setDate(date.getDate() + 1);
-    setSelectedDate(date.toISOString().split('T')[0]);
+    setSelectedDate(formatDateString(date));
   };
 
   // タイムラインデータを構築（実データ + モックPlan）
@@ -104,11 +105,11 @@ export function FamilyDashboard() {
   // 日付選択用の近隣日付生成
   const nearbyDates = useMemo(() => {
     const dates: string[] = [];
-    const today = new Date(selectedDate);
+    const baseDate = new Date(selectedDate);
     for (let i = -2; i <= 2; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i);
-      dates.push(date.toISOString().split('T')[0]);
+      const date = new Date(baseDate);
+      date.setDate(baseDate.getDate() + i);
+      dates.push(formatDateString(date));
     }
     return dates;
   }, [selectedDate]);

@@ -6,6 +6,7 @@
 import * as functions from "firebase-functions";
 import {getFirestore} from "firebase-admin/firestore";
 import {FUNCTIONS_CONFIG} from "../config/sheets";
+import {getTodayString} from "../utils/scheduleUtils";
 import type {
   GetStatsRequest,
   GetStatsResponse,
@@ -23,22 +24,16 @@ import type {
 const CARE_ITEMS_COLLECTION = "care_items";
 
 /**
- * 日付文字列から日数差を計算
+ * 日付文字列から日数差を計算（日本時間）
  */
 function getDaysUntil(dateString: string): number {
-  const today = new Date();
+  const todayStr = getTodayString();
+  const today = new Date(todayStr);
   today.setHours(0, 0, 0, 0);
   const target = new Date(dateString);
   target.setHours(0, 0, 0, 0);
   const diffTime = target.getTime() - today.getTime();
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-}
-
-/**
- * 今日の日付をYYYY-MM-DD形式で取得
- */
-function getTodayString(): string {
-  return new Date().toISOString().split("T")[0];
 }
 
 /**
