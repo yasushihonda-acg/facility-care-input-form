@@ -1,9 +1,9 @@
 /**
- * ImagesTab - Google Chat画像表示タブ（Phase 52）
+ * ImagesTab - 画像表示タブ
  *
- * Firestoreに保存された画像を表示
- * - アクセストークンがあるユーザーは自動的にChatスペースから同期
- * - 全ユーザーがFirestoreの画像を閲覧可能
+ * Firestoreに保存された全画像を表示
+ * - アプリから直接アップロードした画像（source: direct_upload）
+ * - Chatスペースから同期した画像（source: google_chat）
  */
 
 import { useState } from 'react';
