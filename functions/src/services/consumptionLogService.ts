@@ -8,6 +8,7 @@
 import * as admin from "firebase-admin";
 import {Timestamp, FieldValue} from "firebase-admin/firestore";
 import * as functions from "firebase-functions";
+import {getTodayString} from "../utils/scheduleUtils";
 import {
   SnackRecord,
   ConsumptionLog,
@@ -50,7 +51,7 @@ export async function createConsumptionLogsFromSnackRecords(
   linkedMealRecordId: string
 ): Promise<{createdCount: number; errors: string[]}> {
   const db = getFirestore();
-  const today = new Date().toISOString().split("T")[0];
+  const today = getTodayString();
   const now = Timestamp.now();
 
   let createdCount = 0;

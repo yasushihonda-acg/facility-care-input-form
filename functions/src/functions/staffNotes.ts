@@ -17,6 +17,7 @@ import type {
   UpdateStaffNoteRequest,
   UpdateStaffNoteResponse,
 } from "../types";
+import {getTodayString} from "../utils/scheduleUtils";
 
 // Firestoreコレクション名
 const STAFF_NOTES_COLLECTION = "staffNotes";
@@ -40,9 +41,7 @@ function isNoteVisible(note: StaffNote): boolean {
     return true;
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayStr = today.toISOString().split("T")[0];
+  const todayStr = getTodayString();
 
   if (note.startDate && note.startDate > todayStr) {
     return false;

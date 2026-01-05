@@ -22,6 +22,8 @@ import { StaffRecordDialog } from '../staff/StaffRecordDialog';
 import {
   isScheduledForToday as checkScheduledForToday,
   isScheduledForTomorrow as checkScheduledForTomorrow,
+  getTodayString,
+  formatDateString,
 } from '../../utils/scheduleUtils';
 import { ScheduleDisplay } from './ScheduleDisplay';
 
@@ -43,7 +45,7 @@ function isScheduledForToday(item: CareItem): boolean {
   }
   // 後方互換: plannedServeDate のみの場合
   if (!item.plannedServeDate) return false;
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayString();
   return item.plannedServeDate === today;
 }
 
@@ -56,7 +58,7 @@ function isScheduledForTomorrow(item: CareItem): boolean {
   if (!item.plannedServeDate) return false;
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+  const tomorrowStr = formatDateString(tomorrow);
   return item.plannedServeDate === tomorrowStr;
 }
 

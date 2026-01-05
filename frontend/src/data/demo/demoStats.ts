@@ -12,13 +12,14 @@ import type {
   Alert,
 } from '../../types/stats';
 import type { ItemCategory, AIAnalyzeResponse } from '../../types/careItem';
+import { formatDateString } from '../../utils/scheduleUtils';
 
 // ===== 日付ヘルパー =====
 
 function getDateString(daysFromToday: number): string {
   const date = new Date();
   date.setDate(date.getDate() + daysFromToday);
-  return date.toISOString().split('T')[0];
+  return formatDateString(date);
 }
 
 // ===== 在庫サマリー (getInventorySummary相当) =====

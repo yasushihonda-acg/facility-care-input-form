@@ -8,6 +8,7 @@ import * as admin from "firebase-admin";
 import {getStorage} from "firebase-admin/storage";
 import {getFirestore, FieldValue} from "firebase-admin/firestore";
 import * as functions from "firebase-functions";
+import {getTodayString} from "../utils/scheduleUtils";
 
 /**
  * Storage保存先パス設定
@@ -103,8 +104,8 @@ export async function uploadCarePhotoToStorage(
   staffName?: string,
   source: CarePhotoSource = "direct_upload"
 ): Promise<StorageUploadResult> {
-  // 日付デフォルト: 今日
-  const targetDate = date || new Date().toISOString().split("T")[0];
+  // 日付デフォルト: 今日（日本時間）
+  const targetDate = date || getTodayString();
 
   // ファイル名生成
   const extension = getExtensionFromMimeType(mimeType);

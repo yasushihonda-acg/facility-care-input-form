@@ -5,7 +5,7 @@
  */
 
 import { useState } from 'react';
-import { formatDateDisplay } from '../../utils/scheduleUtils';
+import { formatDateDisplay, getTodayString } from '../../utils/scheduleUtils';
 
 interface MultipleDatePickerProps {
   /** 選択中の日付リスト (YYYY-MM-DD[]) */
@@ -27,8 +27,7 @@ export function MultipleDatePicker({
   const [newDate, setNewDate] = useState('');
 
   // 今日の日付を取得（最小値として使用）
-  const today = new Date();
-  const minDate = today.toISOString().split('T')[0];
+  const minDate = getTodayString();
 
   const addDate = () => {
     if (!newDate || disabled) return;

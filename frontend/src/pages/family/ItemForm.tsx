@@ -34,7 +34,7 @@ import type {
   ServingSchedule,
   AISuggestResponse,
 } from '../../types/careItem';
-import { scheduleToPlannedDate } from '../../utils/scheduleUtils';
+import { scheduleToPlannedDate, formatDateString } from '../../utils/scheduleUtils';
 import { DEMO_PRESETS } from '../../data/demoFamilyData';
 import { normalizeItemName } from '../../api';
 import type { CarePreset } from '../../types/family';
@@ -162,7 +162,7 @@ export function ItemForm() {
     // 賞味期限: 今日 + expirationDays
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + aiSuggestion.expirationDays);
-    const expirationDateStr = expirationDate.toISOString().split('T')[0];
+    const expirationDateStr = formatDateString(expirationDate);
 
     setFormData((prev) => ({
       ...prev,

@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { aiAnalyze } from '../../api';
 import { useDemoMode } from '../../hooks/useDemoMode';
 import { DEMO_AI_ANALYSIS } from '../../data/demo';
+import { getTodayString, formatDateString } from '../../utils/scheduleUtils';
 import type {
   AIAnalyzeResponse,
   AIFinding,
@@ -52,11 +53,11 @@ export function AIAnalysis({ residentId, consumptionData, period }: AIAnalysisPr
 
       // 本番モード: API呼び出し
       // デフォルト期間: 過去30日
-      const endDate = period?.endDate || new Date().toISOString().split('T')[0];
+      const endDate = period?.endDate || getTodayString();
       const startDate = period?.startDate || (() => {
         const d = new Date();
         d.setDate(d.getDate() - 30);
-        return d.toISOString().split('T')[0];
+        return formatDateString(d);
       })();
 
       const response = await aiAnalyze({

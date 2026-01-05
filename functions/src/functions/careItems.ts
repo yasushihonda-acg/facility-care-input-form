@@ -31,6 +31,7 @@ import {
   formatCareItemNotification,
   CareItemNotifyData,
 } from "../services/googleChatService";
+import {formatDateString} from "../utils/scheduleUtils";
 
 // Firestoreコレクション名
 const CARE_ITEMS_COLLECTION = "care_items";
@@ -67,7 +68,7 @@ async function createItemActionTask(
   // 24時間後の日付
   const dueDate = new Date();
   dueDate.setHours(dueDate.getHours() + 24);
-  const dueDateStr = dueDate.toISOString().split("T")[0];
+  const dueDateStr = formatDateString(dueDate);
 
   // タスクID生成
   const taskId = `ITEM${Date.now()}${Math.random().toString(36).substr(2, 6)}`;

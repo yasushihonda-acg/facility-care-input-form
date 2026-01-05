@@ -26,6 +26,7 @@ import {
   RemainingHandling,
 } from "../types";
 import {calculateConsumptionAmounts} from "../utils/consumptionCalc";
+import {getTodayString} from "../utils/scheduleUtils";
 
 // Firestoreコレクション名
 const CARE_ITEMS_COLLECTION = "care_items";
@@ -139,7 +140,7 @@ function determineItemStatus(
   expirationDate: string | undefined,
   consumptionSummary: { totalServed: number }
 ): ItemStatus {
-  const today = new Date().toISOString().split("T")[0];
+  const today = getTodayString();
 
   // 期限切れチェック
   if (expirationDate && expirationDate < today) {

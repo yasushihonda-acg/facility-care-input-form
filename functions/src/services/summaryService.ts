@@ -8,6 +8,7 @@
 import * as functions from "firebase-functions";
 import {getFirestore, Timestamp} from "firebase-admin/firestore";
 import {generateContent, generateContentLite} from "./geminiService";
+import {formatDateString, getTodayString} from "../utils/scheduleUtils";
 import type {
   PlanDataSummary,
   SummaryType,
@@ -74,8 +75,8 @@ function getPeriodRange(
     weekEnd.setDate(weekStart.getDate() + 6);
 
     return {
-      start: weekStart.toISOString().split("T")[0],
-      end: weekEnd.toISOString().split("T")[0],
+      start: formatDateString(weekStart),
+      end: formatDateString(weekEnd),
     };
   }
 
@@ -86,8 +87,8 @@ function getPeriodRange(
     const end = new Date(year, month, 0); // 月末
 
     return {
-      start: start.toISOString().split("T")[0],
-      end: end.toISOString().split("T")[0],
+      start: formatDateString(start),
+      end: formatDateString(end),
     };
   }
 
@@ -163,7 +164,7 @@ function detectCorrelations(
         // 同日または翌日に排便があるか
         const nextDay = new Date(tonpukuDate);
         nextDay.setDate(nextDay.getDate() + 1);
-        const nextDayStr = nextDay.toISOString().split("T")[0];
+        const nextDayStr = formatDateString(nextDay);
 
         const hasBowel = bySheet["排便・排尿"].some((r) => {
           const dateStr = r.date?.split(" ")[0];
@@ -423,7 +424,7 @@ export async function getSummaries(options: {
  */
 export async function generateTodaySummary(): Promise<void> {
   const today = new Date();
-  const todayStr = today.toISOString().split("T")[0];
+  const todayStr = getTodayString();
 
   try {
     await generateSummary("daily", todayStr, true);

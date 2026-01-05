@@ -23,6 +23,7 @@ import type {
 } from '../types/task';
 import { useDemoMode } from './useDemoMode';
 import { DEMO_TASKS } from '../data/demo';
+import { getTodayString } from '../utils/scheduleUtils';
 
 // クエリキー
 const TASKS_KEY = 'tasks';
@@ -66,7 +67,7 @@ function filterDemoTasks(params: GetTasksParams): { tasks: Task[]; counts: TaskC
   }
 
   // 件数カウントを計算（フィルタ前の全タスクから計算）
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayString();
   const counts: TaskCounts = {
     pending: DEMO_TASKS.filter(t => t.status === 'pending').length,
     inProgress: DEMO_TASKS.filter(t => t.status === 'in_progress').length,
@@ -227,7 +228,7 @@ export function usePendingTasks(residentId?: string) {
  * 今日が期限のタスクを取得するフック
  */
 export function useTodayTasks(residentId?: string) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayString();
   return useTasks({
     residentId,
     dueDate: today,

@@ -22,6 +22,7 @@ import type {
 } from '../../types/stats';
 import { ALERT_SEVERITY_COLORS, ALERT_SEVERITY_LABELS, ALERT_TYPE_LABELS } from '../../types/stats';
 import type { AIConsumptionRecord } from '../../types/careItem';
+import { getTodayString } from '../../utils/scheduleUtils';
 
 // デモ用の入居者ID（将来は認証から取得）
 const DEMO_RESIDENT_ID = 'resident-001';
@@ -497,7 +498,7 @@ function ConsumptionStatsTab({ data }: ConsumptionStatsTabProps) {
   const consumptionData: AIConsumptionRecord[] = [];
   if (data) {
     // mostPreferred と leastPreferred から消費データを構築
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayString();
     [...(data.mostPreferred || []), ...(data.leastPreferred || [])].forEach(item => {
       consumptionData.push({
         date: today,

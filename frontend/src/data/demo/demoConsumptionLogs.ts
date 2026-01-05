@@ -6,13 +6,14 @@
  */
 
 import type { ConsumptionLog } from '../../types/consumptionLog';
+import { formatDateString } from '../../utils/scheduleUtils';
 
 // ===== 日付ヘルパー =====
 
 function getDateString(daysFromToday: number): string {
   const date = new Date();
   date.setDate(date.getDate() + daysFromToday);
-  return date.toISOString().split('T')[0];
+  return formatDateString(date);
 }
 
 function getDateTimeString(daysFromToday: number, hour = 12, minute = 0): string {
