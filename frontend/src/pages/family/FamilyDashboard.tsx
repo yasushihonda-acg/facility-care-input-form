@@ -6,7 +6,6 @@
  */
 
 import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 // Phase 21: チャット機能一時非表示
 // import { NotificationSection } from '../../components/shared/NotificationSection';
@@ -20,11 +19,7 @@ import {
 } from '../../data/demoFamilyData';
 import { formatDateString } from '../../utils/scheduleUtils';
 import { useDailyMealRecords } from '../../hooks/useFamilyMealRecords';
-import { useTaskBadgeCount } from '../../hooks/useTasks';
 import { useDemoMode } from '../../hooks/useDemoMode';
-
-// デモ用の入居者ID（将来は認証から取得）
-const DEMO_RESIDENT_ID = 'resident-001';
 
 export function FamilyDashboard() {
   const [selectedDate, setSelectedDate] = useState<string>(getTodayString());
@@ -32,12 +27,8 @@ export function FamilyDashboard() {
   // 食事シートから当日の実績データを取得（予実管理）
   const { records: mealResults, isLoading } = useDailyMealRecords(selectedDate);
 
-  // タスクバッジカウント取得（フッターに無い機能なのでホームに表示）
-  const { count: taskCount, hasOverdue } = useTaskBadgeCount(DEMO_RESIDENT_ID);
-
-  // デモモード対応: リンク先プレフィックス
-  const isDemo = useDemoMode();
-  const pathPrefix = isDemo ? '/demo' : '';
+  // デモモード判定（将来の拡張用）
+  useDemoMode();
 
   // 日付の前後移動
   const handlePrevDay = () => {
@@ -145,34 +136,6 @@ export function FamilyDashboard() {
       showBackButton={false}
     >
       <div className="pb-4">
-        {/* フッターに無い機能へのクイックアクセス - Phase 27: 1列フル幅レイアウトに変更 */}
-        <div className="mb-4">
-          {/* タスク管理 */}
-          <Link
-            to={`${pathPrefix}/family/tasks`}
-            className={`block bg-white rounded-lg shadow-card p-4 hover:shadow-md transition ${
-              hasOverdue ? 'ring-2 ring-red-300' : ''
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <span className="text-xl">📋</span>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-gray-800 text-sm">タスク</p>
-                <p className="text-xs text-gray-500 truncate">
-                  {taskCount > 0 ? `${taskCount}件のタスクがあります` : 'タスクはありません'}
-                </p>
-              </div>
-              {taskCount > 0 && (
-                <span className={`px-2 py-0.5 rounded-full text-xs font-bold text-white ${
-                  hasOverdue ? 'bg-red-500' : 'bg-blue-500'
-                }`}>
-                  {taskCount}
-                </span>
-              )}
-            </div>
-          </Link>
-        </div>
-
         {/* Phase 21: チャット機能一時非表示
         <NotificationSection userType="family" maxItems={3} />
         */}

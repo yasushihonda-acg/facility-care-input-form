@@ -90,10 +90,10 @@ https://asia-northeast1-facility-care-input-form.cloudfunctions.net
 | GET | `/getCareItems` | 品物一覧を取得 | Phase 8.1 | ✅ |
 | PUT | `/updateCareItem` | 品物を更新 | Phase 8.1 | ✅ |
 | DELETE | `/deleteCareItem` | 品物を削除 | Phase 8.1 | ✅ |
-| POST | `/createTask` | タスクを作成 | Phase 8.2 | ✅ |
-| GET | `/getTasks` | タスク一覧を取得 | Phase 8.2 | ✅ |
-| PUT | `/updateTask` | タスクを更新 | Phase 8.2 | ✅ |
-| DELETE | `/deleteTask` | タスクを削除 | Phase 8.2 | ✅ |
+| POST | `/createTask` | タスクを作成 | Phase 8.2 | ❌ 削除済み |
+| GET | `/getTasks` | タスク一覧を取得 | Phase 8.2 | ❌ 削除済み |
+| PUT | `/updateTask` | タスクを更新 | Phase 8.2 | ❌ 削除済み |
+| DELETE | `/deleteTask` | タスクを削除 | Phase 8.2 | ❌ 削除済み |
 | POST | `/getPresetSuggestions` | プリセット候補を取得 | Phase 8.5 | ⚠️ 未使用 |
 | GET | `/getPresets` | プリセット一覧を取得 | Phase 8.6 | ✅ |
 | POST | `/createPreset` | プリセットを作成 | Phase 8.6 | ✅ |
@@ -126,8 +126,8 @@ https://asia-northeast1-facility-care-input-form.cloudfunctions.net
 | POST | `/markAsRead` | メッセージを既読にする | Phase 18 | ⏸️ |
 | GET | `/getNotifications` | 通知一覧を取得 | Phase 18 | ⏸️ |
 | GET | `/getActiveChatItems` | アクティブチャット品物を取得 | Phase 18 | ⏸️ |
-| POST | `/generateDailyTasks` | 日次タスクを自動生成 | Phase 8.2.1 | ✅ |
-| POST | `/triggerTaskGeneration` | タスク生成をトリガー | Phase 8.2.1 | ✅ |
+| POST | `/generateDailyTasks` | 日次タスクを自動生成 | Phase 8.2.1 | ❌ 削除済み |
+| POST | `/triggerTaskGeneration` | タスク生成をトリガー | Phase 8.2.1 | ❌ 削除済み |
 | GET | `/checkDailyRecords` | 日次記録チェック（通知用） | Phase 30 | ✅ |
 | GET | `/getStaffNotes` | スタッフ注意事項を取得 | Phase 40 | ✅ |
 | POST | `/createStaffNote` | スタッフ注意事項を作成 | Phase 40 | ✅ |
@@ -906,183 +906,17 @@ Webhook URLの動作確認テスト。管理者が設定保存前にURLの有効
 
 ---
 
-### 4.16 POST /createTask (Phase 8.2)
+### 4.16〜4.19 タスクAPI（削除済み）
 
-タスクを作成します。
-
-
-**エンドポイント**: `POST /createTask`
-
-**リクエスト**:
-```json
-{
-  "residentId": "resident-001",
-  "title": "キウイの賞味期限が近づいています",
-  "description": "12/20に期限切れ予定",
-  "taskType": "expiration_warning",
-  "relatedItemId": "item-abc123",
-  "dueDate": "2025-12-19",
-  "dueTime": "09:00",
-  "priority": "high",
-  "createdBy": "system"
-}
-```
-
-| フィールド | 型 | 必須 | 説明 |
-|-----------|-----|------|------|
-| `residentId` | string | Yes | 入居者ID |
-| `title` | string | Yes | タスクタイトル |
-| `description` | string | No | 詳細説明 |
-| `taskType` | enum | Yes | タイプ（`expiration_warning`, `serve_reminder`, `restock_alert`, `care_instruction`, `custom`） |
-| `relatedItemId` | string | No | 関連する品物ID |
-| `dueDate` | string | Yes | 期日（YYYY-MM-DD） |
-| `dueTime` | string | No | 時刻（HH:mm） |
-| `priority` | enum | No | 優先度（`low`, `medium`, `high`, `urgent`） |
-| `assignee` | string | No | 担当者名 |
-| `createdBy` | string | No | 作成者 |
-
-**成功レスポンス (200)**:
-```json
-{
-  "success": true,
-  "data": {
-    "id": "task-xyz789",
-    "title": "キウイの賞味期限が近づいています",
-    "status": "pending",
-    "createdAt": "2025-12-16T10:00:00.000Z"
-  },
-  "timestamp": "2025-12-16T10:00:00.000Z"
-}
-```
-
----
-
-### 4.17 GET /getTasks (Phase 8.2)
-
-タスク一覧を取得します。フィルタ・ソート対応。
-
-**エンドポイント**: `GET /getTasks`
-
-**クエリパラメータ**:
-
-| パラメータ | 型 | 必須 | 説明 |
-|-----------|-----|------|------|
-| `residentId` | string | No | 入居者IDで絞り込み |
-| `status` | string/array | No | ステータスで絞り込み（`pending`, `in_progress`, `completed`, `cancelled`）。配列で複数指定可 |
-| `taskType` | string | No | タイプで絞り込み |
-| `dueDate` | string | No | 期日で絞り込み（YYYY-MM-DD） |
-| `sortBy` | string | No | ソート項目（`dueDate`, `priority`, `createdAt`） |
-| `sortOrder` | string | No | ソート順（`asc`, `desc`） |
-| `limit` | number | No | 取得件数上限（デフォルト: 50） |
-
-**成功レスポンス (200)**:
-```json
-{
-  "success": true,
-  "data": {
-    "tasks": [
-      {
-        "id": "task-xyz789",
-        "residentId": "resident-001",
-        "title": "キウイの賞味期限が近づいています",
-        "description": "12/20に期限切れ予定",
-        "taskType": "expiration_warning",
-        "relatedItemId": "item-abc123",
-        "dueDate": "2025-12-19",
-        "dueTime": "09:00",
-        "status": "pending",
-        "priority": "high",
-        "notificationSent": false,
-        "createdAt": "2025-12-16T10:00:00.000Z",
-        "updatedAt": "2025-12-16T10:00:00.000Z"
-      }
-    ],
-    "total": 1,
-    "counts": {
-      "pending": 1,
-      "inProgress": 0,
-      "completed": 0,
-      "overdue": 0
-    }
-  },
-  "timestamp": "2025-12-16T10:00:00.000Z"
-}
-```
-
----
-
-### 4.18 PUT /updateTask (Phase 8.2)
-
-タスクを更新します（ステータス変更・完了処理など）。
-
-**エンドポイント**: `PUT /updateTask`
-
-**リクエスト**:
-```json
-{
-  "taskId": "task-xyz789",
-  "updates": {
-    "status": "completed",
-    "completionNote": "提供済み"
-  },
-  "completedBy": "田中花子"
-}
-```
-
-| フィールド | 型 | 必須 | 説明 |
-|-----------|-----|------|------|
-| `taskId` | string | Yes | 更新対象のタスクID |
-| `updates` | object | Yes | 更新内容（部分更新） |
-| `completedBy` | string | No | 完了者名（完了時に使用） |
-
-**更新可能フィールド**:
-- `status`: ステータス変更（`pending`, `in_progress`, `completed`, `cancelled`）
-- `priority`: 優先度変更
-- `assignee`: 担当者変更
-- `dueDate`: 期日変更
-- `dueTime`: 時刻変更
-- `completionNote`: 完了メモ
-
-**成功レスポンス (200)**:
-```json
-{
-  "success": true,
-  "data": {
-    "id": "task-xyz789",
-    "status": "completed",
-    "completedBy": "田中花子",
-    "completedAt": "2025-12-19T09:30:00.000Z",
-    "updatedAt": "2025-12-19T09:30:00.000Z"
-  },
-  "timestamp": "2025-12-19T09:30:00.000Z"
-}
-```
-
----
-
-### 4.19 DELETE /deleteTask (Phase 8.2)
-
-タスクを削除します。
-
-**エンドポイント**: `DELETE /deleteTask`
-
-**リクエスト**:
-```json
-{
-  "taskId": "task-xyz789"
-}
-```
-
-**成功レスポンス (200)**:
-```json
-{
-  "success": true,
-  "data": {
-    "deletedId": "task-xyz789"
-  },
-  "timestamp": "2025-12-19T10:00:00.000Z"
-}
-```
+> **Note**: タスク機能は削除されました。品物の期限管理やスケジュール確認は品物一覧ページで行い、通知はGoogle Chat Webhookで代替しています。
+>
+> 削除されたAPI:
+> - POST /createTask
+> - GET /getTasks
+> - PUT /updateTask
+> - DELETE /deleteTask
+> - POST /generateDailyTasks
+> - POST /triggerTaskGeneration
 
 ---
 

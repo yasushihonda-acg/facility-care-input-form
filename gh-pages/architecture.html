@@ -342,24 +342,24 @@ graph TB
                             <td class="px-4 py-3">品物削除</td>
                             <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
                         </tr>
-                        <!-- Phase 8: タスク管理 -->
-                        <tr class="bg-purple-50">
-                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
+                        <!-- Phase 8: タスク管理（削除済み） -->
+                        <tr class="bg-gray-100 line-through opacity-50">
+                            <td class="px-4 py-3"><span class="bg-gray-200 text-gray-500 px-2 py-1 rounded text-xs">POST</span></td>
                             <td class="px-4 py-3 font-mono text-xs">/createTask</td>
                             <td class="px-4 py-3">タスク作成</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                            <td class="px-4 py-3"><span class="text-red-600">❌削除</span></td>
                         </tr>
-                        <tr class="bg-purple-50">
-                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
+                        <tr class="bg-gray-100 line-through opacity-50">
+                            <td class="px-4 py-3"><span class="bg-gray-200 text-gray-500 px-2 py-1 rounded text-xs">GET</span></td>
                             <td class="px-4 py-3 font-mono text-xs">/getTasks</td>
                             <td class="px-4 py-3">タスク一覧取得</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                            <td class="px-4 py-3"><span class="text-red-600">❌削除</span></td>
                         </tr>
-                        <tr class="bg-purple-50">
-                            <td class="px-4 py-3"><span class="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs">PUT</span></td>
+                        <tr class="bg-gray-100 line-through opacity-50">
+                            <td class="px-4 py-3"><span class="bg-gray-200 text-gray-500 px-2 py-1 rounded text-xs">PUT</span></td>
                             <td class="px-4 py-3 font-mono text-xs">/updateTask</td>
                             <td class="px-4 py-3">タスク更新・完了</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                            <td class="px-4 py-3"><span class="text-red-600">❌削除</span></td>
                         </tr>
                         <!-- Phase 8: 統計・AI -->
                         <tr class="bg-purple-50">
@@ -432,12 +432,12 @@ graph TB
                             <td class="px-4 py-3">食品傾向分析取得</td>
                             <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
                         </tr>
-                        <!-- Scheduler -->
-                        <tr class="bg-gray-50">
-                            <td class="px-4 py-3"><span class="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs">SCHED</span></td>
+                        <!-- Scheduler（削除済み） -->
+                        <tr class="bg-gray-100 line-through opacity-50">
+                            <td class="px-4 py-3"><span class="bg-gray-200 text-gray-500 px-2 py-1 rounded text-xs">SCHED</span></td>
                             <td class="px-4 py-3 font-mono text-xs">/generateDailyTasks</td>
                             <td class="px-4 py-3">タスク自動生成（毎日6時）</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                            <td class="px-4 py-3"><span class="text-red-600">❌削除</span></td>
                         </tr>
                     </tbody>
                 </table>

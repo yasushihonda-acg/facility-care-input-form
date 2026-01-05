@@ -456,17 +456,14 @@ flowchart TB
         Submit[submitMealRecord]
         Upload[uploadCareImage]
         CareItems[submitCareItem]
-        Tasks[getTasks]
         Stats[getStats]
         AISuggest[aiSuggest]
-        TaskGen[generateDailyTasks]
     end
 
     subgraph Storage[Firestore]
         PlanData[plan_data]
         Settings[settings]
         CareItemsDB[care_items]
-        TasksDB[tasks]
     end
 
     subgraph Frontend[React PWA]
@@ -494,11 +491,6 @@ flowchart TB
     CareItems --> CareItemsDB
     CareItems --> AISuggest
     AISuggest --> Gemini
-
-    TaskGen --> CareItemsDB
-    TaskGen --> TasksDB
-    Tasks --> TasksDB
-    Tasks --> Dashboard
 
     Stats --> CareItemsDB
     Stats --> Dashboard

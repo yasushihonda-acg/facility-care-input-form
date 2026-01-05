@@ -5,10 +5,10 @@
  *
  * タブ構成:
  * - 注意事項: スタッフ注意事項のCRUD
- * - 家族依頼: 家族からのタスク一覧 + 廃棄指示（バッジ付き）
+ * - 廃棄指示: 家族からの廃棄指示（バッジ付き）
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { Layout } from '../../components/Layout';
 import { StaffNoteCard } from '../../components/staff/StaffNoteCard';
 import { StaffNoteModal } from '../../components/staff/StaffNoteModal';
@@ -18,12 +18,9 @@ import {
   useUpdateStaffNote,
   useDeleteStaffNote,
 } from '../../hooks/useStaffNotes';
-import { useTasks } from '../../hooks/useTasks';
 import { usePendingDiscardItems, useConfirmDiscard } from '../../hooks/useCareItems';
 import { useDemoMode } from '../../hooks/useDemoMode';
 import type { StaffNote, CreateStaffNoteInput } from '../../types/staffNote';
-import type { Task } from '../../types/task';
-import { isItemActionTask, ITEM_ACTION_COLORS } from '../../types/task';
 import type { CareItem } from '../../types/careItem';
 import { getCategoryIcon, formatDate } from '../../types/careItem';
 
@@ -45,33 +42,26 @@ export function StaffNotesPage() {
   const updateMutation = useUpdateStaffNote();
   const deleteMutation = useDeleteStaffNote();
 
-  // 家族依頼（タスク）データ - 全タスクを取得
-  const { data: tasksData, isLoading: tasksLoading, error: tasksError } = useTasks({});
-
   // 廃棄指示中の品物（Phase 49）
   const { pendingDiscardItems, isLoading: discardLoading } = usePendingDiscardItems();
   const discardCount = pendingDiscardItems.length;
 
-  // 品物操作タスクの件数（Phase 55）
-  const tasks = tasksData?.tasks || [];
-  const itemCreatedCount = tasks.filter((t) => t.taskType === 'item_created').length;
-  const itemUpdatedCount = tasks.filter((t) => t.taskType === 'item_updated').length;
-  const itemDeletedCount = tasks.filter((t) => t.taskType === 'item_deleted').length;
-  const hasItemActionNotifications = itemCreatedCount + itemUpdatedCount + itemDeletedCount > 0;
-
-  // 廃棄指示 or 品物操作通知があれば家族依頼タブをデフォルトに
+  // 初回ロード時に廃棄指示があればタスクタブを表示
+  const [hasInitializedTab, setHasInitializedTab] = useState(false);
   const [activeTab, setActiveTab] = useState<TabValue>('notes');
-  useEffect(() => {
-    if ((discardCount > 0 || hasItemActionNotifications) && !discardLoading && !tasksLoading) {
-      setActiveTab('tasks');
-    }
-  }, [discardCount, hasItemActionNotifications, discardLoading, tasksLoading]);
+
+  // 初回データ取得完了時のみタブを自動切替
+  if (!hasInitializedTab && !discardLoading && discardCount > 0) {
+    setHasInitializedTab(true);
+    setActiveTab('tasks');
+  } else if (!hasInitializedTab && !discardLoading) {
+    setHasInitializedTab(true);
+  }
 
   // タブ定義（バッジ付き）
-  const totalNotificationCount = discardCount + itemCreatedCount + itemUpdatedCount + itemDeletedCount;
   const TABS: { value: TabValue; label: string; icon: string; badge?: number }[] = [
     { value: 'notes', label: '注意事項', icon: '📋' },
-    { value: 'tasks', label: '家族依頼', icon: '📝', badge: totalNotificationCount > 0 ? totalNotificationCount : undefined },
+    { value: 'tasks', label: '廃棄指示', icon: '🗑️', badge: discardCount > 0 ? discardCount : undefined },
   ];
 
   // 注意事項の作成/更新
@@ -190,11 +180,9 @@ export function StaffNotesPage() {
             onDelete={handleDelete}
           />
         ) : (
-          <TasksContent
-            tasks={tasksData?.tasks ?? []}
-            isLoading={tasksLoading || discardLoading}
-            error={tasksError}
+          <DiscardContent
             pendingDiscardItems={pendingDiscardItems}
+            isLoading={discardLoading}
             isDemo={isDemo}
           />
         )}
@@ -300,21 +288,16 @@ function NotesContent({
 }
 
 /**
- * 家族依頼（タスク）コンテンツ
- * Phase 49: 廃棄指示セクションを追加
- * Phase 55: 品物操作通知を優先表示
+ * 廃棄指示コンテンツ
+ * Phase 49: 廃棄指示フロー対応
  */
-function TasksContent({
-  tasks,
-  isLoading,
-  error,
+function DiscardContent({
   pendingDiscardItems,
+  isLoading,
   isDemo,
 }: {
-  tasks: Task[];
-  isLoading: boolean;
-  error: Error | null;
   pendingDiscardItems: CareItem[];
+  isLoading: boolean;
   isDemo: boolean;
 }) {
   if (isLoading) {
@@ -325,65 +308,17 @@ function TasksContent({
     );
   }
 
-  if (error) {
-    return (
-      <div className="bg-red-50 text-red-600 p-4 rounded-lg">
-        エラーが発生しました: {error.message}
-      </div>
-    );
-  }
-
-  const hasDiscardItems = pendingDiscardItems.length > 0;
-
-  // 品物操作タスクを分離して優先表示（Phase 55）
-  const itemActionTasks = tasks.filter((t) => isItemActionTask(t.taskType));
-  const otherTasks = tasks.filter((t) => !isItemActionTask(t.taskType));
-
-  const hasItemActionTasks = itemActionTasks.length > 0;
-  const hasOtherTasks = otherTasks.length > 0;
-
-  if (!hasDiscardItems && !hasItemActionTasks && !hasOtherTasks) {
+  if (pendingDiscardItems.length === 0) {
     return (
       <div className="text-center py-12">
-        <div className="text-6xl mb-4">📝</div>
-        <p className="text-gray-500">家族からの依頼はありません</p>
+        <div className="text-6xl mb-4">✅</div>
+        <p className="text-gray-500">廃棄指示はありません</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {/* 廃棄指示セクション（Phase 49） */}
-      {hasDiscardItems && (
-        <DiscardInstructionSection items={pendingDiscardItems} isDemo={isDemo} />
-      )}
-
-      {/* 品物更新通知セクション（Phase 55）- 優先表示 */}
-      {hasItemActionTasks && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <span className="text-base">📦</span>
-            <h3 className="text-sm font-semibold text-gray-700">品物更新通知</h3>
-            <span className="text-xs text-gray-500">（24時間後に自動削除）</span>
-          </div>
-          {itemActionTasks.map((task) => (
-            <TaskCard key={task.id} task={task} />
-          ))}
-        </div>
-      )}
-
-      {/* その他のタスク */}
-      {hasOtherTasks && (
-        <div className="space-y-3">
-          {(hasDiscardItems || hasItemActionTasks) && (
-            <h3 className="text-sm font-semibold text-gray-600 mt-4">その他の依頼</h3>
-          )}
-          {otherTasks.map((task) => (
-            <TaskCard key={task.id} task={task} />
-          ))}
-        </div>
-      )}
-    </div>
+    <DiscardInstructionSection items={pendingDiscardItems} isDemo={isDemo} />
   );
 }
 
@@ -474,67 +409,6 @@ function DiscardInstructionSection({
             </div>
           </div>
         ))}
-      </div>
-    </div>
-  );
-}
-
-/**
- * タスクカード（読み取り専用）
- * Phase 55: 品物操作タスクは色付きバッジで表示
- */
-function TaskCard({ task }: { task: Task }) {
-  const statusConfig = {
-    pending: { label: '未着手', color: 'bg-gray-100 text-gray-700' },
-    in_progress: { label: '進行中', color: 'bg-blue-100 text-blue-700' },
-    completed: { label: '完了', color: 'bg-green-100 text-green-700' },
-    cancelled: { label: 'キャンセル', color: 'bg-red-100 text-red-700' },
-  };
-
-  const priorityConfig: Record<string, { icon: string; label: string }> = {
-    urgent: { icon: '🔴', label: '緊急' },
-    high: { icon: '🟠', label: '高' },
-    medium: { icon: '🟡', label: '中' },
-    low: { icon: '🟢', label: '低' },
-  };
-
-  const status = statusConfig[task.status] || statusConfig.pending;
-  const priority = priorityConfig[task.priority] || priorityConfig.medium;
-
-  // 品物操作タスクの場合は専用バッジを表示
-  const isItemAction = isItemActionTask(task.taskType);
-  const itemActionStyle = isItemAction ? ITEM_ACTION_COLORS[task.taskType] : null;
-
-  return (
-    <div className={`bg-white rounded-lg shadow-sm border p-4 ${isItemAction ? 'border-l-4' : ''}`}
-      style={isItemAction && itemActionStyle ? { borderLeftColor: itemActionStyle.color.replace('text-', '').replace('-700', '') === 'green' ? '#22c55e' : itemActionStyle.color.replace('text-', '').replace('-700', '') === 'blue' ? '#3b82f6' : '#ef4444' } : undefined}
-    >
-      <div className="flex items-start gap-3">
-        <span className="text-xl">{isItemAction && itemActionStyle ? itemActionStyle.icon : priority.icon}</span>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <h3 className="font-bold text-base">{task.title}</h3>
-            {/* 品物操作バッジ */}
-            {isItemAction && itemActionStyle && (
-              <span className={`px-2 py-0.5 rounded text-xs font-bold ${itemActionStyle.bgColor} ${itemActionStyle.color}`}>
-                {itemActionStyle.label}
-              </span>
-            )}
-            {/* ステータスバッジ（品物操作タスク以外） */}
-            {!isItemAction && (
-              <span className={`px-2 py-0.5 rounded text-xs font-medium ${status.color}`}>
-                {status.label}
-              </span>
-            )}
-          </div>
-          {task.description && (
-            <p className="text-sm text-gray-600 mb-2">{task.description}</p>
-          )}
-          <div className="text-xs text-gray-400 flex gap-4">
-            <span>登録日時: {new Date(task.createdAt).toLocaleString('ja-JP')}</span>
-            {task.completedBy && <span>完了者: {task.completedBy}</span>}
-          </div>
-        </div>
       </div>
     </div>
   );

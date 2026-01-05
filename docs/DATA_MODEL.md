@@ -110,7 +110,6 @@ PWAからの入力データを保存するシート。
 | `allowed_emails` | メール許可リスト（Phase 52） | {email_key}: { allowed: true } |
 | `settings` | アプリ設定 | webhookUrl, driveSettings |
 | `items` | 品物マスタ | name, category, isActive, remainingHandlingLogs |
-| `tasks` | タスク管理 | title, status, dueDate |
 | `presets` | プリセット（いつもの指示） | name, category, instruction, matchConfig |
 | `prohibitions` | 禁止ルール | itemId, reason |
 | `careItems` | ケア記録 | recordDate, mealType, items |
