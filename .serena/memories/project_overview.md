@@ -327,7 +327,7 @@ Google Chat API → syncChatImages → Firestore(care_photos) → フロント�
 - 設定ページの「Chat画像同期 認証設定」セクションに配置
 
 ## E2Eテスト
-468件定義（Phase 56まで）
+477件定義（Phase 57まで）
 
 ## Phase 57: 家族用品物管理に提供漏れアラート表示（2026-01-05）
 
@@ -347,6 +347,11 @@ Google Chat API → syncChatImages → Firestore(care_photos) → フロント�
 - once: 過去の日付で未記録
 - specific_dates: 過去の日付が1つ以上未記録
 - daily/weekly: 開始日から3日以上経過で未記録
+
+**16時チェック（PR #83）**:
+- 朝食/昼食/おやつ: 16時以降なら当日分もチェック
+- 夕食/いつでも: 翌日にチェック（従来通り）
+- `isAfter16JST()`: 日本時間16時以降かを判定する関数
 
 ## バグ修正（2026-01-05）
 
