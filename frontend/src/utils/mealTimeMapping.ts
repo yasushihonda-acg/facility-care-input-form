@@ -10,11 +10,14 @@ import type { PlanDataRecord } from '../types';
 /**
  * 食事シートの値 → MealTime
  * Sheet A/Bの「食事はいつのことですか？」の値をMealTimeに変換
+ * 「-」または空の場合は間食(snack)として扱う
  */
 export const MEAL_TIME_FROM_SHEET: Record<string, MealTime> = {
   '朝': 'breakfast',
   '昼': 'lunch',
   '夜': 'dinner',
+  '-': 'snack',
+  '': 'snack',
 };
 
 /**
@@ -45,12 +48,12 @@ export function extractDateFromTimestamp(timestamp: string): string {
 /**
  * PlanDataRecordからMealTimeを取得
  * @param record - 食事シートのレコード
- * @returns MealTime、取得できない場合はnull
+ * @returns MealTime（「-」または空の場合は'snack'、マッピング不可の場合はnull）
  */
 export function getMealTimeFromRecord(record: PlanDataRecord): MealTime | null {
-  const sheetValue = record.data['食事はいつのことですか？'];
-  if (!sheetValue) return null;
-  return MEAL_TIME_FROM_SHEET[sheetValue] || null;
+  const sheetValue = record.data['食事はいつのことですか？'] ?? '';
+  // 「-」または空の場合は'snack'、それ以外はマッピングテーブルから取得
+  return MEAL_TIME_FROM_SHEET[sheetValue] ?? null;
 }
 
 /**

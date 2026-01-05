@@ -26,9 +26,6 @@ import { useDemoMode } from '../../hooks/useDemoMode';
 // デモ用の入居者ID（将来は認証から取得）
 const DEMO_RESIDENT_ID = 'resident-001';
 
-/** 食事タイミングの順序（表示順） */
-const MEAL_TIME_ORDER: MealTime[] = ['breakfast', 'lunch', 'snack', 'dinner'];
-
 export function FamilyDashboard() {
   const [selectedDate, setSelectedDate] = useState<string>(getTodayString());
 
@@ -57,27 +54,24 @@ export function FamilyDashboard() {
 
   // タイムラインデータを構築（実データ + モックPlan）
   const timelineItems = useMemo<TimelineItemType[]>(() => {
-    // 各食事タイミング用のベースタイムライン
-    const items: TimelineItemType[] = MEAL_TIME_ORDER.map((mealTime) => {
-      // 実績データから該当する食事を検索（mealTime でマッチング）
-      const result = mealResults.find((r) => r.mealTime === mealTime);
+    const items: TimelineItemType[] = [];
 
-      // モックのケア指示から該当するものを検索
+    // 朝食・昼食・夕食は各1件（従来通り）
+    const regularMealTimes: MealTime[] = ['breakfast', 'lunch', 'dinner'];
+
+    regularMealTimes.forEach((mealTime) => {
+      const result = mealResults.find((r) => r.mealTime === mealTime);
       const instruction = DEMO_CARE_INSTRUCTIONS.find(
         (i) => i.targetDate === selectedDate && i.mealTime === mealTime
       );
 
-      // ステータス判定
       let status: TimelineStatus = 'pending';
       if (result) {
-        // 実績あり
         status = result.isImportant ? 'provided' : 'completed';
       } else if (instruction) {
-        // 実績なし、指示あり
         status = 'has_instruction';
       }
 
-      // タイムラインアイテム構築
       const item: TimelineItemType = {
         id: `${selectedDate}-${mealTime}`,
         date: selectedDate,
@@ -86,7 +80,6 @@ export function FamilyDashboard() {
         instruction,
       };
 
-      // 実績データがある場合、タイムラインにマージ
       if (result) {
         item.mainDishAmount = result.mainDishAmount ? `${result.mainDishAmount}割` : undefined;
         item.sideDishAmount = result.sideDishAmount ? `${result.sideDishAmount}割` : undefined;
@@ -96,8 +89,39 @@ export function FamilyDashboard() {
         item.isImportant = result.isImportant;
       }
 
-      return item;
+      items.push(item);
     });
+
+    // 間食(snack)は複数件対応：全てのsnackレコードを取得
+    const snackResults = mealResults.filter((r) => r.mealTime === 'snack');
+
+    if (snackResults.length > 0) {
+      // 間食のレコードがある場合、それぞれをタイムラインに追加
+      snackResults.forEach((result, index) => {
+        const item: TimelineItemType = {
+          id: result.id || `${selectedDate}-snack-${index}`,
+          date: selectedDate,
+          mealTime: 'snack',
+          status: result.isImportant ? 'provided' : 'completed',
+          mainDishAmount: result.mainDishAmount ? `${result.mainDishAmount}割` : undefined,
+          sideDishAmount: result.sideDishAmount ? `${result.sideDishAmount}割` : undefined,
+          staffName: result.staffName,
+          recordedAt: result.recordedAt,
+          note: result.note || result.snack,
+          isImportant: result.isImportant,
+        };
+        items.push(item);
+      });
+    }
+
+    // 表示順: 朝食 → 昼食 → 間食（複数） → 夕食
+    const mealTimeOrder: Record<MealTime, number> = {
+      breakfast: 1,
+      lunch: 2,
+      snack: 3,
+      dinner: 4,
+    };
+    items.sort((a, b) => mealTimeOrder[a.mealTime] - mealTimeOrder[b.mealTime]);
 
     return items;
   }, [selectedDate, mealResults]);
