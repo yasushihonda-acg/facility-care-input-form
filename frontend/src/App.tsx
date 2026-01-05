@@ -44,7 +44,6 @@ import { ItemManagement } from './pages/family/ItemManagement';
 import { ItemForm } from './pages/family/ItemForm';
 import { ItemDetail } from './pages/family/ItemDetail';
 import { ItemEditPage } from './pages/family/ItemEditPage';
-import { TaskList } from './pages/family/TaskList';
 import { PresetManagement } from './pages/family/PresetManagement';
 // Phase 26: 入居者設定削除
 // import { ResidentSettings } from './pages/family/ResidentSettings';
@@ -122,9 +121,6 @@ function App() {
       <Route path="/family/settings/resident" element={<ResidentSettings />} />
       */}
 
-      {/* タスク一覧 */}
-      <Route path="/family/tasks" element={<TaskList />} />
-
       {/* エビデンス確認 */}
       <Route path="/family/evidence/:date" element={<EvidenceMonitor />} />
 
@@ -157,7 +153,6 @@ function App() {
       <Route path="/demo/family/items/new" element={<ItemForm />} />
       <Route path="/demo/family/items/:id" element={<ItemDetail />} />
       <Route path="/demo/family/items/:id/edit" element={<ItemEditPage />} />
-      <Route path="/demo/family/tasks" element={<TaskList />} />
       <Route path="/demo/family/presets" element={<PresetManagement />} />
       {/* Phase 26: 入居者設定削除
       <Route path="/demo/family/settings/resident" element={<ResidentSettings />} />

@@ -203,14 +203,13 @@ oauth_tokens/
 | 属性 | 値 |
 |------|-----|
 | **Role** | アプリ内完結データ |
-| **Storage** | Cloud Firestore (`careItems`, `presets`, `tasks` collection) |
+| **Storage** | Cloud Firestore (`careItems`, `presets` collection) |
 | **操作** | 読み書き可能 |
 
 **データ内容例**:
 - 品物の送付情報（送付日・数量・賞味期限）
 - 提供指示（カット方法・提供温度・申し送り）
 - プリセット（よく使う指示の保存）
-- タスク（賞味期限アラート等）
 
 #### Flow C 詳細: 家族向け機能（『遠隔ケア・コックピット』）
 
@@ -433,8 +432,6 @@ firestore/
 │   └── {itemId}
 ├── presets/                   # プリセット（いつもの指示）
 │   └── {presetId}
-├── tasks/                     # タスク（賞味期限アラート等）
-│   └── {taskId}
 ├── staffNotes/                # スタッフ注意事項
 │   └── {noteId}
 ├── plan_data/                 # 同期済み記録データ（Flow A）

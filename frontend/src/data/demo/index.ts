@@ -32,9 +32,6 @@ export * from './demoConsumptionLogs';
 // 統計デモデータ
 export * from './demoStats';
 
-// タスクデモデータ
-export * from './demoTasks';
-
 // 食品マスタデモデータ (Phase 11)
 export * from './demoFoodMasters';
 

@@ -82,7 +82,14 @@ instruction?: { content: string; };
 - POST /saveAISuggestionAsPreset
 
 ## 開発履歴
-Phase 1〜43.1完了。詳細は `git log` を参照。
+Phase 1〜56完了。詳細は `git log` を参照。
+
+### タスク機能削除（2026-01-05）
+以下のタスク関連機能を完全削除:
+- バックエンド: tasks.ts, taskGenerator.ts, Cloud Scheduler Job
+- フロントエンド: TaskList.tsx, useTasks.ts, task.ts, demoTasks.ts
+- 削除理由: sentDateスキーマ変更によるエラー発生、機能の冗長性（品物一覧・Chat Webhook通知で代替可能）
+- 代替手段: 期限管理は品物一覧の期限切れバナー、通知はGoogle Chat Webhook
 
 - **Phase 44**: 品物名正規化AI（Gemini 2.5 Flash Lite）
   - POST /normalizeItemName API
@@ -323,6 +330,12 @@ Google Chat API → syncChatImages → Firestore(care_photos) → フロント�
 468件定義（Phase 56まで）
 
 ## バグ修正（2026-01-05）
+
+### PR #79: 家族ホームの間食タイムライン表示（2026-01-05）
+Sheet B「食事はいつのことですか？」が「-」または空の場合、家族ホームの間食(15:00)タイムラインに表示。
+- mealTimeMapping.ts: 「-」/空 → 'snack' マッピング追加
+- FamilyDashboard.tsx: 間食の複数件表示対応（filter使用）
+- 表示順: 朝食 → 昼食 → 間食（複数） → 夕食
 
 ### PR #77-78: システム全体タイムゾーン修正
 `toISOString().split('T')[0]`はUTC時刻を返すため、JST 00:00〜09:00の間に「昨日」の日付が表示される問題を修正。
