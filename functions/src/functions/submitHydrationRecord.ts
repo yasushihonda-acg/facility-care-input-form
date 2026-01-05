@@ -217,18 +217,16 @@ async function submitHydrationRecordHandler(
         (settingsDoc.data() as MealFormSettings) :
         null;
 
-      if (settings) {
+      if (settings && settings.webhookUrl) {
         const webhookMessage = buildWebhookMessage(hydrationRecord, postId);
         const isImportant = hydrationRecord.isImportant === "重要";
 
-        // 重要な場合は専用Webhook、そうでなければ通常Webhook
-        const targetUrl = isImportant && settings.importantWebhookUrl ?
-          settings.importantWebhookUrl :
-          settings.webhookUrl;
+        // 通常Webhookに送信（全記録）
+        sendWebhookNotification(settings.webhookUrl, webhookMessage);
 
-        if (targetUrl) {
-          // 非同期で送信（結果を待たない）
-          sendWebhookNotification(targetUrl, webhookMessage);
+        // 重要フラグが立っている場合は追加で重要Webhookにも送信
+        if (isImportant && settings.importantWebhookUrl) {
+          sendWebhookNotification(settings.importantWebhookUrl, webhookMessage);
         }
       }
     } catch (webhookError) {
