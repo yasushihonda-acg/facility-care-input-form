@@ -248,4 +248,4 @@ Phase 1〜52まで完了。詳細は `git log` を参照。
 - **Phase 53.1**: fullSyncモード - 初回同期と増分同期の分離
 - **refactor**: タスク機能を完全削除 - sentDateスキーマ変更による不具合解消、品物一覧・Chat Webhookで代替
 
-E2Eテスト: 468件定義
+E2Eテスト: 477件定義

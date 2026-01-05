@@ -329,6 +329,25 @@ Google Chat API → syncChatImages → Firestore(care_photos) → フロント�
 ## E2Eテスト
 468件定義（Phase 56まで）
 
+## Phase 57: 家族用品物管理に提供漏れアラート表示（2026-01-05）
+
+**目的**: スタッフ用記録入力で表示される「提供漏れ」を家族用品物管理ビューでも確認・編集可能に
+
+**実装内容**:
+- `scheduleUtils.ts`: `isRecordedToday()`, `isMissedSchedule()`, `getMissedScheduleItems()` 追加
+- `ItemManagement.tsx`: `MissedScheduleAlert` コンポーネント追加
+  - 紫色テーマ（スタッフ用と統一）
+  - 期限切れアラートの下に表示
+  - 0件の場合は非表示
+  - 編集ボタン → 品物編集ページへ遷移
+  - 詳細ボタン → 詳細モーダル表示
+- E2Eテスト: `missed-schedule.spec.ts` 9件追加
+
+**提供漏れ判定ロジック**:
+- once: 過去の日付で未記録
+- specific_dates: 過去の日付が1つ以上未記録
+- daily/weekly: 開始日から3日以上経過で未記録
+
 ## バグ修正（2026-01-05）
 
 ### PR #79: 家族ホームの間食タイムライン表示（2026-01-05）
