@@ -324,6 +324,16 @@ Google Chat API → syncChatImages → Firestore(care_photos) → フロント�
 
 ## バグ修正（2026-01-05）
 
+### PR #77-78: システム全体タイムゾーン修正
+`toISOString().split('T')[0]`はUTC時刻を返すため、JST 00:00〜09:00の間に「昨日」の日付が表示される問題を修正。
+
+**修正パターン**:
+- フロントエンド: `getTodayString()` / `formatDateString(date)` (scheduleUtils.ts)
+- バックエンド: `toLocaleDateString("sv-SE", {timeZone: "Asia/Tokyo"})` (scheduleUtils.ts)
+
+**修正ファイル**: 27ファイル（フロントエンド17 + バックエンド10）  
+**詳細**: `.serena/memories/date_handling_pitfalls.md` を参照
+
 ### PR #70: 品物編集後のナビゲーション修正
 - 更新成功後に品物一覧（/family/items）へ遷移
 - キャンセル時も品物一覧へ遷移
