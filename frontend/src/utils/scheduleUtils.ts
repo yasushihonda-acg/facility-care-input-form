@@ -698,3 +698,100 @@ export function filterItemsByDateRangeAndPattern(
 
   return filtered;
 }
+
+// =============================================================================
+// Phase 57: 提供漏れ検出
+// =============================================================================
+
+/**
+ * 今日記録済みかどうかを判定
+ * @param item 品物
+ * @returns 今日記録済みならtrue
+ */
+export function isRecordedToday(item: CareItem): boolean {
+  const lastServedDate = item.consumptionSummary?.lastServedDate;
+  if (!lastServedDate) return false;
+  return lastServedDate === getTodayString();
+}
+
+/**
+ * 提供漏れかどうかを判定
+ * スケジュール通りに提供されていない品物を検出
+ *
+ * 判定条件:
+ * - once: 提供予定日が過去で、その日以降の記録がない
+ * - specific_dates: 過去の提供予定日に記録がない
+ * - daily/weekly: 開始日から3日以上経過して記録がない
+ *
+ * @param item 品物
+ * @returns 提供漏れならtrue
+ */
+export function isMissedSchedule(item: CareItem): boolean {
+  if (!item.servingSchedule) return false;
+  // 今日スケジュールされている場合は提供漏れではない
+  if (isScheduledForToday(item.servingSchedule)) return false;
+  // 今日記録済みなら提供漏れではない
+  if (isRecordedToday(item)) return false;
+
+  // スケジュールタイプ別に判定
+  const schedule = item.servingSchedule;
+  const todayStr = getTodayString();
+
+  // once: 提供予定日が過去で、記録がない
+  if (schedule.type === 'once') {
+    if (!schedule.date) return false;
+    if (schedule.date < todayStr) {
+      // 最後の記録日が提供予定日以降でなければ提供漏れ
+      const lastServed = item.consumptionSummary?.lastServedDate;
+      if (!lastServed) return true;
+      if (lastServed < schedule.date) return true;
+    }
+    return false;
+  }
+
+  // specific_dates: 過去の提供予定日に記録がない
+  if (schedule.type === 'specific_dates') {
+    if (!schedule.dates || schedule.dates.length === 0) return false;
+    const pastDates = schedule.dates.filter(d => d < todayStr);
+    if (pastDates.length === 0) return false;
+    // 最後の記録日が最古の予定日以降でなければ提供漏れ
+    const lastServed = item.consumptionSummary?.lastServedDate;
+    if (!lastServed) return true;
+    const oldestPastDate = pastDates.sort()[0];
+    if (lastServed < oldestPastDate) return true;
+    return false;
+  }
+
+  // daily/weekly: 開始日から3日以上経過して記録がない場合
+  if (schedule.type === 'daily' || schedule.type === 'weekly') {
+    if (!schedule.startDate) return false;
+    const lastServed = item.consumptionSummary?.lastServedDate;
+    if (!lastServed) {
+      // 一度も記録がない場合、開始日が3日以上前なら提供漏れ
+      const startDate = new Date(schedule.startDate);
+      startDate.setHours(0, 0, 0, 0);
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      const threeDaysAgo = new Date(now);
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+      if (startDate < threeDaysAgo) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
+ * 提供漏れの品物をフィルタリング
+ * @param items 品物リスト
+ * @returns 提供漏れの品物リスト
+ */
+export function getMissedScheduleItems(items: CareItem[]): CareItem[] {
+  return items.filter(item => {
+    // アクティブな品物のみ対象
+    if (item.status !== 'pending' && item.status !== 'in_progress') return false;
+    return isMissedSchedule(item);
+  });
+}
