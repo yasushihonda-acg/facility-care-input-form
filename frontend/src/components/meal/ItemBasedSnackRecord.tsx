@@ -729,13 +729,15 @@ function ItemCard({ item, highlight, onRecordClick, onDiscardClick }: ItemCardPr
         </div>
 
         <div className="flex flex-col gap-2 ml-4">
-          <button
-            onClick={onRecordClick}
-            className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-1"
-          >
-            <span>🍪</span>
-            <span>提供記録</span>
-          </button>
+          {!isRecorded && (
+            <button
+              onClick={onRecordClick}
+              className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-1"
+            >
+              <span>🍪</span>
+              <span>提供記録</span>
+            </button>
+          )}
           {onDiscardClick && (
             <button
               onClick={onDiscardClick}
