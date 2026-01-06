@@ -345,14 +345,14 @@ function FamilyRequestsContent({
 
   return (
     <div className="space-y-6">
-      {/* 品物操作通知セクション（Phase 55） */}
-      {hasNotifications && (
-        <FamilyActionNotificationsSection notifications={notifications} />
-      )}
-
-      {/* 廃棄指示セクション（Phase 49） */}
+      {/* 廃棄指示セクション（Phase 49）- アクション必須のため上位表示 */}
       {hasDiscardItems && (
         <DiscardInstructionSection items={pendingDiscardItems} isDemo={isDemo} />
+      )}
+
+      {/* 品物操作通知セクション（Phase 55）- 情報共有目的 */}
+      {hasNotifications && (
+        <FamilyActionNotificationsSection notifications={notifications} />
       )}
     </div>
   );
