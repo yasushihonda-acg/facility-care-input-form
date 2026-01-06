@@ -7,10 +7,11 @@
  * イベントタイプ
  * - created: 品物登録
  * - updated: 品物編集
+ * - deleted: 品物削除
  * - served: 提供・消費
  * - status_changed: ステータス変更
  */
-export type ItemEventType = 'created' | 'updated' | 'served' | 'status_changed';
+export type ItemEventType = 'created' | 'updated' | 'deleted' | 'served' | 'status_changed';
 
 /**
  * 編集変更内容
@@ -45,6 +46,8 @@ export function getEventTypeIcon(eventType: ItemEventType): string {
       return '📦';
     case 'updated':
       return '✏️';
+    case 'deleted':
+      return '🗑️';
     case 'served':
       return '🍽️';
     case 'status_changed':
@@ -63,6 +66,8 @@ export function getEventTypeLabel(eventType: ItemEventType): string {
       return '品物登録';
     case 'updated':
       return '品物編集';
+    case 'deleted':
+      return '品物削除';
     case 'served':
       return '提供';
     case 'status_changed':

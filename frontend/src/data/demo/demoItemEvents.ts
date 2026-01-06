@@ -297,3 +297,127 @@ export function getAllDemoItemEvents(): ItemEvent[] {
     (a, b) => new Date(b.eventAt).getTime() - new Date(a.eventAt).getTime()
   );
 }
+
+// ===== Phase 55: 家族操作通知用デモデータ =====
+// スタッフ注意事項ページの「家族依頼」タブで24時間以内の通知を表示
+
+/**
+ * 家族操作通知（24時間以内のイベント）
+ * created/updated/deleted の3種類を含む
+ */
+export const DEMO_FAMILY_ACTION_NOTIFICATIONS: ItemEvent[] = [
+  // 新規登録通知（2時間前）
+  {
+    id: 'notify-001-created',
+    itemId: 'demo-item-new-ichigo',
+    eventType: 'created',
+    eventAt: getDateTimeString(0, new Date().getHours() - 2, 30),
+    performedBy: '家族 太郎',
+    description: 'いちご を新規登録しました',
+    metadata: {
+      itemName: 'いちご',
+      actionLabel: '新規',
+    },
+  },
+  // 変更通知（5時間前）
+  {
+    id: 'notify-002-updated',
+    itemId: 'demo-item-001', // バナナ
+    eventType: 'updated',
+    eventAt: getDateTimeString(0, new Date().getHours() - 5, 15),
+    performedBy: '家族 太郎',
+    description: 'バナナ の提供方法を変更しました',
+    changes: [
+      {
+        field: 'servingMethodDetail',
+        fieldLabel: '提供方法詳細',
+        oldValue: '1日1房',
+        newValue: '1日半房ずつ提供',
+      },
+    ],
+    metadata: {
+      itemName: 'バナナ',
+      actionLabel: '変更',
+    },
+  },
+  // 削除通知（8時間前）
+  {
+    id: 'notify-003-deleted',
+    itemId: 'demo-item-deleted-budou',
+    eventType: 'deleted',
+    eventAt: getDateTimeString(0, new Date().getHours() - 8, 0),
+    performedBy: '家族 花子',
+    description: 'ぶどう を削除しました',
+    metadata: {
+      itemName: 'ぶどう',
+      actionLabel: '削除',
+      reason: '母が食べなくなったため',
+    },
+  },
+  // 変更通知（12時間前）
+  {
+    id: 'notify-004-updated',
+    itemId: 'demo-item-003', // りんご
+    eventType: 'updated',
+    eventAt: getDateTimeString(0, new Date().getHours() - 12, 45),
+    performedBy: '家族 太郎',
+    description: 'りんご のスタッフへの申し送りを追加しました',
+    changes: [
+      {
+        field: 'noteToStaff',
+        fieldLabel: 'スタッフへの申し送り',
+        oldValue: '(なし)',
+        newValue: '皮を剥いて小さく切ってください',
+      },
+    ],
+    metadata: {
+      itemName: 'りんご',
+      actionLabel: '変更',
+    },
+  },
+];
+
+/**
+ * 24時間以内の家族操作通知を取得
+ * @returns 新しい順にソートされた通知リスト
+ */
+export function getRecentFamilyActionNotifications(): ItemEvent[] {
+  const now = new Date();
+  const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+  return DEMO_FAMILY_ACTION_NOTIFICATIONS
+    .filter(event => new Date(event.eventAt) >= oneDayAgo)
+    .sort((a, b) => new Date(b.eventAt).getTime() - new Date(a.eventAt).getTime());
+}
+
+/**
+ * 通知のバッジカラーを取得
+ */
+export function getNotificationBadgeColor(eventType: ItemEvent['eventType']): string {
+  switch (eventType) {
+    case 'created':
+      return 'bg-green-100 text-green-800';
+    case 'updated':
+      return 'bg-blue-100 text-blue-800';
+    case 'deleted':
+      return 'bg-red-100 text-red-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+}
+
+/**
+ * 通知のラベルを取得
+ */
+export function getNotificationLabel(eventType: ItemEvent['eventType']): string {
+  switch (eventType) {
+    case 'created':
+      return '新規';
+    case 'updated':
+      return '変更';
+    case 'deleted':
+      return '削除';
+    default:
+      return 'その他';
+  }
+}
