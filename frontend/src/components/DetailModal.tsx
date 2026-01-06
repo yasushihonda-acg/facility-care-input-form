@@ -27,9 +27,18 @@ export function DetailModal({ record, sheetName, headers, onClose }: DetailModal
 
   // 値の取得
   const getValue = (header: string): string => {
-    if (header === '日時' || header.includes('日時')) return record.timestamp || '';
-    if (header === 'スタッフ名' || header.includes('スタッフ')) return record.staffName || '';
-    if (header === '入居者名' || header.includes('入居者') || header.includes('利用者')) return record.residentName || '';
+    // タイムスタンプ系
+    if (header === 'タイムスタンプ' || header === '日時' || header.includes('日時')) {
+      return record.timestamp || '';
+    }
+    // スタッフ名系
+    if (header === 'あなたの名前は？' || header === 'スタッフ名' || header.includes('スタッフ')) {
+      return record.staffName || '';
+    }
+    // 入居者名系
+    if (header === '入居者名' || header.includes('入居者') || header.includes('利用者')) {
+      return record.residentName || '';
+    }
     return record.data[header] || '';
   };
 
