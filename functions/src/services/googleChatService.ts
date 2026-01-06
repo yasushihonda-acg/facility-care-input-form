@@ -33,8 +33,22 @@ import {MealRecordForChat, ItemCategory} from "../types";
  * ```
  */
 export function formatMealRecordMessage(record: MealRecordForChat): string {
-  // ヘッダー: 【{facility}_{residentName}様】
-  const header = `【${record.facility}_${record.residentName}様】`;
+  // residentNameに既に(ID...)が含まれているかチェック
+  const hasIdInName = /\(ID[^)]*\)/.test(record.residentName);
+
+  let formattedName: string;
+  if (hasIdInName) {
+    // 既にIDが含まれている場合はそのまま使用
+    formattedName = record.residentName;
+  } else {
+    // 「様」が含まれていなければ追加
+    formattedName = record.residentName.includes("様") ?
+      record.residentName :
+      `${record.residentName}様`;
+  }
+
+  // ヘッダー: 【{facility}_{formattedName}】
+  const header = `【${record.facility}_${formattedName}】`;
 
   // 食事摂取方法の決定ロジック
   // - injectionType が空 → 「経口」
