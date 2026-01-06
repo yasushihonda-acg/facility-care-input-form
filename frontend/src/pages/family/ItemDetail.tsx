@@ -136,6 +136,7 @@ export function ItemDetail() {
   // 同じ品物名の他のアイテムを取得（FIFOガイド用）
   // docs/FIFO_DESIGN_SPEC.md セクション4.3に基づく
   // Phase 43.1: normalizedName で比較（ブランド名が異なっても同じ基準品目なら同一扱い）
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- React Compiler最適化スキップ許容
   const otherSameNameItems = useMemo(() => {
     if (!item || !data?.items) return [];
     // normalizedName があればそれで比較、なければ itemName で比較

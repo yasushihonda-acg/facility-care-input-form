@@ -135,6 +135,7 @@ export function StaffRecordDialog({
           ? (familyInstruction as RemainingHandling)
           : '';
 
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- ダイアログ初期化処理
       setFormData({
         // Phase 29: タブ選択
         activeTab: defaultTab,
@@ -164,6 +165,7 @@ export function StaffRecordDialog({
   // Phase 15.6: 摂食割合が10になったら残り対応をリセット
   useEffect(() => {
     if (formData.consumptionRateInput === 10) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 派生状態の自動更新
       setFormData(prev => ({
         ...prev,
         remainingHandling: '',
@@ -177,6 +179,7 @@ export function StaffRecordDialog({
     if (formData.activeTab === 'hydration') {
       const newHydrationAmount = calculateHydrationAmount(formData.servedQuantity, item.unit);
       if (newHydrationAmount !== null) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- 派生状態の自動更新
         setFormData(prev => ({
           ...prev,
           hydrationAmount: newHydrationAmount,

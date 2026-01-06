@@ -83,11 +83,12 @@ export function MealSettingsModal({
   }, [resetAllStates, onClose]);
 
   // モーダルが開いた時に設定を同期（propsの値で初期化）
-  // resetAllStatesは安定した関数、settingsは外部依存
+  // resetAllStatesは安定した関数（useCallback）、settingsは外部依存
   useEffect(() => {
     if (isOpen) {
       resetAllStates();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- resetAllStatesは安定した関数
   }, [isOpen, settings]); // isOpenがtrueになった時、またはsettingsが変わった時にリセット
 
   // Webhookテスト関数

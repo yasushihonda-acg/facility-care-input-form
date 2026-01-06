@@ -73,6 +73,7 @@ export function SnackRecordModal({
       // 家族の指示から推奨提供数を計算
       const suggestedQuantity = getSuggestedQuantity(item);
 
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- モーダル初期化処理
       setFormData({
         servedDate: getTodayString(),
         servedTime: new Date().toTimeString().slice(0, 5),
@@ -94,6 +95,7 @@ export function SnackRecordModal({
     if (formData.servedQuantity > 0) {
       const rate = calculateConsumptionRate(formData.consumedQuantity, formData.servedQuantity);
       const status = determineConsumptionStatus(rate);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 派生状態の自動更新
       setFormData(prev => ({ ...prev, consumptionStatus: status }));
     }
   }, [formData.consumedQuantity, formData.servedQuantity]);

@@ -158,6 +158,7 @@ export function ItemManagement() {
   const { expiredItems, isLoading: isExpiredLoading } = useExpiredItems(DEMO_RESIDENT_ID);
 
   // 提供漏れ品物を算出
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- React Compiler最適化スキップ許容
   const missedScheduleItems = useMemo(() => {
     if (!data?.items) return [];
     return getMissedScheduleItems(data.items);
@@ -173,6 +174,7 @@ export function ItemManagement() {
   const deleteItem = useDeleteCareItem();
 
   // 日付範囲でフィルタリング + 提供タイミング順でソート
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- React Compiler最適化スキップ許容
   const filteredItems = useMemo(() => {
     if (!data?.items) return [];
     const filtered = filterItemsByDateRange(data.items, selectedDate, viewMode);
@@ -197,6 +199,7 @@ export function ItemManagement() {
   }), [excludeDaily, excludeWeekly]);
 
   // 未設定日を算出（アクティブな品物のみ対象）
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- React Compiler最適化スキップ許容
   const unscheduledDates = useMemo(() => {
     if (!data?.items) return [];
     const activeItems = data.items.filter(

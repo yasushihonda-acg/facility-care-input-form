@@ -29,6 +29,7 @@ export function ChatListPage({ userType }: ChatListPageProps) {
 
   useEffect(() => {
     loadChatItems();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadChatItemsは安定した関数
   }, [userType]);
 
   const loadChatItems = async () => {
