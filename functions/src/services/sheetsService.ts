@@ -186,7 +186,7 @@ function buildMealRecordRow(request: SubmitMealRecordRequest): MealRecordRow {
     specialNotes: request.note || "", // I列
     isImportant: isImportantValue, // J列
     facility: request.facility || "", // K列
-    dayServiceUsage: request.dayServiceUsage || "", // L列
+    dayServiceUsage: request.dayServiceUsage === "利用中" ? "利用中" : "", // L列: デイ利用有無（利用中の時のみ記入）
     injectionType: request.injectionType || "", // M列
     postId: postId, // N列
     dayServiceName: request.dayServiceName || "", // O列
@@ -275,7 +275,7 @@ function buildHydrationRecordRow(request: SubmitHydrationRecordRequest): Record<
     specialNotes: request.note || "", // E列: 特記事項
     isImportant: isImportantValue, // F列: 重要フラグ
     facility: request.facility, // G列: 施設
-    dayServiceUsage: request.dayServiceUsage, // H列: デイ利用有無
+    dayServiceUsage: request.dayServiceUsage === "利用中" ? "利用中" : "", // H列: デイ利用有無（利用中の時のみ記入）
     postId: postId, // I列: 投稿ID
     dayServiceName: request.dayServiceName || "", // J列: デイサービス名
     itemName: request.itemName || "", // K列: 品物名
