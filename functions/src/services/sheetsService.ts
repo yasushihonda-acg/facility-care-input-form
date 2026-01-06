@@ -104,10 +104,10 @@ function generatePostId(): string {
   const now = new Date();
   // JST時刻を取得（UTCに9時間加算）
   const jstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
-  // YYYYMMDDHHmmssSSS形式（17桁）
+  // YYYYMMDDHHmmss形式（14桁、ミリ秒なし）
   const dateStr = jstNow.toISOString()
     .replace(/[-:T.Z]/g, "")
-    .slice(0, 17);
+    .slice(0, 14);
   // ランダム6桁
   const random = Math.floor(Math.random() * 1000000).toString().padStart(6, "0");
   return `MEL${dateStr}${random}`;
@@ -235,14 +235,15 @@ export async function updateSheetB(): Promise<never> {
 
 /**
  * 水分記録用の投稿IDを生成
- * フォーマット: HYD{YYYYMMDDHHmmssSSS}{ランダム6桁}
+ * フォーマット: HYD{YYYYMMDDHHmmss}{ランダム6桁}
  */
 function generateHydrationPostId(): string {
   const now = new Date();
   const jstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  // YYYYMMDDHHmmss形式（14桁、ミリ秒なし）
   const dateStr = jstNow.toISOString()
     .replace(/[-:T.Z]/g, "")
-    .slice(0, 17);
+    .slice(0, 14);
   const random = Math.floor(Math.random() * 1000000).toString().padStart(6, "0");
   return `HYD${dateStr}${random}`;
 }
