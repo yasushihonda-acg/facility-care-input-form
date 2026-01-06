@@ -107,10 +107,10 @@ function buildWebhookMessage(
     // 既にIDが含まれている場合はそのまま使用
     formattedName = record.residentName;
   } else {
-    // IDが含まれていない場合は様とIDを追加
-    const residentNameWithoutSama = record.residentName.replace(/様$/, "");
-    const idPart = record.residentId ? `(ID${record.residentId})` : "";
-    formattedName = `${residentNameWithoutSama}様${idPart}`;
+    // 「様」が含まれていなければ追加
+    formattedName = record.residentName.includes("様") ?
+      record.residentName :
+      `${record.residentName}様`;
   }
 
   // ヘッダー: 【施設名_氏名様(ID...)】
