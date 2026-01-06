@@ -478,7 +478,12 @@ export function ItemEditPage() {
               <button
                 key={cat.value}
                 type="button"
-                onClick={() => setFormData((prev) => ({ ...prev, category: cat.value as ItemCategory }))}
+                onClick={() => setFormData((prev) => ({
+                  ...prev,
+                  category: cat.value as ItemCategory,
+                  // 飲み物選択時は単位を「cc」に自動変更
+                  ...(cat.value === 'drink' && { unit: 'cc' }),
+                }))}
                 className={`flex items-center justify-center gap-2 p-4 rounded-lg border-2 transition-colors ${
                   formData.category === cat.value
                     ? 'border-primary bg-primary/5 text-primary'
