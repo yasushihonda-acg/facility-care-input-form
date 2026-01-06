@@ -104,10 +104,10 @@ function generatePostId(): string {
   const now = new Date();
   // JST時刻を取得（UTCに9時間加算）
   const jstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
-  // YYYYMMDDHHmmssSSS形式（17桁）
+  // YYYYMMDDHHmmss形式（14桁、ミリ秒なし）
   const dateStr = jstNow.toISOString()
     .replace(/[-:T.Z]/g, "")
-    .slice(0, 17);
+    .slice(0, 14);
   // ランダム6桁
   const random = Math.floor(Math.random() * 1000000).toString().padStart(6, "0");
   return `MEL${dateStr}${random}`;
@@ -168,9 +168,9 @@ function buildMealRecordRow(request: SubmitMealRecordRequest): MealRecordRow {
   }).replace(/\//g, "/"); // 形式を確認: YYYY/MM/DD HH:mm:ss
   const postId = generatePostId();
 
-  // 重要フラグの変換（"重要" → "はい", "重要ではない" → "いいえ"）
+  // 重要フラグの変換
   // snack_onlyモードでは isImportant が undefined の場合がある
-  const isImportantValue = request.isImportant === "重要" ? "はい" : "いいえ";
+  const isImportantValue = request.isImportant === "重要" ? "重要/キーワードなし" : "重要ではない/キーワードなし";
 
   // Phase 13.0.4: snack_onlyモード対応
   // snack_onlyモードでは facility, residentName, mealTime, dayServiceUsage が undefined の場合がある
@@ -235,14 +235,15 @@ export async function updateSheetB(): Promise<never> {
 
 /**
  * 水分記録用の投稿IDを生成
- * フォーマット: HYD{YYYYMMDDHHmmssSSS}{ランダム6桁}
+ * フォーマット: HYD{YYYYMMDDHHmmss}{ランダム6桁}
  */
 function generateHydrationPostId(): string {
   const now = new Date();
   const jstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  // YYYYMMDDHHmmss形式（14桁、ミリ秒なし）
   const dateStr = jstNow.toISOString()
     .replace(/[-:T.Z]/g, "")
-    .slice(0, 17);
+    .slice(0, 14);
   const random = Math.floor(Math.random() * 1000000).toString().padStart(6, "0");
   return `HYD${dateStr}${random}`;
 }
@@ -264,7 +265,7 @@ function buildHydrationRecordRow(request: SubmitHydrationRecordRequest): Record<
     hour12: false,
   }).replace(/\//g, "/");
   const postId = generateHydrationPostId();
-  const isImportantValue = request.isImportant === "重要" ? "はい" : "いいえ";
+  const isImportantValue = request.isImportant === "重要" ? "重要/キーワードなし" : "重要ではない/キーワードなし";
 
   return {
     timestamp: timestamp, // A列: タイムスタンプ
