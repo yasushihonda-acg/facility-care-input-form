@@ -189,11 +189,12 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
   const [discardTarget, setDiscardTarget] = useState<CareItem | null>(null);
   const discardMutation = useDiscardItem();
 
-  // 品物取得（pending/in_progress/discarded）
+  // 品物取得（pending/in_progress/consumed/discarded）
   // Phase 49: discardedも取得して「破棄済み」タブに表示
+  // Phase 58: consumedも取得して今日記録済みのものを「入力済み」として表示
   const { data, isLoading, error, refetch } = useCareItems({
     residentId,
-    status: ['pending', 'in_progress', 'discarded'] as ItemStatus[],
+    status: ['pending', 'in_progress', 'consumed', 'discarded'] as ItemStatus[],
   });
   const items = data?.items ?? [];
 
@@ -229,6 +230,9 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
     items.forEach((item) => {
       // Phase 49: discardedは破棄済みタブにのみ表示
       if (item.status === 'discarded') return;
+
+      // Phase 58: consumedは今日記録されたもののみ表示（過去のものは除外）
+      if (item.status === 'consumed' && !isRecordedToday(item)) return;
 
       const group = classifyForTodayTab(item);
       groups[group].push(item);
