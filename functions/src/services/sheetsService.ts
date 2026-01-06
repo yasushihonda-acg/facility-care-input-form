@@ -267,18 +267,39 @@ function buildHydrationRecordRow(request: SubmitHydrationRecordRequest): Record<
   const postId = generateHydrationPostId();
   const isImportantValue = request.isImportant === "重要" ? "重要/キーワードなし" : "重要ではない/キーワードなし";
 
+  // 特記事項に品物名を挿入（K列には入れない）
+  // フォーマット: 【ケアに関すること】\n{品物名}\n【ACPiece】
+  let specialNotes = request.note || "";
+  if (request.itemName) {
+    const careHeader = "【ケアに関すること】";
+    const acpFooter = "【ACPiece】";
+    if (specialNotes.includes(careHeader) && specialNotes.includes(acpFooter)) {
+      // デフォルトフォーマットの場合、【ケアに関すること】の直後に品物名を挿入
+      specialNotes = specialNotes.replace(
+        careHeader + "\n",
+        careHeader + "\n" + request.itemName + "\n"
+      );
+    } else if (!specialNotes) {
+      // 特記事項が空の場合、品物名のみ
+      specialNotes = request.itemName;
+    } else {
+      // その他のフォーマットの場合、品物名を先頭に追加
+      specialNotes = request.itemName + "\n" + specialNotes;
+    }
+  }
+
   return {
     timestamp: timestamp, // A列: タイムスタンプ
     staffName: request.staffName, // B列: スタッフ名
     residentName: request.residentName, // C列: 利用者名
     hydrationAmount: String(request.hydrationAmount), // D列: 水分量(cc)
-    specialNotes: request.note || "", // E列: 特記事項
+    specialNotes: specialNotes, // E列: 特記事項（品物名含む）
     isImportant: isImportantValue, // F列: 重要フラグ
     facility: request.facility, // G列: 施設
     dayServiceUsage: request.dayServiceUsage === "利用中" ? "利用中" : "", // H列: デイ利用有無（利用中の時のみ記入）
     postId: postId, // I列: 投稿ID
     dayServiceName: request.dayServiceName || "", // J列: デイサービス名
-    itemName: request.itemName || "", // K列: 品物名
+    itemName: "", // K列: 使用しない（空欄）
   };
 }
 
