@@ -588,19 +588,19 @@ export function StaffRecordDialog({
               </label>
               <div className="flex items-center gap-2">
                 <input
-                  type="number"
-                  min="0"
-                  step="10"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={formData.hydrationAmount ?? ''}
                   onChange={(e) => {
-                    const value = e.target.value === '' ? null : parseInt(e.target.value) || 0;
+                    const inputValue = e.target.value.replace(/[^0-9]/g, '');
+                    const value = inputValue === '' ? null : parseInt(inputValue, 10);
                     setFormData(prev => ({ ...prev, hydrationAmount: value }));
                   }}
                   data-testid="hydration-amount"
                   className={`w-32 border rounded-lg px-3 py-2 text-lg font-semibold ${
                     errors.hydrationAmount ? 'border-red-500' : 'border-gray-300'
                   }`}
-                  placeholder="200"
                 />
                 <span className="text-gray-600">cc</span>
               </div>
