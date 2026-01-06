@@ -92,14 +92,6 @@ function validateRequest(
 
 /**
  * Google Chat Webhook用メッセージを生成
- * 正しいフォーマット例:
- * 【七福の里215_蒲地 キヌヱ様(ID7282)】
- * #水分摂取 💧
- * 記録者：ヴィ
- * 摂取量：150cc
- * 特記事項：【ケアに関すること】
- * 【ACPiece】
- * 【投稿ID】：HYD...
  */
 function buildWebhookMessage(
   record: SubmitHydrationRecordRequest,
@@ -110,8 +102,9 @@ function buildWebhookMessage(
   // 「様」の重複を防ぐ
   const residentNameWithoutSama = record.residentName.replace(/様$/, "");
 
-  // ヘッダー: 施設名 + 入居者名
-  parts.push(`【${record.facility}${residentNameWithoutSama}様】`);
+  // ヘッダー: 【施設名_氏名様(ID...)】
+  const idPart = record.residentId ? `(ID${record.residentId})` : "";
+  parts.push(`【${record.facility}_${residentNameWithoutSama}様${idPart}】`);
 
   // タグ
   parts.push("#水分摂取 💧");
@@ -128,14 +121,10 @@ function buildWebhookMessage(
   parts.push("");
   parts.push(`摂取量：${record.hydrationAmount}cc`);
 
-  if (record.note) {
-    parts.push("");
-    parts.push(`特記事項：${record.note}`);
-  }
+  parts.push("");
+  parts.push(`特記事項：${record.note || ""}`);
 
   parts.push("");
-  parts.push("【ACPiece】");
-
   parts.push("");
   parts.push(`【投稿ID】：${postId}`);
 
