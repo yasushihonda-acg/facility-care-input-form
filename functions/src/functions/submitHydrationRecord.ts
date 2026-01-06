@@ -99,30 +99,34 @@ function buildWebhookMessage(
 ): string {
   const parts: string[] = [];
 
+  // 「様」の重複を防ぐ
+  const residentNameWithoutSama = record.residentName.replace(/様$/, "");
+
+  // ヘッダー: 【施設名_氏名様(ID...)】
+  const idPart = record.residentId ? `(ID${record.residentId})` : "";
+  parts.push(`【${record.facility}_${residentNameWithoutSama}様${idPart}】`);
+
   // タグ
-  parts.push("#水分摂取💧");
+  parts.push("#水分摂取 💧");
   if (record.isImportant === "重要") {
-    parts.push("#重要⚠️");
+    parts.push("#重要 ⚠️");
   }
   if (record.dayServiceUsage === "利用中" && record.dayServiceName) {
     parts.push(`#デイ利用中[${record.dayServiceName}]`);
   }
 
   parts.push("");
-  parts.push(`【${record.residentName}様】`);
-  parts.push(`水分量: ${record.hydrationAmount}cc`);
-
-  if (record.itemName) {
-    parts.push(`品物: ${record.itemName}`);
-  }
-
-  if (record.note) {
-    parts.push(`特記事項: ${record.note}`);
-  }
+  parts.push(`記録者：${record.staffName}`);
 
   parts.push("");
-  parts.push(`記録者: ${record.staffName}`);
-  parts.push(`投稿ID: ${postId}`);
+  parts.push(`摂取量：${record.hydrationAmount}cc`);
+
+  parts.push("");
+  parts.push(`特記事項：${record.note || ""}`);
+
+  parts.push("");
+  parts.push("");
+  parts.push(`【投稿ID】：${postId}`);
 
   return parts.join("\n");
 }
