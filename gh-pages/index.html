@@ -164,6 +164,31 @@
                 </div>
             </div>
 
+            <!-- Authentication Info -->
+            <div class="bg-red-50 rounded-xl shadow-md p-6 mb-8">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <span class="text-2xl">🔐</span> 認証・セキュリティ（Phase 52）
+                </h2>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <h3 class="font-semibold text-red-800 mb-2">Firebase Authentication</h3>
+                        <ul class="text-sm text-red-700 space-y-1">
+                            <li>・Googleログイン認証</li>
+                            <li>・許可リストによるアクセス制御</li>
+                            <li>・@aozora-cg.com ドメイン許可</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-red-800 mb-2">セキュリティルール</h3>
+                        <ul class="text-sm text-red-700 space-y-1">
+                            <li>・Firestore: 認証必須</li>
+                            <li>・Firebase Storage: 認証必須</li>
+                            <li>・Cloud Functions: CORS制限</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
             <!-- User Types -->
             <div class="bg-white rounded-xl shadow-md p-6">
                 <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
@@ -189,11 +214,11 @@
                             </li>
                             <li class="flex items-start gap-2">
                                 <span>✓</span>
-                                <span>タスク管理・リマインダー</span>
+                                <span>注意事項・申し送り管理</span>
                             </li>
                             <li class="flex items-start gap-2">
                                 <span>✓</span>
-                                <span>家族からの連絡確認</span>
+                                <span>家族依頼・廃棄指示確認</span>
                             </li>
                         </ul>
                         <a href="https://facility-care-input-form.web.app/staff/notes" target="_blank"
@@ -330,11 +355,11 @@
                             <p class="text-gray-600 text-sm">家族が送付した品物の登録・追跡。賞味期限・在庫管理、提供・摂食記録。</p>
                             <span class="inline-block mt-2 bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs">Phase 8.1</span>
                         </div>
-                        <div class="bg-white rounded-lg shadow p-5 border-l-4 border-purple-500">
+                        <div class="bg-white rounded-lg shadow p-5 border-l-4 border-gray-300 opacity-60">
                             <div class="text-2xl mb-2">✅</div>
-                            <h3 class="font-semibold mb-1">タスク管理</h3>
-                            <p class="text-gray-600 text-sm">スタッフ向けタスク管理。賞味期限警告・提供リマインダーを毎日自動生成。</p>
-                            <span class="inline-block mt-2 bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs">Phase 8.2</span>
+                            <h3 class="font-semibold mb-1 line-through">タスク管理</h3>
+                            <p class="text-gray-500 text-sm">Phase 56で削除。品物一覧の期限切れバナーとChat Webhook通知で代替。</p>
+                            <span class="inline-block mt-2 bg-gray-200 text-gray-500 px-2 py-0.5 rounded text-xs">削除済み</span>
                         </div>
                         <div class="bg-white rounded-lg shadow p-5 border-l-4 border-purple-500">
                             <div class="text-2xl mb-2">📊</div>
@@ -382,11 +407,11 @@
                             <p class="text-gray-600 text-sm">提供・摂食記録API、在庫バー表示、タイムラインとの連携。</p>
                             <span class="inline-block mt-2 bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs">Phase 9.2 ✅完了</span>
                         </div>
-                        <div class="bg-white rounded-lg shadow p-5 border-l-4 border-green-500">
+                        <div class="bg-white rounded-lg shadow p-5 border-l-4 border-gray-300 opacity-60">
                             <div class="text-2xl mb-2">🚫</div>
-                            <h3 class="font-semibold mb-1">禁止ルール機能</h3>
-                            <p class="text-gray-600 text-sm">家族が設定した提供禁止品目をスタッフに警告表示。入居者設定画面で管理。</p>
-                            <span class="inline-block mt-2 bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs">Phase 9.x ✅完了</span>
+                            <h3 class="font-semibold mb-1 line-through">禁止ルール機能</h3>
+                            <p class="text-gray-500 text-sm">Phase 26で削除。運用での管理に移行。</p>
+                            <span class="inline-block mt-2 bg-gray-200 text-gray-500 px-2 py-0.5 rounded text-xs">削除済み</span>
                         </div>
                     </div>
                 </div>
@@ -410,11 +435,11 @@
                             <p class="text-gray-600 text-sm">写真をFirebase Storageに移行。Cloud FunctionsのAPIで安全に配信。</p>
                             <span class="inline-block mt-2 bg-pink-100 text-pink-700 px-2 py-0.5 rounded text-xs">Phase 17 ✅完了</span>
                         </div>
-                        <div class="bg-white rounded-lg shadow p-5 border-l-4 border-pink-500">
+                        <div class="bg-white rounded-lg shadow p-5 border-l-4 border-gray-300 opacity-60">
                             <div class="text-2xl mb-2">💬</div>
-                            <h3 class="font-semibold mb-1">チャット連携</h3>
-                            <p class="text-gray-600 text-sm">品物起点でスタッフ・家族間のメッセージ機能。未読バッジ付きで通知。</p>
-                            <span class="inline-block mt-2 bg-pink-100 text-pink-700 px-2 py-0.5 rounded text-xs">Phase 18 ✅完了</span>
+                            <h3 class="font-semibold mb-1 line-through">チャット連携</h3>
+                            <p class="text-gray-500 text-sm">Phase 21で一時非表示。将来再有効化予定。</p>
+                            <span class="inline-block mt-2 bg-gray-200 text-gray-500 px-2 py-0.5 rounded text-xs">非表示中</span>
                         </div>
                         <div class="bg-white rounded-lg shadow p-5 border-l-4 border-pink-500">
                             <div class="text-2xl mb-2">🔐</div>
@@ -645,7 +670,7 @@ flowchart TB
                 © 2025 施設ケア入力フォーム プロジェクト
             </p>
             <p class="text-gray-500 text-sm mt-2">
-                最終更新: 2026年1月6日（Phase 57完了・E2Eテスト477件）
+                最終更新: 2026年1月7日（Phase 57完了・E2Eテスト477件定義）
             </p>
         </div>
     </footer>
