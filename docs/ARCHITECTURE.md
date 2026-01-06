@@ -189,7 +189,6 @@ oauth_tokens/
 | **Sheet ID** | `1OrpUVoDfUECXCTrKOGKLwN_4OQ9dlg7cUTCPGLDGHV0` |
 | **Sheet URL** | https://docs.google.com/spreadsheets/d/1OrpUVoDfUECXCTrKOGKLwN_4OQ9dlg7cUTCPGLDGHV0/edit |
 | **操作** | 追記のみ（読み取り・更新禁止） |
-| **特殊仕様** | Bot連携ハック（詳細は BUSINESS_RULES.md 参照） |
 
 **データ内容例**:
 - 食事介助記録
@@ -342,7 +341,6 @@ graph TD
     subgraph "External Data Sources"
         SHEET_A[/"Sheet A (Read-Only)<br/>ID: ...DkfG-w<br/>【記録の結果/参照】"/]
         SHEET_B[/"Sheet B (Write-Only)<br/>ID: ...DGHV0<br/>【実績入力先】"/]
-        BOT[Existing GAS Bot<br/>Google Chat通知]
         CHAT[Google Chat API]
     end
 
@@ -364,7 +362,6 @@ graph TD
 
     %% Flow B: Write-Only Log
     FUNC_CARE -->|"Append Only"| SHEET_B
-    SHEET_B -.->|"Trigger (重要フラグ検知)"| BOT
 
     %% Flow C: Item Management
     FUNC_ITEM -->|"Write"| FS
@@ -485,14 +482,13 @@ service cloud.firestore {
 
 ## 9. 関連ドキュメント
 
-### アクティブドキュメント（6ファイル）
+### アクティブドキュメント（5ファイル）
 
 | ドキュメント | 内容 |
 |--------------|------|
 | [HANDOVER.md](./HANDOVER.md) | **引き継ぎ・クイックスタート**（再開時に最初に読む） |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | システム設計（本ファイル） |
 | [API_SPEC.md](./API_SPEC.md) | API仕様書（Dev Mode） |
-| [BUSINESS_RULES.md](./BUSINESS_RULES.md) | 業務ルール・Bot連携ハック |
 | [DATA_MODEL.md](./DATA_MODEL.md) | データモデル定義 |
 | [SETUP.md](./SETUP.md) | 環境セットアップガイド（CLI版） |
 
@@ -500,6 +496,7 @@ service cloud.firestore {
 
 | ドキュメント | 内容 |
 |--------------|------|
+| [archive/BUSINESS_RULES.md](./archive/BUSINESS_RULES.md) | 業務ルール草案（未実装・虚構含む） |
 | [archive/SYNC_CONCURRENCY.md](./archive/SYNC_CONCURRENCY.md) | 同期処理の競合防止設計 |
 | [archive/SHEET_B_STRUCTURE.md](./archive/SHEET_B_STRUCTURE.md) | Sheet B（書き込み先）構造 |
 

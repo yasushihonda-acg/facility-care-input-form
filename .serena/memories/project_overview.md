@@ -40,7 +40,7 @@ facility-care-input-form/
 | `docs/HANDOVER.md` | 引き継ぎ（クイックスタート） |
 | `docs/ARCHITECTURE.md` | システム設計 |
 | `docs/API_SPEC.md` | API仕様 |
-| `docs/BUSINESS_RULES.md` | 業務ルール |
+| `docs/DATA_MODEL.md` | データモデル |
 | `docs/archive/` | 過去のPhase仕様書 |
 
 ## 認証情報
@@ -471,13 +471,12 @@ getCareItemsHandlerでFirestoreから取得したデータをレスポンスに�
 - 「何を作ったか」ではなく「どう使うか」を記載
 - 一時的な実装メモはコミットメッセージに残す
 
-### アクティブドキュメント（6ファイルのみ）
+### アクティブドキュメント（5ファイルのみ）
 1. HANDOVER.md - クイックスタート・引き継ぎ
 2. ARCHITECTURE.md - システム設計
 3. API_SPEC.md - API仕様
-4. BUSINESS_RULES.md - 業務ルール
-5. DATA_MODEL.md - データモデル
-6. SETUP.md - 環境構築
+4. DATA_MODEL.md - データモデル
+5. SETUP.md - 環境構築
 
 ### 過去仕様書
 - docs/archive/に保存（参照用）

@@ -431,9 +431,9 @@ facility-care-input-form/
 ├── docs/
 │   ├── API_SPEC.md
 │   ├── ARCHITECTURE.md
-│   ├── BUSINESS_RULES.md
-│   ├── ROADMAP.md
-│   └── SETUP.md
+│   ├── DATA_MODEL.md
+│   ├── SETUP.md
+│   └── archive/
 ├── firebase.json
 ├── firestore.indexes.json
 ├── firestore.rules

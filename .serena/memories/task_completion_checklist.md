@@ -165,7 +165,7 @@ PR作成後、以下を提示：
 grep -r "admin=true" docs/ gh-pages/ --include="*.md" --include="*.html" 2>/dev/null
 
 # 新規ドキュメントがdocs/直下にないか確認（archive/に移動すべき）
-ls docs/*.md | grep -v -E "(HANDOVER|API_SPEC|ARCHITECTURE|BUSINESS_RULES|DATA_MODEL|SETUP)\.md"
+ls docs/*.md | grep -v -E "(HANDOVER|API_SPEC|ARCHITECTURE|DATA_MODEL|SETUP)\.md"
 ```
 
 ### ルール確認

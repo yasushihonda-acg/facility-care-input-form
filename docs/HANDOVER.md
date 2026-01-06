@@ -63,7 +63,7 @@ facility-care-input-form/
 ├── docs/              # ドキュメント
 │   ├── ARCHITECTURE.md   # システム設計
 │   ├── API_SPEC.md       # API仕様
-│   ├── BUSINESS_RULES.md # 業務ルール
+│   ├── DATA_MODEL.md     # データモデル
 │   └── archive/          # 過去の仕様書
 └── gh-pages/          # GitHub Pages
 ```
@@ -150,7 +150,6 @@ firebase deploy --only functions --debug
 | `CLAUDE.md` | 開発設定・アカウント・コマンド |
 | `docs/ARCHITECTURE.md` | システム設計・データフロー |
 | `docs/API_SPEC.md` | API仕様（全エンドポイント） |
-| `docs/BUSINESS_RULES.md` | 業務ルール・投稿ID規則 |
 | `docs/DATA_MODEL.md` | Firestore構造・型定義 |
 | `docs/archive/` | 過去のPhase仕様書 |
 
