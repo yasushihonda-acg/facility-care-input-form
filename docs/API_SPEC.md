@@ -321,8 +321,7 @@ interface SnackRecord {
 | `postId` | string | 生成された投稿ID（MEL{YYYYMMDDHHmmssSSS}{6桁乱数}形式、約26文字） |
 | `sheetRow` | number | Sheet Bに追記された行番号 |
 
-> **参照**:
-> - 投稿IDルールの詳細は [BUSINESS_RULES.md#6-投稿id生成ルール](./BUSINESS_RULES.md#6-投稿id生成ルール) を参照
+> **注**: 投稿IDは `MEL` + 14桁タイムスタンプ（ミリ秒3桁含む）+ 6桁乱数で生成（計23文字程度）
 
 #### Webhook連携
 
@@ -462,10 +461,8 @@ Content-Type: application/json
 | recordType | 処理 |
 |------------|------|
 | `meal` | 通常記録（食事内容列に記載） |
-| `snack` | **Bot連携ハック適用**（特記事項列 + 重要度="重要"） |
-| `hydration` | 通常記録（水分摂取列に記載） |
-
-> **参照**: Bot連携ハックの詳細は [BUSINESS_RULES.md](./BUSINESS_RULES.md#2-bot連携ハック間食入力時の特殊処理) を参照
+| `snack` | 間食記録（特記事項列に記載） |
+| `hydration` | 水分記録（水分摂取列に記載） |
 
 #### レスポンス
 
@@ -474,8 +471,7 @@ Content-Type: application/json
   "success": true,
   "data": {
     "recordId": "REC_20240115_150000_S001",
-    "sheetRow": 156,
-    "botNotificationTriggered": true
+    "sheetRow": 156
   },
   "timestamp": "2024-01-15T15:00:01.000Z"
 }
@@ -485,7 +481,6 @@ Content-Type: application/json
 |------------|-----|------|
 | `recordId` | string | 生成されたレコードID |
 | `sheetRow` | number | 追記された行番号 |
-| `botNotificationTriggered` | boolean | Bot通知がトリガーされたか |
 
 ---
 
