@@ -99,7 +99,107 @@ lsof -ti:4173 | xargs kill
 
 ---
 
-## 4. 禁止事項
+## 4. デモ・本番・ツアー整合性ルール
+
+### 設計原則
+デモと本番は**同一コンポーネント**を使用し、データソースのみが異なる。
+デモツアーは**実装済み機能のみ**を案内する。
+
+```mermaid
+graph TD
+    subgraph 本番
+        F1[/family/*] --> C1[FamilyDashboard等]
+        S1[/staff/*] --> C2[StaffNotesPage等]
+    end
+    subgraph デモ
+        F2[/demo/family/*] --> C1
+        S2[/demo/staff/*] --> C2
+    end
+    subgraph ツアー
+        T1[DemoShowcase] -.->|案内| F2
+        T2[DemoStaffShowcase] -.->|案内| S2
+    end
+    style C1 fill:#f9f,stroke:#333
+    style C2 fill:#9ff,stroke:#333
+```
+
+### ルート対照表（デモ ↔ 本番）
+
+| 役割 | 本番パス | デモパス | コンポーネント | 状態 |
+|------|----------|----------|----------------|------|
+| **家族ホーム** | /family | /demo/family | FamilyDashboard | ✅ |
+| **品物管理** | /family/items | /demo/family/items | ItemManagement | ✅ |
+| **品物登録** | /family/items/new | /demo/family/items/new | ItemForm | ✅ |
+| **品物詳細** | /family/items/:id | /demo/family/items/:id | ItemDetail | ✅ |
+| **品物編集** | /family/items/:id/edit | /demo/family/items/:id/edit | ItemEditPage | ✅ |
+| **プリセット** | /family/presets | /demo/family/presets | PresetManagement | ✅ |
+| **エビデンス** | /family/evidence/:date | /demo/family/evidence/:date | EvidenceMonitor | ✅ |
+| **スタッフ注意** | /staff/notes | /demo/staff/notes | StaffNotesPage | ✅ |
+| **記録入力** | /staff/input/meal | /demo/staff/input/meal | MealInputPage | ✅ |
+| **家族連絡一覧** | /staff/family-messages | /demo/staff/family-messages | FamilyMessages | ✅ |
+| **家族連絡詳細** | /staff/family-messages/:id | /demo/staff/family-messages/:id | FamilyMessageDetail | ✅ |
+| **統計** | /stats | /demo/stats | StatsDashboard | ✅ |
+| **記録閲覧** | /view | /demo/view | ViewPage | ✅ |
+| **品物タイムライン** | /items/:id/timeline | /demo/items/:id/timeline | ItemTimeline | ✅ |
+| **設定** | /settings | なし（独立） | SettingsPage | ✅ |
+
+### ツアー ↔ 機能 対照表
+
+| ツアーステップ | 案内先パス | 説明 | 実装状態 |
+|---------------|-----------|------|----------|
+| **家族1: 品物登録** | /demo/family/items/new | AI入力サポート | ✅ |
+| **家族2: 品物確認** | /demo/family/items | 期限アラート | ✅ |
+| **家族3: プリセット** | /demo/family/presets | ワンクリック保存 | ✅ |
+| **家族4: 今日の様子** | /demo/family | タイムライン | ✅ |
+| **家族5: 傾向分析** | /demo/stats | AI分析 | ✅ |
+| **スタッフ1: 注意事項** | /demo/staff/notes | 申し送り確認 | ✅ |
+| **スタッフ2: 品物指示** | /demo/staff/input/meal | 提供方法確認 | ✅ |
+| **スタッフ3: 間食記録** | /demo/staff/input/meal | 摂食記録入力 | ✅ |
+| **スタッフ4: 統計** | /demo/stats | 摂食傾向 | ✅ |
+
+### 削除済み機能（ツアーに含めないこと）
+
+| 機能 | 削除Phase | 理由 |
+|------|-----------|------|
+| 入居者設定（禁止品目） | Phase 26 | 運用で代替 |
+| チャット機能 | Phase 21 | 一時非表示 |
+| タスク機能 | Phase 56 | 品物管理で代替 |
+| **品物操作通知（家族依頼タブ）** | Phase 56 | タスク機能に依存していたため削除 |
+| AI提案ボタン | Phase 41 | 一時非表示 |
+
+> **注意**: Phase 55で実装された「品物操作通知」はPhase 56のタスク削除時に消失。
+> E2Eテスト（item-action-notifications.spec.ts）はスキップ化済み。
+
+### E2Eテスト ↔ 実装 整合性
+
+**要注意**: テストが存在しても実装がない場合がある。
+```bash
+# テストファイルと実装の整合性確認
+npx playwright test --list 2>&1 | tail -3
+```
+
+### 機能変更時のチェックリスト（必須）
+
+機能を追加・変更・削除した場合、**以下を全て確認**すること：
+
+1. **ルート対照表**: 本番とデモの両方にルートが存在するか
+2. **ツアー説明**: 案内内容が実装と一致しているか
+   - `frontend/src/pages/demo/DemoShowcase.tsx`（家族用）
+   - `frontend/src/pages/demo/DemoStaffShowcase.tsx`（スタッフ用）
+3. **デモデータ**: `frontend/src/data/demo/` に必要なデータがあるか
+4. **E2Eテスト**: テストが実装と同期しているか（skip/削除の判断）
+5. **削除済み機能表**: 削除した機能を上記表に追記
+
+### 不整合発見時の対応
+
+1. **実装あり・ツアーなし**: ツアーにステップ追加
+2. **ツアーあり・実装なし**: ツアーからステップ削除
+3. **テストあり・実装なし**: テストをskipまたは削除
+4. **デモデータなし**: デモデータを追加
+
+---
+
+## 5. 禁止事項
 
 - `keys/` ディレクトリをGitにコミットしない
 - `functions/.env` をGitにコミットしない
