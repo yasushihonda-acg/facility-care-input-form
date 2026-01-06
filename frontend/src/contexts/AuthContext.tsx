@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- Context + Hook を同一ファイルでエクスポート */
 /**
  * AuthContext - Firebase Authentication コンテキスト
  * Phase 52: ユーザー認証とアクセス制御

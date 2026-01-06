@@ -18,6 +18,7 @@ export function Header({ title, showBack, onBack, sticky = false }: HeaderProps)
   useEffect(() => {
     // isSyncing が true → false に変わった時のみトースト表示
     if (prevSyncingRef.current && !isSyncing) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 状態遷移検出パターン
       setShowToast(true);
     }
     prevSyncingRef.current = isSyncing;

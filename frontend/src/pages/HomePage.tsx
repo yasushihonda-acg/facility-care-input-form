@@ -18,6 +18,7 @@ export function HomePage() {
   // 最初のシートを選択
   useEffect(() => {
     if (sheets.length > 0 && !selectedSheet) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 初期値設定
       setSelectedSheet(sheets[0].sheetName);
     }
   }, [sheets, selectedSheet]);
@@ -46,6 +47,7 @@ export function HomePage() {
   // 選択年が利用可能年にない場合、最新年に変更
   useEffect(() => {
     if (availableYears.length > 0 && !availableYears.includes(selectedYear)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- フォールバック設定
       setSelectedYear(availableYears[0]);
     }
   }, [availableYears, selectedYear]);

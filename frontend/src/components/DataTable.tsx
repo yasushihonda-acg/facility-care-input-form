@@ -44,6 +44,7 @@ export function DataTable({ records, headers, sheetName }: DataTableProps) {
         initialWidths[col.originalHeader] = width;
       }
     });
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 初期化処理で1回のみ実行
     setColumnWidths(initialWidths);
   }, [columnConfig]);
 

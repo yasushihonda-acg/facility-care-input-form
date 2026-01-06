@@ -39,6 +39,7 @@ export function ItemChatPage({ userType, userName = 'ユーザー' }: ItemChatPa
     if (itemId) {
       loadData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadDataは安定した関数
   }, [itemId]);
 
   useEffect(() => {

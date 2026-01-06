@@ -196,6 +196,7 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
     residentId,
     status: ['pending', 'in_progress', 'consumed', 'discarded'] as ItemStatus[],
   });
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- itemsはdata?.itemsから派生、useMemoで再ラップ不要
   const items = data?.items ?? [];
 
   // 共通ソート関数（提供タイミング → 期限 → 登録日）

@@ -33,6 +33,7 @@ export function NotificationSection({
 
   useEffect(() => {
     loadNotifications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadNotificationsは安定した関数
   }, [userType, isDemo]);
 
   const loadNotifications = async () => {
