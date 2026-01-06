@@ -523,9 +523,11 @@ export function ItemForm() {
                   type="button"
                   onClick={() => {
                     updateField('category', cat.value as ItemCategory);
-                    // 飲み物選択時は単位を「cc」に自動変更
+                    // カテゴリに応じて単位を自動変更
                     if (cat.value === 'drink') {
                       updateField('unit', 'cc');
+                    } else if (cat.value === 'food') {
+                      updateField('unit', '個');
                     }
                   }}
                   className={`flex items-center justify-center gap-2 p-4 rounded-lg border-2 transition-colors ${
