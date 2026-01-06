@@ -82,7 +82,7 @@ instruction?: { content: string; };
 - POST /saveAISuggestionAsPreset
 
 ## 開発履歴
-Phase 1〜56完了。詳細は `git log` を参照。
+Phase 1〜57完了。詳細は `git log` を参照。
 
 ### タスク機能削除（2026-01-05）
 以下のタスク関連機能を完全削除:
