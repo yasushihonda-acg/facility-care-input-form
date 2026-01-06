@@ -2,13 +2,14 @@
  * スタッフ注意事項ページ
  * Phase 40: スタッフ専用の注意事項管理機能
  * Phase 49: 廃棄指示フロー対応（家族→スタッフ通知）
+ * Phase 55: 家族操作通知（品物の新規・編集・削除を24時間表示）
  *
  * タブ構成:
  * - 注意事項: スタッフ注意事項のCRUD
- * - 廃棄指示: 家族からの廃棄指示（バッジ付き）
+ * - 家族依頼: 品物操作通知（24時間）+ 廃棄指示（バッジ付き）
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Layout } from '../../components/Layout';
 import { StaffNoteCard } from '../../components/staff/StaffNoteCard';
 import { StaffNoteModal } from '../../components/staff/StaffNoteModal';
@@ -23,12 +24,18 @@ import { useDemoMode } from '../../hooks/useDemoMode';
 import type { StaffNote, CreateStaffNoteInput } from '../../types/staffNote';
 import type { CareItem } from '../../types/careItem';
 import { getCategoryIcon, formatDate } from '../../types/careItem';
+import type { ItemEvent } from '../../types/itemEvent';
+import {
+  getRecentFamilyActionNotifications,
+  getNotificationBadgeColor,
+  getNotificationLabel,
+} from '../../data/demo/demoItemEvents';
 
 // デモ用スタッフ名（将来は認証から取得）
 const DEMO_STAFF_NAME = 'スタッフA';
 
 // タブ定義
-type TabValue = 'notes' | 'tasks';
+type TabValue = 'notes' | 'familyRequests';
 
 export function StaffNotesPage() {
   const isDemo = useDemoMode();
@@ -46,14 +53,27 @@ export function StaffNotesPage() {
   const { pendingDiscardItems, isLoading: discardLoading } = usePendingDiscardItems();
   const discardCount = pendingDiscardItems.length;
 
-  // 初回ロード時に廃棄指示があればタスクタブを表示
+  // 家族操作通知（Phase 55: デモモードのみ。本番はFirestore連携が必要）
+  const familyNotifications = useMemo(() => {
+    if (isDemo) {
+      return getRecentFamilyActionNotifications();
+    }
+    // 本番モードでは空配列（将来的にFirestoreから取得）
+    return [];
+  }, [isDemo]);
+  const notificationCount = familyNotifications.length;
+
+  // 家族依頼の合計件数（通知 + 廃棄指示）
+  const familyRequestsCount = notificationCount + discardCount;
+
+  // 初回ロード時に家族依頼があればそのタブを表示
   const [hasInitializedTab, setHasInitializedTab] = useState(false);
   const [activeTab, setActiveTab] = useState<TabValue>('notes');
 
   // 初回データ取得完了時のみタブを自動切替
-  if (!hasInitializedTab && !discardLoading && discardCount > 0) {
+  if (!hasInitializedTab && !discardLoading && familyRequestsCount > 0) {
     setHasInitializedTab(true);
-    setActiveTab('tasks');
+    setActiveTab('familyRequests');
   } else if (!hasInitializedTab && !discardLoading) {
     setHasInitializedTab(true);
   }
@@ -61,7 +81,7 @@ export function StaffNotesPage() {
   // タブ定義（バッジ付き）
   const TABS: { value: TabValue; label: string; icon: string; badge?: number }[] = [
     { value: 'notes', label: '注意事項', icon: '📋' },
-    { value: 'tasks', label: '廃棄指示', icon: '🗑️', badge: discardCount > 0 ? discardCount : undefined },
+    { value: 'familyRequests', label: '家族依頼', icon: '👨‍👩‍👧', badge: familyRequestsCount > 0 ? familyRequestsCount : undefined },
   ];
 
   // 注意事項の作成/更新
@@ -180,7 +200,8 @@ export function StaffNotesPage() {
             onDelete={handleDelete}
           />
         ) : (
-          <DiscardContent
+          <FamilyRequestsContent
+            notifications={familyNotifications}
             pendingDiscardItems={pendingDiscardItems}
             isLoading={discardLoading}
             isDemo={isDemo}
@@ -288,14 +309,16 @@ function NotesContent({
 }
 
 /**
- * 廃棄指示コンテンツ
- * Phase 49: 廃棄指示フロー対応
+ * 家族依頼コンテンツ
+ * Phase 55: 品物操作通知 + 廃棄指示（統合）
  */
-function DiscardContent({
+function FamilyRequestsContent({
+  notifications,
   pendingDiscardItems,
   isLoading,
   isDemo,
 }: {
+  notifications: ItemEvent[];
   pendingDiscardItems: CareItem[];
   isLoading: boolean;
   isDemo: boolean;
@@ -308,17 +331,110 @@ function DiscardContent({
     );
   }
 
-  if (pendingDiscardItems.length === 0) {
+  const hasNotifications = notifications.length > 0;
+  const hasDiscardItems = pendingDiscardItems.length > 0;
+
+  if (!hasNotifications && !hasDiscardItems) {
     return (
       <div className="text-center py-12">
         <div className="text-6xl mb-4">✅</div>
-        <p className="text-gray-500">廃棄指示はありません</p>
+        <p className="text-gray-500">家族からの依頼はありません</p>
       </div>
     );
   }
 
   return (
-    <DiscardInstructionSection items={pendingDiscardItems} isDemo={isDemo} />
+    <div className="space-y-6">
+      {/* 品物操作通知セクション（Phase 55） */}
+      {hasNotifications && (
+        <FamilyActionNotificationsSection notifications={notifications} />
+      )}
+
+      {/* 廃棄指示セクション（Phase 49） */}
+      {hasDiscardItems && (
+        <DiscardInstructionSection items={pendingDiscardItems} isDemo={isDemo} />
+      )}
+    </div>
+  );
+}
+
+/**
+ * 家族操作通知セクション（Phase 55）
+ * 24時間以内の品物操作（新規・編集・削除）を表示
+ */
+function FamilyActionNotificationsSection({
+  notifications,
+}: {
+  notifications: ItemEvent[];
+}) {
+  return (
+    <div className="bg-blue-50 border-2 border-blue-300 rounded-xl overflow-hidden">
+      {/* ヘッダー */}
+      <div className="px-4 py-3 bg-blue-100 border-b border-blue-200">
+        <h2 className="text-base font-bold text-blue-800 flex items-center gap-2">
+          <span className="text-xl">📢</span>
+          品物更新通知（{notifications.length}件）
+        </h2>
+        <p className="text-xs text-blue-600 mt-1">
+          家族が品物を登録・編集・削除しました。24時間後に自動削除されます。
+        </p>
+      </div>
+
+      {/* 通知リスト */}
+      <div className="divide-y divide-blue-200">
+        {notifications.map((notification) => {
+          const itemName = (notification.metadata?.itemName as string) || '品物';
+          const label = getNotificationLabel(notification.eventType);
+          const badgeColor = getNotificationBadgeColor(notification.eventType);
+          const borderColor = notification.eventType === 'created'
+            ? 'border-l-green-500'
+            : notification.eventType === 'updated'
+            ? 'border-l-blue-500'
+            : 'border-l-red-500';
+
+          return (
+            <div
+              key={notification.id}
+              className={`px-4 py-4 bg-white border-l-4 ${borderColor}`}
+            >
+              <div className="flex items-start gap-3">
+                <span className="text-2xl flex-shrink-0">
+                  {notification.eventType === 'created' && '➕'}
+                  {notification.eventType === 'updated' && '✏️'}
+                  {notification.eventType === 'deleted' && '🗑️'}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`px-2 py-0.5 text-xs font-medium rounded ${badgeColor}`}>
+                      {label}
+                    </span>
+                    <span className="font-bold text-gray-900">
+                      【{label}】{itemName}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    {notification.description}
+                  </p>
+                  {notification.changes && notification.changes.length > 0 && (
+                    <div className="mt-2 text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                      {notification.changes.map((change, idx) => (
+                        <div key={idx}>
+                          {change.fieldLabel}: {change.oldValue} → {change.newValue}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="text-xs text-gray-400 mt-2">
+                    登録日時: {new Date(notification.eventAt).toLocaleString('ja-JP')}
+                    {notification.performedBy && ` / ${notification.performedBy}`}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

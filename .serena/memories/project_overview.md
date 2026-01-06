@@ -333,8 +333,12 @@ Google Chat API → syncChatImages → Firestore(care_photos) → フロント�
 CLAUDE.mdセクション4に対照表・チェックリストあり。
 詳細: `.serena/memories/demo_production_consistency.md`
 
-### 未実装機能（テスト存在・実装なし）
-- Phase 55: 品物操作通知（`item-action-notifications.spec.ts` スキップ中）
+### Phase 55: 品物操作通知（2026-01-06）
+- スタッフ注意事項ページの「家族依頼」タブに品物操作通知を表示
+- 24時間以内の新規登録/変更/削除を色分けバッジで表示
+- 廃棄指示と統合して1タブで管理
+- ItemEventType: 'deleted' 追加
+- E2Eテスト: item-action-notifications.spec.ts（10件パス）
 
 ## E2Eテスト定義（Phase 57まで）
 

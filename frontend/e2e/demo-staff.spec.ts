@@ -90,7 +90,7 @@ test.describe('Phase 14: スタッフ用デモページ', () => {
 
       // 4つのステップが表示される（折りたたみ内）
       await expect(page.getByText('1. 注意事項を確認')).toBeVisible();
-      await expect(page.getByText('2. 家族依頼を確認')).toBeVisible();
+      await expect(page.getByText('2. 品物の指示を確認')).toBeVisible();
       await expect(page.getByText('3. 間食記録を入力')).toBeVisible();
       await expect(page.getByText('4. 統計を確認')).toBeVisible();
     });
@@ -111,6 +111,10 @@ test.describe('Phase 14: スタッフ用デモページ', () => {
 
       // ページが読み込まれるまで待機
       await page.waitForLoadState('networkidle');
+
+      // Phase 55: 家族依頼があると自動でそのタブが選択されるため、注意事項タブをクリック
+      await page.locator('button').filter({ hasText: '📋注意事項' }).click();
+      await page.waitForTimeout(500);
 
       // スタッフ注意事項が表示される（デモデータから）
       // 例: 糖尿病関連の注意事項
