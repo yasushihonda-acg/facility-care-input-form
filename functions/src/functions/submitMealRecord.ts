@@ -8,7 +8,7 @@ import * as functions from "firebase-functions";
 import {Request, Response} from "express";
 import {getFirestore, FieldValue, Timestamp} from "firebase-admin/firestore";
 import {appendMealRecordToSheetB} from "../services/sheetsService";
-import {notifyMealRecord} from "../services/googleChatService";
+import {notifyMealRecord, sendToGoogleChat} from "../services/googleChatService";
 import {FUNCTIONS_CONFIG} from "../config/sheets";
 import {
   ApiResponse,
@@ -286,6 +286,55 @@ function validateRequest(
 }
 
 /**
+ * snack_only モード用 Webhook メッセージを生成
+ * 食事記録と同じフォーマットで間食情報を投稿
+ */
+function buildSnackWebhookMessage(
+  mealRecord: SubmitMealRecordRequest,
+  postId: string
+): string {
+  const residentName = mealRecord.residentName || "";
+  const facility = mealRecord.facility || "";
+
+  // residentNameに既に(ID...)が含まれているかチェック
+  const hasIdInName = /\(ID[^)]*\)/.test(residentName);
+
+  let formattedName: string;
+  if (hasIdInName) {
+    // 既にIDが含まれている場合はそのまま使用
+    formattedName = residentName;
+  } else {
+    // 「様」が含まれていなければ追加
+    formattedName = residentName.includes("様") ?
+      residentName :
+      `${residentName}様`;
+  }
+
+  // 食事記録と同じフォーマットで組み立て
+  const lines = [
+    `【${facility}_${formattedName}】`,
+    "#食事🍚",
+    "",
+    `記録者：${mealRecord.staffName}`,
+    "",
+    `間食：${mealRecord.snack || ""}`,
+    "",
+    `特記事項：${mealRecord.note || ""}`,
+    "",
+    "",
+    `【投稿ID】：${postId}`,
+  ];
+
+  // 写真URLがあれば追加
+  if (mealRecord.photoUrl) {
+    lines.push("");
+    lines.push(`📷 ${mealRecord.photoUrl}`);
+  }
+
+  return lines.join("\n");
+}
+
+/**
  * submitMealRecord 関数本体
  */
 async function submitMealRecordHandler(
@@ -363,18 +412,37 @@ async function submitMealRecordHandler(
     const {sheetRow, postId} = await appendMealRecordToSheetB(mealRecord);
 
     // Google Chat Webhook通知（非同期・エラーでも処理続行）
-    // snack_onlyモードの場合はWebhook通知をスキップ
-    if (!isSnackOnlyMode) {
-      try {
-        // Firestoreから設定を取得
-        const db = getFirestore();
-        const settingsDoc = await db.collection("settings").doc("mealFormDefaults").get();
-        const settings = settingsDoc.exists ?
-          (settingsDoc.data() as MealFormSettings) :
-          null;
+    try {
+      // Firestoreから設定を取得
+      const db = getFirestore();
+      const settingsDoc = await db.collection("settings").doc("mealFormDefaults").get();
+      const settings = settingsDoc.exists ?
+        (settingsDoc.data() as MealFormSettings) :
+        null;
 
-        if (settings && (settings.webhookUrl || settings.importantWebhookUrl)) {
-          // Webhook送信用データを作成
+      if (settings && (settings.webhookUrl || settings.importantWebhookUrl)) {
+        // 重要フラグの判定
+        const isImportant = mealRecord.isImportant === "重要";
+
+        if (isSnackOnlyMode) {
+          // snack_only モード: 間食記録用のメッセージを生成して送信
+          const snackMessage = buildSnackWebhookMessage(mealRecord, postId);
+
+          // 通常Webhookに送信
+          if (settings.webhookUrl) {
+            sendToGoogleChat(settings.webhookUrl, snackMessage).catch((err) => {
+              functions.logger.warn("Snack webhook notification failed:", err);
+            });
+          }
+
+          // 重要フラグが立っている場合は追加で重要Webhookにも送信
+          if (isImportant && settings.importantWebhookUrl) {
+            sendToGoogleChat(settings.importantWebhookUrl, snackMessage).catch((err) => {
+              functions.logger.warn("Snack important webhook notification failed:", err);
+            });
+          }
+        } else {
+          // 通常モード: 食事記録用のメッセージを生成して送信
           const chatRecord: MealRecordForChat = {
             facility: mealRecord.facility || "",
             residentName: mealRecord.residentName || "",
@@ -390,9 +458,6 @@ async function submitMealRecordHandler(
             photoUrl: mealRecord.photoUrl,
           };
 
-          // 重要フラグの判定
-          const isImportant = mealRecord.isImportant === "重要";
-
           // Webhook送信（非同期で実行、結果を待たない）
           notifyMealRecord(
             chatRecord,
@@ -403,10 +468,10 @@ async function submitMealRecordHandler(
             functions.logger.warn("Webhook notification failed:", webhookError);
           });
         }
-      } catch (webhookError) {
-        // Webhookエラーは記録成功には影響させない
-        functions.logger.warn("Webhook setup failed:", webhookError);
       }
+    } catch (webhookError) {
+      // Webhookエラーは記録成功には影響させない
+      functions.logger.warn("Webhook setup failed:", webhookError);
     }
 
     // 間食記録から消費ログを作成（非同期・エラーでも処理続行）
