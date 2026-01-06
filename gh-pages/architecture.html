@@ -29,6 +29,7 @@
             </nav>
             <h1 class="text-3xl font-bold">システムアーキテクチャ</h1>
             <p class="text-indigo-200 mt-2">施設ケア入力フォーム - 技術設計詳細</p>
+            <p class="text-indigo-300 text-sm mt-1">最終更新: 2026年1月7日（Phase 57対応）</p>
         </div>
     </header>
 
@@ -46,6 +47,11 @@ flowchart TB
         Admin["⚙️ 管理者"]
     end
 
+    subgraph Auth["認証層（Firebase Auth）"]
+        GoogleAuth["🔐 Googleログイン"]
+        AllowList["📋 許可リスト<br/>@aozora-cg.com"]
+    end
+
     subgraph Frontend["フロントエンド（Firebase Hosting）"]
         PWA["📱 React PWA<br/>Vite + TypeScript + TailwindCSS"]
     end
@@ -54,37 +60,162 @@ flowchart TB
         direction TB
         API["🔌 REST API"]
         Sync["⏰ 定期同期<br/>Cloud Scheduler"]
+        AI["🤖 Gemini AI<br/>RAG / 要約"]
     end
 
     subgraph Storage["データストレージ"]
-        Firestore["🔥 Firestore<br/>plan_data/ settings/"]
+        Firestore["🔥 Firestore<br/>plan_data / careItems / staffNotes"]
         FBStorage["📁 Firebase Storage<br/>画像保存"]
+        OAuthTokens["🔑 oauth_tokens<br/>Chat API認証"]
     end
 
     subgraph External["外部連携"]
         Sheets["📊 Google Sheets<br/>Sheet A / Sheet B"]
-        Chat["💬 Google Chat<br/>Webhook通知"]
+        Chat["💬 Google Chat<br/>Webhook / API"]
+        Gemini["🧠 Vertex AI<br/>Gemini 2.5 Flash"]
     end
 
-    Staff --> PWA
-    Family --> PWA
-    Admin --> PWA
+    Staff --> GoogleAuth
+    Family --> GoogleAuth
+    Admin --> GoogleAuth
+    GoogleAuth --> AllowList
+    AllowList --> PWA
 
     PWA <--> API
     API <--> Firestore
     API --> FBStorage
     API --> Chat
     API <--> Sheets
+    API --> AI
+    AI --> Gemini
+    AI --> Firestore
 
     Sync --> API
+    OAuthTokens -.-> Chat
                 </div>
+            </div>
+        </section>
+
+        <!-- Authentication Section (Phase 52) -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-red-500 pb-2">🔐 認証・認可（Phase 52）</h2>
+            <p class="text-gray-600 mb-4">Firebase Authentication によるGoogleログイン認証を実装済み</p>
+
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="font-semibold text-gray-800 mb-4">認証フロー</h3>
+                    <ol class="text-sm text-gray-600 space-y-2 list-decimal list-inside">
+                        <li>アプリ起動 → Firebase Auth状態チェック</li>
+                        <li>未認証 → LoginPage表示</li>
+                        <li>Googleログイン実行（OAuthスコープ含む）</li>
+                        <li>ログイン成功 → 許可リストチェック</li>
+                        <li>許可あり → アプリ表示 / 許可なし → エラー</li>
+                    </ol>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="font-semibold text-gray-800 mb-4">許可リスト</h3>
+                    <table class="text-sm w-full">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-3 py-2 text-left">タイプ</th>
+                                <th class="px-3 py-2 text-left">値</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b">
+                                <td class="px-3 py-2">ドメイン許可</td>
+                                <td class="px-3 py-2 font-mono text-xs">@aozora-cg.com</td>
+                            </tr>
+                            <tr>
+                                <td class="px-3 py-2">個別許可</td>
+                                <td class="px-3 py-2 font-mono text-xs">kinuekamachi@gmail.com</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-red-50 rounded-lg p-4">
+                <h3 class="font-semibold text-red-800 mb-2">セキュリティルール</h3>
+                <table class="text-sm w-full">
+                    <tbody>
+                        <tr class="border-b border-red-200">
+                            <td class="py-2 font-medium">Firestore</td>
+                            <td class="py-2">認証必須 + 許可リストチェック</td>
+                        </tr>
+                        <tr class="border-b border-red-200">
+                            <td class="py-2 font-medium">Firebase Storage</td>
+                            <td class="py-2">認証必須</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 font-medium">Cloud Functions</td>
+                            <td class="py-2">CORS許可（フロントエンドからのみ）</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Chat OAuth Section (Phase 53) -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-yellow-500 pb-2">🔑 Chat画像同期認証（Phase 53）</h2>
+            <p class="text-gray-600 mb-4"><strong>設計判断</strong>: 管理者が1回だけ認証すれば、全ユーザーがChat画像を閲覧可能</p>
+
+            <div class="bg-white rounded-lg shadow-md p-6 overflow-x-auto mb-6">
+                <div class="mermaid">
+sequenceDiagram
+    participant Admin as 管理者
+    participant Settings as /settings
+    participant OAuth as Google OAuth
+    participant CF as Cloud Function
+    participant FS as Firestore
+
+    Admin->>Settings: 「Googleアカウントで認証」クリック
+    Settings->>OAuth: 認可リクエスト
+    OAuth-->>Settings: 認可コード
+    Settings->>CF: exchangeOAuthCode
+    CF->>OAuth: コード→トークン交換
+    OAuth-->>CF: リフレッシュトークン
+    CF->>FS: oauth_tokens/chat_sync に保存
+    CF-->>Settings: 認証完了
+
+    Note over Admin,FS: 以降、任意のユーザーがChat画像を取得可能
+
+    participant User as 一般ユーザー
+    User->>CF: syncChatImages
+    CF->>FS: リフレッシュトークン取得
+    CF->>OAuth: アクセストークン更新
+    CF->>CF: Chat API経由で画像取得
+    CF->>FS: care_photos に保存
+    CF-->>User: 同期完了
+                </div>
+            </div>
+
+            <div class="bg-yellow-50 rounded-lg p-4">
+                <h3 class="font-semibold text-yellow-800 mb-2">関連ファイル</h3>
+                <table class="text-sm w-full">
+                    <tbody>
+                        <tr class="border-b border-yellow-200">
+                            <td class="py-2 font-mono text-xs">oauthToken.ts</td>
+                            <td class="py-2">トークン交換・保存・取得API</td>
+                        </tr>
+                        <tr class="border-b border-yellow-200">
+                            <td class="py-2 font-mono text-xs">SettingsPage.tsx</td>
+                            <td class="py-2">管理者認証UI</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 font-mono text-xs">useSyncedChatImages.ts</td>
+                            <td class="py-2">同期フック（トークン不要）</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </section>
 
         <!-- Data Flow - Flow A -->
         <section class="mb-12">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-indigo-500 pb-2">Flow A: データ同期（読み取り）</h2>
-            <p class="text-gray-600 mb-4">スプレッドシートからFirestoreへの1時間毎の自動同期フロー</p>
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-blue-500 pb-2">Flow A: データ同期（読み取り）</h2>
+            <p class="text-gray-600 mb-4">スプレッドシートからFirestoreへの定期自動同期フロー</p>
             <div class="bg-white rounded-lg shadow-md p-6 overflow-x-auto">
                 <div class="mermaid">
 sequenceDiagram
@@ -93,7 +224,7 @@ sequenceDiagram
     participant Sheets as Sheet A
     participant FS as Firestore
 
-    Scheduler->>Func: 1時間毎にトリガー
+    Scheduler->>Func: 1時間毎（差分）/ 日次3時（完全）
     Func->>Sheets: シートデータ取得
     Sheets-->>Func: 全シートの行データ
 
@@ -102,22 +233,25 @@ sequenceDiagram
         Func->>FS: Upsert plan_data/{sheetName}/{id}
     end
 
+    Func->>Func: 日次/週次/月次要約生成（Gemini）
+    Func->>FS: plan_data_summaries に保存
+
     Func-->>Scheduler: 同期完了
                 </div>
             </div>
             <div class="mt-4 bg-blue-50 rounded-lg p-4">
-                <h3 class="font-semibold text-blue-800 mb-2">ポイント</h3>
+                <h3 class="font-semibold text-blue-800 mb-2">同期スケジュール</h3>
                 <ul class="text-sm text-blue-700 list-disc list-inside space-y-1">
-                    <li>Cloud Schedulerで1時間毎に自動実行</li>
-                    <li>決定論的IDで重複防止（同期競合対策）</li>
-                    <li>汎用データモデルで全シートに対応</li>
+                    <li><strong>差分同期</strong>: 毎時0分 - 新規レコードのみ追加</li>
+                    <li><strong>完全同期</strong>: 午前3時 - 洗い替え</li>
+                    <li><strong>要約生成</strong>: 同期時にGemini AIで日次/週次/月次要約を自動生成</li>
                 </ul>
             </div>
         </section>
 
         <!-- Data Flow - Flow B -->
         <section class="mb-12">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-indigo-500 pb-2">Flow B: 食事記録入力</h2>
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-green-500 pb-2">Flow B: 食事記録入力</h2>
             <p class="text-gray-600 mb-4">スタッフの食事記録入力からスプレッドシート書き込み・通知までのフロー</p>
             <div class="bg-white rounded-lg shadow-md p-6 overflow-x-auto">
                 <div class="mermaid">
@@ -155,299 +289,137 @@ sequenceDiagram
     PWA-->>Staff: 完了表示
                 </div>
             </div>
-            <div class="mt-4 bg-green-50 rounded-lg p-4">
-                <h3 class="font-semibold text-green-800 mb-2">ポイント</h3>
-                <ul class="text-sm text-green-700 list-disc list-inside space-y-1">
-                    <li>Sheet Bへの直接書き込み（リアルタイム反映）</li>
-                    <li>Google Chat Webhookで自動通知</li>
-                    <li>重要フラグで別チャンネルにも追加通知</li>
-                </ul>
-            </div>
         </section>
 
-        <!-- Data Flow - Flow C -->
+        <!-- Flow D: AI Chat Analysis (Phase 45) -->
         <section class="mb-12">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-indigo-500 pb-2">Flow C: 家族ビュー（予実管理）</h2>
-            <p class="text-gray-600 mb-4">ご家族がケア指示（Plan）と実績（Result）を対比確認するフロー</p>
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-purple-500 pb-2">Flow D: AIチャット分析（Phase 45）</h2>
+            <p class="text-gray-600 mb-4">ケア記録に関する質問にAIが回答（RAG構成）</p>
             <div class="bg-white rounded-lg shadow-md p-6 overflow-x-auto">
                 <div class="mermaid">
 sequenceDiagram
-    participant Family as ご家族
-    participant PWA as React PWA
-    participant Hook as useFamilyMealRecords
-    participant API as getPlanData
+    participant User as ユーザー
+    participant PWA as ViewPage
+    participant API as chatWithRecords
+    participant Cache as インメモリキャッシュ
     participant FS as Firestore
+    participant AI as Gemini 2.5 Flash
 
-    Family->>PWA: 家族ビューアクセス
-    PWA->>Hook: 日付・食事時間指定
-    Hook->>API: getPlanData('食事')
-    API->>FS: plan_data/食事 取得
-    FS-->>API: 全記録
-    API-->>Hook: レスポンス
+    User->>PWA: 質問入力
+    PWA->>API: POST /chatWithRecords
 
-    Hook->>Hook: 日付+食事時間でフィルタ
-    Hook->>Hook: PlanDataRecord → MealResult変換
-    Hook-->>PWA: フィルタ済みResult
+    API->>Cache: キャッシュ確認
+    alt キャッシュHIT
+        Cache-->>API: キャッシュデータ
+    else キャッシュMISS
+        API->>FS: plan_data取得
+        FS-->>API: 関連レコード
+        API->>Cache: キャッシュ保存（TTL 5分）
+    end
 
-    PWA->>PWA: Plan（モック）+ Result を統合
-    PWA-->>Family: タイムライン表示
+    API->>API: キーワード抽出・重要レコード優先
+    API->>AI: プロンプト + コンテキスト
+    AI-->>API: 回答 + フォローアップ質問
+    API-->>PWA: AIレスポンス（Markdown）
+    PWA-->>User: 回答表示（テーブル・箇条書き対応）
                 </div>
             </div>
-            <div class="mt-4 bg-purple-50 rounded-lg p-4">
-                <h3 class="font-semibold text-purple-800 mb-2">ポイント</h3>
-                <ul class="text-sm text-purple-700 list-disc list-inside space-y-1">
-                    <li>「読み取り時JOIN」方式でバックエンド修正ゼロ</li>
-                    <li>既存のgetPlanData APIを再利用</li>
-                    <li>フロントエンドでフィルタ・変換処理</li>
-                </ul>
-            </div>
-        </section>
-
-        <!-- Component Architecture -->
-        <section class="mb-12">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-indigo-500 pb-2">フロントエンド構成</h2>
-            <div class="bg-white rounded-lg shadow-md p-6 overflow-x-auto">
-                <div class="mermaid">
-graph TB
-    subgraph Pages["ページ"]
-        Home["HomePage<br/>記録閲覧"]
-        Meal["MealInputPage<br/>食事入力"]
-        FamDash["FamilyDashboard<br/>家族ホーム"]
-        Evidence["EvidenceMonitor<br/>エビデンス"]
-        Items["ItemManagement<br/>品物管理"]
-    end
-
-    subgraph Components["共通コンポーネント"]
-        Layout["Layout"]
-        Footer["FooterNav"]
-        Modal["MealSettingsModal"]
-        Timeline["TimelineItem"]
-    end
-
-    subgraph Hooks["カスタムフック"]
-        UsePlan["usePlanData"]
-        UseSettings["useMealFormSettings"]
-        UseMeal["useFamilyMealRecords"]
-    end
-
-    subgraph Services["サービス"]
-        API["apiService"]
-        AdminTest["adminTestService"]
-    end
-
-    Home --> UsePlan
-    Meal --> UseSettings
-    FamDash --> UseMeal
-    Evidence --> UseMeal
-
-    UsePlan --> API
-    UseSettings --> API
-    UseMeal --> UsePlan
-
-    Pages --> Components
+            <div class="mt-4 grid md:grid-cols-2 gap-4">
+                <div class="bg-purple-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-purple-800 mb-2">相関分析機能</h3>
+                    <ul class="text-sm text-purple-700 list-disc list-inside space-y-1">
+                        <li>頓服×排便の相関分析</li>
+                        <li>バイタル異常検出（高血圧140+、発熱37.5+）</li>
+                        <li>水分×排尿の傾向分析</li>
+                    </ul>
+                </div>
+                <div class="bg-purple-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-purple-800 mb-2">キャッシュ戦略</h3>
+                    <ul class="text-sm text-purple-700 list-disc list-inside space-y-1">
+                        <li>インメモリキャッシュ（TTL 5分）</li>
+                        <li>キャッシュHIT時: 約6秒（7秒短縮）</li>
+                        <li>ウォームインスタンスでのみ有効</li>
+                    </ul>
                 </div>
             </div>
         </section>
 
-        <!-- API Endpoints -->
+        <!-- Hierarchical Summary System (Phase 46) -->
         <section class="mb-12">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-indigo-500 pb-2">APIエンドポイント</h2>
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <table class="w-full text-sm">
-                    <thead class="bg-gray-100">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-teal-500 pb-2">階層的要約システム（Phase 46）</h2>
+            <p class="text-gray-600 mb-4">事前要約によりRAGの効率・品質を大幅向上</p>
+
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 class="font-semibold text-gray-800 mb-4">階層構造</h3>
+                <div class="overflow-x-auto">
+                    <table class="text-sm w-full">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-4 py-2 text-left">レベル</th>
+                                <th class="px-4 py-2 text-left">生成タイミング</th>
+                                <th class="px-4 py-2 text-left">AIモデル</th>
+                                <th class="px-4 py-2 text-left">内容例</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b">
+                                <td class="px-4 py-2 font-medium">月次</td>
+                                <td class="px-4 py-2">月末同期時</td>
+                                <td class="px-4 py-2">Gemini 2.5 Flash</td>
+                                <td class="px-4 py-2 text-gray-600">「12月は頓服3回、全て排便あり」</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="px-4 py-2 font-medium">週次</td>
+                                <td class="px-4 py-2">週末同期時</td>
+                                <td class="px-4 py-2">Gemini 2.5 Flash</td>
+                                <td class="px-4 py-2 text-gray-600">「W51: バイタル安定、水分平均1.2L」</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-2 font-medium">日次</td>
+                                <td class="px-4 py-2">毎日同期時</td>
+                                <td class="px-4 py-2">Gemini 2.5 Flash Lite</td>
+                                <td class="px-4 py-2 text-gray-600">「12/28: 頓服→翌日排便あり」</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-teal-50 rounded-lg p-4">
+                <h3 class="font-semibold text-teal-800 mb-2">期待効果</h3>
+                <table class="text-sm w-full">
+                    <thead class="bg-teal-100">
                         <tr>
-                            <th class="px-4 py-3 text-left">メソッド</th>
-                            <th class="px-4 py-3 text-left">パス</th>
-                            <th class="px-4 py-3 text-left">説明</th>
-                            <th class="px-4 py-3 text-left">状態</th>
+                            <th class="px-3 py-2 text-left">指標</th>
+                            <th class="px-3 py-2 text-left">Phase 45</th>
+                            <th class="px-3 py-2 text-left">Phase 46</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y">
-                        <tr>
-                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/healthCheck</td>
-                            <td class="px-4 py-3">ヘルスチェック</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                    <tbody>
+                        <tr class="border-b border-teal-200">
+                            <td class="px-3 py-2">RAGコンテキスト</td>
+                            <td class="px-3 py-2">150-200レコード（生データ）</td>
+                            <td class="px-3 py-2">要約10件 + 詳細30件</td>
+                        </tr>
+                        <tr class="border-b border-teal-200">
+                            <td class="px-3 py-2">長期トレンド分析</td>
+                            <td class="px-3 py-2">不可</td>
+                            <td class="px-3 py-2 text-teal-700 font-medium">可能</td>
                         </tr>
                         <tr>
-                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/syncPlanData</td>
-                            <td class="px-4 py-3">記録データ同期</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
-                        </tr>
-                        <tr>
-                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/getPlanData</td>
-                            <td class="px-4 py-3">同期済み記録取得</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
-                        </tr>
-                        <tr>
-                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/submitMealRecord</td>
-                            <td class="px-4 py-3">食事記録入力</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
-                        </tr>
-                        <tr>
-                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/getMealFormSettings</td>
-                            <td class="px-4 py-3">設定取得</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
-                        </tr>
-                        <tr>
-                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/updateMealFormSettings</td>
-                            <td class="px-4 py-3">設定更新</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
-                        </tr>
-                        <tr>
-                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/uploadCareImage</td>
-                            <td class="px-4 py-3">画像アップロード</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
-                        </tr>
-                        <tr>
-                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/testWebhook</td>
-                            <td class="px-4 py-3">Webhookテスト</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
-                        </tr>
-                        <tr>
-                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/getCarePhotos</td>
-                            <td class="px-4 py-3">写真メタデータ取得</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
-                        </tr>
-                        <!-- Phase 8: 品物管理 -->
-                        <tr class="bg-purple-50">
-                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/createCareItem</td>
-                            <td class="px-4 py-3">品物登録</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
-                        </tr>
-                        <tr class="bg-purple-50">
-                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/getCareItems</td>
-                            <td class="px-4 py-3">品物一覧取得</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
-                        </tr>
-                        <tr class="bg-purple-50">
-                            <td class="px-4 py-3"><span class="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs">PUT</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/updateCareItem</td>
-                            <td class="px-4 py-3">品物更新</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
-                        </tr>
-                        <tr class="bg-purple-50">
-                            <td class="px-4 py-3"><span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs">DELETE</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/deleteCareItem</td>
-                            <td class="px-4 py-3">品物削除</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
-                        </tr>
-                        <!-- Phase 8: タスク管理（削除済み） -->
-                        <tr class="bg-gray-100 line-through opacity-50">
-                            <td class="px-4 py-3"><span class="bg-gray-200 text-gray-500 px-2 py-1 rounded text-xs">POST</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/createTask</td>
-                            <td class="px-4 py-3">タスク作成</td>
-                            <td class="px-4 py-3"><span class="text-red-600">❌削除</span></td>
-                        </tr>
-                        <tr class="bg-gray-100 line-through opacity-50">
-                            <td class="px-4 py-3"><span class="bg-gray-200 text-gray-500 px-2 py-1 rounded text-xs">GET</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/getTasks</td>
-                            <td class="px-4 py-3">タスク一覧取得</td>
-                            <td class="px-4 py-3"><span class="text-red-600">❌削除</span></td>
-                        </tr>
-                        <tr class="bg-gray-100 line-through opacity-50">
-                            <td class="px-4 py-3"><span class="bg-gray-200 text-gray-500 px-2 py-1 rounded text-xs">PUT</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/updateTask</td>
-                            <td class="px-4 py-3">タスク更新・完了</td>
-                            <td class="px-4 py-3"><span class="text-red-600">❌削除</span></td>
-                        </tr>
-                        <!-- Phase 8: 統計・AI -->
-                        <tr class="bg-purple-50">
-                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/getStats</td>
-                            <td class="px-4 py-3">統計データ取得</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
-                        </tr>
-                        <tr class="bg-purple-50">
-                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/aiSuggest</td>
-                            <td class="px-4 py-3">AI品物入力補助（Gemini）</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
-                        </tr>
-                        <!-- Phase 8: プリセット -->
-                        <tr class="bg-purple-50">
-                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/getPresets</td>
-                            <td class="px-4 py-3">プリセット一覧取得</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
-                        </tr>
-                        <tr class="bg-purple-50">
-                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/createPreset</td>
-                            <td class="px-4 py-3">プリセット作成</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
-                        </tr>
-                        <tr class="bg-purple-50">
-                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/saveAISuggestionAsPreset</td>
-                            <td class="px-4 py-3">AI提案をプリセット保存</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
-                        </tr>
-                        <!-- Phase 9: 禁止ルール -->
-                        <tr class="bg-indigo-50">
-                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/getProhibitions</td>
-                            <td class="px-4 py-3">禁止ルール一覧取得</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
-                        </tr>
-                        <tr class="bg-indigo-50">
-                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/createProhibition</td>
-                            <td class="px-4 py-3">禁止ルール作成</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
-                        </tr>
-                        <!-- Phase 9: 消費記録 -->
-                        <tr class="bg-indigo-50">
-                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/recordConsumptionLog</td>
-                            <td class="px-4 py-3">消費ログ記録</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
-                        </tr>
-                        <tr class="bg-indigo-50">
-                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/getConsumptionLogs</td>
-                            <td class="px-4 py-3">消費ログ一覧取得</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
-                        </tr>
-                        <!-- Phase 9.3: 統計拡張 -->
-                        <tr class="bg-indigo-50">
-                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/getInventorySummary</td>
-                            <td class="px-4 py-3">在庫サマリー取得</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
-                        </tr>
-                        <tr class="bg-indigo-50">
-                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/getFoodStats</td>
-                            <td class="px-4 py-3">食品傾向分析取得</td>
-                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
-                        </tr>
-                        <!-- Scheduler（削除済み） -->
-                        <tr class="bg-gray-100 line-through opacity-50">
-                            <td class="px-4 py-3"><span class="bg-gray-200 text-gray-500 px-2 py-1 rounded text-xs">SCHED</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">/generateDailyTasks</td>
-                            <td class="px-4 py-3">タスク自動生成（毎日6時）</td>
-                            <td class="px-4 py-3"><span class="text-red-600">❌削除</span></td>
+                            <td class="px-3 py-2">応答精度</td>
+                            <td class="px-3 py-2">局所的</td>
+                            <td class="px-3 py-2 text-teal-700 font-medium">全体傾向 + 詳細</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </section>
 
-        <!-- Flow D: Discard Instruction -->
+        <!-- Flow E: Discard Instruction (Phase 49) -->
         <section class="mb-12">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-indigo-500 pb-2">Flow D: 廃棄指示フロー</h2>
-            <p class="text-gray-600 mb-4">家族が期限切れ品物の廃棄をスタッフに依頼するフロー（Phase 49）</p>
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-red-500 pb-2">Flow E: 廃棄指示フロー（Phase 49）</h2>
+            <p class="text-gray-600 mb-4">家族が期限切れ品物の廃棄をスタッフに依頼するフロー</p>
             <div class="bg-white rounded-lg shadow-md p-6 overflow-x-auto">
                 <div class="mermaid">
 sequenceDiagram
@@ -472,19 +444,209 @@ sequenceDiagram
                 </div>
             </div>
             <div class="mt-4 bg-red-50 rounded-lg p-4">
-                <h3 class="font-semibold text-red-800 mb-2">ポイント</h3>
-                <ul class="text-sm text-red-700 list-disc list-inside space-y-1">
-                    <li>家族は「廃棄」ボタンを押すと「スタッフに通知中...」表示に変わる</li>
-                    <li>スタッフの注意事項ページに廃棄指示がバッジ付きで表示される</li>
-                    <li>廃棄指示がある場合、家族依頼タブが自動選択される</li>
-                    <li>スタッフが「廃棄完了」を押すと即座に家族側から消える</li>
-                </ul>
+                <h3 class="font-semibold text-red-800 mb-2">ステータス遷移</h3>
+                <table class="text-sm w-full">
+                    <thead class="bg-red-100">
+                        <tr>
+                            <th class="px-3 py-2 text-left">ステータス</th>
+                            <th class="px-3 py-2 text-left">家族側</th>
+                            <th class="px-3 py-2 text-left">スタッフ側</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-red-200">
+                            <td class="px-3 py-2 font-mono text-xs">pending / in_progress</td>
+                            <td class="px-3 py-2">廃棄ボタン表示</td>
+                            <td class="px-3 py-2">-</td>
+                        </tr>
+                        <tr class="border-b border-red-200">
+                            <td class="px-3 py-2 font-mono text-xs">pending_discard</td>
+                            <td class="px-3 py-2">「通知中...」表示</td>
+                            <td class="px-3 py-2">廃棄指示セクション</td>
+                        </tr>
+                        <tr>
+                            <td class="px-3 py-2 font-mono text-xs">discarded</td>
+                            <td class="px-3 py-2">一覧から消える</td>
+                            <td class="px-3 py-2">一覧から消える</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- API Endpoints -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-indigo-500 pb-2">APIエンドポイント</h2>
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-4 py-3 text-left">メソッド</th>
+                            <th class="px-4 py-3 text-left">パス</th>
+                            <th class="px-4 py-3 text-left">説明</th>
+                            <th class="px-4 py-3 text-left">状態</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                        <!-- 基本API -->
+                        <tr>
+                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/healthCheck</td>
+                            <td class="px-4 py-3">ヘルスチェック</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/syncPlanData</td>
+                            <td class="px-4 py-3">記録データ同期</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/getPlanData</td>
+                            <td class="px-4 py-3">同期済み記録取得（年月フィルタ対応）</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/submitMealRecord</td>
+                            <td class="px-4 py-3">食事記録入力</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/uploadCareImage</td>
+                            <td class="px-4 py-3">画像アップロード</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <!-- 品物管理 -->
+                        <tr class="bg-purple-50">
+                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/createCareItem</td>
+                            <td class="px-4 py-3">品物登録</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr class="bg-purple-50">
+                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/getCareItems</td>
+                            <td class="px-4 py-3">品物一覧取得</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr class="bg-purple-50">
+                            <td class="px-4 py-3"><span class="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs">PUT</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/updateCareItem</td>
+                            <td class="px-4 py-3">品物更新</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr class="bg-purple-50">
+                            <td class="px-4 py-3"><span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs">DELETE</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/deleteCareItem</td>
+                            <td class="px-4 py-3">品物削除</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <!-- スタッフ注意事項 -->
+                        <tr class="bg-green-50">
+                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/getStaffNotes</td>
+                            <td class="px-4 py-3">スタッフ注意事項一覧</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr class="bg-green-50">
+                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/createStaffNote</td>
+                            <td class="px-4 py-3">注意事項作成</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <!-- AI関連 -->
+                        <tr class="bg-indigo-50">
+                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/chatWithRecords</td>
+                            <td class="px-4 py-3">AIチャット（RAG）</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr class="bg-indigo-50">
+                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/normalizeItemName</td>
+                            <td class="px-4 py-3">品物名正規化（Gemini Flash Lite）</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr class="bg-indigo-50">
+                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">GET</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/getSummaries</td>
+                            <td class="px-4 py-3">階層要約取得</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <!-- Chat画像同期 -->
+                        <tr class="bg-yellow-50">
+                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/syncChatImages</td>
+                            <td class="px-4 py-3">Chat画像同期</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <tr class="bg-yellow-50">
+                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">POST</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/exchangeOAuthCode</td>
+                            <td class="px-4 py-3">OAuth認可コード交換</td>
+                            <td class="px-4 py-3"><span class="text-green-600">✅</span></td>
+                        </tr>
+                        <!-- 削除済み -->
+                        <tr class="bg-gray-100 line-through opacity-50">
+                            <td class="px-4 py-3"><span class="bg-gray-200 text-gray-500 px-2 py-1 rounded text-xs">POST</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/createTask</td>
+                            <td class="px-4 py-3">タスク作成（Phase 56削除）</td>
+                            <td class="px-4 py-3"><span class="text-red-600">❌</span></td>
+                        </tr>
+                        <tr class="bg-gray-100 line-through opacity-50">
+                            <td class="px-4 py-3"><span class="bg-gray-200 text-gray-500 px-2 py-1 rounded text-xs">GET</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">/getProhibitions</td>
+                            <td class="px-4 py-3">禁止ルール（Phase 26削除）</td>
+                            <td class="px-4 py-3"><span class="text-red-600">❌</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- PWA Update Strategy -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-cyan-500 pb-2">PWA更新戦略</h2>
+            <p class="text-gray-600 mb-4">Service Workerによるキャッシュ問題への対応</p>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="font-semibold text-gray-800 mb-4">設定項目</h3>
+                    <table class="text-sm w-full">
+                        <tbody>
+                            <tr class="border-b">
+                                <td class="py-2 font-mono text-xs">registerType</td>
+                                <td class="py-2">autoUpdate</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="py-2 font-mono text-xs">skipWaiting</td>
+                                <td class="py-2">true</td>
+                            </tr>
+                            <tr>
+                                <td class="py-2 font-mono text-xs">clientsClaim</td>
+                                <td class="py-2">true</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="bg-cyan-50 rounded-lg p-6">
+                    <h3 class="font-semibold text-cyan-800 mb-4">更新フロー</h3>
+                    <ol class="text-sm text-cyan-700 list-decimal list-inside space-y-2">
+                        <li>デプロイ: 新アセットがHostingにアップロード</li>
+                        <li>SW検知: 1分ごとに更新をチェック</li>
+                        <li>通知表示: 「新しいバージョン」バナー</li>
+                        <li>ユーザー操作: 更新 or 後で</li>
+                    </ol>
+                </div>
             </div>
         </section>
 
         <!-- Infrastructure -->
         <section class="mb-12">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-indigo-500 pb-2">インフラ構成</h2>
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-gray-500 pb-2">インフラ構成</h2>
             <div class="bg-white rounded-lg shadow-md p-6 overflow-x-auto">
                 <div class="mermaid">
 graph LR
@@ -493,10 +655,12 @@ graph LR
             Hosting["Firebase Hosting<br/>フロントエンド"]
             Functions["Cloud Functions<br/>バックエンドAPI"]
             Firestore["Firestore<br/>データストア"]
+            Auth["Firebase Auth<br/>認証"]
         end
 
-        Scheduler["Cloud Scheduler<br/>1時間毎同期"]
+        Scheduler["Cloud Scheduler<br/>定期同期"]
         SA["Service Account<br/>facility-care-sa"]
+        Vertex["Vertex AI<br/>Gemini 2.5"]
     end
 
     subgraph Google["Google Workspace"]
@@ -504,7 +668,7 @@ graph LR
         Chat["Google Chat"]
     end
 
-    subgraph Firebase["Firebase"]
+    subgraph Firebase2["Firebase"]
         FBStorage["Firebase Storage"]
     end
 
@@ -512,11 +676,13 @@ graph LR
         Actions["GitHub Actions"]
     end
 
+    Auth --> Hosting
     Scheduler --> Functions
     Functions --> Firestore
     Functions --> Sheets
     Functions --> FBStorage
     Functions --> Chat
+    Functions --> Vertex
     SA -.-> Functions
     Actions --> Hosting
     Actions --> Functions
@@ -529,7 +695,7 @@ graph LR
     <footer class="bg-gray-800 text-white py-8">
         <div class="container mx-auto px-4 text-center">
             <p class="text-gray-400">
-                © 2025 施設ケア入力フォーム プロジェクト
+                © 2025-2026 施設ケア入力フォーム プロジェクト
             </p>
             <div class="mt-4 space-x-4">
                 <a href="index.html" class="text-gray-400 hover:text-white transition">トップ</a>
@@ -540,6 +706,9 @@ graph LR
                 <a href="https://facility-care-input-form.web.app/settings" target="_blank"
                    class="text-yellow-400 hover:text-yellow-300 transition">設定</a>
             </div>
+            <p class="text-gray-500 text-sm mt-4">
+                最終更新: 2026年1月7日（Phase 57対応）
+            </p>
         </div>
     </footer>
 
