@@ -368,6 +368,8 @@ async function getCareItemsHandler(
         noteToFamily: data.noteToFamily,
         status: data.status,
         remainingQuantity: data.remainingQuantity,
+        currentQuantity: data.currentQuantity,
+        consumptionSummary: data.consumptionSummary,
         createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
         updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
       } as CareItem;
@@ -464,6 +466,8 @@ async function getCareItemsHandler(
         noteToFamily: data.noteToFamily,
         status: data.status,
         remainingQuantity: data.remainingQuantity,
+        currentQuantity: data.currentQuantity,
+        consumptionSummary: data.consumptionSummary,
         createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
         updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
       } as CareItem;
