@@ -43,6 +43,18 @@ export function FamilyDashboard() {
     setSelectedDate(formatDateString(date));
   };
 
+  // 間食の内容が実質的に空かどうかをチェック
+  // 「【ケアに関すること】 【ACPiece】」のみの場合は空とみなす
+  const hasSnackContent = (note: string | undefined): boolean => {
+    if (!note) return false;
+    // 【ケアに関すること】と【ACPiece】を削除して、残りがあるか確認
+    const content = note
+      .replace(/【ケアに関すること】/g, '')
+      .replace(/【ACPiece】/g, '')
+      .trim();
+    return content.length > 0;
+  };
+
   // タイムラインデータを構築（実データ + モックPlan）
   const timelineItems = useMemo<TimelineItemType[]>(() => {
     const items: TimelineItemType[] = [];
@@ -84,7 +96,10 @@ export function FamilyDashboard() {
     });
 
     // 間食(snack)は複数件対応：全てのsnackレコードを取得
-    const snackResults = mealResults.filter((r) => r.mealTime === 'snack');
+    // 実質的な内容がある記録のみ表示（「【ケアに関すること】 【ACPiece】」のみは除外）
+    const snackResults = mealResults
+      .filter((r) => r.mealTime === 'snack')
+      .filter((r) => hasSnackContent(r.note || r.snack));
 
     if (snackResults.length > 0) {
       // 間食のレコードがある場合、それぞれをタイムラインに追加
