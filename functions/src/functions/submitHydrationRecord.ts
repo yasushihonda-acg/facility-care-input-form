@@ -99,12 +99,22 @@ function buildWebhookMessage(
 ): string {
   const parts: string[] = [];
 
-  // 「様」の重複を防ぐ
-  const residentNameWithoutSama = record.residentName.replace(/様$/, "");
+  // residentNameに既に(ID...)が含まれているかチェック
+  const hasIdInName = /\(ID[^)]*\)/.test(record.residentName);
+
+  let formattedName: string;
+  if (hasIdInName) {
+    // 既にIDが含まれている場合はそのまま使用
+    formattedName = record.residentName;
+  } else {
+    // IDが含まれていない場合は様とIDを追加
+    const residentNameWithoutSama = record.residentName.replace(/様$/, "");
+    const idPart = record.residentId ? `(ID${record.residentId})` : "";
+    formattedName = `${residentNameWithoutSama}様${idPart}`;
+  }
 
   // ヘッダー: 【施設名_氏名様(ID...)】
-  const idPart = record.residentId ? `(ID${record.residentId})` : "";
-  parts.push(`【${record.facility}_${residentNameWithoutSama}様${idPart}】`);
+  parts.push(`【${record.facility}_${formattedName}】`);
 
   // タグ
   parts.push("#水分摂取 💧");
