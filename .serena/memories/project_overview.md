@@ -329,6 +329,27 @@ Google Chat API → syncChatImages → Firestore(care_photos) → フロント�
 ## E2Eテスト
 477件定義（Phase 57まで）
 
+## デモ・本番整合性
+CLAUDE.mdセクション4に対照表・チェックリストあり。
+詳細: `.serena/memories/demo_production_consistency.md`
+
+### 未実装機能（テスト存在・実装なし）
+- Phase 55: 品物操作通知（`item-action-notifications.spec.ts` スキップ中）
+
+## E2Eテスト定義（Phase 57まで）
+
+## バグ修正（2026-01-06）
+
+### PR #84: 水分記録のWebhook通知ロジック統一
+- 変更前: 重要なら重要Webhookのみ、それ以外は通常Webhookのみ
+- 変更後: 全記録→通常Webhook + 重要なら追加で重要Webhookにも送信
+- 食事記録と同じロジックに統一
+
+### PR #85: 画像タブで全ソースの画像を表示
+- 変更前: Chat経由の画像（source: google_chat）のみ表示
+- 変更後: 全画像を表示（direct_upload + google_chat）
+- アプリから直接アップロードした画像が即座に画像タブに反映
+
 ## Phase 57: 家族用品物管理に提供漏れアラート表示（2026-01-05）
 
 **目的**: スタッフ用記録入力で表示される「提供漏れ」を家族用品物管理ビューでも確認・編集可能に
