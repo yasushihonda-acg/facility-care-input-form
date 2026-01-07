@@ -214,8 +214,8 @@ export function StaffRecordDialog({
     if (formData.servedQuantity <= 0) {
       newErrors.servedQuantity = '提供数量を入力してください。';
     }
-    // Phase 59: 破棄済み品物の修正記録の場合、在庫は復元されるためこのチェックをスキップ
-    if (item.status !== 'discarded' && formData.servedQuantity > currentQuantity) {
+    // Phase 59 Fix: 廃棄記録がある品物の修正記録の場合、在庫は復元されるためこのチェックをスキップ
+    if (!isDiscardedItem && formData.servedQuantity > currentQuantity) {
       newErrors.servedQuantity = `提供数量が残量(${currentQuantity}${item.unit})を超えています`;
     }
 
