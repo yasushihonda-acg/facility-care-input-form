@@ -149,23 +149,27 @@ graph TD
 
 ### ルート対照表（デモ ↔ 本番）
 
-| 役割 | 本番パス | デモパス | コンポーネント | 状態 |
-|------|----------|----------|----------------|------|
-| **家族ホーム** | /family | /demo/family | FamilyDashboard | ✅ |
-| **品物管理** | /family/items | /demo/family/items | ItemManagement | ✅ |
-| **品物登録** | /family/items/new | /demo/family/items/new | ItemForm | ✅ |
-| **品物詳細** | /family/items/:id | /demo/family/items/:id | ItemDetail | ✅ |
-| **品物編集** | /family/items/:id/edit | /demo/family/items/:id/edit | ItemEditPage | ✅ |
-| **プリセット** | /family/presets | /demo/family/presets | PresetManagement | ✅ |
-| **エビデンス** | /family/evidence/:date | /demo/family/evidence/:date | EvidenceMonitor | ✅ |
-| **スタッフ注意** | /staff/notes | /demo/staff/notes | StaffNotesPage | ✅ |
-| **記録入力** | /staff/input/meal | /demo/staff/input/meal | MealInputPage | ✅ |
-| **家族連絡一覧** | /staff/family-messages | /demo/staff/family-messages | FamilyMessages | ✅ |
-| **家族連絡詳細** | /staff/family-messages/:id | /demo/staff/family-messages/:id | FamilyMessageDetail | ✅ |
-| **統計** | /stats | /demo/stats | StatsDashboard | ✅ |
-| **記録閲覧** | /view | /demo/view | ViewPage | ✅ |
-| **品物タイムライン** | /items/:id/timeline | /demo/items/:id/timeline | ItemTimeline | ✅ |
-| **設定** | /settings | なし（独立） | SettingsPage | ✅ |
+| 役割 | 本番パス | デモパス | コンポーネント | ルート | 本番実装 |
+|------|----------|----------|----------------|--------|----------|
+| **家族ホーム** | /family | /demo/family | FamilyDashboard | ✅ | ✅ |
+| **品物管理** | /family/items | /demo/family/items | ItemManagement | ✅ | ✅ |
+| **品物登録** | /family/items/new | /demo/family/items/new | ItemForm | ✅ | ✅ |
+| **品物詳細** | /family/items/:id | /demo/family/items/:id | ItemDetail | ✅ | ✅ |
+| **品物編集** | /family/items/:id/edit | /demo/family/items/:id/edit | ItemEditPage | ✅ | ✅ |
+| **プリセット** | /family/presets | /demo/family/presets | PresetManagement | ✅ | ✅ |
+| **エビデンス** | /family/evidence/:date | /demo/family/evidence/:date | EvidenceMonitor | ✅ | ✅ |
+| **スタッフ注意** | /staff/notes | /demo/staff/notes | StaffNotesPage | ✅ | ✅ |
+| **記録入力** | /staff/input/meal | /demo/staff/input/meal | MealInputPage | ✅ | ✅ |
+| **家族連絡一覧** | /staff/family-messages | /demo/staff/family-messages | FamilyMessages | ✅ | ✅ |
+| **家族連絡詳細** | /staff/family-messages/:id | /demo/staff/family-messages/:id | FamilyMessageDetail | ✅ | ✅ |
+| **統計** | /stats | /demo/stats | StatsDashboard | ✅ | ✅ |
+| **記録閲覧** | /view | /demo/view | ViewPage | ✅ | ✅ |
+| **品物タイムライン** | /items/:id/timeline | /demo/items/:id/timeline | ItemTimeline | ✅ | ⚠️ デモのみ |
+| **設定** | /settings | なし（独立） | SettingsPage | ✅ | ✅ |
+
+**凡例:**
+- ルート: ルーティング設定の有無
+- 本番実装: ✅ = 本番でデータ保存・取得が動作 / ⚠️ = デモのみハードコード（本番未実装）
 
 ### ツアー ↔ 機能 対照表
 
