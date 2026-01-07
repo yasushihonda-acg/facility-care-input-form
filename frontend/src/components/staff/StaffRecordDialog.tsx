@@ -129,22 +129,29 @@ export function StaffRecordDialog({
       const rhlQty = item.remainingHandlingLogs?.find(log => log.handling === 'discarded')?.quantity;
       const discardedQty = rhlQty || item.servedQuantity || item.quantity || 1;
 
-      // デバッグログ: ダイアログ表示時に常に値を確認
+      // Phase 59 Fix: 廃棄記録がある場合は discardedQty を使用
+      // - status === 'discarded' の場合
+      // - または remainingHandlingLogs に discarded エントリがある場合（status が consumed でも）
+      const hasDiscardedLog = !!rhlQty;
+      const isDiscardedItem = item.status === 'discarded' || hasDiscardedLog;
+
+      const servedQty = isDiscardedItem && discardedQty
+        ? discardedQty
+        : Math.min(suggestedQuantity, currentQuantity);
+
+      // デバッグログ
       console.log('[修正記録] ダイアログ開始:', {
         itemName: item.itemName,
         status: item.status,
-        'remainingHandlingLogs[discarded].quantity': rhlQty,
+        hasDiscardedLog,
+        isDiscardedItem,
+        'rhlQty': rhlQty,
         servedQuantity: item.servedQuantity,
         quantity: item.quantity,
         currentQuantity: item.currentQuantity,
         '→ discardedQty': discardedQty,
-        '→ servedQty(初期値)': item.status === 'discarded' && discardedQty
-          ? discardedQty
-          : Math.min(suggestedQuantity, currentQuantity)
+        '→ servedQty(初期値)': servedQty
       });
-      const servedQty = item.status === 'discarded' && discardedQty
-        ? discardedQty
-        : Math.min(suggestedQuantity, currentQuantity);
 
       // Phase 29/31: カテゴリに基づくタブ決定（旧カテゴリも自動変換）
       const defaultTab = getDefaultTab(item.category);
@@ -518,11 +525,15 @@ export function StaffRecordDialog({
               <div>
                 <p className="font-bold">{item.itemName}</p>
                 <p className="text-sm text-gray-500">
-                  {/* Phase 59: 破棄済み品物の修正記録では破棄された数量（復元される数量）を表示 */}
-                  {/* フォールバック: remainingHandlingLogs → servedQuantity → quantity → 1 */}
-                  残り: {item.status === 'discarded'
-                    ? (item.remainingHandlingLogs?.find(log => log.handling === 'discarded')?.quantity || item.servedQuantity || item.quantity || 1)
-                    : currentQuantity}{item.unit}
+                  {/* Phase 59 Fix: 廃棄記録がある場合は破棄された数量を表示 */}
+                  {/* status が 'consumed' でも remainingHandlingLogs に discarded があれば対象 */}
+                  残り: {(() => {
+                    const rhl = item.remainingHandlingLogs?.find(log => log.handling === 'discarded')?.quantity;
+                    const hasDiscarded = item.status === 'discarded' || !!rhl;
+                    return hasDiscarded
+                      ? (rhl || item.servedQuantity || item.quantity || 1)
+                      : currentQuantity;
+                  })()}{item.unit}
                   {item.expirationDate && (
                     <span className="ml-2">
                       期限: {new Date(item.expirationDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}
