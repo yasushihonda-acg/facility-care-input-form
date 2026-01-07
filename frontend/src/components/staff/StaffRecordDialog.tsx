@@ -118,7 +118,12 @@ export function StaffRecordDialog({
     if (isOpen) {
       // 家族の指示から推奨提供数を計算
       const suggestedQuantity = getSuggestedQuantity(item);
-      const servedQty = Math.min(suggestedQuantity, currentQuantity);
+
+      // Phase 59: 破棄済み品物の修正記録の場合、元の提供数量を復元
+      // 通常の記録の場合は残量との最小値を使用
+      const servedQty = item.status === 'discarded' && item.servedQuantity
+        ? item.servedQuantity
+        : Math.min(suggestedQuantity, currentQuantity);
 
       // Phase 29/31: カテゴリに基づくタブ決定（旧カテゴリも自動変換）
       const defaultTab = getDefaultTab(item.category);
@@ -203,7 +208,8 @@ export function StaffRecordDialog({
     if (formData.servedQuantity <= 0) {
       newErrors.servedQuantity = '提供数量を入力してください。';
     }
-    if (formData.servedQuantity > currentQuantity) {
+    // Phase 59: 破棄済み品物の修正記録の場合、在庫は復元されるためこのチェックをスキップ
+    if (item.status !== 'discarded' && formData.servedQuantity > currentQuantity) {
       newErrors.servedQuantity = `提供数量が残量(${currentQuantity}${item.unit})を超えています`;
     }
 
