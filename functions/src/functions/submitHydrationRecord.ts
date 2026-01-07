@@ -131,8 +131,25 @@ function buildWebhookMessage(
   parts.push("");
   parts.push(`摂取量：${record.hydrationAmount}cc`);
 
+  // 特記事項に品物名を挿入（シート保存と同じロジック）
+  let specialNotes = record.note || "";
+  if (record.itemName) {
+    const careHeader = "【ケアに関すること】";
+    const acpFooter = "【ACPiece】";
+    if (specialNotes.includes(careHeader) && specialNotes.includes(acpFooter)) {
+      specialNotes = specialNotes.replace(
+        careHeader + "\n",
+        careHeader + "\n" + record.itemName + "\n"
+      );
+    } else if (!specialNotes) {
+      specialNotes = record.itemName;
+    } else {
+      specialNotes = record.itemName + "\n" + specialNotes;
+    }
+  }
+
   parts.push("");
-  parts.push(`特記事項：${record.note || ""}`);
+  parts.push(`特記事項：${specialNotes}`);
 
   parts.push("");
   parts.push("");
