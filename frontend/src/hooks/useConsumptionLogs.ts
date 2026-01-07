@@ -10,8 +10,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getConsumptionLogs,
   recordConsumptionLog,
+  correctDiscardedRecord,
 } from '../api';
-import type { GetConsumptionLogsParams } from '../api';
+import type { GetConsumptionLogsParams, CorrectDiscardedRecordRequest } from '../api';
 import type { RecordConsumptionLogRequest, ConsumptionLog, GetConsumptionLogsResponse } from '../types/consumptionLog';
 import { useDemoMode } from './useDemoMode';
 import { getDemoConsumptionLogsForItem } from '../data/demo';
@@ -76,6 +77,37 @@ export function useRecordConsumptionLog() {
         queryKey: [CONSUMPTION_LOGS_KEY, data.requestItemId],
       });
       // 品物データのキャッシュも無効化（currentQuantity, statusが更新されるため）
+      queryClient.invalidateQueries({
+        queryKey: [CARE_ITEMS_KEY],
+      });
+    },
+  });
+}
+
+
+/**
+ * 破棄記録を修正するミューテーションフック
+ */
+export function useCorrectDiscardedRecord() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: CorrectDiscardedRecordRequest) => {
+      const response = await correctDiscardedRecord(params);
+      if (!response.success || !response.data) {
+        const errorMsg = typeof response.error === 'string'
+          ? response.error
+          : response.error?.message || 'Failed to correct discarded record';
+        throw new Error(errorMsg);
+      }
+      return { ...response.data, requestItemId: params.itemId };
+    },
+    onSuccess: (data) => {
+      // 消費ログのキャッシュを無効化
+      queryClient.invalidateQueries({
+        queryKey: [CONSUMPTION_LOGS_KEY, data.requestItemId],
+      });
+      // 品物データのキャッシュも無効化
       queryClient.invalidateQueries({
         queryKey: [CARE_ITEMS_KEY],
       });

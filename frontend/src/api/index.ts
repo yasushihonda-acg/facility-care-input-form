@@ -677,6 +677,45 @@ export async function getConsumptionLogs(
   return response.json();
 }
 
+
+/**
+ * 破棄記録を修正
+ * 破棄済みの消費ログを無効化し、新しい記録で置き換える
+ */
+export interface CorrectDiscardedRecordRequest extends RecordConsumptionLogRequest {
+  /** 修正対象の消費ログID（指定しない場合は最新の破棄ログを修正） */
+  targetLogId?: string;
+}
+
+export interface CorrectDiscardedRecordResponse {
+  /** 新しい消費ログID */
+  newLogId: string;
+  /** 修正された元のログID */
+  correctedLogId: string;
+  itemId: string;
+  /** 更新後の残量 */
+  currentQuantity: number;
+  /** 更新後のステータス */
+  status: string;
+}
+
+export async function correctDiscardedRecord(
+  params: CorrectDiscardedRecordRequest
+): Promise<ApiResponse<CorrectDiscardedRecordResponse>> {
+  const response = await fetch(`${API_BASE}/correctDiscardedRecord`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to correct discarded record: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
 // =============================================================================
 // 禁止ルール CRUD API（Phase 9.x）
 // =============================================================================

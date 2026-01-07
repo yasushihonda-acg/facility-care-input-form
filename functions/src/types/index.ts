@@ -851,6 +851,43 @@ export interface GetConsumptionLogsResponse {
   total: number;
 }
 
+
+/** 破棄記録修正リクエスト */
+export interface CorrectDiscardedRecordRequest {
+  itemId: string;
+  /** 修正後の提供情報 */
+  servedDate: string; // YYYY-MM-DD
+  servedTime?: string; // HH:mm
+  mealTime?: MealTime;
+  servedQuantity: number;
+  servedBy: string;
+  /** 修正後の摂食情報 */
+  consumedQuantity: number;
+  consumptionStatus: ConsumptionStatus;
+  consumptionNote?: string;
+  noteToFamily?: string;
+  /** 修正後の残り対応 */
+  remainingHandling?: RemainingHandling;
+  remainingHandlingOther?: string;
+  /** メタ情報 */
+  recordedBy: string;
+  /** 修正対象の消費ログID（指定しない場合は最新の破棄ログを修正） */
+  targetLogId?: string;
+}
+
+/** 破棄記録修正レスポンス */
+export interface CorrectDiscardedRecordResponse {
+  /** 新しい消費ログID */
+  newLogId: string;
+  /** 修正された元のログID */
+  correctedLogId: string;
+  itemId: string;
+  /** 更新後の残量 */
+  currentQuantity: number;
+  /** 更新後のステータス */
+  status: ItemStatus;
+}
+
 // =============================================================================
 // 統計ダッシュボード関連型定義 (Phase 8.3)
 // =============================================================================
