@@ -131,19 +131,6 @@ export function StaffRecordDialog({
         ? discardedQty
         : Math.min(suggestedQuantity, currentQuantity);
 
-      // デバッグログ
-      console.log('[修正記録] ダイアログ開始:', {
-        itemName: item.itemName,
-        status: item.status,
-        isDiscardedItem,
-        rhlDiscardedQty,
-        servedQuantity: item.servedQuantity,
-        quantity: item.quantity,
-        currentQuantity: item.currentQuantity,
-        discardedQty,
-        '→ servedQty(初期値)': servedQty
-      });
-
       // Phase 29/31: カテゴリに基づくタブ決定（旧カテゴリも自動変換）
       const defaultTab = getDefaultTab(item.category);
 
