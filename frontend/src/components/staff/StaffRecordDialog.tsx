@@ -82,6 +82,11 @@ export function StaffRecordDialog({
   // 現在の残量
   const currentQuantity = item.currentQuantity ?? item.remainingQuantity ?? item.quantity;
 
+  // Phase 59 Fix: 廃棄記録がある場合の判定（コンポーネントレベルで計算）
+  const rhlDiscardedQty = item.remainingHandlingLogs?.find(log => log.handling === 'discarded')?.quantity;
+  const isDiscardedItem = item.status === 'discarded' || !!rhlDiscardedQty;
+  const discardedQty = rhlDiscardedQty || item.servedQuantity || item.quantity || 1;
+
   // フォーム状態
   const [formData, setFormData] = useState({
     // Phase 29: タブ選択
@@ -120,21 +125,8 @@ export function StaffRecordDialog({
       const suggestedQuantity = getSuggestedQuantity(item);
 
       // Phase 59: 破棄済み品物の修正記録の場合、破棄された数量（復元される数量）を使用
-      // 通常の記録の場合は残量との最小値を使用
-      // フォールバック優先順位:
-      // 1. remainingHandlingLogs[].quantity (消費記録API経由の廃棄)
-      // 2. servedQuantity (最後に提供した数量)
-      // 3. quantity (登録時の元数量)
-      // 4. 1 (最終フォールバック)
-      const rhlQty = item.remainingHandlingLogs?.find(log => log.handling === 'discarded')?.quantity;
-      const discardedQty = rhlQty || item.servedQuantity || item.quantity || 1;
-
       // Phase 59 Fix: 廃棄記録がある場合は discardedQty を使用
-      // - status === 'discarded' の場合
-      // - または remainingHandlingLogs に discarded エントリがある場合（status が consumed でも）
-      const hasDiscardedLog = !!rhlQty;
-      const isDiscardedItem = item.status === 'discarded' || hasDiscardedLog;
-
+      // isDiscardedItem, discardedQty はコンポーネントレベルで計算済み
       const servedQty = isDiscardedItem && discardedQty
         ? discardedQty
         : Math.min(suggestedQuantity, currentQuantity);
@@ -143,13 +135,12 @@ export function StaffRecordDialog({
       console.log('[修正記録] ダイアログ開始:', {
         itemName: item.itemName,
         status: item.status,
-        hasDiscardedLog,
         isDiscardedItem,
-        'rhlQty': rhlQty,
+        rhlDiscardedQty,
         servedQuantity: item.servedQuantity,
         quantity: item.quantity,
         currentQuantity: item.currentQuantity,
-        '→ discardedQty': discardedQty,
+        discardedQty,
         '→ servedQty(初期値)': servedQty
       });
 
@@ -484,7 +475,9 @@ export function StaffRecordDialog({
     }
   }, [formData.activeTab, formData.servedQuantity, formData.consumptionRateInput, formData.remainingHandling, formData.hydrationAmount, item.unit]);
 
-  const quantityAfter = currentQuantity - consumptionAmounts.inventoryDeducted;
+  // Phase 59 Fix: 廃棄済み品物の修正記録では、復元される数量をベースに計算
+  const baseQuantity = isDiscardedItem ? discardedQty : currentQuantity;
+  const quantityAfter = baseQuantity - consumptionAmounts.inventoryDeducted;
 
   if (!isOpen) return null;
 
@@ -525,15 +518,8 @@ export function StaffRecordDialog({
               <div>
                 <p className="font-bold">{item.itemName}</p>
                 <p className="text-sm text-gray-500">
-                  {/* Phase 59 Fix: 廃棄記録がある場合は破棄された数量を表示 */}
-                  {/* status が 'consumed' でも remainingHandlingLogs に discarded があれば対象 */}
-                  残り: {(() => {
-                    const rhl = item.remainingHandlingLogs?.find(log => log.handling === 'discarded')?.quantity;
-                    const hasDiscarded = item.status === 'discarded' || !!rhl;
-                    return hasDiscarded
-                      ? (rhl || item.servedQuantity || item.quantity || 1)
-                      : currentQuantity;
-                  })()}{item.unit}
+                  {/* Phase 59 Fix: 廃棄記録がある場合は復元される数量を表示 */}
+                  残り: {isDiscardedItem ? discardedQty : currentQuantity}{item.unit}
                   {item.expirationDate && (
                     <span className="ml-2">
                       期限: {new Date(item.expirationDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}
