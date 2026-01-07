@@ -129,18 +129,19 @@ export function StaffRecordDialog({
       const rhlQty = item.remainingHandlingLogs?.find(log => log.handling === 'discarded')?.quantity;
       const discardedQty = rhlQty || item.servedQuantity || item.quantity || 1;
 
-      // デバッグログ: 破棄済み品物の修正記録時に値を確認
-      if (item.status === 'discarded') {
-        console.log('[修正記録] フォールバック診断:', {
-          itemName: item.itemName,
-          status: item.status,
-          'remainingHandlingLogs[discarded].quantity': rhlQty,
-          servedQuantity: item.servedQuantity,
-          quantity: item.quantity,
-          currentQuantity: item.currentQuantity,
-          '→ discardedQty': discardedQty
-        });
-      }
+      // デバッグログ: ダイアログ表示時に常に値を確認
+      console.log('[修正記録] ダイアログ開始:', {
+        itemName: item.itemName,
+        status: item.status,
+        'remainingHandlingLogs[discarded].quantity': rhlQty,
+        servedQuantity: item.servedQuantity,
+        quantity: item.quantity,
+        currentQuantity: item.currentQuantity,
+        '→ discardedQty': discardedQty,
+        '→ servedQty(初期値)': item.status === 'discarded' && discardedQty
+          ? discardedQty
+          : Math.min(suggestedQuantity, currentQuantity)
+      });
       const servedQty = item.status === 'discarded' && discardedQty
         ? discardedQty
         : Math.min(suggestedQuantity, currentQuantity);
