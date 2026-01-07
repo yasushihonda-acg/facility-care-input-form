@@ -130,6 +130,7 @@ export async function createConsumptionLogsFromSnackRecords(
             FieldValue.increment(consumedQuantity),
           "consumptionSummary.lastServedDate": today,
           "consumptionSummary.lastServedBy": staffName,
+          "consumptionSummary.lastRecordedAt": now.toDate().toISOString(),
           "updatedAt": now,
         });
       });

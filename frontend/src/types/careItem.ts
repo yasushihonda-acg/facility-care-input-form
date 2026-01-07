@@ -245,6 +245,7 @@ export interface CareItem {
     avgConsumptionRate: number;  // 平均摂食率
     lastServedDate?: string;     // 最終提供日
     lastServedBy?: string;       // 最終提供者
+    lastRecordedAt?: string;     // 最終記録日時（ISO 8601）
   };
 
   // ステータス・メタ情報
