@@ -880,8 +880,8 @@ function RemainingItemCard({ item, type, showButtons = true, onRecordClick }: Re
               onClick={onRecordClick}
               className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-1"
             >
-              <span>🍪</span>
-              <span>提供記録</span>
+              <span>{type === 'discarded' ? '🔄' : '🍪'}</span>
+              <span>{type === 'discarded' ? '修正記録' : '提供記録'}</span>
             </button>
           </div>
         )}
