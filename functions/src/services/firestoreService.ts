@@ -146,29 +146,12 @@ export async function syncPlanDataFull(
   const db = getFirestore();
   const collection = db.collection(COLLECTIONS.PLAN_DATA);
 
-  // 1. 既存データを削除（バッチ分割）
-  const existingDocs = await collection
-    .where("sheetName", "==", sheetName)
-    .get();
-
-  if (existingDocs.docs.length > 0) {
-    const deleteChunks = chunkArray(existingDocs.docs, BATCH_SIZE);
-    const docCount = existingDocs.docs.length;
-    console.log(`[FULL] Deleting ${docCount} docs in ${deleteChunks.length} batches: ${sheetName}`);
-
-    for (let i = 0; i < deleteChunks.length; i++) {
-      const batch = db.batch();
-      deleteChunks[i].forEach((doc) => {
-        batch.delete(doc.ref);
-      });
-      await batch.commit();
-      console.log(`[FULL] Delete batch ${i + 1}/${deleteChunks.length} completed for ${sheetName}`);
-    }
-  }
-
-  // 2. 新しいデータを追加（決定論的ID・バッチ分割）
+  // 1. 新しいデータを追加（決定論的ID・バッチ分割）
+  // ※ 先に追加することで、途中失敗時もデータが残る
   const syncedAt = Timestamp.now();
   const insertChunks = chunkArray(records, BATCH_SIZE);
+  const insertedIds = new Set<string>();
+
   console.log(`[FULL] Inserting ${records.length} records in ${insertChunks.length} batches for ${sheetName}`);
 
   for (let i = 0; i < insertChunks.length; i++) {
@@ -181,6 +164,7 @@ export async function syncPlanDataFull(
         record.staffName,
         record.residentName
       );
+      insertedIds.add(docId);
       const docRef = collection.doc(docId);
       // 年月を抽出
       const yearMonth = extractYearMonth(record.timestamp);
@@ -194,6 +178,30 @@ export async function syncPlanDataFull(
     });
     await batch.commit();
     console.log(`[FULL] Insert batch ${i + 1}/${insertChunks.length} completed for ${sheetName}`);
+  }
+
+  // 2. 追加成功後、古いデータを削除（シートから消えたレコードのみ）
+  // ※ 追加が全て成功してから削除するため、途中失敗時はデータが残る
+  const existingDocs = await collection
+    .where("sheetName", "==", sheetName)
+    .get();
+
+  const docsToDelete = existingDocs.docs.filter((doc) => !insertedIds.has(doc.id));
+
+  if (docsToDelete.length > 0) {
+    const deleteChunks = chunkArray(docsToDelete, BATCH_SIZE);
+    console.log(`[FULL] Deleting ${docsToDelete.length} stale docs in ${deleteChunks.length} batches: ${sheetName}`);
+
+    for (let i = 0; i < deleteChunks.length; i++) {
+      const batch = db.batch();
+      deleteChunks[i].forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+      console.log(`[FULL] Delete batch ${i + 1}/${deleteChunks.length} completed for ${sheetName}`);
+    }
+  } else {
+    console.log(`[FULL] No stale docs to delete for ${sheetName}`);
   }
 
   // 3. メタデータ更新
