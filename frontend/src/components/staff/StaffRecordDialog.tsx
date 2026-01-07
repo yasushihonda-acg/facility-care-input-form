@@ -11,7 +11,7 @@ import type { CareItem } from '../../types/careItem';
 import type { RemainingHandling } from '../../types/consumptionLog';
 import { getCategoryIcon, migrateCategory, formatRemainingHandlingWithConditions } from '../../types/careItem';
 import { determineConsumptionStatus, REMAINING_HANDLING_OPTIONS } from '../../types/consumptionLog';
-import { useRecordConsumptionLog } from '../../hooks/useConsumptionLogs';
+import { useRecordConsumptionLog, useCorrectDiscardedRecord } from '../../hooks/useConsumptionLogs';
 import { submitMealRecord, uploadCareImage, submitHydrationRecord } from '../../api';
 import { useMealFormSettings } from '../../hooks/useMealFormSettings';
 import { DAY_SERVICE_OPTIONS } from '../../types/mealForm';
@@ -77,6 +77,7 @@ export function StaffRecordDialog({
 }: StaffRecordDialogProps) {
   const { settings } = useMealFormSettings();
   const recordMutation = useRecordConsumptionLog();
+  const correctDiscardedMutation = useCorrectDiscardedRecord();
 
   // 現在の残量
   const currentQuantity = item.currentQuantity ?? item.remainingQuantity ?? item.quantity;
@@ -281,24 +282,49 @@ export function StaffRecordDialog({
       const consumedQuantity = (consumptionRate / 100) * formData.servedQuantity;
       const consumptionStatus = determineConsumptionStatus(consumptionRate);
 
-      await recordMutation.mutateAsync({
-        itemId: item.id,
-        servedDate: getTodayString(),
-        servedTime: new Date().toTimeString().slice(0, 5),
-        mealTime: 'snack', // 品物ベースの記録はすべて間食として消費ログに記録
-        servedQuantity: formData.servedQuantity,
-        servedBy: formData.staffName,
-        consumedQuantity: consumedQuantity,
-        consumptionStatus: consumptionStatus,
-        consumptionNote: formData.consumptionNote || undefined,
-        noteToFamily: formData.noteToFamily || undefined,
-        recordedBy: formData.staffName,
-        // Phase 15.7: 残り対応をAPIに送信（食事タブのみ）
-        ...(formData.activeTab === 'meal' && formData.remainingHandling && {
-          remainingHandling: formData.remainingHandling,
-          remainingHandlingOther: formData.remainingHandlingOther || undefined,
-        }),
-      });
+      // 破棄済みの品物に対する修正記録の場合は correctDiscardedRecord API を使用
+      const isCorrection = item.status === 'discarded';
+
+      if (isCorrection) {
+        // 修正記録API: 破棄ログを無効化し、新しい記録で置き換える
+        await correctDiscardedMutation.mutateAsync({
+          itemId: item.id,
+          servedDate: getTodayString(),
+          servedTime: new Date().toTimeString().slice(0, 5),
+          mealTime: 'snack',
+          servedQuantity: formData.servedQuantity,
+          servedBy: formData.staffName,
+          consumedQuantity: consumedQuantity,
+          consumptionStatus: consumptionStatus,
+          consumptionNote: formData.consumptionNote || undefined,
+          noteToFamily: formData.noteToFamily || undefined,
+          recordedBy: formData.staffName,
+          ...(formData.activeTab === 'meal' && formData.remainingHandling && {
+            remainingHandling: formData.remainingHandling,
+            remainingHandlingOther: formData.remainingHandlingOther || undefined,
+          }),
+        });
+      } else {
+        // 通常記録API
+        await recordMutation.mutateAsync({
+          itemId: item.id,
+          servedDate: getTodayString(),
+          servedTime: new Date().toTimeString().slice(0, 5),
+          mealTime: 'snack', // 品物ベースの記録はすべて間食として消費ログに記録
+          servedQuantity: formData.servedQuantity,
+          servedBy: formData.staffName,
+          consumedQuantity: consumedQuantity,
+          consumptionStatus: consumptionStatus,
+          consumptionNote: formData.consumptionNote || undefined,
+          noteToFamily: formData.noteToFamily || undefined,
+          recordedBy: formData.staffName,
+          // Phase 15.7: 残り対応をAPIに送信（食事タブのみ）
+          ...(formData.activeTab === 'meal' && formData.remainingHandling && {
+            remainingHandling: formData.remainingHandling,
+            remainingHandlingOther: formData.remainingHandlingOther || undefined,
+          }),
+        });
+      }
 
       // Phase 29: タブ別にシート記録APIを呼び出し
       if (formData.activeTab === 'meal') {
@@ -354,12 +380,15 @@ export function StaffRecordDialog({
         });
       }
 
+      // 注: 破棄済みの品物に対する修正記録の場合、
+      // correctDiscardedRecord API がステータス復旧を処理するため手動更新は不要
+
       onSuccess?.();
       onClose();
     } catch (err) {
       setErrors({ submit: err instanceof Error ? err.message : '記録に失敗しました' });
     }
-  }, [formData, item, settings, recordMutation, validate, onSuccess, onClose, isDemo]);
+  }, [formData, item, settings, recordMutation, correctDiscardedMutation, validate, onSuccess, onClose, isDemo]);
 
   // Phase 15.7: 残り対応に基づいて消費量・残量を計算
   // Phase 29修正: タブ別に計算ロジックを分岐（水分タブも残り対応を考慮）
@@ -967,17 +996,17 @@ export function StaffRecordDialog({
         <div className="sticky bottom-0 bg-white flex justify-end gap-2 p-4 border-t">
           <button
             onClick={onClose}
-            disabled={recordMutation.isPending || isDemoSubmitting}
+            disabled={recordMutation.isPending || correctDiscardedMutation.isPending || isDemoSubmitting}
             className="px-4 py-2 text-gray-700 border rounded-lg hover:bg-gray-100 disabled:opacity-50"
           >
             キャンセル
           </button>
           <button
             onClick={handleSubmit}
-            disabled={recordMutation.isPending || isDemoSubmitting}
+            disabled={recordMutation.isPending || correctDiscardedMutation.isPending || isDemoSubmitting}
             className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50"
           >
-            {(recordMutation.isPending || isDemoSubmitting) ? '記録中...' : (isDemo ? '記録を保存（デモ）' : '記録を保存')}
+            {(recordMutation.isPending || correctDiscardedMutation.isPending || isDemoSubmitting) ? '記録中...' : (isDemo ? '記録を保存（デモ）' : '記録を保存')}
           </button>
         </div>
       </div>

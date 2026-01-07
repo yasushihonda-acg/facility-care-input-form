@@ -556,6 +556,316 @@ async function getConsumptionLogsHandler(
   }
 }
 
+
+// =============================================================================
+// Handler: correctDiscardedRecord
+// =============================================================================
+
+/**
+ * 破棄記録を修正
+ * - 破棄済みの消費ログを無効化し、新しい記録で置き換える
+ * - 在庫・統計を正しい値に修正する
+ */
+async function correctDiscardedRecordHandler(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const timestamp = new Date().toISOString();
+
+  try {
+    // CORS対応
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.set("Access-Control-Allow-Headers", "Content-Type");
+
+    if (req.method === "OPTIONS") {
+      res.status(204).send("");
+      return;
+    }
+
+    if (req.method !== "POST") {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: {
+          code: ErrorCodes.INVALID_REQUEST,
+          message: "Method not allowed. Use POST.",
+        },
+        timestamp,
+      };
+      res.status(405).json(response);
+      return;
+    }
+
+    // バリデーション（RecordConsumptionLogRequestと同様）
+    const validation = validateRecordConsumptionLogRequest(req.body);
+    if (!validation.valid) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: {
+          code: ErrorCodes.MISSING_REQUIRED_FIELD,
+          message: validation.error,
+        },
+        timestamp,
+      };
+      res.status(400).json(response);
+      return;
+    }
+
+    const input = validation.data;
+    const targetLogId = (req.body as { targetLogId?: string }).targetLogId;
+
+    functions.logger.info("correctDiscardedRecord started", {
+      itemId: input.itemId,
+      targetLogId,
+      servedQuantity: input.servedQuantity,
+      consumedQuantity: input.consumedQuantity,
+    });
+
+    const db = getFirestore();
+    const itemRef = db.collection(CARE_ITEMS_COLLECTION).doc(input.itemId);
+    const logsRef = itemRef.collection(CONSUMPTION_LOGS_SUBCOLLECTION);
+
+    // トランザクションで処理
+    const result = await db.runTransaction(async (transaction) => {
+      const itemDoc = await transaction.get(itemRef);
+
+      if (!itemDoc.exists) {
+        throw new Error("Item not found");
+      }
+
+      const item = itemDoc.data() as CareItem;
+
+      // 修正対象の破棄ログを取得
+      let discardLogDoc;
+      if (targetLogId) {
+        discardLogDoc = await transaction.get(logsRef.doc(targetLogId));
+        if (!discardLogDoc.exists) {
+          throw new Error("Target log not found");
+        }
+      } else {
+        // 最新の破棄ログを取得
+        const discardLogsSnapshot = await logsRef
+          .where("remainingHandling", "==", "discarded")
+          .orderBy("recordedAt", "desc")
+          .limit(1)
+          .get();
+
+        if (discardLogsSnapshot.empty) {
+          throw new Error("No discarded log found for this item");
+        }
+        discardLogDoc = discardLogsSnapshot.docs[0];
+      }
+
+      const discardLog = discardLogDoc.data() as ConsumptionLog;
+
+      // 破棄ログであることを確認
+      if (discardLog.remainingHandling !== "discarded") {
+        throw new Error("Target log is not a discarded record");
+      }
+
+      // 既に修正済みでないことを確認
+      if ((discardLog as { correctedAt?: unknown }).correctedAt) {
+        throw new Error("Target log has already been corrected");
+      }
+
+      // === 1. 在庫の逆算 ===
+      // 破棄時: inventoryDeducted = servedQuantity（全量を在庫から引いた）
+      // 修正後: 破棄量を戻して、新しい消費量を引く
+      const discardedInventoryDeducted = discardLog.inventoryDeducted ?? discardLog.servedQuantity;
+      const currentQty = item.currentQuantity ?? item.remainingQuantity ?? item.quantity ?? 0;
+
+      // 破棄した分を在庫に戻す
+      const restoredQty = currentQty + discardedInventoryDeducted;
+
+      // === 2. サマリーの逆算 ===
+      const existingSummary = item.consumptionSummary ?? {
+        totalServed: 0,
+        totalServedQuantity: 0,
+        totalConsumedQuantity: 0,
+        avgConsumptionRate: 0,
+      };
+
+      // 破棄ログの分を引く
+      const adjustedTotalServed = Math.max(0, existingSummary.totalServed - 1);
+      const adjustedTotalServedQty = Math.max(0, existingSummary.totalServedQuantity - discardLog.servedQuantity);
+      const adjustedTotalConsumedQty = Math.max(0, existingSummary.totalConsumedQuantity - discardLog.consumedQuantity);
+
+      // === 3. 新しい消費量を計算 ===
+      const newConsumptionRate = input.servedQuantity > 0 ?
+        Math.round((input.consumedQuantity / input.servedQuantity) * 100) :
+        0;
+
+      const newAmounts = calculateConsumptionAmounts(
+        input.servedQuantity,
+        newConsumptionRate,
+        input.remainingHandling
+      );
+
+      // 新しい残量を計算
+      const newQuantity = restoredQty - newAmounts.inventoryDeducted;
+
+      // バリデーション: 残量がマイナスにならないか
+      if (newQuantity < 0) {
+        throw new Error(`修正後の残量がマイナスになります: ${newQuantity}`);
+      }
+
+      // === 4. 新しいサマリーを計算 ===
+      const newTotalServed = adjustedTotalServed + 1;
+      const newTotalServedQty = adjustedTotalServedQty + input.servedQuantity;
+      const newTotalConsumedQty = adjustedTotalConsumedQty + input.consumedQuantity;
+      const newAvgRate = newTotalServedQty > 0 ?
+        Math.round((newTotalConsumedQty / newTotalServedQty) * 100) :
+        0;
+
+      const newSummary = {
+        totalServed: newTotalServed,
+        totalServedQuantity: newTotalServedQty,
+        totalConsumedQuantity: newTotalConsumedQty,
+        avgConsumptionRate: newAvgRate,
+        lastServedDate: input.servedDate,
+        lastServedBy: input.servedBy,
+      };
+
+      // === 5. ステータスを判定 ===
+      const newStatus = determineItemStatus(
+        newQuantity,
+        item.expirationDate,
+        newSummary
+      );
+
+      // === 6. 元のログを修正済みとしてマーク ===
+      const now = Timestamp.now();
+      transaction.update(logsRef.doc(discardLogDoc.id), {
+        correctedAt: now,
+        correctedBy: input.recordedBy,
+      });
+
+      // === 7. 新しい消費ログを作成 ===
+      const newLogRef = logsRef.doc();
+      const newLogData = {
+        id: newLogRef.id,
+        itemId: input.itemId,
+        servedDate: input.servedDate,
+        servedTime: input.servedTime ?? null,
+        mealTime: input.mealTime ?? null,
+        servedQuantity: input.servedQuantity,
+        servedBy: input.servedBy,
+        consumedQuantity: input.consumedQuantity,
+        consumptionRate: newConsumptionRate,
+        consumptionStatus: input.consumptionStatus,
+        remainingHandling: input.remainingHandling ?? null,
+        remainingHandlingOther: input.remainingHandlingOther ?? null,
+        inventoryDeducted: newAmounts.inventoryDeducted,
+        wastedQuantity: newAmounts.wastedQuantity,
+        quantityBefore: restoredQty,
+        quantityAfter: newQuantity,
+        consumptionNote: input.consumptionNote ?? null,
+        noteToFamily: input.noteToFamily ?? null,
+        recordedBy: input.recordedBy,
+        recordedAt: now,
+        // 修正記録であることを示すフィールド
+        isCorrectionOf: discardLogDoc.id,
+      };
+
+      transaction.set(newLogRef, newLogData);
+
+      // === 8. CareItemを更新 ===
+      const updateData: Record<string, unknown> = {
+        currentQuantity: newQuantity,
+        remainingQuantity: newQuantity,
+        status: newStatus,
+        consumptionSummary: newSummary,
+        actualServeDate: input.servedDate,
+        servedQuantity: input.servedQuantity,
+        servedBy: input.servedBy,
+        consumptionRate: newConsumptionRate,
+        consumptionStatus: input.consumptionStatus,
+        consumptionNote: input.consumptionNote ?? FieldValue.delete(),
+        noteToFamily: input.noteToFamily ?? FieldValue.delete(),
+        recordedBy: input.recordedBy,
+        updatedAt: now,
+        // 破棄済みステータスを解除
+        discardedAt: FieldValue.delete(),
+        discardReason: FieldValue.delete(),
+      };
+
+      // remainingHandlingLogsから破棄エントリを削除
+      const existingLogs = item.remainingHandlingLogs ?? [];
+      // 同じ日付・数量の破棄ログを削除
+      const updatedLogs = existingLogs.filter((log: RemainingHandlingLog) => {
+        if (log.handling !== "discarded") return true;
+        // 破棄ログの記録日時と比較（最新のものを削除）
+        return log.recordedAt !== discardLog.recordedAt?.toDate?.().toISOString();
+      });
+      updateData.remainingHandlingLogs = updatedLogs;
+
+      // 新しい残り対応がある場合は追加
+      if (input.remainingHandling === "discarded" || input.remainingHandling === "stored") {
+        const remainingQuantity = input.servedQuantity - input.consumedQuantity;
+        const handlingLog: RemainingHandlingLog = {
+          id: `RHL_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+          handling: input.remainingHandling,
+          quantity: remainingQuantity,
+          note: input.remainingHandlingOther || undefined,
+          recordedBy: input.recordedBy,
+          recordedAt: now.toDate().toISOString(),
+        };
+        updateData.remainingHandlingLogs = FieldValue.arrayUnion(handlingLog);
+      }
+
+      transaction.update(itemRef, updateData);
+
+      return {
+        newLogId: newLogRef.id,
+        correctedLogId: discardLogDoc.id,
+        currentQuantity: newQuantity,
+        status: newStatus,
+      };
+    });
+
+    functions.logger.info("correctDiscardedRecord success", {
+      newLogId: result.newLogId,
+      correctedLogId: result.correctedLogId,
+      itemId: input.itemId,
+      currentQuantity: result.currentQuantity,
+      status: result.status,
+    });
+
+    const responseData = {
+      newLogId: result.newLogId,
+      correctedLogId: result.correctedLogId,
+      itemId: input.itemId,
+      currentQuantity: result.currentQuantity,
+      status: result.status,
+    };
+
+    const response: ApiResponse<typeof responseData> = {
+      success: true,
+      data: responseData,
+      timestamp,
+    };
+    res.status(201).json(response);
+  } catch (error) {
+    functions.logger.error("correctDiscardedRecord error", error);
+
+    const isValidationError = error instanceof Error &&
+      (error.message.includes("not found") ||
+       error.message.includes("already been corrected") ||
+       error.message.includes("not a discarded") ||
+       error.message.includes("マイナス"));
+
+    const response: ApiResponse<null> = {
+      success: false,
+      error: {
+        code: isValidationError ? ErrorCodes.INVALID_REQUEST : ErrorCodes.FIRESTORE_ERROR,
+        message: error instanceof Error ? error.message : "Unknown error",
+      },
+      timestamp,
+    };
+    res.status(isValidationError ? 400 : 500).json(response);
+  }
+}
+
 // =============================================================================
 // Cloud Functions エクスポート
 // =============================================================================
@@ -577,3 +887,13 @@ export const getConsumptionLogs = functions
     serviceAccount: FUNCTIONS_CONFIG.SERVICE_ACCOUNT,
   })
   .https.onRequest(getConsumptionLogsHandler);
+
+
+export const correctDiscardedRecord = functions
+  .region(FUNCTIONS_CONFIG.REGION)
+  .runWith({
+    timeoutSeconds: 60,
+    memory: "256MB",
+    serviceAccount: FUNCTIONS_CONFIG.SERVICE_ACCOUNT,
+  })
+  .https.onRequest(correctDiscardedRecordHandler);
