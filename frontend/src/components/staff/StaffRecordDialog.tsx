@@ -295,7 +295,8 @@ export function StaffRecordDialog({
       const consumptionStatus = determineConsumptionStatus(consumptionRate);
 
       // 破棄済みの品物に対する修正記録の場合は correctDiscardedRecord API を使用
-      const isCorrection = item.status === 'discarded';
+      // Phase 59 Fix: status が 'consumed' でも remainingHandlingLogs に discarded があれば修正記録
+      const isCorrection = isDiscardedItem;
 
       if (isCorrection) {
         // 修正記録API: 破棄ログを無効化し、新しい記録で置き換える
