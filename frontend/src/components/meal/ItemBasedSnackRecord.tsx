@@ -726,6 +726,19 @@ function ItemCard({ item, highlight, onRecordClick, onDiscardClick }: ItemCardPr
                 <span className="italic">「{item.noteToStaff}」</span>
               </div>
             )}
+
+            {/* 入力済みの場合、記録者と時刻を表示 */}
+            {isRecorded && item.consumptionSummary?.lastServedBy && (
+              <div className="flex items-center gap-1 text-gray-500 mt-2">
+                <span>📝</span>
+                <span>{item.consumptionSummary.lastServedBy}</span>
+                {item.consumptionSummary.lastRecordedAt && (
+                  <span>
+                    {new Date(item.consumptionSummary.lastRecordedAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

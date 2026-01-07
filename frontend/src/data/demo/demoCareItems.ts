@@ -280,6 +280,7 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
       avgConsumptionRate: 80,
       lastServedDate: getDateString(0), // 今日記録済み → 「入力済み」表示
       lastServedBy: 'スタッフA',
+      lastRecordedAt: getDateTimeString(0, 14), // 今日14:00に記録
     },
     consumptionRate: 80,
     noteToStaff: 'おやつタイムに1切れずつ提供してください',
