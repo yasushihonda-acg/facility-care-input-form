@@ -238,7 +238,7 @@
     },
     {
       "collectionGroup": "consumptionLogs",
-      "queryScope": "COLLECTION",
+      "queryScope": "COLLECTION_GROUP",
       "fields": [
         {
           "fieldPath": "remainingHandling",
