@@ -189,3 +189,9 @@ export {syncChatImages} from "./functions/syncChatImages";
 // =============================================================================
 
 export {exchangeOAuthCode, checkOAuthToken, getOAuthUrl} from "./functions/oauthToken";
+
+// =============================================================================
+// ワンタイムバックフィル（Phase 58）
+// =============================================================================
+
+export {backfillRemainingHandlingLogs} from "./functions/backfillRemainingHandlingLogs";
