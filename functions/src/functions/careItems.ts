@@ -30,6 +30,7 @@ import {
   formatCareItemNotification,
   CareItemNotifyData,
 } from "../services/googleChatService";
+import {logItemEvent, detectChanges} from "./itemEvents";
 
 // Firestoreコレクション名
 const CARE_ITEMS_COLLECTION = "care_items";
@@ -219,6 +220,17 @@ async function submitCareItemHandler(
     functions.logger.info("submitCareItem success", {
       itemId: docRef.id,
       itemName: item.itemName,
+    });
+
+    // Phase 58: 品物イベントログ（非同期・エラーでも処理続行）
+    logItemEvent({
+      itemId: docRef.id,
+      itemName: item.itemName,
+      eventType: "created",
+      performedBy: userId,
+      description: `${item.itemName} を新規登録しました`,
+    }).catch((err) => {
+      functions.logger.warn("submitCareItem event logging failed:", err);
     });
 
     // Phase 30: 家族操作通知（非同期・エラーでも処理続行）
@@ -574,7 +586,7 @@ async function updateCareItemHandler(
     const db = getFirestore();
     const docRef = db.collection(CARE_ITEMS_COLLECTION).doc(itemId);
 
-    // ドキュメント存在確認
+    // ドキュメント存在確認と更新前データ取得
     const docSnapshot = await docRef.get();
     if (!docSnapshot.exists) {
       const response: ApiResponse<null> = {
@@ -588,6 +600,9 @@ async function updateCareItemHandler(
       res.status(404).json(response);
       return;
     }
+
+    // Phase 58: 更新前のデータを保存（イベントログ用）
+    const oldData = docSnapshot.data() as Record<string, unknown>;
 
     // 更新不可フィールドを除外
     const {id: _id, createdAt: _createdAt, ...allowedUpdates} = updates as Record<string, unknown>;
@@ -603,6 +618,27 @@ async function updateCareItemHandler(
     await docRef.update(updateData);
 
     functions.logger.info("updateCareItem success", {itemId});
+
+    // Phase 58: 品物イベントログ（非同期・エラーでも処理続行）
+    const fieldsToTrack = [
+      "itemName", "category", "quantity", "unit", "expirationDate",
+      "storageMethod", "servingMethod", "servingMethodDetail",
+      "noteToStaff", "remainingHandlingInstruction",
+      "scheduleType", "scheduleDays", "specificDates", "scheduleTime",
+    ];
+    const changes = detectChanges(oldData, {...oldData, ...allowedUpdates}, fieldsToTrack);
+    if (changes.length > 0) {
+      logItemEvent({
+        itemId,
+        itemName: (oldData.itemName as string) || "不明",
+        eventType: "updated",
+        performedBy: (oldData.userId as string) || "不明",
+        description: `${oldData.itemName} を編集しました`,
+        changes,
+      }).catch((err) => {
+        functions.logger.warn("updateCareItem event logging failed:", err);
+      });
+    }
 
     // Phase 30: 家族操作通知（非同期・エラーでも処理続行）
     try {
@@ -728,6 +764,17 @@ async function deleteCareItemHandler(
     await docRef.delete();
 
     functions.logger.info("deleteCareItem success", {itemId});
+
+    // Phase 58: 品物イベントログ（非同期・エラーでも処理続行）
+    logItemEvent({
+      itemId,
+      itemName: deletedItem.itemName,
+      eventType: "deleted",
+      performedBy: deletedItem.userId,
+      description: `${deletedItem.itemName} を削除しました`,
+    }).catch((err) => {
+      functions.logger.warn("deleteCareItem event logging failed:", err);
+    });
 
     // Phase 30.1: 削除通知を非同期で送信
     try {

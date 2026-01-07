@@ -2041,3 +2041,50 @@ export interface GenerateSummaryResponse {
   generated: boolean;
   processingTime: number;
 }
+
+// =============================================================================
+// 品物イベント（Phase 58）
+// =============================================================================
+
+/** イベントタイプ */
+export type ItemEventType =
+  | "created" // 品物登録
+  | "updated" // 品物編集
+  | "deleted" // 品物削除
+  | "served" // 提供・消費
+  | "status_changed"; // ステータス変更
+
+/** 編集変更内容 */
+export interface ItemEventChange {
+  field: string;
+  fieldLabel: string;
+  oldValue: string;
+  newValue: string;
+}
+
+/** 品物イベント */
+export interface ItemEvent {
+  id: string;
+  itemId: string;
+  itemName: string;
+  eventType: ItemEventType;
+  eventAt: string; // ISO8601
+  performedBy: string;
+  description?: string;
+  changes?: ItemEventChange[];
+  metadata?: Record<string, unknown>;
+}
+
+/** 品物イベント取得リクエスト */
+export interface GetItemEventsRequest {
+  itemId?: string; // 特定品物のイベントのみ
+  hoursAgo?: number; // N時間以内のイベント（デフォルト24）
+  eventTypes?: ItemEventType[]; // フィルター
+  limit?: number;
+}
+
+/** 品物イベント取得レスポンス */
+export interface GetItemEventsResponse {
+  events: ItemEvent[];
+  total: number;
+}
