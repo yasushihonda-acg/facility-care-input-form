@@ -119,10 +119,11 @@ export function StaffRecordDialog({
       // 家族の指示から推奨提供数を計算
       const suggestedQuantity = getSuggestedQuantity(item);
 
-      // Phase 59: 破棄済み品物の修正記録の場合、元の提供数量を復元
+      // Phase 59: 破棄済み品物の修正記録の場合、破棄された数量（復元される数量）を使用
       // 通常の記録の場合は残量との最小値を使用
-      const servedQty = item.status === 'discarded' && item.servedQuantity
-        ? item.servedQuantity
+      const discardedQty = item.remainingHandlingLogs?.find(log => log.handling === 'discarded')?.quantity;
+      const servedQty = item.status === 'discarded' && discardedQty
+        ? discardedQty
         : Math.min(suggestedQuantity, currentQuantity);
 
       // Phase 29/31: カテゴリに基づくタブ決定（旧カテゴリも自動変換）
@@ -497,7 +498,10 @@ export function StaffRecordDialog({
               <div>
                 <p className="font-bold">{item.itemName}</p>
                 <p className="text-sm text-gray-500">
-                  残り: {currentQuantity}{item.unit}
+                  {/* Phase 59: 破棄済み品物の修正記録では破棄された数量（復元される数量）を表示 */}
+                  残り: {item.status === 'discarded'
+                    ? (item.remainingHandlingLogs?.find(log => log.handling === 'discarded')?.quantity || 0)
+                    : currentQuantity}{item.unit}
                   {item.expirationDate && (
                     <span className="ml-2">
                       期限: {new Date(item.expirationDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}
