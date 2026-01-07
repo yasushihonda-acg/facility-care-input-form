@@ -72,6 +72,11 @@ export function TimelineItem({ item }: TimelineItemProps) {
             </p>
           )}
 
+          {/* 間食内容（何を食べたか） */}
+          {item.snack && (
+            <p className="text-sm text-gray-800 font-medium">🍴 {item.snack}</p>
+          )}
+
           {/* 備考 */}
           {item.note && (
             <p className="text-sm text-gray-600 line-clamp-2">{item.note}</p>

@@ -44,10 +44,13 @@ export function FamilyDashboard() {
   };
 
   // 間食の内容が実質的に空かどうかをチェック
-  // 「【ケアに関すること】 【ACPiece】」のみの場合は空とみなす
-  const hasSnackContent = (note: string | undefined): boolean => {
+  // snackがあるか、noteに「【ケアに関すること】 【ACPiece】」以外の内容があれば表示
+  const hasSnackContent = (note: string | undefined, snack: string | undefined): boolean => {
+    // snackがあれば内容あり
+    if (snack && snack.trim().length > 0) return true;
+
+    // noteがある場合、【ケアに関すること】と【ACPiece】を削除して残りがあるか確認
     if (!note) return false;
-    // 【ケアに関すること】と【ACPiece】を削除して、残りがあるか確認
     const content = note
       .replace(/【ケアに関すること】/g, '')
       .replace(/【ACPiece】/g, '')
@@ -88,7 +91,8 @@ export function FamilyDashboard() {
         item.sideDishAmount = result.sideDishAmount ? `${result.sideDishAmount}割` : undefined;
         item.staffName = result.staffName;
         item.recordedAt = result.recordedAt;
-        item.note = result.note || result.snack;
+        item.note = result.note;
+        item.snack = result.snack;
         item.isImportant = result.isImportant;
       }
 
@@ -99,7 +103,7 @@ export function FamilyDashboard() {
     // 実質的な内容がある記録のみ表示（「【ケアに関すること】 【ACPiece】」のみは除外）
     const snackResults = mealResults
       .filter((r) => r.mealTime === 'snack')
-      .filter((r) => hasSnackContent(r.note || r.snack));
+      .filter((r) => hasSnackContent(r.note, r.snack));
 
     if (snackResults.length > 0) {
       // 間食のレコードがある場合、それぞれをタイムラインに追加
@@ -113,7 +117,8 @@ export function FamilyDashboard() {
           sideDishAmount: result.sideDishAmount ? `${result.sideDishAmount}割` : undefined,
           staffName: result.staffName,
           recordedAt: result.recordedAt,
-          note: result.note || result.snack,
+          note: result.note,
+          snack: result.snack,
           isImportant: result.isImportant,
         };
         items.push(item);

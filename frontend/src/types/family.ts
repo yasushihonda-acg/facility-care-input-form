@@ -139,6 +139,7 @@ export interface TimelineItem {
   recordedAt?: string;         // 記録日時
   photoUrl?: string;           // 写真URL
   note?: string;               // 備考
+  snack?: string;              // 間食内容（間食は何を食べましたか？）
 
   // 指示データ（Flow C）
   instruction?: CareInstruction;
