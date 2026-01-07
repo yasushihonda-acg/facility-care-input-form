@@ -126,10 +126,21 @@ export function StaffRecordDialog({
       // 2. servedQuantity (最後に提供した数量)
       // 3. quantity (登録時の元数量)
       // 4. 1 (最終フォールバック)
-      const discardedQty = item.remainingHandlingLogs?.find(log => log.handling === 'discarded')?.quantity
-        || item.servedQuantity
-        || item.quantity
-        || 1;
+      const rhlQty = item.remainingHandlingLogs?.find(log => log.handling === 'discarded')?.quantity;
+      const discardedQty = rhlQty || item.servedQuantity || item.quantity || 1;
+
+      // デバッグログ: 破棄済み品物の修正記録時に値を確認
+      if (item.status === 'discarded') {
+        console.log('[修正記録] フォールバック診断:', {
+          itemName: item.itemName,
+          status: item.status,
+          'remainingHandlingLogs[discarded].quantity': rhlQty,
+          servedQuantity: item.servedQuantity,
+          quantity: item.quantity,
+          currentQuantity: item.currentQuantity,
+          '→ discardedQty': discardedQty
+        });
+      }
       const servedQty = item.status === 'discarded' && discardedQty
         ? discardedQty
         : Math.min(suggestedQuantity, currentQuantity);
