@@ -111,6 +111,7 @@ https://asia-northeast1-facility-care-input-form.cloudfunctions.net
 | GET | `/getFoodStats` | 食品傾向統計を取得 | Phase 9.3 | ✅ |
 | POST | `/recordConsumptionLog` | 消費ログを記録 | Phase 9.2 | ✅ |
 | GET | `/getConsumptionLogs` | 消費ログ一覧を取得 | Phase 9.2 | ✅ |
+| POST | `/correctDiscardedRecord` | 破棄記録を修正 | Phase 59 | ✅ |
 | GET | `/getProhibitions` | 禁止ルール一覧を取得 | Phase 9.x | ✅ |
 | POST | `/createProhibition` | 禁止ルールを作成 | Phase 9.x | ✅ |
 | PUT | `/updateProhibition` | 禁止ルールを更新 | Phase 9.x | ✅ |
@@ -1638,6 +1639,7 @@ interface SyncResult {
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
+| 2026-01-07 | 1.22.0 | Phase 59: correctDiscardedRecord API追加（破棄記録修正） |
 | 2026-01-04 | 1.21.1 | syncChatImages: orphan削除条件を修正（fullSync+year指定時のみ）、staffName制限事項を追記 |
 | 2026-01-04 | 1.21.0 | Phase 53: syncChatImages API追加（fullSyncモード対応） |
 | 2026-01-03 | 1.20.0 | Phase 51: getChatImages API追加（Google Chat画像取得） |
