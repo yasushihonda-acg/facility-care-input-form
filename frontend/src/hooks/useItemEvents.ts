@@ -3,12 +3,17 @@
  * @see docs/ITEM_MANAGEMENT_SPEC.md セクション9.4 - 編集履歴タイムライン
  *
  * デモモード対応: /demo パス配下ではローカルデモデータを返却
- * @see docs/DEMO_SHOWCASE_SPEC.md
+ * 本番モード: Firestore item_events コレクションから取得（Phase 58）
  */
 
 import { useQuery } from '@tanstack/react-query';
 import { useDemoMode } from './useDemoMode';
-import { getDemoItemEventsForItem, getDemoEditEventsForItem } from '../data/demo';
+import {
+  getDemoItemEventsForItem,
+  getDemoEditEventsForItem,
+  getRecentFamilyActionNotifications,
+} from '../data/demo';
+import { getItemEvents as getItemEventsApi } from '../api';
 import type { ItemEvent } from '../types/itemEvent';
 
 // クエリキー
@@ -57,12 +62,14 @@ export function useItemEvents(params: GetItemEventsParams) {
         };
       }
 
-      // 本番モード: 現時点ではitem_eventsコレクションは未実装なので空を返す
-      // 将来: APIからイベントを取得
-      return {
-        events: [],
-        total: 0,
-      };
+      // 本番モード: APIからイベントを取得（Phase 58）
+      const result = await getItemEventsApi({
+        itemId: params.itemId,
+        hoursAgo: 24 * 30, // 30日分
+        eventTypes: params.eventType ? [params.eventType] : undefined,
+        limit: params.limit ?? 50,
+      });
+      return result;
     },
     enabled: !!params.itemId,
   });
@@ -87,12 +94,47 @@ export function useEditEvents(itemId: string, limit?: number) {
         };
       }
 
-      // 本番モード: 現時点では未実装なので空を返す
-      return {
-        events: [],
-        total: 0,
-      };
+      // 本番モード: APIからイベントを取得（Phase 58）
+      const result = await getItemEventsApi({
+        itemId,
+        hoursAgo: 24 * 30, // 30日分
+        eventTypes: ['updated'],
+        limit: limit ?? 10,
+      });
+      return result;
     },
     enabled: !!itemId,
+  });
+}
+
+/**
+ * 家族操作通知（24時間以内の新規・編集・削除イベント）を取得するフック
+ * スタッフ注意事項ページの「家族依頼」タブで使用
+ */
+export function useFamilyActionNotifications() {
+  const isDemo = useDemoMode();
+
+  return useQuery<GetItemEventsResponse>({
+    queryKey: [ITEM_EVENTS_KEY, 'familyNotifications', isDemo],
+    queryFn: async (): Promise<GetItemEventsResponse> => {
+      // デモモードではローカルデータを返却
+      if (isDemo) {
+        const events = getRecentFamilyActionNotifications();
+        return {
+          events,
+          total: events.length,
+        };
+      }
+
+      // 本番モード: APIから24時間以内のイベントを取得（Phase 58）
+      const result = await getItemEventsApi({
+        hoursAgo: 24,
+        eventTypes: ['created', 'updated', 'deleted'],
+        limit: 50,
+      });
+      return result;
+    },
+    // 30秒ごとにリフレッシュ
+    refetchInterval: 30000,
   });
 }

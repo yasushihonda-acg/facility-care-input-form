@@ -1457,3 +1457,52 @@ export async function getOAuthAuthorizationUrl(): Promise<ApiResponse<{
   return response.json();
 }
 
+// =============================================================================
+// 品物イベント（Phase 58）
+// =============================================================================
+
+import type { ItemEvent } from '../types/itemEvent';
+
+export interface GetItemEventsParams {
+  itemId?: string;
+  hoursAgo?: number;
+  eventTypes?: string[];
+  limit?: number;
+}
+
+export interface GetItemEventsResponse {
+  events: ItemEvent[];
+  total: number;
+}
+
+/**
+ * 品物イベント取得
+ * GET /getItemEvents
+ */
+export async function getItemEvents(
+  params: GetItemEventsParams = {}
+): Promise<GetItemEventsResponse> {
+  const url = new URL(`${API_BASE}/getItemEvents`);
+
+  if (params.itemId) url.searchParams.set('itemId', params.itemId);
+  if (params.hoursAgo !== undefined) url.searchParams.set('hoursAgo', String(params.hoursAgo));
+  if (params.limit !== undefined) url.searchParams.set('limit', String(params.limit));
+  if (params.eventTypes && params.eventTypes.length > 0) {
+    url.searchParams.set('eventTypes', params.eventTypes.join(','));
+  }
+
+  const response = await fetch(url.toString(), {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Failed to get item events: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+

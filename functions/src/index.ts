@@ -189,3 +189,9 @@ export {syncChatImages} from "./functions/syncChatImages";
 // =============================================================================
 
 export {exchangeOAuthCode, checkOAuthToken, getOAuthUrl} from "./functions/oauthToken";
+
+// =============================================================================
+// 品物イベント（Phase 58）
+// =============================================================================
+
+export {getItemEvents} from "./functions/itemEvents";

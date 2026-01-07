@@ -9,7 +9,7 @@
  * - 家族依頼: 品物操作通知（24時間）+ 廃棄指示（バッジ付き）
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { Layout } from '../../components/Layout';
 import { StaffNoteCard } from '../../components/staff/StaffNoteCard';
 import { StaffNoteModal } from '../../components/staff/StaffNoteModal';
@@ -21,12 +21,12 @@ import {
 } from '../../hooks/useStaffNotes';
 import { usePendingDiscardItems, useConfirmDiscard } from '../../hooks/useCareItems';
 import { useDemoMode } from '../../hooks/useDemoMode';
+import { useFamilyActionNotifications } from '../../hooks/useItemEvents';
 import type { StaffNote, CreateStaffNoteInput } from '../../types/staffNote';
 import type { CareItem } from '../../types/careItem';
 import { getCategoryIcon, formatDate } from '../../types/careItem';
 import type { ItemEvent } from '../../types/itemEvent';
 import {
-  getRecentFamilyActionNotifications,
   getNotificationBadgeColor,
   getNotificationLabel,
 } from '../../data/demo/demoItemEvents';
@@ -53,14 +53,9 @@ export function StaffNotesPage() {
   const { pendingDiscardItems, isLoading: discardLoading } = usePendingDiscardItems();
   const discardCount = pendingDiscardItems.length;
 
-  // 家族操作通知（Phase 55: デモモードのみ。本番はFirestore連携が必要）
-  const familyNotifications = useMemo(() => {
-    if (isDemo) {
-      return getRecentFamilyActionNotifications();
-    }
-    // 本番モードでは空配列（将来的にFirestoreから取得）
-    return [];
-  }, [isDemo]);
+  // 家族操作通知（Phase 58: 品物の新規・編集・削除を24時間表示）
+  const { data: notificationsData, isLoading: notificationsLoading } = useFamilyActionNotifications();
+  const familyNotifications = notificationsData?.events ?? [];
   const notificationCount = familyNotifications.length;
 
   // 家族依頼の合計件数（通知 + 廃棄指示）
@@ -71,10 +66,11 @@ export function StaffNotesPage() {
   const [activeTab, setActiveTab] = useState<TabValue>('notes');
 
   // 初回データ取得完了時のみタブを自動切替
-  if (!hasInitializedTab && !discardLoading && familyRequestsCount > 0) {
+  const isDataLoading = discardLoading || notificationsLoading;
+  if (!hasInitializedTab && !isDataLoading && familyRequestsCount > 0) {
     setHasInitializedTab(true);
     setActiveTab('familyRequests');
-  } else if (!hasInitializedTab && !discardLoading) {
+  } else if (!hasInitializedTab && !isDataLoading) {
     setHasInitializedTab(true);
   }
 
