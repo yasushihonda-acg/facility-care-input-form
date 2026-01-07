@@ -112,7 +112,7 @@ test.describe('Phase 33: 残ったものへの処置指示', () => {
       }
     });
 
-    test('RHI-009: 家族指示がある場合、他の選択肢が非活性化される', async ({ page }) => {
+    test('RHI-009: 家族指示がある場合でも全選択肢が有効（修正記録用）', async ({ page }) => {
       // デモデータ: demo-item-001 (バナナ) に 'stored' 指示あり
       // バナナカードをクリックしてダイアログを開く
       const bananaCard = page.locator('[data-testid="item-card"]').filter({ hasText: 'バナナ' }).first();
@@ -131,14 +131,13 @@ test.describe('Phase 33: 残ったものへの処置指示', () => {
           // 残り対応セクションが表示されるまで待機
           await expect(page.getByText('残った分への対応')).toBeVisible({ timeout: 3000 });
 
-          // 「保存した」以外の選択肢が非活性化されていることを確認
+          // 家族指示があっても全選択肢が有効（修正記録として使用可能）
           const discardedRadio = page.getByLabel('破棄した');
           const storedRadio = page.getByLabel('保存した');
 
-          // 保存した は有効
+          // すべての選択肢が有効
           await expect(storedRadio).toBeEnabled();
-          // 破棄した は無効
-          await expect(discardedRadio).toBeDisabled();
+          await expect(discardedRadio).toBeEnabled();
         }
       }
     });

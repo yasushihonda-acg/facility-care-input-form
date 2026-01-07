@@ -770,39 +770,26 @@ export function StaffRecordDialog({
               )}
 
               <div className="space-y-2">
-                {REMAINING_HANDLING_OPTIONS.map(option => {
-                  // Phase 33: 家族指示がある場合、該当オプション以外は非活性
-                  const hasInstruction = item.remainingHandlingInstruction && item.remainingHandlingInstruction !== 'none';
-                  const isAllowed = !hasInstruction || option.value === item.remainingHandlingInstruction;
-                  const isDisabled = hasInstruction && !isAllowed;
-
-                  return (
-                    <label
-                      key={option.value}
-                      className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                        isDisabled
-                          ? 'cursor-not-allowed opacity-50 border-gray-200 bg-gray-50'
-                          : formData.remainingHandling === option.value
-                            ? 'cursor-pointer border-primary bg-primary/5'
-                            : 'cursor-pointer border-gray-200 hover:bg-gray-50'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="remainingHandling"
-                        value={option.value}
-                        checked={formData.remainingHandling === option.value}
-                        disabled={isDisabled}
-                        onChange={(e) => setFormData(prev => ({ ...prev, remainingHandling: e.target.value as RemainingHandling }))}
-                        className="w-4 h-4"
-                      />
-                      <span className="text-sm">{option.label}</span>
-                      {isDisabled && (
-                        <span className="text-xs text-gray-400 ml-auto">（家族指示により選択不可）</span>
-                      )}
-                    </label>
-                  );
-                })}
+                {REMAINING_HANDLING_OPTIONS.map(option => (
+                  <label
+                    key={option.value}
+                    className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+                      formData.remainingHandling === option.value
+                        ? 'border-primary bg-primary/5'
+                        : 'border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="remainingHandling"
+                      value={option.value}
+                      checked={formData.remainingHandling === option.value}
+                      onChange={(e) => setFormData(prev => ({ ...prev, remainingHandling: e.target.value as RemainingHandling }))}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm">{option.label}</span>
+                  </label>
+                ))}
               </div>
               {errors.remainingHandling && (
                 <p className="mt-1 text-sm text-red-500">{errors.remainingHandling}</p>

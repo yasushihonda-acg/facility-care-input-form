@@ -539,7 +539,7 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
             </button>
           </div>
 
-          {/* 破棄済みサブタブ（記録ボタンなし） */}
+          {/* 破棄済みサブタブ（修正記録用ボタンあり） */}
           {remainingSubTab === 'discarded' && (
             <div className="space-y-3">
               {remainingItems.discarded.length > 0 ? (
@@ -548,7 +548,8 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
                     key={item.id}
                     item={item}
                     type="discarded"
-                    showButtons={false}
+                    showButtons={true}
+                    onRecordClick={() => handleRecordClick(item)}
                   />
                 ))
               ) : (
