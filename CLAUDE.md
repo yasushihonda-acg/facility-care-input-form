@@ -160,8 +160,6 @@ graph TD
 | **エビデンス** | /family/evidence/:date | /demo/family/evidence/:date | EvidenceMonitor | ✅ | ✅ |
 | **スタッフ注意** | /staff/notes | /demo/staff/notes | StaffNotesPage | ✅ | ✅ |
 | **記録入力** | /staff/input/meal | /demo/staff/input/meal | MealInputPage | ✅ | ✅ |
-| **家族連絡一覧** | /staff/family-messages | /demo/staff/family-messages | FamilyMessages | ✅ | ✅ |
-| **家族連絡詳細** | /staff/family-messages/:id | /demo/staff/family-messages/:id | FamilyMessageDetail | ✅ | ✅ |
 | **統計** | /stats | /demo/stats | StatsDashboard | ✅ | ✅ |
 | **記録閲覧** | /view | /demo/view | ViewPage | ✅ | ✅ |
 | **品物タイムライン** | /items/:id/timeline | /demo/items/:id/timeline | ItemTimeline | ✅ | ⚠️ デモのみ |
@@ -185,14 +183,18 @@ graph TD
 | **スタッフ3: 間食記録** | /demo/staff/input/meal | 摂食記録入力 | ✅ |
 | **スタッフ4: 統計** | /demo/stats | 摂食傾向 | ✅ |
 
-### 削除済み機能（ツアーに含めないこと）
+### 削除済み・孤立機能（ツアー・対照表に含めないこと）
 
-| 機能 | 削除Phase | 理由 |
-|------|-----------|------|
-| 入居者設定（禁止品目） | Phase 26 | 運用で代替 |
-| チャット機能 | Phase 21 | 一時非表示 |
-| タスク機能 | Phase 56 | 品物管理で代替 |
-| AI提案ボタン | Phase 41 | 一時非表示 |
+| 機能 | Phase | 状態 | 理由 |
+|------|-------|------|------|
+| 入居者設定（禁止品目） | Phase 26 | 孤立 | 運用で代替、ルートは残存 |
+| チャット機能 | Phase 21 | 孤立 | 一時非表示、ルートは残存 |
+| 家族連絡一覧/詳細 | Phase 40 | 孤立 | 注意事項に統合、ルートは残存 |
+| タスク機能 | Phase 56 | 削除 | 品物管理で代替 |
+| AI提案ボタン | Phase 41 | 非表示 | UIのみ非表示 |
+| 品物タイムライン | - | デモのみ | 本番未実装（item_events未実装） |
+
+**注意**: 「孤立」= ルートは存在するがナビからアクセス不可。後方互換または将来の再有効化のため残存。
 
 ### E2Eテスト ↔ 実装 整合性
 

@@ -173,8 +173,6 @@ firebase deploy --only functions --debug
 |------|------|------|
 | 注意事項 | `/staff/notes` | スタッフ用注意事項・廃棄指示確認（Phase 40） |
 | 間食記録入力 | `/staff/input/meal` | 家族からの品物の提供記録入力（写真・Chat通知）、残り対応タブ（破棄済み/保存済みの確認・再提供） |
-| 家族連絡一覧 | `/staff/family-messages` | 家族からの品物一覧（消費記録への遷移） |
-| 家族連絡詳細 | `/staff/family-messages/:id` | 品物詳細・消費記録入力 |
 | 記録閲覧 | `/view` | 全ケア記録の閲覧（データ/相関分析/グラフ切替） |
 | 統計 | `/stats` | 品物・摂食統計ダッシュボード |
 
