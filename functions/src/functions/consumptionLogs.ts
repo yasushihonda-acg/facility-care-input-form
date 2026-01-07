@@ -24,6 +24,7 @@ import {
   MealTime,
   CareItem,
   RemainingHandling,
+  RemainingHandlingLog,
 } from "../types";
 import {calculateConsumptionAmounts} from "../utils/consumptionCalc";
 import {getTodayString} from "../utils/scheduleUtils";
@@ -320,8 +321,9 @@ async function recordConsumptionLogHandler(
 
       transaction.set(logRef, logData);
 
-      // CareItemを更新
-      transaction.update(itemRef, {
+      // Phase 58: remainingHandlingが 'discarded' または 'stored' の場合、
+      // remainingHandlingLogs 配列に追加（「残り対応」タブに表示するため）
+      const updateData: Record<string, unknown> = {
         currentQuantity: newQuantity,
         remainingQuantity: newQuantity, // 互換性のため
         status: newStatus,
@@ -336,7 +338,24 @@ async function recordConsumptionLogHandler(
         noteToFamily: input.noteToFamily ?? FieldValue.delete(),
         recordedBy: input.recordedBy,
         updatedAt: now,
-      });
+      };
+
+      // 残り対応がある場合、ログを追加
+      if (input.remainingHandling === "discarded" || input.remainingHandling === "stored") {
+        const remainingQuantity = input.servedQuantity - input.consumedQuantity;
+        const handlingLog: RemainingHandlingLog = {
+          id: `RHL_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+          handling: input.remainingHandling,
+          quantity: remainingQuantity,
+          note: input.remainingHandlingOther || undefined,
+          recordedBy: input.recordedBy,
+          recordedAt: now.toDate().toISOString(),
+        };
+        updateData.remainingHandlingLogs = FieldValue.arrayUnion(handlingLog);
+      }
+
+      // CareItemを更新
+      transaction.update(itemRef, updateData);
 
       return {
         logId: logRef.id,
