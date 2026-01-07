@@ -627,6 +627,33 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
     updatedAt: getDateTimeString(0),
   },
 
+  // ===== Phase 59: 修正記録テスト用（廃棄済み品物） =====
+  {
+    id: 'demo-item-discarded-001',
+    residentId: 'resident-001',
+    userId: 'family-001',
+    itemName: '廃棄済みテスト品（修正記録用）',
+    normalizedName: '廃棄済みテスト品',
+    category: 'food' as ItemCategory,
+    sentDate: getDateString(-3),
+    initialQuantity: 2,
+    currentQuantity: 0, // 廃棄済みなので0
+    remainingQuantity: 0,
+    quantity: 2, // 元の数量
+    unit: '個',
+    status: 'discarded' as ItemStatus,
+    expirationDate: getDateString(-1), // 期限切れ
+    storageMethod: 'room_temp',
+    servingMethod: 'as_is' as ServingMethod,
+    servedQuantity: 1.5, // 最後に提供した数量（フォールバック用）
+    discardedAt: getDateTimeString(-1, 15),
+    discardedBy: '山田',
+    discardReason: '期限切れのため廃棄',
+    // remainingHandlingLogs なし（直接ステータス更新で廃棄された想定）
+    createdAt: getDateTimeString(-3),
+    updatedAt: getDateTimeString(-1),
+  },
+
   // ===== 未設定警告テスト用: 提供予定・賞味期限なし =====
   {
     id: 'demo-item-018',
