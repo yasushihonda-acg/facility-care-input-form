@@ -407,33 +407,35 @@ export function ItemForm() {
               </button>
             </div>
             {/* 検索 + ソート + グループ化コントロール */}
-            <div className="flex gap-2 mb-3">
+            <div className="flex flex-wrap gap-2 mb-3">
               <input
                 type="text"
                 placeholder="検索..."
                 value={presetSearch}
                 onChange={(e) => setPresetSearch(e.target.value)}
-                className="flex-1 px-3 py-1.5 text-sm border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-amber-400"
+                className="flex-1 min-w-[120px] px-3 py-1.5 text-sm border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-amber-400"
               />
-              <select
-                value={presetSortBy}
-                onChange={(e) => setPresetSortBy(e.target.value as 'name' | 'usage')}
-                className="px-2 py-1 text-xs border border-amber-200 rounded bg-white"
-              >
-                <option value="usage">使用順</option>
-                <option value="name">名前順</option>
-              </select>
-              <button
-                type="button"
-                onClick={() => setGroupByTimeSlot(!groupByTimeSlot)}
-                className={`px-2 py-1 text-xs rounded border whitespace-nowrap transition-colors ${
-                  groupByTimeSlot
-                    ? 'bg-amber-100 border-amber-400 text-amber-700'
-                    : 'border-amber-200 bg-white text-amber-600 hover:bg-amber-50'
-                }`}
-              >
-                {groupByTimeSlot ? '分類中' : '分類'}
-              </button>
+              <div className="flex gap-2 shrink-0">
+                <select
+                  value={presetSortBy}
+                  onChange={(e) => setPresetSortBy(e.target.value as 'name' | 'usage')}
+                  className="px-2 py-1.5 text-xs border border-amber-200 rounded bg-white"
+                >
+                  <option value="usage">使用順</option>
+                  <option value="name">名前順</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setGroupByTimeSlot(!groupByTimeSlot)}
+                  className={`px-2 py-1.5 text-xs rounded border transition-colors ${
+                    groupByTimeSlot
+                      ? 'bg-amber-100 border-amber-400 text-amber-700'
+                      : 'border-amber-200 bg-white text-amber-600 hover:bg-amber-50'
+                  }`}
+                >
+                  {groupByTimeSlot ? '分類中' : '分類'}
+                </button>
+              </div>
             </div>
 
             {/* プリセット一覧（グループ化対応） */}
