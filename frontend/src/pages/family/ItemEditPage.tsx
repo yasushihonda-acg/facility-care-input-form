@@ -153,6 +153,26 @@ export function ItemEditPage() {
     }
   };
 
+  // 数量入力用ハンドラ（半角数字のみ許可）
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // 全角数字を半角に変換
+    const halfWidth = value.replace(/[０-９]/g, (s) =>
+      String.fromCharCode(s.charCodeAt(0) - 0xFEE0)
+    );
+    // 半角数字以外を除去
+    const numericOnly = halfWidth.replace(/[^0-9]/g, '');
+    const numValue = parseInt(numericOnly, 10) || 0;
+    setFormData((prev) => ({
+      ...prev,
+      quantity: numValue > 0 ? numValue : 1,
+    }));
+    // エラーをクリア
+    if (errors.quantity) {
+      setErrors((prev) => ({ ...prev, quantity: '' }));
+    }
+  };
+
   // Phase 36: スケジュール変更ハンドラ
   const handleScheduleChange = (schedule: ServingSchedule | undefined) => {
     setFormData((prev) => ({
@@ -504,13 +524,13 @@ export function ItemEditPage() {
               個数 <span className="text-red-500">*</span>
             </label>
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               id="quantity"
               name="quantity"
-              min="1"
-              step="0.5"
               value={formData.quantity}
-              onChange={handleChange}
+              onChange={handleQuantityChange}
               className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
                 errors.quantity ? 'border-red-500' : 'border-gray-300'
               }`}
