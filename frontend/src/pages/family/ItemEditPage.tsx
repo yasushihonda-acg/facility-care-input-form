@@ -522,7 +522,7 @@ export function ItemEditPage() {
               pattern="[0-9]*"
               id="quantity"
               name="quantity"
-              value={formData.quantity}
+              value={formData.quantity || ''}
               onChange={handleQuantityChange}
               className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
                 errors.quantity ? 'border-red-500' : 'border-gray-300'
