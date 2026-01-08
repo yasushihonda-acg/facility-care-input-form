@@ -61,7 +61,7 @@ export function ItemForm() {
   const [formData, setFormData] = useState<CareItemInput>({
     itemName: '',
     category: 'food',
-    quantity: 1,
+    quantity: 0,
     unit: '個',
     servingMethod: 'as_is',
   });
@@ -561,7 +561,7 @@ export function ItemForm() {
                   type="text"
                   inputMode="numeric"
                   pattern="[0-9]*"
-                  value={formData.quantity}
+                  value={formData.quantity || ''}
                   onChange={handleQuantityChange}
                   className={`flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary ${
                     errors.quantity ? 'border-red-500' : 'border-gray-300'
