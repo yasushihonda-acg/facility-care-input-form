@@ -88,11 +88,6 @@ lsof -ti:4173 | xargs kill
 - featureブランチで作業し、PRを作成
 - PRレビュー後にマージ（ユーザー承認を待つ）
 
-### PRレビュー（todoに必ず含める）
-- 作業開始時のtodoに「PRレビュー依頼」を必ず含める
-- `gh pr create` 後、ユーザーに確認を求める
-- ユーザー承認後に `gh pr merge --squash --delete-branch`
-
 ### 本番デプロイ（自動）
 - mainへのマージで GitHub Actions が自動デプロイ
 - 手動 `firebase deploy` は不要
