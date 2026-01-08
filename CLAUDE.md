@@ -45,6 +45,12 @@ lsof -ti:4173 | xargs kill
 2. **ローカルテスト必須**: `npm run build && npm run preview` で確認後にコミット
 3. **場当たり的修正は禁止**: 「とりあえずデプロイ」ではなく「理解してから直す」
 
+### Firestoreインデックス追加時
+1. **コレクション名をコードで確認**: `grep -r "collection(" functions/src`
+   - 例: `consumptionLogs`（キャメル）ではなく `consumption_logs`（スネーク）
+2. **サブコレクションは `COLLECTION_GROUP` スコープ**: `care_items/{id}/consumption_logs` 等
+3. **デプロイ後にREADY確認**: `gcloud firestore indexes composite list --project facility-care-input-form`
+
 ---
 
 ## 2. ドキュメント更新ルール
