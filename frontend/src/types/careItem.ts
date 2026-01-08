@@ -92,7 +92,7 @@ export const ITEM_STATUSES: { value: ItemStatus; label: string; color: string; b
 ];
 
 // 単位
-export const ITEM_UNITS: string[] = ['個', 'パック', '本', '袋', '箱', '枚', 'g', 'ml', 'cc'];
+export const ITEM_UNITS: string[] = ['個', 'ヶ', 'パック', '本', '袋', '箱', '枚', 'g', 'ml', 'cc'];
 
 // =============================================================================
 // 残ったものへの処置指示 (Phase 33)
