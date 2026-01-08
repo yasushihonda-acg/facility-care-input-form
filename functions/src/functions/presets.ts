@@ -172,6 +172,7 @@ export const createPreset = functions
         storageMethod: preset.storageMethod || undefined,
         servingMethod: preset.servingMethod || undefined,
         servingMethodDetail: preset.servingMethodDetail || undefined,
+        servingTimeSlot: preset.servingTimeSlot || undefined,
         noteToStaff: preset.noteToStaff || undefined,
         remainingHandlingInstruction: preset.remainingHandlingInstruction || undefined,
         // マッチング設定
@@ -287,6 +288,9 @@ export const updatePreset = functions
       }
       if (updates.servingMethodDetail !== undefined) {
         updateData.servingMethodDetail = updates.servingMethodDetail;
+      }
+      if (updates.servingTimeSlot !== undefined) {
+        updateData.servingTimeSlot = updates.servingTimeSlot;
       }
       if (updates.noteToStaff !== undefined) {
         updateData.noteToStaff = updates.noteToStaff;

@@ -10,11 +10,13 @@ import type {
   ItemCategory,
   StorageMethod,
   ServingMethod,
+  ServingTimeSlot,
   RemainingHandlingInstruction,
 } from '../../types/careItem';
 import {
   STORAGE_METHODS,
   SERVING_METHODS,
+  SERVING_TIME_SLOT_LABELS,
   REMAINING_HANDLING_INSTRUCTION_OPTIONS,
 } from '../../types/careItem';
 
@@ -51,6 +53,7 @@ export function PresetFormModal({
   const [servingMethodDetail, setServingMethodDetail] = useState(
     preset?.servingMethodDetail || preset?.processingDetail || preset?.instruction?.content || ''
   );
+  const [servingTimeSlot, setServingTimeSlot] = useState<ServingTimeSlot | undefined>(preset?.servingTimeSlot);
   const [noteToStaff, setNoteToStaff] = useState(preset?.noteToStaff || '');
   const [remainingHandlingInstruction, setRemainingHandlingInstruction] = useState<RemainingHandlingInstruction | undefined>(
     preset?.remainingHandlingInstruction
@@ -75,6 +78,7 @@ export function PresetFormModal({
       storageMethod,
       servingMethod,
       servingMethodDetail: servingMethodDetail.trim() || undefined,
+      servingTimeSlot,
       noteToStaff: noteToStaff.trim() || undefined,
       remainingHandlingInstruction,
       // マッチング設定
@@ -211,6 +215,29 @@ export function PresetFormModal({
                   }`}
                 >
                   {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 提供タイミング */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              提供タイミング
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {(['breakfast', 'lunch', 'dinner', 'snack', 'anytime'] as ServingTimeSlot[]).map((slot) => (
+                <button
+                  key={slot}
+                  type="button"
+                  onClick={() => setServingTimeSlot(servingTimeSlot === slot ? undefined : slot)}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                    servingTimeSlot === slot
+                      ? 'bg-green-500 text-white'
+                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {SERVING_TIME_SLOT_LABELS[slot]}
                 </button>
               ))}
             </div>
