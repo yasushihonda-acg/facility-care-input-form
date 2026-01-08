@@ -253,4 +253,4 @@ Phase 1〜59まで完了。詳細は `git log` を参照。
 - **refactor**: タスク機能を完全削除 - sentDateスキーマ変更による不具合解消、品物一覧・Chat Webhookで代替
 - **Phase 59**: 修正記録フォームのフォールバック修正 - 廃棄済み品物（status: consumed + remainingHandlingLogs: discarded）の修正記録が正しく動作するように。残り数量表示・提供数初期値・バリデーション・API選択ロジックを修正。Firestoreインデックス追加（consumption_logs, item_events）
 
-E2Eテスト: 477件定義
+E2Eテスト: 479件定義

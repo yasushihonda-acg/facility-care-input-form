@@ -362,8 +362,14 @@ const discardedQty = rhlDiscardedQty || item.servedQuantity || item.quantity || 
 
 **E2Eテスト**: correction-record-fallback.spec.ts（2件追加）
 
+**CLAUDE.mdに追加されたルール（PR #139）**:
+Firestoreインデックス追加時のチェックリスト:
+1. コレクション名をコードで確認: `grep -r "collection(" functions/src`
+2. サブコレクションは `COLLECTION_GROUP` スコープ
+3. デプロイ後にREADY確認: `gcloud firestore indexes composite list`
+
 ## E2Eテスト
-477件定義（Phase 59まで）
+479件定義（Phase 59まで）
 
 ## デモ・本番整合性
 CLAUDE.mdセクション4に対照表・チェックリストあり。
