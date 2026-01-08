@@ -4,7 +4,7 @@
  * @see docs/AI_INTEGRATION_SPEC.md (セクション8: AI提案UI統合, セクション9: プリセット統合)
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import { AISuggestion } from '../../components/family/AISuggestion';
@@ -20,12 +20,13 @@ import {
   ITEM_CATEGORIES,
   STORAGE_METHODS,
   SERVING_METHODS,
+  SERVING_TIME_SLOT_LABELS,
   ITEM_UNITS,
   REMAINING_HANDLING_INSTRUCTION_OPTIONS,
   DISCARD_CONDITION_SUGGESTIONS,
   STORE_CONDITION_SUGGESTIONS,
 } from '../../types/careItem';
-import type { RemainingHandlingInstruction, RemainingHandlingCondition } from '../../types/careItem';
+import type { RemainingHandlingInstruction, RemainingHandlingCondition, ServingTimeSlot } from '../../types/careItem';
 import type {
   CareItemInput,
   ItemCategory,
@@ -81,6 +82,11 @@ export function ItemForm() {
   const [editingPreset, setEditingPreset] = useState<CarePreset | null>(null);
   const [isCreatingPreset, setIsCreatingPreset] = useState(false);
 
+  // プリセット検索・ソート・グループ化用state
+  const [presetSearch, setPresetSearch] = useState('');
+  const [presetSortBy, setPresetSortBy] = useState<'name' | 'usage'>('usage');
+  const [groupByTimeSlot, setGroupByTimeSlot] = useState(false);
+
   // プリセット一覧を取得（本番モードのみAPIを使用）
   const { data: presetsData } = usePresets({
     residentId: DEMO_RESIDENT_ID,
@@ -91,6 +97,41 @@ export function ItemForm() {
 
   // プリセット一覧（デモモード: DEMO_PRESETS、本番: APIデータ）
   const presets = isDemo ? DEMO_PRESETS : (presetsData?.presets || DEMO_PRESETS);
+
+  // プリセットのフィルタリング・ソート・グループ化
+  const processedPresets = useMemo(() => {
+    // 検索フィルター
+    let filtered = presets.filter((p) =>
+      p.name.toLowerCase().includes(presetSearch.toLowerCase())
+    );
+
+    // ソート
+    filtered = [...filtered].sort((a, b) => {
+      if (presetSortBy === 'name') {
+        return a.name.localeCompare(b.name, 'ja');
+      }
+      return (b.usageCount || 0) - (a.usageCount || 0);
+    });
+
+    // グループ化
+    if (!groupByTimeSlot) {
+      return { all: filtered };
+    }
+
+    const grouped: Record<string, CarePreset[]> = {
+      breakfast: [],
+      lunch: [],
+      snack: [],
+      dinner: [],
+      anytime: [],
+      unset: [],
+    };
+    filtered.forEach((p) => {
+      const slot = p.servingTimeSlot || 'unset';
+      grouped[slot].push(p);
+    });
+    return grouped;
+  }, [presets, presetSearch, presetSortBy, groupByTimeSlot]);
 
   // Phase 43.1: 品物名正規化の状態
   const [isNormalizing, setIsNormalizing] = useState(false);
@@ -365,39 +406,84 @@ export function ItemForm() {
                 + 新規追加
               </button>
             </div>
-            {/* プリセット一覧 */}
-            <div className="grid grid-cols-3 gap-2">
-              {presets.map((preset) => (
-                <div
-                  key={preset.id}
-                  className="relative flex flex-col items-center gap-1 p-2 bg-white rounded-lg border border-amber-200 hover:border-amber-400 hover:bg-amber-100 transition-colors text-center group"
-                >
-                  {/* 編集アイコン（モバイル：常に薄く表示、デスクトップ：ホバー時に濃く） */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEditingPreset(preset);
-                    }}
-                    className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center text-sm text-gray-400 opacity-40 hover:opacity-100 hover:text-amber-600 group-hover:opacity-100 transition-opacity"
-                    title="編集"
-                  >
-                    ✏️
-                  </button>
-                  {/* クリックで適用 */}
-                  <button
-                    type="button"
-                    onClick={() => handleApplyPreset(preset)}
-                    className="w-full flex flex-col items-center gap-1"
-                  >
-                    <span className="text-xl">{preset.icon}</span>
-                    <span className="text-xs text-gray-700 line-clamp-2">
-                      {preset.name.replace(/[（(].*/g, '')}
-                    </span>
-                  </button>
-                </div>
-              ))}
+            {/* 検索 + ソート + グループ化コントロール */}
+            <div className="flex gap-2 mb-3">
+              <input
+                type="text"
+                placeholder="検索..."
+                value={presetSearch}
+                onChange={(e) => setPresetSearch(e.target.value)}
+                className="flex-1 px-3 py-1.5 text-sm border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-amber-400"
+              />
+              <select
+                value={presetSortBy}
+                onChange={(e) => setPresetSortBy(e.target.value as 'name' | 'usage')}
+                className="px-2 py-1 text-xs border border-amber-200 rounded bg-white"
+              >
+                <option value="usage">使用順</option>
+                <option value="name">名前順</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => setGroupByTimeSlot(!groupByTimeSlot)}
+                className={`px-2 py-1 text-xs rounded border whitespace-nowrap transition-colors ${
+                  groupByTimeSlot
+                    ? 'bg-amber-100 border-amber-400 text-amber-700'
+                    : 'border-amber-200 bg-white text-amber-600 hover:bg-amber-50'
+                }`}
+              >
+                {groupByTimeSlot ? '分類中' : '分類'}
+              </button>
             </div>
+
+            {/* プリセット一覧（グループ化対応） */}
+            {Object.entries(processedPresets).map(([timeSlot, items]) => (
+              items.length > 0 && (
+                <div key={timeSlot} className="mb-3">
+                  {groupByTimeSlot && timeSlot !== 'all' && (
+                    <h4 className="text-xs font-medium text-amber-700 mb-1.5 flex items-center gap-1">
+                      <span>
+                        {timeSlot === 'unset'
+                          ? '📋 未設定'
+                          : `${timeSlot === 'breakfast' ? '🌅' : timeSlot === 'lunch' ? '☀️' : timeSlot === 'snack' ? '🍵' : timeSlot === 'dinner' ? '🌙' : '⏰'} ${SERVING_TIME_SLOT_LABELS[timeSlot as ServingTimeSlot]}`}
+                      </span>
+                    </h4>
+                  )}
+                  <div className="grid grid-cols-3 gap-2">
+                    {items.map((preset) => (
+                      <div
+                        key={preset.id}
+                        className="relative flex flex-col items-center gap-1 p-2 bg-white rounded-lg border border-amber-200 hover:border-amber-400 hover:bg-amber-100 transition-colors text-center group"
+                      >
+                        {/* 編集アイコン（モバイル：常に薄く表示、デスクトップ：ホバー時に濃く） */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingPreset(preset);
+                          }}
+                          className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center text-sm text-gray-400 opacity-40 hover:opacity-100 hover:text-amber-600 group-hover:opacity-100 transition-opacity"
+                          title="編集"
+                        >
+                          ✏️
+                        </button>
+                        {/* クリックで適用 */}
+                        <button
+                          type="button"
+                          onClick={() => handleApplyPreset(preset)}
+                          className="w-full flex flex-col items-center gap-1"
+                        >
+                          <span className="text-xl">{preset.icon}</span>
+                          <span className="text-xs text-gray-700 line-clamp-2">
+                            {preset.name.replace(/[（(].*/g, '')}
+                          </span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            ))}
             {/* フッター：説明 + 一覧管理リンク */}
             <div className="flex items-center justify-between mt-2">
               <p className="text-xs text-amber-600">

@@ -1224,6 +1224,7 @@ export interface CarePreset {
   storageMethod?: StorageMethod; // 保存方法
   servingMethod?: ServingMethod; // 提供方法
   servingMethodDetail?: string; // 提供方法の詳細
+  servingTimeSlot?: ServingTimeSlot; // 提供タイミング
   noteToStaff?: string; // スタッフへの申し送り
   remainingHandlingInstruction?: RemainingHandlingInstruction; // 残った場合の処置
 
@@ -1268,6 +1269,7 @@ export interface CarePresetInput {
   storageMethod?: StorageMethod;
   servingMethod?: ServingMethod;
   servingMethodDetail?: string;
+  servingTimeSlot?: ServingTimeSlot;
   noteToStaff?: string;
   remainingHandlingInstruction?: RemainingHandlingInstruction;
 

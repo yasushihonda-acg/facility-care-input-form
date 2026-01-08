@@ -55,6 +55,7 @@ export const DEMO_PRESETS: CarePreset[] = [
     servingMethod: 'cut',
     servingMethodDetail:
       '輪切り4等分をさらに半分（半月）に切ってください。\n皮は必ず剥いてください。\n種が多い部分は避けてください。',
+    servingTimeSlot: 'snack',
     matchConfig: { keywords: ['キウイ', 'kiwi'] },
     source: 'manual',
     isActive: true,
@@ -73,6 +74,7 @@ export const DEMO_PRESETS: CarePreset[] = [
     servingMethod: 'cut',
     servingMethodDetail:
       '熟して柔らかくなった部分も捨てずに提供してください。\nご本人の好物です。\n皮をむいて食べやすい大きさにカット。',
+    servingTimeSlot: 'snack',
     matchConfig: { keywords: ['柿', '柿の実'] },
     source: 'manual',
     isActive: true,
@@ -91,6 +93,7 @@ export const DEMO_PRESETS: CarePreset[] = [
     servingMethod: 'other',
     servingMethodDetail:
       '煮汁をしっかり切ってから器に盛り付けてください。\n汁気が多いとこぼれやすいため。',
+    servingTimeSlot: 'snack',
     matchConfig: { keywords: ['黒豆', 'くろまめ'] },
     source: 'manual',
     isActive: true,
@@ -110,6 +113,7 @@ export const DEMO_PRESETS: CarePreset[] = [
     servingMethod: 'as_is',
     servingMethodDetail:
       'らっきょうは冷たいまま小皿で提供してください。\n常温で放置しないでください。',
+    servingTimeSlot: 'dinner',
     noteToStaff: '提供直前まで冷蔵庫で保管をお願いします。',
     matchConfig: { keywords: ['らっきょう', 'ラッキョウ'] },
     source: 'manual',
@@ -128,6 +132,7 @@ export const DEMO_PRESETS: CarePreset[] = [
     itemCategory: 'food',
     storageMethod: 'room_temp',
     servingMethod: 'peeled',
+    servingTimeSlot: 'snack',
     remainingHandlingInstruction: 'stored',
     noteToStaff:
       '皮を剥かずに残した場合は、おやつの時間に再度提供してください。\n剥いた状態で残した場合は廃棄。',
@@ -148,6 +153,7 @@ export const DEMO_PRESETS: CarePreset[] = [
     itemCategory: 'food',
     storageMethod: 'room_temp',
     servingMethod: 'as_is',
+    servingTimeSlot: 'anytime',
     noteToStaff:
       'ご家族が指定した日のみ提供してください。\n指定日以外は提供しないでください。\n不明な場合はご家族に確認を。',
     matchConfig: { keywords: ['黒砂糖', 'くろざとう'] },
@@ -166,6 +172,7 @@ export const DEMO_PRESETS: CarePreset[] = [
     itemCategory: 'food',
     storageMethod: 'refrigerated',
     servingMethod: 'as_is',
+    servingTimeSlot: 'breakfast',
     noteToStaff:
       'ご家族が指定した日のみ提供してください。\n指定日以外は提供しないでください。\n不明な場合はご家族に確認を。',
     matchConfig: { keywords: ['チーズ', 'cheese'] },
@@ -176,7 +183,7 @@ export const DEMO_PRESETS: CarePreset[] = [
     updatedAt: '2025-12-20T15:00:00Z',
     createdBy: 'family-001',
   },
-];;;;
+];
 
 // ============================================
 // 禁止ルールデモデータ（蒲地様FAX内容に基づく）
