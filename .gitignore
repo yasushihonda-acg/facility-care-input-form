@@ -30,3 +30,4 @@ firebase-debug.*.log
 test-results/
 playwright-report/
 .envrc
+# Hook Test v2
