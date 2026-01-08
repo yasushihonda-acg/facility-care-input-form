@@ -1,6 +1,6 @@
 # 引き継ぎドキュメント
 
-> 最終更新: 2026-01-05
+> 最終更新: 2026-01-08
 
 ## クイックスタート（5分で開発開始）
 
@@ -234,7 +234,7 @@ frontend/src/
 
 ## 開発履歴
 
-Phase 1〜57まで完了。詳細は `git log` を参照。
+Phase 1〜59まで完了。詳細は `git log` を参照。
 
 - **Phase 43.1**: 品物名正規化AI（Gemini 2.5 Flash Lite）- 統計用の基準品目名を自動提案
 - **Phase 44**: 品物登録フォームからプリセット編集・新規追加が可能に
@@ -251,5 +251,6 @@ Phase 1〜57まで完了。詳細は `git log` を参照。
 - **Phase 53**: OAuth永続化 - 管理者認証1回で全ユーザーがChat画像同期可能
 - **Phase 53.1**: fullSyncモード - 初回同期と増分同期の分離
 - **refactor**: タスク機能を完全削除 - sentDateスキーマ変更による不具合解消、品物一覧・Chat Webhookで代替
+- **Phase 59**: 修正記録フォームのフォールバック修正 - 廃棄済み品物（status: consumed + remainingHandlingLogs: discarded）の修正記録が正しく動作するように。残り数量表示・提供数初期値・バリデーション・API選択ロジックを修正。Firestoreインデックス追加（consumption_logs, item_events）
 
 E2Eテスト: 477件定義

@@ -82,7 +82,7 @@ instruction?: { content: string; };
 - POST /saveAISuggestionAsPreset
 
 ## 開発履歴
-Phase 1〜57完了。詳細は `git log` を参照。
+Phase 1〜59完了。詳細は `git log` を参照。
 
 ### タスク機能削除（2026-01-05）
 以下のタスク関連機能を完全削除:
@@ -334,8 +334,36 @@ Google Chat API → syncChatImages → Firestore(care_photos) → フロント�
 - 「全件同期」ボタンを記録閲覧ページから設定ページ（/settings）に移動
 - 設定ページの「Chat画像同期 認証設定」セクションに配置
 
+## Phase 59: 修正記録フォームのフォールバック修正（2026-01-08）
+
+**問題**: 廃棄済み品物（status: 'consumed' + remainingHandlingLogs: 'discarded'）の修正記録で以下の不具合:
+- 「残り: 0個」と表示される（正しくは廃棄数量）
+- 提供数初期値が0になる
+- バリデーションで「残量を超えています」エラー
+- API選択が通常記録APIを使用
+
+**解決策**: `isDiscardedItem` 判定を導入（PR #125-136）
+```typescript
+const rhlDiscardedQty = item.remainingHandlingLogs?.find(log => log.handling === 'discarded')?.quantity;
+const isDiscardedItem = item.status === 'discarded' || !!rhlDiscardedQty;
+const discardedQty = rhlDiscardedQty || item.servedQuantity || item.quantity || 1;
+```
+
+**修正箇所（StaffRecordDialog.tsx 5箇所）**:
+1. 残り数量表示: `isDiscardedItem ? discardedQty : currentQuantity`
+2. 提供数初期値: 同上
+3. quantityAfter計算: baseQuantityにdiscardedQtyを使用
+4. バリデーション: `!isDiscardedItem && servedQuantity > currentQuantity`
+5. API選択: `isCorrection = isDiscardedItem`
+
+**Firestoreインデックス追加**:
+- `consumption_logs`: remainingHandling + recordedAt（COLLECTION_GROUP）
+- `item_events`: eventType + eventAt（COLLECTION_GROUP）
+
+**E2Eテスト**: correction-record-fallback.spec.ts（2件追加）
+
 ## E2Eテスト
-477件定義（Phase 57まで）
+477件定義（Phase 59まで）
 
 ## デモ・本番整合性
 CLAUDE.mdセクション4に対照表・チェックリストあり。
