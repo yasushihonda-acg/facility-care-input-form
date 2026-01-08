@@ -2,9 +2,26 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { writeFileSync } from 'fs'
+import { resolve } from 'path'
 
 // ビルドタイムスタンプ（PWAバージョン識別用）
 const buildTimestamp = new Date().toISOString();
+
+// ビルド時にversion.jsonを生成（強制更新チェック用）
+const versionPlugin = () => ({
+  name: 'version-plugin',
+  writeBundle() {
+    const versionInfo = {
+      version: buildTimestamp,
+      buildTime: buildTimestamp,
+    };
+    writeFileSync(
+      resolve(__dirname, 'dist', 'version.json'),
+      JSON.stringify(versionInfo)
+    );
+  },
+});
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -63,12 +80,29 @@ export default defineConfig({
         skipWaiting: true,
         // 全クライアント（タブ）を即座に制御
         clientsClaim: true,
-        // 静的アセットのプリキャッシュ
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        // 静的アセットのプリキャッシュ（HTMLのみ - JS/CSSはruntimeCachingで管理）
+        globPatterns: ['**/*.{html,ico,png,svg}'],
         // ナビゲーションリクエストのフォールバック
         navigateFallback: 'index.html',
-        navigateFallbackDenylist: [/^\/api\//],
+        navigateFallbackDenylist: [/^\/api\//, /version\.json/],
         runtimeCaching: [
+          // JS/CSSファイル: ネットワーク優先（キャッシュは1時間で無効化）
+          {
+            urlPattern: /\.(?:js|css)$/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'static-resources',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 // 1時間
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              },
+              networkTimeoutSeconds: 10 // 10秒でタイムアウト→キャッシュにフォールバック
+            }
+          },
+          // API: ネットワーク優先
           {
             urlPattern: /^https:\/\/asia-northeast1-facility-care-input-form\.cloudfunctions\.net\/.*/i,
             handler: 'NetworkFirst',
@@ -76,15 +110,21 @@ export default defineConfig({
               cacheName: 'api-cache',
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 60 * 15 // 15 minutes
+                maxAgeSeconds: 60 * 15 // 15分
               },
               cacheableResponse: {
                 statuses: [0, 200]
               }
             }
+          },
+          // version.json: 常にネットワークから取得（キャッシュしない）
+          {
+            urlPattern: /version\.json$/,
+            handler: 'NetworkOnly'
           }
         ]
       }
-    })
+    }),
+    versionPlugin(),
   ],
 })
