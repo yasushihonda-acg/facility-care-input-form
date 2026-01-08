@@ -517,10 +517,37 @@ getCareItemsHandlerでFirestoreから取得したデータをレスポンスに�
 - 時刻取得: 「何時に頓服薬を飲まれましたか？」フィールド
 - 検索キーワード: マグミット, ﾏｸﾞﾐｯﾄ, まぐみっと, 酸化マグネシウム
 
-## Git運用（2026-01-08更新）
+## Git運用（2026-01-09更新）
 - **mainへ直接pushしない**
 - featureブランチで作業 → PR作成 → レビュー後マージ
 - PR作成後、グローバルhookで自動 `/review-pr` 実行
+
+### グローバルフック自動注入機構（2026-01-09追加）
+プロジェクト設定がグローバル設定を上書きする問題を解決:
+- `~/.claude/hooks/ensure-global-hooks.sh`: セッション開始時に実行
+- `UserPromptSubmit` フックでプロジェクトの `.claude/settings.json` を確認
+- PostToolUse[Bash] フックがなければ自動追加
+- 2回目以降は即時return（パフォーマンス影響なし）
+
+## Phase 60: プリセット検索・ソート・グループ化（2026-01-09）
+
+**PR #149**: servingTimeSlot追加 + 検索/ソート/グループ化UI
+**PR #150**: モバイルレイアウト修正
+
+### 追加フィールド
+```typescript
+// CarePreset, CarePresetInput に追加
+servingTimeSlot?: ServingTimeSlot;  // 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'anytime'
+```
+
+### 機能
+- **検索**: プリセット名でフィルタリング
+- **ソート**: 使用順（デフォルト）/ 名前順（あいうえお順）
+- **グループ化**: 提供タイミング別（朝食時/昼食時/おやつ時/夕食時/いつでも/未設定）
+
+### 注意
+- 既存の本番プリセット（Firestore）には servingTimeSlot がないため「未設定」に分類される
+- 各プリセットの編集画面で個別に設定するか、Firestoreで一括更新が必要
 
 ## ドキュメント更新方針
 

@@ -542,6 +542,11 @@ export type RemainingHandlingInstruction =
   | "discarded" // 破棄してください
   | "stored"; // 保存してください
 
+/** Phase 54: 処置指示の条件 */
+export interface RemainingHandlingCondition {
+  condition: string; // 条件テキスト（サジェストまたは自由記述）
+}
+
 /** 残り対応の実績ログ（スタッフが記録） */
 export interface RemainingHandlingLog {
   /** ログID（RHL_{timestamp}_{random}） */
@@ -622,6 +627,11 @@ export interface CareItem {
   servingSchedule?: ServingSchedule; // 構造化スケジュール（Phase 13.1）
   noteToStaff?: string;
 
+  // Phase 33: 残った場合の処置指示（家族が設定）
+  remainingHandlingInstruction?: RemainingHandlingInstruction;
+  /** Phase 54: 処置指示の条件（例: 食べかけの場合は破棄） */
+  remainingHandlingConditions?: RemainingHandlingCondition[];
+
   // 提供記録（スタッフが入力）- 旧: 互換性のため残す
   actualServeDate?: string;
   servedQuantity?: number;
@@ -674,6 +684,10 @@ export interface CareItemInput {
   plannedServeDate?: string;
   servingSchedule?: ServingSchedule; // 構造化スケジュール（Phase 13.1）
   noteToStaff?: string;
+  // Phase 33: 残った場合の処置指示
+  remainingHandlingInstruction?: RemainingHandlingInstruction;
+  /** Phase 54: 処置指示の条件（例: 食べかけの場合は破棄） */
+  remainingHandlingConditions?: RemainingHandlingCondition[];
 }
 
 /** 品物登録リクエスト */

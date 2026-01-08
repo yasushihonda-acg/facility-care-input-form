@@ -208,7 +208,13 @@ async function submitCareItemHandler(
       servingMethod: item.servingMethod,
       servingMethodDetail: item.servingMethodDetail,
       plannedServeDate: item.plannedServeDate,
+      // Phase 13.1: 構造化スケジュール
+      servingSchedule: item.servingSchedule,
       noteToStaff: item.noteToStaff,
+      // Phase 33: 残った場合の処置指示
+      remainingHandlingInstruction: item.remainingHandlingInstruction,
+      // Phase 54: 処置指示の条件
+      remainingHandlingConditions: item.remainingHandlingConditions,
       status: "pending" as ItemStatus,
       remainingQuantity: item.quantity,
       createdAt: now,
