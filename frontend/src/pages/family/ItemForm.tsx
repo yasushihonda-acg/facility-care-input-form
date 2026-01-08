@@ -247,6 +247,19 @@ export function ItemForm() {
     }
   };
 
+  // 数量入力用ハンドラ（半角数字のみ許可）
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // 全角数字を半角に変換
+    const halfWidth = value.replace(/[０-９]/g, (s) =>
+      String.fromCharCode(s.charCodeAt(0) - 0xFEE0)
+    );
+    // 半角数字以外を除去
+    const numericOnly = halfWidth.replace(/[^0-9]/g, '');
+    const numValue = parseInt(numericOnly, 10) || 0;
+    updateField('quantity', numValue > 0 ? numValue : 1);
+  };
+
   // バリデーション
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -552,10 +565,11 @@ export function ItemForm() {
               <div className="flex gap-2">
                 <input
                   id="quantity"
-                  type="number"
-                  min="1"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={formData.quantity}
-                  onChange={(e) => updateField('quantity', parseInt(e.target.value, 10) || 1)}
+                  onChange={handleQuantityChange}
                   className={`flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary ${
                     errors.quantity ? 'border-red-500' : 'border-gray-300'
                   }`}
