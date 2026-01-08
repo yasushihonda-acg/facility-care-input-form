@@ -157,13 +157,29 @@ Phase 1〜59完了。詳細は `git log` を参照。
 - Firebase Storage写真連携
 - 統計ダッシュボード・AI分析
 
-## PWA更新戦略
+## PWA更新戦略（PR #141で強化: 2026-01-08）
 
-Service Workerキャッシュによる更新遅延問題に対応:
-- `skipWaiting: true` - 新SW即座にアクティブ化
-- `clientsClaim: true` - 全タブを即座に制御
-- `PWAUpdateNotification.tsx` - 更新通知バナーUI
-- ビルドタイムスタンプをコンソール出力（デバッグ用）
+### キャッシュ戦略
+- JS/CSSファイル: `NetworkFirst`（ネットワーク優先、10秒タイムアウト）
+- キャッシュ有効期限: 1時間
+- HTMLのみプリキャッシュ
+- version.json: `NetworkOnly`（キャッシュしない）
+
+### 自動更新機能
+- `version.json`: ビルド時にタイムスタンプを生成（versionPlugin）
+- `useVersionCheck.ts`: 起動時/画面復帰時にサーバーのversion.jsonと比較
+- バージョンが異なれば → キャッシュ全削除 → 自動リロード
+- 5分間隔制限でリロードループ防止
+
+### コンソールログ
+```
+[PWA] Build: 2026-01-08T06:35:23.294Z
+[PWA] Version check: { current: ..., server: ... }
+```
+
+### ユーザー操作
+- 新バージョンデプロイ後、アプリを開くだけで自動更新
+- 手動キャッシュクリア不要
 
 詳細: docs/ARCHITECTURE.md セクション10.5
 
