@@ -35,6 +35,7 @@ import type {
   AISuggestResponse,
 } from '../../types/careItem';
 import { scheduleToPlannedDate, formatDateString } from '../../utils/scheduleUtils';
+import { parseNumericInput } from '../../utils/inputHelpers';
 import { DEMO_PRESETS } from '../../data/demoFamilyData';
 import { normalizeItemName } from '../../api';
 import type { CarePreset } from '../../types/family';
@@ -249,15 +250,7 @@ export function ItemForm() {
 
   // 数量入力用ハンドラ（半角数字のみ許可）
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    // 全角数字を半角に変換
-    const halfWidth = value.replace(/[０-９]/g, (s) =>
-      String.fromCharCode(s.charCodeAt(0) - 0xFEE0)
-    );
-    // 半角数字以外を除去
-    const numericOnly = halfWidth.replace(/[^0-9]/g, '');
-    const numValue = parseInt(numericOnly, 10) || 0;
-    updateField('quantity', numValue > 0 ? numValue : 1);
+    updateField('quantity', parseNumericInput(e.target.value));
   };
 
   // バリデーション
