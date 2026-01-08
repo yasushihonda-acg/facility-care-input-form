@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useRoleTheme } from './hooks/useRoleTheme';
+import { useVersionCheck } from './hooks/useVersionCheck';
 import { PWAUpdateNotification } from './components/PWAUpdateNotification';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
@@ -63,6 +64,9 @@ import { SettingsPage } from './pages/SettingsPage';
 function App() {
   // ロール別テーマカラーを自動適用
   useRoleTheme();
+
+  // 起動時にバージョンチェック（古ければ自動リロード）
+  useVersionCheck();
 
   return (
     <ProtectedRoute>
