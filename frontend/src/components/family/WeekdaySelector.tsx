@@ -30,7 +30,7 @@ export function WeekdaySelector({ value, onChange, disabled = false }: WeekdaySe
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">曜日を選択</label>
+      <label className="block text-sm font-medium text-gray-700">曜日を選択 <span className="text-red-500">*</span></label>
       <div className="flex gap-1">
         {WEEKDAY_LABELS.map((label, index) => {
           const isSelected = value.includes(index);

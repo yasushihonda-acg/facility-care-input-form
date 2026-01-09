@@ -35,7 +35,7 @@ test.describe('【Phase 36.1】スケジュール開始日入力UI', () => {
         await dailyButton.click();
 
         // 開始日入力フィールドが表示される
-        await expect(page.getByText('開始日（任意）')).toBeVisible();
+        await expect(page.getByText('開始日')).toBeVisible();
         await expect(page.locator('input[type="date"]').nth(0)).toBeVisible();
       }
     });
@@ -55,7 +55,7 @@ test.describe('【Phase 36.1】スケジュール開始日入力UI', () => {
         await weeklyButton.click();
 
         // 開始日入力フィールドが表示される
-        await expect(page.getByText('開始日（任意）')).toBeVisible();
+        await expect(page.getByText('開始日')).toBeVisible();
       }
     });
 
@@ -74,7 +74,7 @@ test.describe('【Phase 36.1】スケジュール開始日入力UI', () => {
         await onceButton.click();
 
         // 開始日入力フィールドは表示されない
-        await expect(page.getByText('開始日（任意）')).not.toBeVisible();
+        await expect(page.getByText('開始日')).not.toBeVisible();
       }
     });
 
@@ -93,7 +93,7 @@ test.describe('【Phase 36.1】スケジュール開始日入力UI', () => {
         await specificDatesButton.click();
 
         // 開始日入力フィールドは表示されない
-        await expect(page.getByText('開始日（任意）')).not.toBeVisible();
+        await expect(page.getByText('開始日')).not.toBeVisible();
       }
     });
 
