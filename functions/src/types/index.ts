@@ -613,7 +613,7 @@ export interface CareItem {
   normalizedName?: string;
   category: ItemCategory;
   sentDate?: string; // YYYY-MM-DD（オプショナル - UI非表示）
-  quantity: number; // 旧: 互換性のため残す
+  quantity?: number; // 数量（undefined = 数量管理しない）
   unit: string;
   expirationDate?: string; // YYYY-MM-DD
   storageMethod?: StorageMethod;
@@ -654,7 +654,7 @@ export interface CareItem {
 
   // ステータス・メタ情報
   status: ItemStatus;
-  remainingQuantity: number; // 旧: 互換性のため残す
+  remainingQuantity?: number; // 残量（undefined = 数量管理しない）
   createdAt: Timestamp;
   updatedAt: Timestamp;
 
@@ -678,7 +678,7 @@ export interface CareItemInput {
   normalizedName?: string;
   category: ItemCategory;
   sentDate?: string; // オプショナル - UI非表示
-  quantity: number;
+  quantity?: number; // 数量（undefined = 数量管理しない）
   unit: string;
   expirationDate?: string;
   storageMethod?: StorageMethod;

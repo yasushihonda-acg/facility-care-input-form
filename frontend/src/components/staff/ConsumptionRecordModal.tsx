@@ -5,9 +5,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { CareItem } from '../../types/careItem';
+import { isQuantitySkipped, CONSUMPTION_STATUSES } from '../../types/careItem';
 import type { MealTime, RecordConsumptionLogRequest, ConsumptionStatus } from '../../types/consumptionLog';
 import { MEAL_TIMES, determineConsumptionStatus, calculateConsumptionRate } from '../../types/consumptionLog';
-import { CONSUMPTION_STATUSES } from '../../types/careItem';
 import { useRecordConsumptionLog } from '../../hooks/useConsumptionLogs';
 import { getTodayString } from '../../utils/scheduleUtils';
 
@@ -26,8 +26,11 @@ export function ConsumptionRecordModal({
   staffName = '',
   onSuccess,
 }: ConsumptionRecordModalProps) {
+  // 数量管理しない品物の判定
+  const skipQuantity = isQuantitySkipped(item);
   // 現在の残量（currentQuantityがなければremainingQuantityを使用）
-  const currentQuantity = item.currentQuantity ?? item.remainingQuantity ?? item.quantity;
+  // 数量管理しない品物は1として扱う
+  const currentQuantity = skipQuantity ? 1 : (item.currentQuantity ?? item.remainingQuantity ?? item.quantity ?? 1);
 
   // フォーム状態
   const [formData, setFormData] = useState({

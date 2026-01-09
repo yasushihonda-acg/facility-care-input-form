@@ -189,7 +189,7 @@ function migrateCategory(category: string): ItemCategory {
 export interface CareItemNotifyData {
   itemName: string;
   category: ItemCategory;
-  quantity: number;
+  quantity?: number; // undefined = 数量管理しない
   unit: string;
   expirationDate?: string;
   noteToStaff?: string;
@@ -232,12 +232,17 @@ export function formatCareItemNotification(
     second: "2-digit",
   });
 
+  // 数量管理しない場合は「在庫あり」と表示
+  const quantityText = item.quantity != null ?
+    `数量: ${item.quantity}${item.unit}` :
+    "数量: 在庫あり（数量管理なし）";
+
   const lines = [
     `#${actionLabel}`,
     "",
     `【${item.itemName}】`,
     `カテゴリ: ${categoryLabel}`,
-    `数量: ${item.quantity}${item.unit}`,
+    quantityText,
   ];
 
   // 削除時は賞味期限・伝達事項は表示しない

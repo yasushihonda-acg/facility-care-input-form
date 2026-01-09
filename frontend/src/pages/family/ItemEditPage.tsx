@@ -49,7 +49,7 @@ interface EditFormData {
   // Phase 43: 統計用の表示名
   normalizedName: string;
   category: ItemCategory;
-  quantity: number;
+  quantity?: number; // 数量（undefined = 数量管理しない）
   unit: string;
   expirationDate: string;
   storageMethod: StorageMethod | '';
@@ -133,7 +133,7 @@ export function ItemEditPage() {
     itemName: '',
     normalizedName: '',
     category: 'food',
-    quantity: 1,
+    quantity: undefined, // 数量（undefined = 数量管理しない）
     unit: '個',
     expirationDate: '',
     storageMethod: '',
@@ -145,6 +145,9 @@ export function ItemEditPage() {
     remainingHandlingConditions: undefined,
     servingSchedule: undefined,
   });
+
+  // 数量管理をスキップするかどうか
+  const [skipQuantity, setSkipQuantity] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -161,11 +164,15 @@ export function ItemEditPage() {
   // 品物データが取得できたらフォームにセット（旧カテゴリは自動変換）
   useEffect(() => {
     if (item) {
+      // 数量管理しない品物かどうかを判定
+      const isQuantitySkipped = item.quantity == null;
+      setSkipQuantity(isQuantitySkipped);
+
       setFormData({
         itemName: item.itemName || '',
         normalizedName: item.normalizedName || '',
         category: migrateCategory(item.category || 'food'),
-        quantity: item.quantity || 1,
+        quantity: isQuantitySkipped ? undefined : (item.quantity || 1),
         unit: item.unit || '個',
         expirationDate: item.expirationDate || '',
         storageMethod: item.storageMethod || '',
@@ -293,7 +300,8 @@ export function ItemEditPage() {
     if (!formData.itemName.trim()) {
       newErrors.itemName = '品物名を入力してください';
     }
-    if (formData.quantity < 1) {
+    // 数量管理する場合のみバリデーション
+    if (!skipQuantity && (formData.quantity == null || formData.quantity < 1)) {
       newErrors.quantity = '1以上を入力してください';
     }
     if (!formData.servingSchedule) {
@@ -626,46 +634,80 @@ export function ItemEditPage() {
           </div>
         </div>
 
-        {/* 個数・単位 */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
-              個数 <span className="text-red-500">*</span>
-            </label>
+        {/* 数量 */}
+        <div className="space-y-3">
+          {/* 数量を管理しないオプション */}
+          <div className="flex items-center gap-2">
             <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              id="quantity"
-              name="quantity"
-              value={formData.quantity || ''}
-              onChange={handleQuantityChange}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
-                errors.quantity ? 'border-red-500' : 'border-gray-300'
-              }`}
+              type="checkbox"
+              id="skipQuantity"
+              checked={skipQuantity}
+              onChange={(e) => {
+                setSkipQuantity(e.target.checked);
+                if (e.target.checked) {
+                  // 数量管理しない場合はquantityをundefinedに
+                  setFormData(prev => ({ ...prev, quantity: undefined }));
+                  setErrors(prev => ({ ...prev, quantity: '' }));
+                }
+              }}
+              className="w-4 h-4 text-primary rounded"
             />
-            {errors.quantity && (
-              <p className="mt-1 text-sm text-red-500">{errors.quantity}</p>
-            )}
-          </div>
-          <div>
-            <label htmlFor="unit" className="block text-sm font-medium text-gray-700 mb-1">
-              単位
+            <label htmlFor="skipQuantity" className="text-sm text-gray-700">
+              数量を管理しない
+              <span className="text-gray-500 ml-1">（詰め合わせ等）</span>
             </label>
-            <select
-              id="unit"
-              name="unit"
-              value={formData.unit}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-            >
-              {ITEM_UNITS.map((u) => (
-                <option key={u} value={u}>
-                  {u}
-                </option>
-              ))}
-            </select>
           </div>
+
+          {/* 数量入力（数量管理する場合のみ表示） */}
+          {!skipQuantity && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
+                  個数 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  id="quantity"
+                  name="quantity"
+                  value={formData.quantity || ''}
+                  onChange={handleQuantityChange}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
+                    errors.quantity ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+                {errors.quantity && (
+                  <p className="mt-1 text-sm text-red-500">{errors.quantity}</p>
+                )}
+              </div>
+              <div>
+                <label htmlFor="unit" className="block text-sm font-medium text-gray-700 mb-1">
+                  単位
+                </label>
+                <select
+                  id="unit"
+                  name="unit"
+                  value={formData.unit}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                >
+                  {ITEM_UNITS.map((u) => (
+                    <option key={u} value={u}>
+                      {u}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* 数量管理しない場合の説明 */}
+          {skipQuantity && (
+            <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-600">
+              📦 在庫数は追跡されません。提供時は「提供した」の記録のみ行います。
+            </div>
+          )}
         </div>
 
         {/* 賞味期限 */}

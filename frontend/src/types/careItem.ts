@@ -201,7 +201,7 @@ export interface CareItem {
   normalizedName?: string;
   category: ItemCategory;
   sentDate?: string;             // YYYY-MM-DD（オプショナル - UI非表示）
-  quantity: number;              // 旧: 互換性のため残す
+  quantity?: number;             // 数量（undefined = 数量管理しない）
   unit: string;
   expirationDate?: string;       // YYYY-MM-DD
   storageMethod?: StorageMethod;
@@ -250,7 +250,7 @@ export interface CareItem {
 
   // ステータス・メタ情報
   status: ItemStatus;
-  remainingQuantity: number;     // 旧: 互換性のため残す（currentQuantityと同期）
+  remainingQuantity?: number;    // 残量（undefined = 数量管理しない）
   createdAt: string;             // ISO8601
   updatedAt: string;             // ISO8601
 
@@ -274,7 +274,7 @@ export interface CareItemInput {
   normalizedName?: string;
   category: ItemCategory;
   sentDate?: string;  // オプショナル - UI非表示
-  quantity: number;
+  quantity?: number;  // 数量（undefined = 数量管理しない）
   unit: string;
   expirationDate?: string;
   storageMethod?: StorageMethod;
@@ -473,6 +473,22 @@ export function formatDate(dateStr: string): string {
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}/${m}/${d}`;
+}
+
+/**
+ * 数量を管理しない品物かどうかを判定
+ * quantity が undefined または null の場合は数量管理しない
+ */
+export function isQuantitySkipped(item: { quantity?: number | null }): boolean {
+  return item.quantity == null;
+}
+
+/**
+ * 品物の残量を取得（数量管理しない品物の場合は undefined）
+ */
+export function getRemainingQuantity(item: CareItem): number | undefined {
+  if (isQuantitySkipped(item)) return undefined;
+  return item.currentQuantity ?? item.remainingQuantity ?? item.quantity;
 }
 
 // =============================================================================

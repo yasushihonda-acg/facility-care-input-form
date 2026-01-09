@@ -13,4 +13,3 @@ export { SnackSection } from './SnackSection';
 export { MealInputTabs } from './MealInputTabs';
 export type { MealInputTabType } from './MealInputTabs';
 export { ItemBasedSnackRecord } from './ItemBasedSnackRecord';
-export { SnackRecordModal } from './SnackRecordModal';

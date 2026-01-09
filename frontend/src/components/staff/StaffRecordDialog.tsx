@@ -9,7 +9,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { CareItem } from '../../types/careItem';
 import type { RemainingHandling } from '../../types/consumptionLog';
-import { getCategoryIcon, migrateCategory, formatRemainingHandlingWithConditions } from '../../types/careItem';
+import { getCategoryIcon, migrateCategory, formatRemainingHandlingWithConditions, isQuantitySkipped } from '../../types/careItem';
 import { determineConsumptionStatus, REMAINING_HANDLING_OPTIONS } from '../../types/consumptionLog';
 import { useRecordConsumptionLog, useCorrectDiscardedRecord } from '../../hooks/useConsumptionLogs';
 import { submitMealRecord, uploadCareImage, submitHydrationRecord } from '../../api';
@@ -79,8 +79,10 @@ export function StaffRecordDialog({
   const recordMutation = useRecordConsumptionLog();
   const correctDiscardedMutation = useCorrectDiscardedRecord();
 
-  // 現在の残量
-  const currentQuantity = item.currentQuantity ?? item.remainingQuantity ?? item.quantity;
+  // 数量管理しない品物の判定
+  const skipQuantity = isQuantitySkipped(item);
+  // 現在の残量（数量管理しない品物は1として扱う）
+  const currentQuantity = skipQuantity ? 1 : (item.currentQuantity ?? item.remainingQuantity ?? item.quantity ?? 1);
 
   // Phase 59 Fix: 廃棄記録がある場合の判定（コンポーネントレベルで計算）
   const rhlDiscardedQty = item.remainingHandlingLogs?.find(log => log.handling === 'discarded')?.quantity;
@@ -172,7 +174,7 @@ export function StaffRecordDialog({
       });
       setErrors({});
     }
-  }, [isOpen, item, currentQuantity]);
+  }, [isOpen, item, currentQuantity, isDiscardedItem, discardedQty]);
 
   // Phase 15.6: 摂食割合が10になったら残り対応をリセット
   useEffect(() => {
@@ -252,7 +254,7 @@ export function StaffRecordDialog({
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [formData, currentQuantity, item.unit]);
+  }, [formData, currentQuantity, item.unit, isDiscardedItem]);
 
   // デモモード用のローディング状態
   const [isDemoSubmitting, setIsDemoSubmitting] = useState(false);
@@ -409,7 +411,7 @@ export function StaffRecordDialog({
     } catch (err) {
       setErrors({ submit: err instanceof Error ? err.message : '記録に失敗しました' });
     }
-  }, [formData, item, settings, recordMutation, correctDiscardedMutation, validate, onSuccess, onClose, isDemo]);
+  }, [formData, item, settings, recordMutation, correctDiscardedMutation, validate, onSuccess, onClose, isDemo, isDiscardedItem]);
 
   // Phase 15.7: 残り対応に基づいて消費量・残量を計算
   // Phase 29修正: タブ別に計算ロジックを分岐（水分タブも残り対応を考慮）
