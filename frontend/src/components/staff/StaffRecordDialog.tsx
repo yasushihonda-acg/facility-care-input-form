@@ -235,7 +235,9 @@ export function StaffRecordDialog({
       if (formData.hydrationAmount === null || formData.hydrationAmount <= 0) {
         newErrors.hydrationAmount = '水分量を入力してください。';
       }
-      // Phase 29追加: 水分タブでも残った分への対応を必須に
+      // Phase 29追加 + Phase 61修正: 残った分への対応バリデーション
+      // 単位がcc換算可能で残りがある場合のみ必須
+      // 単位がcc換算不可（個など）の場合は任意のためスキップ
       const maxHydrationAmount = calculateHydrationAmount(formData.servedQuantity, item.unit);
       if (maxHydrationAmount !== null &&
           formData.hydrationAmount !== null &&
@@ -312,7 +314,8 @@ export function StaffRecordDialog({
           consumptionNote: formData.consumptionNote || undefined,
           noteToFamily: formData.noteToFamily || undefined,
           recordedBy: formData.staffName,
-          ...(formData.activeTab === 'meal' && formData.remainingHandling && {
+          // Phase 15.7 + Phase 61: 残り対応をAPIに送信（食事・水分タブ共通）
+          ...(formData.remainingHandling && {
             remainingHandling: formData.remainingHandling,
             remainingHandlingOther: formData.remainingHandlingOther || undefined,
           }),
@@ -331,8 +334,8 @@ export function StaffRecordDialog({
           consumptionNote: formData.consumptionNote || undefined,
           noteToFamily: formData.noteToFamily || undefined,
           recordedBy: formData.staffName,
-          // Phase 15.7: 残り対応をAPIに送信（食事タブのみ）
-          ...(formData.activeTab === 'meal' && formData.remainingHandling && {
+          // Phase 15.7 + Phase 61: 残り対応をAPIに送信（食事・水分タブ共通）
+          ...(formData.remainingHandling && {
             remainingHandling: formData.remainingHandling,
             remainingHandlingOther: formData.remainingHandlingOther || undefined,
           }),
@@ -390,6 +393,11 @@ export function StaffRecordDialog({
           itemName: item.itemName,
           servedQuantity: formData.servedQuantity,
           unit: item.unit,
+          // Phase 61: 残った分への対応
+          ...(formData.remainingHandling && {
+            remainingHandling: formData.remainingHandling,
+            remainingHandlingOther: formData.remainingHandlingOther || undefined,
+          }),
         });
       }
 
@@ -660,17 +668,22 @@ export function StaffRecordDialog({
             </div>
           )}
 
-          {/* Phase 29追加: 水分タブ - 残った分への対応（全量消費していない場合） */}
+          {/* Phase 29追加: 水分タブ - 残った分への対応 */}
+          {/* Phase 61: 単位がcc換算不可（個など）の場合は常に表示・任意入力 */}
           {formData.activeTab === 'hydration' && (() => {
             const maxHydrationAmount = calculateHydrationAmount(formData.servedQuantity, item.unit);
-            const hasRemaining = maxHydrationAmount !== null &&
+            const isUnitConvertible = maxHydrationAmount !== null;
+            const hasRemaining = isUnitConvertible &&
               formData.hydrationAmount !== null &&
               formData.hydrationAmount < maxHydrationAmount;
-            if (!hasRemaining) return null;
+            // 単位がcc換算可能で残りがない場合のみ非表示
+            if (isUnitConvertible && !hasRemaining) return null;
+            // 単位がcc換算不可の場合は任意入力として常に表示
+            const isRequired = isUnitConvertible && hasRemaining;
             return (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  残った分への対応 <span className="text-red-500">*</span>
+                  残った分への対応 {isRequired && <span className="text-red-500">*</span>}
                 </label>
 
                 {/* Phase 33: 家族からの処置指示バナー */}

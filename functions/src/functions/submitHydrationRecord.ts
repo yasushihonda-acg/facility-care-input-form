@@ -86,6 +86,9 @@ function validateRequest(
       itemName: req.itemName as string | undefined,
       servedQuantity: req.servedQuantity as number | undefined,
       unit: req.unit as string | undefined,
+      // Phase 61: 残った分への対応（任意）
+      remainingHandling: req.remainingHandling as "discarded" | "stored" | "other" | undefined,
+      remainingHandlingOther: req.remainingHandlingOther as string | undefined,
     },
   };
 }
@@ -130,6 +133,20 @@ function buildWebhookMessage(
 
   parts.push("");
   parts.push(`摂取量：${record.hydrationAmount}cc`);
+
+  // Phase 61: 残った分への対応
+  if (record.remainingHandling) {
+    const handlingLabels: Record<string, string> = {
+      discarded: "破棄",
+      stored: "保存",
+      other: "その他",
+    };
+    const handlingLabel = handlingLabels[record.remainingHandling] || record.remainingHandling;
+    const handlingDetail = record.remainingHandlingOther ?
+      `${handlingLabel}（${record.remainingHandlingOther}）` :
+      handlingLabel;
+    parts.push(`残った分への対応：${handlingDetail}`);
+  }
 
   // 特記事項に品物名を挿入（シート保存と同じロジック）
   let specialNotes = record.note || "";
