@@ -255,24 +255,26 @@ export function ItemForm() {
 
     const itemName = extractItemName(preset.name);
 
+    // プリセット切り替え時は全てのプリセット関連フィールドをリセットしてから適用
+    // 条件付きスプレッドだと前のプリセットの値が残ってしまうため、明示的に設定
     setFormData((prev) => ({
       ...prev,
       // 品物名（プリセット名からカッコ前を抽出）
       itemName,
       // 統計用の表示名（品物名と同じ）
       normalizedName: itemName,
-      // カテゴリ（食べ物/飲み物）
-      ...(preset.itemCategory && { category: preset.itemCategory }),
-      // 保存方法
-      ...(preset.storageMethod && { storageMethod: preset.storageMethod }),
+      // カテゴリ（食べ物/飲み物）- 未設定なら前の値を維持（必須フィールドのため）
+      category: preset.itemCategory || prev.category,
+      // 保存方法 - 未設定ならundefinedにリセット
+      storageMethod: preset.storageMethod,
       // 提供方法（プリセットに指定があればそれを使用、なければ'as_is'）
       servingMethod: preset.servingMethod || 'as_is',
-      // 提供方法の詳細（新形式優先、旧形式フォールバック）
+      // 提供方法の詳細（新形式優先、旧形式フォールバック）- 未設定なら空文字にリセット
       servingMethodDetail: preset.servingMethodDetail || preset.processingDetail || '',
-      // スタッフへの申し送り
-      ...(preset.noteToStaff && { noteToStaff: preset.noteToStaff }),
-      // 残った場合の処置指示
-      ...(preset.remainingHandlingInstruction && { remainingHandlingInstruction: preset.remainingHandlingInstruction }),
+      // スタッフへの申し送り - 未設定なら空文字にリセット
+      noteToStaff: preset.noteToStaff || '',
+      // 残った場合の処置指示 - 未設定なら'none'にリセット
+      remainingHandlingInstruction: preset.remainingHandlingInstruction || 'none',
     }));
   }, []);
 

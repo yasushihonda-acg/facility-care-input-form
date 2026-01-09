@@ -280,16 +280,24 @@ export function ItemEditPage() {
 
     const itemName = extractItemName(preset.name);
 
+    // プリセット切り替え時は全てのプリセット関連フィールドをリセットしてから適用
+    // 条件付きスプレッドだと前のプリセットの値が残ってしまうため、明示的に設定
     setFormData((prev) => ({
       ...prev,
       itemName,
       normalizedName: itemName,
-      ...(preset.itemCategory && { category: preset.itemCategory }),
-      ...(preset.storageMethod && { storageMethod: preset.storageMethod }),
+      // カテゴリ（食べ物/飲み物）- 未設定なら前の値を維持（必須フィールドのため）
+      category: preset.itemCategory || prev.category,
+      // 保存方法 - 未設定なら空文字にリセット
+      storageMethod: preset.storageMethod || '',
+      // 提供方法（プリセットに指定があればそれを使用、なければ'as_is'）
       servingMethod: preset.servingMethod || 'as_is',
+      // 提供方法の詳細 - 未設定なら空文字にリセット
       servingMethodDetail: preset.servingMethodDetail || preset.processingDetail || '',
-      ...(preset.noteToStaff && { noteToStaff: preset.noteToStaff }),
-      ...(preset.remainingHandlingInstruction && { remainingHandlingInstruction: preset.remainingHandlingInstruction }),
+      // スタッフへの申し送り - 未設定なら空文字にリセット
+      noteToStaff: preset.noteToStaff || '',
+      // 残った場合の処置指示 - 未設定なら'none'にリセット
+      remainingHandlingInstruction: preset.remainingHandlingInstruction || 'none',
     }));
   }, []);
 
