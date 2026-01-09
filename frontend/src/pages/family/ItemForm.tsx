@@ -314,6 +314,33 @@ export function ItemForm() {
 
     if (!formData.servingSchedule) {
       newErrors.servingSchedule = '提供スケジュールを設定してください';
+    } else {
+      // スケジュールタイプに応じた詳細バリデーション
+      const schedule = formData.servingSchedule;
+      switch (schedule.type) {
+        case 'once':
+          if (!schedule.date) {
+            newErrors.servingSchedule = '日付を入力してください';
+          }
+          break;
+        case 'daily':
+          if (!schedule.startDate) {
+            newErrors.servingSchedule = '開始日を入力してください';
+          }
+          break;
+        case 'weekly':
+          if (!schedule.startDate) {
+            newErrors.servingSchedule = '開始日を入力してください';
+          } else if (!schedule.weekdays || schedule.weekdays.length === 0) {
+            newErrors.servingSchedule = '曜日を1つ以上選択してください';
+          }
+          break;
+        case 'specific_dates':
+          if (!schedule.dates || schedule.dates.length === 0) {
+            newErrors.servingSchedule = '日付を1つ以上選択してください';
+          }
+          break;
+      }
     }
 
     setErrors(newErrors);

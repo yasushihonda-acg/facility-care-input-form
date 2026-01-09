@@ -154,7 +154,7 @@ export function ServingScheduleInput({
         {/* 特定の日 */}
         {value.type === 'once' && (
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">日付</label>
+            <label className="block text-sm font-medium text-gray-700">日付 <span className="text-red-500">*</span></label>
             <input
               type="date"
               value={value.date || ''}
@@ -185,8 +185,8 @@ export function ServingScheduleInput({
         {/* 開始日（daily/weeklyの場合のみ） */}
         {(value.type === 'daily' || value.type === 'weekly') && (
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-600">
-              開始日（任意）
+            <label className="block text-sm font-medium text-gray-700">
+              開始日 <span className="text-red-500">*</span>
             </label>
             <input
               type="date"
