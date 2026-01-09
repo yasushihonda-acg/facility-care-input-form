@@ -6,7 +6,10 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAuth } from './contexts/AuthContext';
 
 /** 家族専用アカウント（常に家族ビューにリダイレクト） */
-const FAMILY_ONLY_EMAILS = ['kinuekamachi@gmail.com'];
+const FAMILY_ONLY_EMAILS = [
+  'kinuekamachi@gmail.com',
+  'yasushi.honda@aozora-cg.com', // テスト用（確認後に削除）
+];
 
 /**
  * ロールに応じたリダイレクトコンポーネント
