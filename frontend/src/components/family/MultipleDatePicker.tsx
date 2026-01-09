@@ -55,7 +55,7 @@ export function MultipleDatePicker({
 
   return (
     <div className="space-y-3">
-      <label className="block text-sm font-medium text-gray-700">日付を選択</label>
+      <label className="block text-sm font-medium text-gray-700">日付を選択 <span className="text-red-500">*</span></label>
 
       {/* 日付追加フォーム */}
       <div className="flex gap-2">
