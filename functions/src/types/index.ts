@@ -109,6 +109,9 @@ export interface SubmitHydrationRecordRequest {
   itemName?: string;
   servedQuantity?: number;
   unit?: string;
+  // Phase 61: 残った分への対応（任意）
+  remainingHandling?: "discarded" | "stored" | "other";
+  remainingHandlingOther?: string;
 }
 
 /**
