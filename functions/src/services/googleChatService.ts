@@ -233,9 +233,9 @@ export function formatCareItemNotification(
   });
 
   // 数量管理しない場合は「在庫あり」と表示
-  const quantityText = item.quantity != null
-    ? `数量: ${item.quantity}${item.unit}`
-    : "数量: 在庫あり（数量管理なし）";
+  const quantityText = item.quantity != null ?
+    `数量: ${item.quantity}${item.unit}` :
+    "数量: 在庫あり（数量管理なし）";
 
   const lines = [
     `#${actionLabel}`,
