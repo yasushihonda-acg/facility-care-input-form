@@ -173,8 +173,8 @@ async function generateAlerts(
       }
     }
 
-    // 在庫少
-    if (item.status === "pending" && item.remainingQuantity <= 1) {
+    // 在庫少（数量管理する品物のみ）
+    if (item.status === "pending" && item.remainingQuantity != null && item.remainingQuantity <= 1) {
       alerts.push({
         id: `alert-low-stock-${item.id}`,
         type: "low_stock" as AlertType,
