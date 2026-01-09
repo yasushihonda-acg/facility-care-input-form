@@ -5,21 +5,21 @@ owner: core-team
 last_reviewed: 2025-12-20
 ---
 
-# API仕様書 (Dev Mode)
+# API仕様書
 
 ## 1. 概要
 
-本ドキュメントは、蒲地様プロジェクトのCloud Run functions APIエンドポイント仕様を定義します。
+本ドキュメントは、蒲地様プロジェクトのCloud Functions APIエンドポイント仕様を定義します。
 
-### 開発モード (Dev Mode) について
+### 認証 (Phase 52)
 
 | 項目 | 設定 |
 |------|------|
-| 認証 | なし (`--allow-unauthenticated`) |
-| ユーザー識別 | リクエストボディで `userId` / `staffId` を送信 |
-| CORS | 全オリジン許可 |
+| 認証 | Firebase Authentication（Googleログイン） |
+| 許可リスト | @aozora-cg.com ドメイン + 個別メール |
+| CORS | フロントエンドからのリクエストのみ許可 |
 
-> **注意**: 本仕様はプロトタイプ検証用です。本番環境では Firebase Authentication を実装してください。
+> 詳細は `docs/ARCHITECTURE.md` セクション2「認証・認可」を参照。
 
 ---
 

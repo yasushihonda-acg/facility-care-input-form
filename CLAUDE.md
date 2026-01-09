@@ -231,4 +231,4 @@ npx playwright test --list 2>&1 | tail -3
 - `keys/` ディレクトリをGitにコミットしない
 - `functions/.env` をGitにコミットしない
 - 新規サービスアカウントを作成しない（統一SA: `facility-care-sa`）
-- 認証なしのまま本番運用しない（現在はDev Mode）
+- Firebase Authentication認証は必須（Phase 52で導入済み）

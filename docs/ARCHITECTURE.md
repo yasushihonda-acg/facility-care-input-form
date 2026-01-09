@@ -458,25 +458,34 @@ src/
 └── types/
     └── index.ts               # 型定義
 
-firestore.rules                 # セキュリティルール（Dev Mode: 全開放）
+firestore.rules                 # セキュリティルール（認証 + 許可リスト）
 ```
 
 ---
 
-## 8. セキュリティルール (Dev Mode)
+## 8. セキュリティルール (Phase 52: 認証必須)
+
+Firebase Authentication + 許可リストによるアクセス制御を実装済み。
 
 ```javascript
-// firestore.rules
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // WARNING: Dev Mode - 本番環境では必ず認証を実装すること
-    match /{document=**} {
-      allow read, write: if true;
-    }
-  }
+// firestore.rules - 主要部分
+function isAllowedUser() {
+  let domain = request.auth.token.email.split('@')[1];
+  return exists(/databases/$(database)/documents/allowed_domains/$(domain))
+      || exists(/databases/$(database)/documents/allowed_emails/$(emailKey));
+}
+
+function isAuthorized() {
+  return request.auth != null && isAllowedUser();
+}
+
+// 全コレクションに認証を適用
+match /{collection}/{document=**} {
+  allow read, write: if isAuthorized();
 }
 ```
+
+詳細は `firestore.rules` を参照。
 
 ---
 
@@ -488,7 +497,7 @@ service cloud.firestore {
 |--------------|------|
 | [HANDOVER.md](./HANDOVER.md) | **引き継ぎ・クイックスタート**（再開時に最初に読む） |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | システム設計（本ファイル） |
-| [API_SPEC.md](./API_SPEC.md) | API仕様書（Dev Mode） |
+| [API_SPEC.md](./API_SPEC.md) | API仕様書 |
 | [DATA_MODEL.md](./DATA_MODEL.md) | データモデル定義 |
 | [SETUP.md](./SETUP.md) | 環境セットアップガイド（CLI版） |
 
