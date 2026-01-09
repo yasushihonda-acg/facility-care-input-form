@@ -8,12 +8,16 @@ import { useAuth } from './contexts/AuthContext';
 /** 家族専用アカウント（常に家族ビューにリダイレクト） */
 const FAMILY_ONLY_EMAILS = ['kinuekamachi@gmail.com'];
 
+/** スタッフ専用ドメイン（常にスタッフビューにリダイレクト） */
+const STAFF_ONLY_DOMAINS = ['aozora-cg.com'];
+
 /**
  * ロールに応じたリダイレクトコンポーネント
  *
  * 優先順位:
  * 1. 家族専用アカウント → /family（強制）
- * 2. localStorage の userRole に基づいて決定
+ * 2. スタッフ専用ドメイン → /staff/notes（強制）
+ * 3. localStorage の userRole に基づいて決定
  *    - staff → /staff/notes（注意事項）
  *    - family → /family（家族ホーム）
  *    - 未設定 → /view（記録閲覧）
@@ -21,11 +25,18 @@ const FAMILY_ONLY_EMAILS = ['kinuekamachi@gmail.com'];
 function RoleBasedRedirect() {
   const { user } = useAuth();
   const savedRole = localStorage.getItem('userRole');
+  const emailDomain = user?.email?.split('@')[1];
 
   // 家族専用アカウントは常に家族ビューにリダイレクト
   if (user?.email && FAMILY_ONLY_EMAILS.includes(user.email)) {
     localStorage.setItem('userRole', 'family');
     return <Navigate to="/family" replace />;
+  }
+
+  // スタッフ専用ドメインは常にスタッフビューにリダイレクト
+  if (emailDomain && STAFF_ONLY_DOMAINS.includes(emailDomain)) {
+    localStorage.setItem('userRole', 'staff');
+    return <Navigate to="/staff/notes" replace />;
   }
 
   if (savedRole === 'staff') {
