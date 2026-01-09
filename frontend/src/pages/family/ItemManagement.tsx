@@ -29,6 +29,7 @@ import {
   getServingTimeSlotOrder,
 } from '../../types/careItem';
 import type { CareItem } from '../../types/careItem';
+import { isQuantitySkipped } from '../../types/careItem';
 import { ExpirationAlert } from '../../components/family/ExpirationAlert';
 import { DateNavigator, type DateViewMode } from '../../components/family/DateNavigator';
 import { UnscheduledDatesBanner } from '../../components/family/UnscheduledDatesBanner';
@@ -431,7 +432,8 @@ function ItemCard({ item, onDelete, onEdit, onShowDetail }: {
 }) {
   const statusColor = getStatusColorClass(item.status);
   const daysUntilExpiration = item.expirationDate ? getDaysUntilExpiration(item.expirationDate) : null;
-  const currentQty = item.remainingQuantity ?? item.quantity ?? 0;
+  const skipQuantity = isQuantitySkipped(item);
+  const currentQty = skipQuantity ? undefined : (item.remainingQuantity ?? item.quantity ?? 0);
 
   return (
     <div
@@ -452,7 +454,11 @@ function ItemCard({ item, onDelete, onEdit, onShowDetail }: {
           <div className="mt-2 text-sm text-gray-600 space-y-1">
             {/* 残量・期限情報（スタッフ用カードと同じ形式） */}
             <div className="flex items-center gap-2">
-              <span>残り {currentQty}{item.unit}</span>
+              {skipQuantity ? (
+                <span className="text-green-600 font-medium">在庫あり</span>
+              ) : (
+                <span>残り {currentQty}{item.unit}</span>
+              )}
               <span className="text-gray-300">┃</span>
               {item.expirationDate ? (
                 <span className={
@@ -578,8 +584,9 @@ function ItemDetailModal({ item, onClose, onEdit, onDelete }: {
 }) {
   const statusColor = getStatusColorClass(item.status);
   const daysUntilExpiration = item.expirationDate ? getDaysUntilExpiration(item.expirationDate) : null;
-  const currentQty = item.remainingQuantity ?? item.quantity ?? 0;
-  const initialQty = item.quantity ?? 1;
+  const skipQuantity = isQuantitySkipped(item);
+  const currentQty = skipQuantity ? undefined : (item.remainingQuantity ?? item.quantity ?? 0);
+  const initialQty = skipQuantity ? 1 : (item.quantity ?? 1);
 
   return (
     <div
@@ -612,7 +619,11 @@ function ItemDetailModal({ item, onClose, onEdit, onDelete }: {
         <div className="p-4 space-y-4">
           {/* 残量・期限（スタッフ用カードと同じ形式） */}
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <span className="font-medium">残り {currentQty}{item.unit}</span>
+            {skipQuantity ? (
+              <span className="text-green-600 font-medium">在庫あり</span>
+            ) : (
+              <span className="font-medium">残り {currentQty}{item.unit}</span>
+            )}
             <span className="text-gray-300">┃</span>
             {item.expirationDate ? (
               <span className={
@@ -631,19 +642,21 @@ function ItemDetailModal({ item, onClose, onEdit, onDelete }: {
             )}
           </div>
 
-          {/* 在庫バー */}
-          <div className="bg-gray-50 rounded-lg p-3">
-            <div className="flex justify-between text-xs text-gray-500 mb-1">
-              <span>消費</span>
-              <span>{currentQty}{item.unit} / {initialQty}{item.unit}</span>
+          {/* 在庫バー（数量管理する品物のみ表示） */}
+          {!skipQuantity && (
+            <div className="bg-gray-50 rounded-lg p-3">
+              <div className="flex justify-between text-xs text-gray-500 mb-1">
+                <span>消費</span>
+                <span>{currentQty}{item.unit} / {initialQty}{item.unit}</span>
+              </div>
+              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-blue-500 transition-all"
+                  style={{ width: `${((currentQty ?? 0) / initialQty) * 100}%` }}
+                />
+              </div>
             </div>
-            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-blue-500 transition-all"
-                style={{ width: `${(currentQty / initialQty) * 100}%` }}
-              />
-            </div>
-          </div>
+          )}
 
           {/* スケジュール表示（スタッフ用カードと同じScheduleDisplayコンポーネント使用） */}
           {item.servingSchedule ? (

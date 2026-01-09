@@ -6,6 +6,7 @@
  */
 
 import type { CareItem } from '../../types/careItem';
+import { isQuantitySkipped } from '../../types/careItem';
 import { FamilyItemCard } from './FamilyItemCard';
 
 interface FamilyItemListProps {
@@ -24,10 +25,11 @@ export function FamilyItemList({
   error = null,
 }: FamilyItemListProps) {
   // 在庫のある品物のみフィルタ（pending, in_progress）
+  // 数量管理しない品物も、提供後は consumed になるためフィルタで除外される
   const availableItems = items.filter(
     (item) =>
       (item.status === 'pending' || item.status === 'in_progress') &&
-      (item.currentQuantity ?? item.quantity ?? 0) > 0
+      (isQuantitySkipped(item) || (item.currentQuantity ?? item.quantity ?? 0) > 0)
   );
 
   if (isLoading) {

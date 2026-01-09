@@ -6,6 +6,7 @@
  */
 
 import type { CareItem } from '../../types/careItem';
+import { isQuantitySkipped } from '../../types/careItem';
 
 interface FamilyItemCardProps {
   item: CareItem;
@@ -69,14 +70,18 @@ export function FamilyItemCard({
   onRecordClick,
   isSelected = false,
 }: FamilyItemCardProps) {
-  const currentQty = item.currentQuantity ?? item.quantity ?? 0;
-  const initialQty = item.initialQuantity ?? item.quantity ?? 1;
+  const skipQuantity = isQuantitySkipped(item);
+  const currentQty = skipQuantity ? undefined : (item.currentQuantity ?? item.quantity ?? 0);
+  const initialQty = skipQuantity ? 1 : (item.initialQuantity ?? item.quantity ?? 1);
   const daysUntil = getDaysUntilExpiration(item.expirationDate);
   const expirationStyle = getExpirationStyle(daysUntil);
-  const stockIcon = getStockIcon(currentQty, initialQty);
+  const stockIcon = skipQuantity ? '📦' : getStockIcon(currentQty ?? 0, initialQty);
 
-  // 在庫なし（消費済み）の場合は表示しない
-  if (currentQty <= 0) return null;
+  // 消費済み・廃棄済みの場合は表示しない
+  // 数量管理しない品物も、提供記録後は status が 'consumed' になるため非表示
+  if (item.status === 'consumed' || item.status === 'discarded') return null;
+  // 数量管理する品物で在庫なしの場合も非表示
+  if (!skipQuantity && currentQty != null && currentQty <= 0) return null;
 
   return (
     <div
@@ -104,9 +109,13 @@ export function FamilyItemCard({
 
       {/* 在庫・期限情報 */}
       <div className="mt-1 flex items-center gap-2 text-sm text-gray-600">
-        <span>
-          残り {currentQty}{item.unit}
-        </span>
+        {skipQuantity ? (
+          <span className="text-green-600 font-medium">在庫あり</span>
+        ) : (
+          <span>
+            残り {currentQty}{item.unit}
+          </span>
+        )}
         {item.expirationDate && (
           <>
             <span className="text-gray-400">┃</span>

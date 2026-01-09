@@ -62,10 +62,13 @@ export function ItemForm() {
   const [formData, setFormData] = useState<CareItemInput>({
     itemName: '',
     category: 'food',
-    quantity: 0,
+    quantity: undefined, // 数量（undefined = 数量管理しない）
     unit: '個',
     servingMethod: 'as_is',
   });
+
+  // 数量管理をスキップするかどうか
+  const [skipQuantity, setSkipQuantity] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -304,7 +307,8 @@ export function ItemForm() {
 
     // 送付日は任意（デフォルト: 今日の日付が自動設定される）
 
-    if (formData.quantity < 1) {
+    // 数量管理する場合のみバリデーション
+    if (!skipQuantity && (formData.quantity == null || formData.quantity < 1)) {
       newErrors.quantity = '1以上の数を入力してください';
     }
 
@@ -665,41 +669,75 @@ export function ItemForm() {
           </div>
 
           {/* 数量 */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
-                数量 <span className="text-red-500">*</span>
+          <div className="space-y-3">
+            {/* 数量を管理しないオプション */}
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="skipQuantity"
+                checked={skipQuantity}
+                onChange={(e) => {
+                  setSkipQuantity(e.target.checked);
+                  if (e.target.checked) {
+                    // 数量管理しない場合はquantityをundefinedに
+                    setFormData(prev => ({ ...prev, quantity: undefined }));
+                    setErrors(prev => ({ ...prev, quantity: '' }));
+                  }
+                }}
+                className="w-4 h-4 text-primary rounded"
+              />
+              <label htmlFor="skipQuantity" className="text-sm text-gray-700">
+                数量を管理しない
+                <span className="text-gray-500 ml-1">（詰め合わせ等）</span>
               </label>
-              <div className="flex gap-2">
-                <input
-                  id="quantity"
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={formData.quantity || ''}
-                  onChange={handleQuantityChange}
-                  className={`flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary ${
-                    errors.quantity ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                <select
-                  id="unit"
-                  aria-label="単位"
-                  value={formData.unit}
-                  onChange={(e) => updateField('unit', e.target.value)}
-                  className="px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
-                >
-                  {ITEM_UNITS.map((unit) => (
-                    <option key={unit} value={unit}>
-                      {unit}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {errors.quantity && (
-                <p className="mt-1 text-sm text-red-500">{errors.quantity}</p>
-              )}
             </div>
+
+            {/* 数量入力（数量管理する場合のみ表示） */}
+            {!skipQuantity && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
+                    数量 <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      id="quantity"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={formData.quantity || ''}
+                      onChange={handleQuantityChange}
+                      className={`flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary ${
+                        errors.quantity ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    />
+                    <select
+                      id="unit"
+                      aria-label="単位"
+                      value={formData.unit}
+                      onChange={(e) => updateField('unit', e.target.value)}
+                      className="px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                    >
+                      {ITEM_UNITS.map((unit) => (
+                        <option key={unit} value={unit}>
+                          {unit}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {errors.quantity && (
+                    <p className="mt-1 text-sm text-red-500">{errors.quantity}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 数量管理しない場合は単位のみ表示 */}
+            {skipQuantity && (
+              <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-600">
+                📦 在庫数は追跡されません。提供時は「提供した」の記録のみ行います。
+              </div>
+            )}
           </div>
 
           {/* 賞味期限 */}

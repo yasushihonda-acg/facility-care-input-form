@@ -17,6 +17,7 @@ import {
   getStorageLabel,
   formatRemainingHandlingWithConditions,
   getServingTimeSlotOrder,
+  isQuantitySkipped,
 } from '../../types/careItem';
 import { StaffRecordDialog } from '../staff/StaffRecordDialog';
 import {
@@ -636,7 +637,8 @@ interface ItemCardProps {
 
 function ItemCard({ item, highlight, onRecordClick, onDiscardClick }: ItemCardProps) {
   const daysUntil = getDaysUntilExpiration(item);
-  const remainingQty = item.currentQuantity ?? item.remainingQuantity ?? item.quantity;
+  const skipQuantity = isQuantitySkipped(item);
+  const remainingQty = skipQuantity ? undefined : (item.currentQuantity ?? item.remainingQuantity ?? item.quantity);
   const isRecorded = highlight === 'recorded';
 
   const borderColor = {
@@ -666,7 +668,11 @@ function ItemCard({ item, highlight, onRecordClick, onDiscardClick }: ItemCardPr
 
           <div className="mt-2 text-sm text-gray-600 space-y-1">
             <div className="flex items-center gap-2">
-              <span>残り {remainingQty}{item.unit}</span>
+              {skipQuantity ? (
+                <span className="text-green-600 font-medium">在庫あり</span>
+              ) : (
+                <span>残り {remainingQty}{item.unit}</span>
+              )}
               <span className="text-gray-300">┃</span>
               {item.expirationDate ? (
                 <span className={
@@ -779,7 +785,8 @@ interface RemainingItemCardProps {
 
 function RemainingItemCard({ item, type, showButtons = true, onRecordClick }: RemainingItemCardProps) {
   const daysUntil = getDaysUntilExpiration(item);
-  const remainingQty = item.currentQuantity ?? item.remainingQuantity ?? item.quantity;
+  const skipQuantity = isQuantitySkipped(item);
+  const remainingQty = skipQuantity ? undefined : (item.currentQuantity ?? item.remainingQuantity ?? item.quantity);
 
   const borderColor = type === 'discarded'
     ? 'border-red-300 bg-red-50'
@@ -804,7 +811,11 @@ function RemainingItemCard({ item, type, showButtons = true, onRecordClick }: Re
 
           <div className="mt-2 text-sm text-gray-600 space-y-1">
             <div className="flex items-center gap-2">
-              <span>残り {remainingQty}{item.unit}</span>
+              {skipQuantity ? (
+                <span className="text-green-600 font-medium">在庫あり</span>
+              ) : (
+                <span>残り {remainingQty}{item.unit}</span>
+              )}
               <span className="text-gray-300">┃</span>
               {item.expirationDate ? (
                 <span className={

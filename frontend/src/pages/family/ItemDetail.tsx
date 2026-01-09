@@ -21,6 +21,7 @@ import {
   getStorageLabel,
   getServingMethodLabel,
   CONSUMPTION_STATUSES,
+  isQuantitySkipped,
 } from '../../types/careItem';
 import type { ConsumptionStatus } from '../../types/careItem';
 import { useItemEvents } from '../../hooks/useItemEvents';
@@ -205,10 +206,11 @@ export function ItemDetail() {
   const isExpiringSoon = daysUntilExpiration !== null && daysUntilExpiration <= 3 && daysUntilExpiration >= 0;
   const isExpired = daysUntilExpiration !== null && daysUntilExpiration < 0;
 
-  // 在庫計算
-  const initialQty = item.quantity || 1;
-  const remainingQty = item.remainingQuantity || 0;
-  const consumedPercent = ((initialQty - remainingQty) / initialQty) * 100;
+  // 在庫計算（数量管理しない品物は表示しない）
+  const skipQuantity = isQuantitySkipped(item);
+  const initialQty = skipQuantity ? 1 : (item.quantity || 1);
+  const remainingQty = skipQuantity ? undefined : (item.remainingQuantity || 0);
+  const consumedPercent = skipQuantity ? 0 : ((initialQty - (remainingQty ?? 0)) / initialQty) * 100;
 
   return (
     <Layout
@@ -250,25 +252,34 @@ export function ItemDetail() {
               </div>
             </div>
 
-            {/* 在庫バー */}
+            {/* 在庫バー（数量管理する品物のみ）/ 在庫あり表示（数量管理しない品物） */}
             <div className="mb-4">
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-600">残量</span>
-                <span className="font-bold">{remainingQty}{item.unit} / {initialQty}{item.unit}</span>
-              </div>
-              <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className={`h-full transition-all ${
-                    consumedPercent >= 80 ? 'bg-red-500' :
-                    consumedPercent >= 50 ? 'bg-yellow-500' : 'bg-blue-500'
-                  }`}
-                  style={{ width: `${100 - consumedPercent}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>消費: {consumedPercent.toFixed(0)}%</span>
-                <span>残り: {(100 - consumedPercent).toFixed(0)}%</span>
-              </div>
+              {skipQuantity ? (
+                <div className="flex items-center gap-2 py-2">
+                  <span className="text-green-600 font-medium text-lg">✓ 在庫あり</span>
+                  <span className="text-sm text-gray-500">（数量管理なし）</span>
+                </div>
+              ) : (
+                <>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-600">残量</span>
+                    <span className="font-bold">{remainingQty}{item.unit} / {initialQty}{item.unit}</span>
+                  </div>
+                  <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all ${
+                        consumedPercent >= 80 ? 'bg-red-500' :
+                        consumedPercent >= 50 ? 'bg-yellow-500' : 'bg-blue-500'
+                      }`}
+                      style={{ width: `${100 - consumedPercent}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>消費: {consumedPercent.toFixed(0)}%</span>
+                    <span>残り: {(100 - consumedPercent).toFixed(0)}%</span>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* 基本情報 */}
