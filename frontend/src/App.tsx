@@ -3,16 +3,30 @@ import { useRoleTheme } from './hooks/useRoleTheme';
 import { useVersionCheck } from './hooks/useVersionCheck';
 import { PWAUpdateNotification } from './components/PWAUpdateNotification';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { useAuth } from './contexts/AuthContext';
+
+/** 家族専用アカウント（常に家族ビューにリダイレクト） */
+const FAMILY_ONLY_EMAILS = ['kinuekamachi@gmail.com'];
 
 /**
  * ロールに応じたリダイレクトコンポーネント
- * localStorage の userRole に基づいて初期表示ページを決定
- * - staff → /staff/notes（注意事項）
- * - family → /family（家族ホーム）
- * - 未設定 → /view（記録閲覧）
+ *
+ * 優先順位:
+ * 1. 家族専用アカウント → /family（強制）
+ * 2. localStorage の userRole に基づいて決定
+ *    - staff → /staff/notes（注意事項）
+ *    - family → /family（家族ホーム）
+ *    - 未設定 → /view（記録閲覧）
  */
 function RoleBasedRedirect() {
+  const { user } = useAuth();
   const savedRole = localStorage.getItem('userRole');
+
+  // 家族専用アカウントは常に家族ビューにリダイレクト
+  if (user?.email && FAMILY_ONLY_EMAILS.includes(user.email)) {
+    localStorage.setItem('userRole', 'family');
+    return <Navigate to="/family" replace />;
+  }
 
   if (savedRole === 'staff') {
     return <Navigate to="/staff/notes" replace />;
