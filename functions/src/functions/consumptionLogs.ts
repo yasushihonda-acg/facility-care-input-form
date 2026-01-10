@@ -533,6 +533,8 @@ async function getConsumptionLogsHandler(
         recordedAt: data.recordedAt?.toDate?.().toISOString() ?? data.recordedAt,
         updatedAt: data.updatedAt?.toDate?.().toISOString() ?? data.updatedAt ?? undefined,
         updatedBy: data.updatedBy ?? undefined,
+        // Phase 29: 水分量
+        hydrationAmount: data.hydrationAmount ?? undefined,
       };
     });
 
