@@ -234,8 +234,7 @@ async function updateHydrationRecordHandler(
     try {
       const sheetResult = await updateHydrationRecordInSheetA(
         input.sheetTimestamp,
-        input.hydrationAmount,
-        updatedNote || undefined
+        input.hydrationAmount
       );
 
       if (sheetResult) {
