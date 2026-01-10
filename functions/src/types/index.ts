@@ -874,6 +874,24 @@ export interface GetConsumptionLogsResponse {
   total: number;
 }
 
+/** 全品物消費ログ一括取得リクエスト */
+export interface GetAllConsumptionLogsRequest {
+  /** 取得対象の品物IDリスト */
+  itemIds: string[];
+  /** 開始日（YYYY-MM-DD）- この日より後のログを取得 */
+  startDate?: string;
+  /** 終了日（YYYY-MM-DD）- この日より前のログを取得 */
+  endDate?: string;
+  /** 取得件数上限（デフォルト: 100） */
+  limit?: number;
+}
+
+/** 全品物消費ログ一括取得レスポンス */
+export interface GetAllConsumptionLogsResponse {
+  logs: ConsumptionLog[];
+  total: number;
+}
+
 
 /** 破棄記録修正リクエスト */
 export interface CorrectDiscardedRecordRequest {

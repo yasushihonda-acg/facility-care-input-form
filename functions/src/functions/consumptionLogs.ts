@@ -581,6 +581,191 @@ async function getConsumptionLogsHandler(
 
 
 // =============================================================================
+// Handler: getAllConsumptionLogs
+// =============================================================================
+
+/**
+ * 全品物の消費ログを一括取得
+ * - 複数の品物IDを受け取り、それらの消費ログを一括で返す
+ * - 過去記録の閲覧・編集に使用
+ */
+async function getAllConsumptionLogsHandler(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const timestamp = new Date().toISOString();
+
+  try {
+    // CORS対応
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.set("Access-Control-Allow-Headers", "Content-Type");
+
+    if (req.method === "OPTIONS") {
+      res.status(204).send("");
+      return;
+    }
+
+    if (req.method !== "POST") {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: {
+          code: ErrorCodes.INVALID_REQUEST,
+          message: "Method not allowed. Use POST.",
+        },
+        timestamp,
+      };
+      res.status(405).json(response);
+      return;
+    }
+
+    const params = req.body as {
+      itemIds?: string[];
+      startDate?: string;
+      endDate?: string;
+      limit?: number;
+    };
+
+    // itemIdsは必須
+    if (!params.itemIds || !Array.isArray(params.itemIds) || params.itemIds.length === 0) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: {
+          code: ErrorCodes.MISSING_REQUIRED_FIELD,
+          message: "itemIds is required and must be a non-empty array",
+        },
+        timestamp,
+      };
+      res.status(400).json(response);
+      return;
+    }
+
+    // 最大100品物まで
+    if (params.itemIds.length > 100) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: {
+          code: ErrorCodes.INVALID_REQUEST,
+          message: "itemIds cannot exceed 100 items",
+        },
+        timestamp,
+      };
+      res.status(400).json(response);
+      return;
+    }
+
+    // itemIdsを変数に保存（TypeScript narrowing用）
+    const itemIds = params.itemIds;
+
+    functions.logger.info("getAllConsumptionLogs started", {
+      itemCount: itemIds.length,
+      startDate: params.startDate,
+      endDate: params.endDate,
+      limit: params.limit,
+    });
+
+    const db = getFirestore();
+    const limit = params.limit ? Math.min(params.limit, 500) : 100;
+
+    // 各品物の消費ログを並列取得
+    const logPromises = itemIds.map(async (itemId) => {
+      const logsRef = db
+        .collection(CARE_ITEMS_COLLECTION)
+        .doc(itemId)
+        .collection(CONSUMPTION_LOGS_SUBCOLLECTION);
+
+      let query = logsRef.orderBy("servedDate", "desc").orderBy("recordedAt", "desc");
+
+      if (params.startDate) {
+        query = query.where("servedDate", ">=", params.startDate);
+      }
+      if (params.endDate) {
+        query = query.where("servedDate", "<=", params.endDate);
+      }
+
+      // 各品物あたりの取得件数を制限（全体のlimitを品物数で分割）
+      const perItemLimit = Math.ceil(limit / itemIds.length);
+      query = query.limit(Math.max(perItemLimit, 10)); // 最低10件は取得
+
+      const snapshot = await query.get();
+      return snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          itemId: data.itemId,
+          servedDate: data.servedDate,
+          servedTime: data.servedTime ?? undefined,
+          mealTime: data.mealTime ?? undefined,
+          servedQuantity: data.servedQuantity,
+          servedBy: data.servedBy,
+          consumedQuantity: data.consumedQuantity,
+          consumptionRate: data.consumptionRate,
+          consumptionStatus: data.consumptionStatus,
+          remainingHandling: data.remainingHandling ?? undefined,
+          remainingHandlingOther: data.remainingHandlingOther ?? undefined,
+          inventoryDeducted: data.inventoryDeducted ?? undefined,
+          wastedQuantity: data.wastedQuantity ?? undefined,
+          quantityBefore: data.quantityBefore,
+          quantityAfter: data.quantityAfter,
+          consumptionNote: data.consumptionNote ?? undefined,
+          noteToFamily: data.noteToFamily ?? undefined,
+          recordedBy: data.recordedBy,
+          recordedAt: data.recordedAt?.toDate?.().toISOString() ?? data.recordedAt,
+          updatedAt: data.updatedAt?.toDate?.().toISOString() ?? data.updatedAt ?? undefined,
+          updatedBy: data.updatedBy ?? undefined,
+          hydrationAmount: data.hydrationAmount ?? undefined,
+          sheetTimestamp: data.sheetTimestamp ?? undefined,
+        } as ConsumptionLog;
+      });
+    });
+
+    const logsArrays = await Promise.all(logPromises);
+    let allLogs = logsArrays.flat();
+
+    // 全体を日付順でソート（新しい順）
+    allLogs.sort((a, b) => {
+      const dateCompare = b.servedDate.localeCompare(a.servedDate);
+      if (dateCompare !== 0) return dateCompare;
+      const recordedAtA = String(a.recordedAt || "");
+      const recordedAtB = String(b.recordedAt || "");
+      return recordedAtB.localeCompare(recordedAtA);
+    });
+
+    // 全体のlimitを適用
+    allLogs = allLogs.slice(0, limit);
+
+    functions.logger.info("getAllConsumptionLogs success", {
+      itemCount: itemIds.length,
+      totalLogs: allLogs.length,
+    });
+
+    const responseData = {
+      logs: allLogs,
+      total: allLogs.length,
+    };
+
+    const response: ApiResponse<typeof responseData> = {
+      success: true,
+      data: responseData,
+      timestamp,
+    };
+    res.status(200).json(response);
+  } catch (error) {
+    functions.logger.error("getAllConsumptionLogs error", error);
+    const response: ApiResponse<null> = {
+      success: false,
+      error: {
+        code: ErrorCodes.FIRESTORE_ERROR,
+        message: error instanceof Error ? error.message : "Unknown error",
+      },
+      timestamp,
+    };
+    res.status(500).json(response);
+  }
+}
+
+
+// =============================================================================
 // Handler: correctDiscardedRecord
 // =============================================================================
 
@@ -910,6 +1095,15 @@ export const getConsumptionLogs = functions
     serviceAccount: FUNCTIONS_CONFIG.SERVICE_ACCOUNT,
   })
   .https.onRequest(getConsumptionLogsHandler);
+
+export const getAllConsumptionLogs = functions
+  .region(FUNCTIONS_CONFIG.REGION)
+  .runWith({
+    timeoutSeconds: 60,
+    memory: "256MB",
+    serviceAccount: FUNCTIONS_CONFIG.SERVICE_ACCOUNT,
+  })
+  .https.onRequest(getAllConsumptionLogsHandler);
 
 
 export const correctDiscardedRecord = functions

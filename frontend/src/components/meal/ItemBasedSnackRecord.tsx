@@ -31,6 +31,7 @@ import {
   isAfter16JST,
 } from '../../utils/scheduleUtils';
 import { ScheduleDisplay } from './ScheduleDisplay';
+import { PastRecordsAccordion } from './PastRecordsAccordion';
 
 // タブの種類
 type TabType = 'today' | 'remaining';
@@ -386,6 +387,18 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
     }
   };
 
+  // 過去記録の編集ハンドラ
+  const handlePastRecordEdit = (log: ConsumptionLog, item: CareItem) => {
+    // Firestoreに保存されたsheetTimestampを使用（Sheet A検索用の正確なタイムスタンプ）
+    const sheetTimestamp = log.sheetTimestamp || null;
+
+    setSelectedItem(item);
+    setIsEditMode(true);
+    setEditSheetTimestamp(sheetTimestamp);
+    setEditingLog(log);
+    setIsModalOpen(true);
+  };
+
   return (
     <div className="p-4 space-y-4">
       {/* タブUI */}
@@ -509,6 +522,12 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
               </div>
             </div>
           )}
+
+          {/* 過去の記録（アコーディオン） */}
+          <PastRecordsAccordion
+            items={items}
+            onEditClick={handlePastRecordEdit}
+          />
 
           {/* その他の品物 */}
           {todayGroups.other.length > 0 && (
