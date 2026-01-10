@@ -3,7 +3,7 @@
  * PresetManagement.tsx と ItemForm.tsx で共有
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type {
   CarePreset,
   CarePresetInput,
@@ -20,8 +20,8 @@ import {
   REMAINING_HANDLING_INSTRUCTION_OPTIONS,
 } from '../../types/careItem';
 
-// アイコン選択肢（食品関連のみ）
-const ICON_OPTIONS = ['🥝', '🍎', '🍊', '🍑', '🍌', '🍇', '🍓', '🍈', '🥭', '🧅', '🥕', '🥒', '🍰', '🍮', '🥛', '🍚', '🍵', '☕'];
+// アイコン選択肢（食品関連 + 汎用）
+const BASE_ICON_OPTIONS = ['🥝', '🍎', '🍊', '🍑', '🍌', '🍇', '🍓', '🍈', '🥭', '🧅', '🥕', '🥒', '🍰', '🍮', '🥛', '🍚', '🍵', '☕', '●'];
 
 // カテゴリラベル
 const ITEM_CATEGORY_LABELS: Record<ItemCategory, string> = {
@@ -61,6 +61,14 @@ export function PresetFormModal({
 
   // マッチング
   const [keywords, setKeywords] = useState(preset?.matchConfig?.keywords?.join(', ') || '');
+
+  // 既存アイコンが選択肢にない場合は先頭に追加
+  const iconOptions = useMemo(() => {
+    if (preset?.icon && !BASE_ICON_OPTIONS.includes(preset.icon)) {
+      return [preset.icon, ...BASE_ICON_OPTIONS];
+    }
+    return BASE_ICON_OPTIONS;
+  }, [preset?.icon]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,7 +142,7 @@ export function PresetFormModal({
               アイコン
             </label>
             <div className="flex flex-wrap gap-2">
-              {ICON_OPTIONS.map((emoji) => (
+              {iconOptions.map((emoji) => (
                 <button
                   key={emoji}
                   type="button"
