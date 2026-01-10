@@ -18,8 +18,11 @@ import {
   formatRemainingHandlingWithConditions,
   getServingTimeSlotOrder,
   isQuantitySkipped,
+  migrateCategory,
 } from '../../types/careItem';
 import { StaffRecordDialog } from '../staff/StaffRecordDialog';
+import { getConsumptionLogs } from '../../api';
+import type { ConsumptionLog } from '../../types/consumptionLog';
 import {
   isScheduledForToday as checkScheduledForToday,
   isScheduledForTomorrow as checkScheduledForTomorrow,
@@ -185,6 +188,10 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
   // モーダル状態
   const [selectedItem, setSelectedItem] = useState<CareItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  // 編集モード状態（水分記録編集用）
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editSheetTimestamp, setEditSheetTimestamp] = useState<string | null>(null);
+  const [editingLog, setEditingLog] = useState<ConsumptionLog | null>(null);
 
   // 廃棄確認ダイアログ
   const [discardTarget, setDiscardTarget] = useState<CareItem | null>(null);
@@ -323,12 +330,57 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
 
   const handleRecordClick = (item: CareItem) => {
     setSelectedItem(item);
+    setIsEditMode(false);
+    setEditSheetTimestamp(null);
     setIsModalOpen(true);
+  };
+
+  // 編集ボタンクリック時のハンドラ（水分記録編集用）
+  const handleEditClick = async (item: CareItem) => {
+    try {
+      // 最新のconsumption_logを取得
+      const logsResponse = await getConsumptionLogs({ itemId: item.id, limit: 1 });
+      const latestLog = logsResponse.data?.logs[0];
+
+      if (!latestLog) {
+        console.error('編集対象のログが見つかりません');
+        return;
+      }
+
+      // consumptionSummary.lastRecordedAtをJST形式に変換
+      // ISO8601 → "YYYY/MM/DD HH:mm:ss"
+      const lastRecordedAt = item.consumptionSummary?.lastRecordedAt;
+      let sheetTimestamp: string | null = null;
+      if (lastRecordedAt) {
+        const date = new Date(lastRecordedAt);
+        sheetTimestamp = date.toLocaleString('ja-JP', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false,
+          timeZone: 'Asia/Tokyo',
+        }).replace(/-/g, '/');
+      }
+
+      setSelectedItem(item);
+      setIsEditMode(true);
+      setEditSheetTimestamp(sheetTimestamp);
+      setEditingLog(latestLog);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error('ログの取得に失敗しました:', error);
+    }
   };
 
   const handleModalClose = () => {
     setIsModalOpen(false);
     setSelectedItem(null);
+    setIsEditMode(false);
+    setEditSheetTimestamp(null);
+    setEditingLog(null);
   };
 
   const handleRecordSuccess = () => {
@@ -465,6 +517,8 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
                     item={item}
                     highlight="recorded"
                     onRecordClick={() => handleRecordClick(item)}
+                    // 水分カテゴリの品物のみ編集ボタンを表示
+                    onEditClick={migrateCategory(item.category) === 'drink' ? () => handleEditClick(item) : undefined}
                   />
                 ))}
               </div>
@@ -621,6 +675,9 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
           item={selectedItem}
           onSuccess={handleRecordSuccess}
           isDemo={isDemo}
+          isEdit={isEditMode}
+          existingLog={editingLog || undefined}
+          sheetTimestamp={editSheetTimestamp || undefined}
         />
       )}
     </div>
@@ -633,9 +690,11 @@ interface ItemCardProps {
   highlight: 'today' | 'expiring' | 'expired' | 'recorded' | 'missed' | 'none';
   onRecordClick: () => void;
   onDiscardClick?: () => void;
+  /** 編集ボタンクリック時のハンドラ（水分記録編集用） */
+  onEditClick?: () => void;
 }
 
-function ItemCard({ item, highlight, onRecordClick, onDiscardClick }: ItemCardProps) {
+function ItemCard({ item, highlight, onRecordClick, onDiscardClick, onEditClick }: ItemCardProps) {
   const daysUntil = getDaysUntilExpiration(item);
   const skipQuantity = isQuantitySkipped(item);
   const remainingQty = skipQuantity ? undefined : (item.currentQuantity ?? item.remainingQuantity ?? item.quantity);
@@ -757,6 +816,16 @@ function ItemCard({ item, highlight, onRecordClick, onDiscardClick }: ItemCardPr
             >
               <span>🍪</span>
               <span>提供記録</span>
+            </button>
+          )}
+          {/* 編集ボタン（入力済み・水分記録の場合のみ） */}
+          {isRecorded && onEditClick && (
+            <button
+              onClick={onEditClick}
+              className="px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-1"
+            >
+              <span>✏️</span>
+              <span>編集</span>
             </button>
           )}
           {onDiscardClick && (

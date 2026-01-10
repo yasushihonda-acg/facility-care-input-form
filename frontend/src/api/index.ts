@@ -1205,6 +1205,51 @@ export async function submitHydrationRecord(
   return response.json();
 }
 
+/**
+ * 水分記録更新リクエスト型
+ */
+export interface UpdateHydrationRecordRequest {
+  itemId: string;
+  logId: string;
+  hydrationAmount: number;
+  remainingHandling?: 'discarded' | 'stored' | 'other';
+  remainingHandlingOther?: string;
+  sheetTimestamp: string;
+  updatedBy: string;
+}
+
+/**
+ * 水分記録更新レスポンス型
+ */
+export interface UpdateHydrationRecordResponse {
+  logId: string;
+  itemId: string;
+  hydrationAmount: number;
+  sheetUpdated: boolean;
+  sheetRow?: number;
+}
+
+/**
+ * 水分記録を更新
+ * Firestoreのconsumption_logsとSHEET_Aの水分摂取量シートを更新
+ */
+export async function updateHydrationRecord(
+  data: UpdateHydrationRecordRequest
+): Promise<ApiResponse<UpdateHydrationRecordResponse>> {
+  const response = await fetch(`${API_BASE}/updateHydrationRecord`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Update hydration record failed: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
 // =============================================================================
 // スタッフ注意事項 API（Phase 40）
 // =============================================================================

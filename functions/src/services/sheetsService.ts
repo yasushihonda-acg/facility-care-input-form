@@ -6,6 +6,8 @@
 import {google, sheets_v4} from "googleapis";
 import {
   SHEET_A,
+  SHEET_A_HYDRATION_SHEET_NAME,
+  // SHEET_A_HYDRATION_COLUMNS, // 将来の拡張用
   SHEET_B,
   SHEET_B_SHEET_NAME,
   SHEET_HYDRATION,
@@ -332,4 +334,61 @@ export async function appendHydrationRecordToSheet(
   const sheetRow = rowMatch ? parseInt(rowMatch[1], 10) : 0;
 
   return {sheetRow, postId: row.postId};
+}
+
+/**
+ * Sheet A の「水分摂取量」シートで該当行を検索し、水分量を更新
+ * @param timestamp 検索対象のタイムスタンプ（例: "2024/09/01 9:37:34"）
+ * @param newHydrationAmount 新しい水分量(cc)
+ * @returns 更新した行番号（見つからない場合はnull）
+ */
+export async function updateHydrationRecordInSheetA(
+  timestamp: string,
+  newHydrationAmount: number
+): Promise<{updatedRow: number} | null> {
+  const client = await getSheetsClient();
+
+  // 1. シートからA列（タイムスタンプ）を読み取り
+  const readResponse = await client.spreadsheets.values.get({
+    spreadsheetId: SHEET_A.id,
+    range: `'${SHEET_A_HYDRATION_SHEET_NAME}'!A:A`,
+  });
+
+  const rows = readResponse.data.values;
+  if (!rows || rows.length === 0) {
+    console.log("Sheet A 水分摂取量シートにデータがありません");
+    return null;
+  }
+
+  // 2. タイムスタンプで該当行を検索
+  let targetRowIndex = -1;
+  for (let i = 0; i < rows.length; i++) {
+    const cellValue = rows[i][0];
+    if (cellValue === timestamp) {
+      targetRowIndex = i + 1; // シートの行番号は1始まり
+      break;
+    }
+  }
+
+  if (targetRowIndex === -1) {
+    console.log(`タイムスタンプ "${timestamp}" が見つかりません`);
+    return null;
+  }
+
+  // 3. D列（水分量）を更新
+  const updateRange = `'${SHEET_A_HYDRATION_SHEET_NAME}'!D${targetRowIndex}`;
+  await client.spreadsheets.values.update({
+    spreadsheetId: SHEET_A.id,
+    range: updateRange,
+    valueInputOption: "USER_ENTERED",
+    requestBody: {
+      values: [[newHydrationAmount]],
+    },
+  });
+
+  console.log(
+    `Sheet A 水分摂取量シート: 行${targetRowIndex}のD列を${newHydrationAmount}ccに更新`
+  );
+
+  return {updatedRow: targetRowIndex};
 }
