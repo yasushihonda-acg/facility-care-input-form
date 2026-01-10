@@ -841,6 +841,8 @@ export interface RecordConsumptionLogRequest {
   // Phase 15.7: 残り対応
   remainingHandling?: RemainingHandling;
   remainingHandlingOther?: string;
+  // Phase 29: 水分量（飲み物カテゴリの場合）
+  hydrationAmount?: number;
 }
 
 /** 消費ログ記録レスポンス */

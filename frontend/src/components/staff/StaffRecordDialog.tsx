@@ -397,6 +397,10 @@ export function StaffRecordDialog({
             remainingHandling: formData.remainingHandling,
             remainingHandlingOther: formData.remainingHandlingOther || undefined,
           }),
+          // Phase 29: 水分量（飲み物カテゴリの場合）
+          ...(formData.hydrationAmount && {
+            hydrationAmount: formData.hydrationAmount,
+          }),
         });
       }
 
