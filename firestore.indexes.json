@@ -256,11 +256,11 @@
       "fields": [
         {
           "fieldPath": "servedDate",
-          "order": "ASCENDING"
+          "order": "DESCENDING"
         },
         {
           "fieldPath": "recordedAt",
-          "order": "ASCENDING"
+          "order": "DESCENDING"
         }
       ]
     },
