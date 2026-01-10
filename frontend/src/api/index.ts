@@ -677,6 +677,44 @@ export async function getConsumptionLogs(
   return response.json();
 }
 
+/**
+ * 全品物の消費ログを一括取得（過去記録閲覧用）
+ */
+export interface GetAllConsumptionLogsParams {
+  /** 取得対象の品物IDリスト */
+  itemIds: string[];
+  /** 開始日（YYYY-MM-DD）- この日以降のログを取得 */
+  startDate?: string;
+  /** 終了日（YYYY-MM-DD）- この日以前のログを取得 */
+  endDate?: string;
+  /** 取得件数上限 */
+  limit?: number;
+}
+
+export interface GetAllConsumptionLogsResponse {
+  logs: ConsumptionLog[];
+  total: number;
+}
+
+export async function getAllConsumptionLogs(
+  params: GetAllConsumptionLogsParams
+): Promise<ApiResponse<GetAllConsumptionLogsResponse>> {
+  const response = await fetch(`${API_BASE}/getAllConsumptionLogs`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(params),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to get all consumption logs: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
 
 /**
  * 破棄記録を修正
