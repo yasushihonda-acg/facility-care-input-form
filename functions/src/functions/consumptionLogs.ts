@@ -476,19 +476,30 @@ async function getConsumptionLogsHandler(
       .doc(params.itemId)
       .collection(CONSUMPTION_LOGS_SUBCOLLECTION);
 
-    let query = logsRef.orderBy("servedDate", "desc").orderBy("recordedAt", "desc");
-
-    // 日付フィルタ
-    if (params.startDate) {
-      query = query.where("servedDate", ">=", params.startDate);
-    }
-    if (params.endDate) {
-      query = query.where("servedDate", "<=", params.endDate);
-    }
-
     // limit
     const limit = params.limit ? parseInt(String(params.limit), 10) : 50;
-    query = query.limit(limit);
+
+    // 日付フィルタがなく、limit=1の場合は単純なクエリを使用
+    // （複合インデックス不要、inventoryStats.ts と同じパターン）
+    const hasDateFilter = params.startDate || params.endDate;
+    let query;
+
+    if (!hasDateFilter && limit === 1) {
+      // 最新1件のみ取得する場合は recordedAt のみでソート
+      query = logsRef.orderBy("recordedAt", "desc").limit(1);
+    } else {
+      // 日付フィルタがある場合や複数件取得の場合は従来のクエリ
+      query = logsRef.orderBy("servedDate", "desc").orderBy("recordedAt", "desc");
+
+      if (params.startDate) {
+        query = query.where("servedDate", ">=", params.startDate);
+      }
+      if (params.endDate) {
+        query = query.where("servedDate", "<=", params.endDate);
+      }
+
+      query = query.limit(limit);
+    }
 
     const snapshot = await query.get();
 
