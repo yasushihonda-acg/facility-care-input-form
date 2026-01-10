@@ -31,6 +31,8 @@ interface UpdateHydrationRecordRequest {
   // SHEET_A検索用タイムスタンプ（例: "2024/09/01 9:37:34"）
   sheetTimestamp: string;
   updatedBy: string;
+  // 編集前の水分量（特記事項に「※{前の値}ccから編集」を追加するため）
+  previousHydrationAmount?: number;
 }
 
 /**
@@ -94,6 +96,9 @@ function validateRequest(
       remainingHandlingOther: req.remainingHandlingOther as string | undefined,
       sheetTimestamp: req.sheetTimestamp as string,
       updatedBy: req.updatedBy as string,
+      previousHydrationAmount: typeof req.previousHydrationAmount === "number" ?
+        req.previousHydrationAmount :
+        undefined,
     },
   };
 }
@@ -175,6 +180,29 @@ async function updateHydrationRecordHandler(
     }
 
     const now = Timestamp.now();
+    const existingLogData = logDoc.data() as Record<string, unknown>;
+
+    // 特記事項に「※{前の値}ccから編集」を追加
+    let updatedNote = (existingLogData.consumptionNote as string) || "";
+    if (input.previousHydrationAmount !== undefined) {
+      const editNote = `※${input.previousHydrationAmount}ccから編集`;
+      // 【ケアに関すること】の直後に追加
+      const careHeader = "【ケアに関すること】";
+      if (updatedNote.includes(careHeader)) {
+        // 【ケアに関すること】の直後の改行後に追加
+        updatedNote = updatedNote.replace(
+          careHeader + "\n",
+          careHeader + "\n" + editNote + "\n"
+        );
+      } else if (updatedNote) {
+        // 既存の特記事項がある場合は先頭に追加
+        updatedNote = editNote + "\n" + updatedNote;
+      } else {
+        // 特記事項が空の場合
+        updatedNote = editNote;
+      }
+    }
+
     const updateData: Record<string, unknown> = {
       // 水分量はconsumption_logsでは直接hydrationAmountというフィールドはないが、
       // consumedQuantityまたは別フィールドとして保存する可能性あり
@@ -182,6 +210,8 @@ async function updateHydrationRecordHandler(
       hydrationAmount: input.hydrationAmount,
       updatedAt: now,
       updatedBy: input.updatedBy,
+      // 編集履歴を含む特記事項
+      consumptionNote: updatedNote || null,
     };
 
     // 残り対応がある場合は更新
@@ -204,7 +234,8 @@ async function updateHydrationRecordHandler(
     try {
       const sheetResult = await updateHydrationRecordInSheetA(
         input.sheetTimestamp,
-        input.hydrationAmount
+        input.hydrationAmount,
+        updatedNote || undefined
       );
 
       if (sheetResult) {
