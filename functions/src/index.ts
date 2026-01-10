@@ -115,6 +115,7 @@ export {
 export {
   recordConsumptionLog,
   getConsumptionLogs,
+  getAllConsumptionLogs,
   correctDiscardedRecord,
 } from "./functions/consumptionLogs";
 
