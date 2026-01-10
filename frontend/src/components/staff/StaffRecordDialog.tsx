@@ -12,7 +12,8 @@ import type { RemainingHandling } from '../../types/consumptionLog';
 import { getCategoryIcon, migrateCategory, formatRemainingHandlingWithConditions, isQuantitySkipped } from '../../types/careItem';
 import { determineConsumptionStatus, REMAINING_HANDLING_OPTIONS } from '../../types/consumptionLog';
 import { useRecordConsumptionLog, useCorrectDiscardedRecord } from '../../hooks/useConsumptionLogs';
-import { submitMealRecord, uploadCareImage, submitHydrationRecord } from '../../api';
+import { submitMealRecord, uploadCareImage, submitHydrationRecord, updateHydrationRecord } from '../../api';
+import type { ConsumptionLog } from '../../types/consumptionLog';
 import { useMealFormSettings } from '../../hooks/useMealFormSettings';
 import { DAY_SERVICE_OPTIONS } from '../../types/mealForm';
 import type { SnackRecord } from '../../types/mealForm';
@@ -63,6 +64,12 @@ interface StaffRecordDialogProps {
   item: CareItem;
   onSuccess?: () => void;
   isDemo?: boolean;
+  /** 編集モード: 既存の水分記録を編集する場合 */
+  isEdit?: boolean;
+  /** 編集対象のログ（編集モード時に必須） */
+  existingLog?: ConsumptionLog;
+  /** SHEET_A検索用タイムスタンプ（編集モード時に必須、例: "2024/09/01 9:37:34"） */
+  sheetTimestamp?: string;
 }
 
 /**
@@ -74,6 +81,9 @@ export function StaffRecordDialog({
   item,
   onSuccess,
   isDemo = false,
+  isEdit = false,
+  existingLog,
+  sheetTimestamp,
 }: StaffRecordDialogProps) {
   const { settings } = useMealFormSettings();
   const recordMutation = useRecordConsumptionLog();
@@ -123,6 +133,36 @@ export function StaffRecordDialog({
   // モーダルが開いた時にフォームをリセット
   useEffect(() => {
     if (isOpen) {
+      // 編集モード: 既存ログから初期化
+      if (isEdit && existingLog) {
+        const defaultTab = getDefaultTab(item.category);
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- ダイアログ初期化処理
+        setFormData({
+          activeTab: defaultTab,
+          staffName: existingLog.recordedBy || '',
+          dayServiceUsage: '利用中ではない',
+          dayServiceName: '',
+          servedQuantity: existingLog.servedQuantity || 1,
+          consumptionRateInput: Math.round((existingLog.consumptionRate || 100) / 10),
+          consumptionNote: existingLog.consumptionNote || '',
+          noteToFamily: existingLog.noteToFamily || '',
+          followedFamilyInstructions: true,
+          remainingHandling: (existingLog.remainingHandling as RemainingHandling) || '',
+          remainingHandlingOther: existingLog.remainingHandlingOther || '',
+          snack: '',
+          note: DEFAULT_NOTE,
+          isImportant: '重要ではない',
+          photo: null,
+          photoPreview: '',
+          // 水分量: existingLogにhydrationAmountがあればそれを使用、なければ計算
+          hydrationAmount: (existingLog as { hydrationAmount?: number }).hydrationAmount ??
+            calculateHydrationAmount(existingLog.servedQuantity || 1, item.unit),
+        });
+        setErrors({});
+        return;
+      }
+
+      // 新規記録モード: 通常の初期化
       // 家族の指示から推奨提供数を計算
       const suggestedQuantity = getSuggestedQuantity(item);
 
@@ -174,7 +214,7 @@ export function StaffRecordDialog({
       });
       setErrors({});
     }
-  }, [isOpen, item, currentQuantity, isDiscardedItem, discardedQty]);
+  }, [isOpen, item, currentQuantity, isDiscardedItem, discardedQty, isEdit, existingLog]);
 
   // Phase 15.6: 摂食割合が10になったら残り対応をリセット
   useEffect(() => {
@@ -276,6 +316,22 @@ export function StaffRecordDialog({
     }
 
     try {
+      // 編集モード: 水分記録の更新
+      if (isEdit && existingLog && sheetTimestamp) {
+        await updateHydrationRecord({
+          itemId: item.id,
+          logId: existingLog.id,
+          hydrationAmount: formData.hydrationAmount || 0,
+          remainingHandling: formData.remainingHandling || undefined,
+          remainingHandlingOther: formData.remainingHandlingOther || undefined,
+          sheetTimestamp: sheetTimestamp,
+          updatedBy: formData.staffName,
+        });
+        onSuccess?.();
+        onClose();
+        return;
+      }
+
       // Phase 15.9: 写真がある場合は先にアップロードしてURLを取得
       let photoUrl: string | undefined;
       if (formData.photo) {
@@ -411,7 +467,7 @@ export function StaffRecordDialog({
     } catch (err) {
       setErrors({ submit: err instanceof Error ? err.message : '記録に失敗しました' });
     }
-  }, [formData, item, settings, recordMutation, correctDiscardedMutation, validate, onSuccess, onClose, isDemo, isDiscardedItem]);
+  }, [formData, item, settings, recordMutation, correctDiscardedMutation, validate, onSuccess, onClose, isDemo, isDiscardedItem, isEdit, existingLog, sheetTimestamp]);
 
   // Phase 15.7: 残り対応に基づいて消費量・残量を計算
   // Phase 29修正: タブ別に計算ロジックを分岐（水分タブも残り対応を考慮）
@@ -484,7 +540,7 @@ export function StaffRecordDialog({
       <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
         {/* ヘッダー */}
         <div className="sticky top-0 bg-white px-4 py-3 border-b flex items-center justify-between z-10">
-          <h2 className="font-bold text-lg">提供・摂食を記録</h2>
+          <h2 className="font-bold text-lg">{isEdit ? '水分記録を編集' : '提供・摂食を記録'}</h2>
           <button
             onClick={onClose}
             className="p-2 text-gray-500 hover:text-gray-700"

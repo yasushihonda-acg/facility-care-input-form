@@ -36,6 +36,7 @@ export {syncPlanData} from "./functions/syncPlanData";
 export {submitCareRecord} from "./functions/submitCareRecord";
 export {submitMealRecord} from "./functions/submitMealRecord";
 export {submitHydrationRecord} from "./functions/submitHydrationRecord";
+export {updateHydrationRecord} from "./functions/updateHydrationRecord";
 
 // =============================================================================
 // 画像連携（Phase 17: Firebase Storage）

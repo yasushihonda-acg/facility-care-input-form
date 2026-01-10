@@ -16,7 +16,7 @@ export const SHEET_A = {
     read: true,
     write: false,
     append: false,
-    update: false,
+    update: true, // 水分摂取量シートの編集用に有効化
     delete: false,
   },
 } as const;
@@ -39,6 +39,18 @@ export const SHEET_A_ORDER: string[] = [
   "体重",
   "カンファレンス録",
 ];
+
+/**
+ * Sheet A の「水分摂取量」シート列定義
+ * gid=1819839398
+ */
+export const SHEET_A_HYDRATION_SHEET_NAME = "水分摂取量";
+export const SHEET_A_HYDRATION_COLUMNS = {
+  TIMESTAMP: 0, // A列: タイムスタンプ（例: 2024/09/01 9:37:34）
+  // B列: 不明
+  // C列: 不明
+  HYDRATION_AMOUNT: 3, // D列: 水分量はいくらでしたか？
+} as const;
 
 /**
  * Sheet B: 実績入力先（Write-Only Destination）
