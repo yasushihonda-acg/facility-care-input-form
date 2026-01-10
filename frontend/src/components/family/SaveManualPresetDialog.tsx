@@ -14,7 +14,7 @@ const ITEM_CATEGORY_LABELS: Record<ItemCategory, string> = {
 };
 
 // アイコン選択肢（PresetFormModalと共通）
-const ICON_OPTIONS = ['🥝', '🍎', '🍊', '🍑', '🍌', '🍇', '🍓', '🍈', '🥭', '🧅', '🥕', '🥒', '🍰', '🍮', '🥛', '🍚', '🍵', '☕'];
+const ICON_OPTIONS = ['🥝', '🍎', '🍊', '🍑', '🍌', '🍇', '🍓', '🍈', '🥭', '🧅', '🥕', '🥒', '🍰', '🍮', '🥛', '🍚', '🍵', '☕', '●'];
 
 // 提供方法ラベル
 // Phase 28で整理: cooled/blended削除
