@@ -318,6 +318,8 @@ export function StaffRecordDialog({
     try {
       // 編集モード: 水分記録の更新
       if (isEdit && existingLog && sheetTimestamp) {
+        // 編集前の水分量を取得（特記事項に「※{前の値}ccから編集」を追加するため）
+        const previousHydrationAmount = (existingLog as { hydrationAmount?: number }).hydrationAmount;
         await updateHydrationRecord({
           itemId: item.id,
           logId: existingLog.id,
@@ -326,6 +328,7 @@ export function StaffRecordDialog({
           remainingHandlingOther: formData.remainingHandlingOther || undefined,
           sheetTimestamp: sheetTimestamp,
           updatedBy: formData.staffName,
+          previousHydrationAmount,
         });
         onSuccess?.();
         onClose();

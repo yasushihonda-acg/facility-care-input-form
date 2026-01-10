@@ -344,7 +344,8 @@ export async function appendHydrationRecordToSheet(
  */
 export async function updateHydrationRecordInSheetA(
   timestamp: string,
-  newHydrationAmount: number
+  newHydrationAmount: number,
+  note?: string
 ): Promise<{updatedRow: number} | null> {
   const client = await getSheetsClient();
 
@@ -389,6 +390,23 @@ export async function updateHydrationRecordInSheetA(
   console.log(
     `Sheet A 水分摂取量シート: 行${targetRowIndex}のD列を${newHydrationAmount}ccに更新`
   );
+
+  // 4. J列（特記事項）を更新（noteがある場合のみ）
+  if (note !== undefined) {
+    const noteRange = `'${SHEET_A_HYDRATION_SHEET_NAME}'!J${targetRowIndex}`;
+    await client.spreadsheets.values.update({
+      spreadsheetId: SHEET_A.id,
+      range: noteRange,
+      valueInputOption: "USER_ENTERED",
+      requestBody: {
+        values: [[note]],
+      },
+    });
+
+    console.log(
+      `Sheet A 水分摂取量シート: 行${targetRowIndex}のJ列（特記事項）を更新`
+    );
+  }
 
   return {updatedRow: targetRowIndex};
 }

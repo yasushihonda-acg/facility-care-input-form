@@ -1216,6 +1216,8 @@ export interface UpdateHydrationRecordRequest {
   remainingHandlingOther?: string;
   sheetTimestamp: string;
   updatedBy: string;
+  /** 編集前の水分量（特記事項に「※{前の値}ccから編集」を追加するため） */
+  previousHydrationAmount?: number;
 }
 
 /**
