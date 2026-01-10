@@ -45,6 +45,47 @@ lsof -ti:4173 | xargs kill
 2. **ローカルテスト必須**: `npm run build && npm run preview` で確認後にコミット
 3. **場当たり的修正は禁止**: 「とりあえずデプロイ」ではなく「理解してから直す」
 
+### バックエンドAPI変更時（Firebase Emulatorで検証）
+
+本番データに影響を与えずにAPIの動作を検証できる。**デモモードはAPIを呼ばないため、API修正の検証にはEmulatorを使用すること。**
+
+```bash
+# 1. Emulator起動（Functions + Firestore）
+firebase emulators:start --only functions,firestore
+
+# 2. 別ターミナルでAPIテスト
+EMULATOR_URL="http://127.0.0.1:5001/facility-care-input-form/asia-northeast1"
+
+# 例: submitCareItem（品物登録）のテスト
+curl -s -X POST "$EMULATOR_URL/submitCareItem" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "residentId": "test-resident-001",
+    "userId": "test-user-001",
+    "item": {
+      "itemName": "テスト品物",
+      "category": "food",
+      "quantity": 3,
+      "unit": "個",
+      "servingMethod": "cut",
+      "servingSchedule": {"type": "daily", "timeSlot": "snack"}
+    }
+  }' | jq .
+
+# 例: getCareItems（品物取得）で保存確認
+curl -s "$EMULATOR_URL/getCareItems?itemId=<返却されたitemId>" | jq .
+
+# 3. Emulator停止
+lsof -ti:5001 | xargs kill; lsof -ti:8080 | xargs kill
+```
+
+**Emulator UI**: http://127.0.0.1:4000/ でFirestoreデータを確認可能
+
+**注意事項**:
+- Emulatorのデータは揮発性（停止で消える）
+- 本番のFirestore/認証には影響しない
+- `functions/.env` の環境変数は読み込まれる
+
 ### Firestoreインデックス追加時
 1. **コレクション名をコードで確認**: `grep -r "collection(" functions/src`
    - 例: `consumptionLogs`（キャメル）ではなく `consumption_logs`（スネーク）
