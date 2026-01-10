@@ -361,6 +361,34 @@ export function StaffRecordDialog({
       // Phase 59 Fix: status が 'consumed' でも remainingHandlingLogs に discarded があれば修正記録
       const isCorrection = isDiscardedItem;
 
+      // 水分タブの場合: シート記録を先に行いsheetTimestampを取得
+      // (編集時にSheet Aの該当行を特定するため)
+      let sheetTimestampForLog: string | undefined;
+      if (formData.activeTab === 'hydration') {
+        const hydrationResult = await submitHydrationRecord({
+          staffName: formData.staffName,
+          residentName: settings.defaultResidentName || '',
+          residentId: item.residentId,
+          hydrationAmount: formData.hydrationAmount || 0,
+          note: formData.note || undefined,
+          isImportant: formData.isImportant,
+          facility: settings.defaultFacility || '',
+          dayServiceUsage: formData.dayServiceUsage,
+          ...(formData.dayServiceName && { dayServiceName: formData.dayServiceName }),
+          // 品物連携情報
+          itemId: item.id,
+          itemName: item.itemName,
+          servedQuantity: formData.servedQuantity,
+          unit: item.unit,
+          // Phase 61: 残った分への対応
+          ...(formData.remainingHandling && {
+            remainingHandling: formData.remainingHandling,
+            remainingHandlingOther: formData.remainingHandlingOther || undefined,
+          }),
+        });
+        sheetTimestampForLog = hydrationResult.data?.sheetTimestamp;
+      }
+
       if (isCorrection) {
         // 修正記録API: 破棄ログを無効化し、新しい記録で置き換える
         await correctDiscardedMutation.mutateAsync({
@@ -404,12 +432,17 @@ export function StaffRecordDialog({
           ...(formData.hydrationAmount && {
             hydrationAmount: formData.hydrationAmount,
           }),
+          // Sheet A検索用タイムスタンプ（水分記録編集時に使用）
+          ...(sheetTimestampForLog && {
+            sheetTimestamp: sheetTimestampForLog,
+          }),
         });
       }
 
-      // Phase 29: タブ別にシート記録APIを呼び出し
+      // Phase 29: タブ別にシート記録APIを呼び出し（食事タブのみ）
+      // 水分タブは上で先に呼び出し済み
       if (formData.activeTab === 'meal') {
-        // 2a. 食事タブ: Sheet B に記録
+        // 食事タブ: Sheet B に記録
         const snackRecord: SnackRecord = {
           itemId: item.id,
           itemName: item.itemName,
@@ -440,29 +473,6 @@ export function StaffRecordDialog({
           residentId: item.residentId,
           // Phase 15.9: 写真URLを渡す（Google Chat Webhook連携用）
           ...(photoUrl && { photoUrl }),
-        });
-      } else {
-        // 2b. 水分タブ: 水分摂取量シートに記録
-        await submitHydrationRecord({
-          staffName: formData.staffName,
-          residentName: settings.defaultResidentName || '',
-          residentId: item.residentId,
-          hydrationAmount: formData.hydrationAmount || 0,
-          note: formData.note || undefined,
-          isImportant: formData.isImportant,
-          facility: settings.defaultFacility || '',
-          dayServiceUsage: formData.dayServiceUsage,
-          ...(formData.dayServiceName && { dayServiceName: formData.dayServiceName }),
-          // 品物連携情報
-          itemId: item.id,
-          itemName: item.itemName,
-          servedQuantity: formData.servedQuantity,
-          unit: item.unit,
-          // Phase 61: 残った分への対応
-          ...(formData.remainingHandling && {
-            remainingHandling: formData.remainingHandling,
-            remainingHandlingOther: formData.remainingHandlingOther || undefined,
-          }),
         });
       }
 

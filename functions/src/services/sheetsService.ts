@@ -314,7 +314,7 @@ function buildHydrationRecordRow(request: SubmitHydrationRecordRequest): Record<
  */
 export async function appendHydrationRecordToSheet(
   request: SubmitHydrationRecordRequest
-): Promise<{ sheetRow: number; postId: string }> {
+): Promise<{ sheetRow: number; postId: string; sheetTimestamp: string }> {
   const client = await getSheetsClient();
 
   const row = buildHydrationRecordRow(request);
@@ -333,7 +333,7 @@ export async function appendHydrationRecordToSheet(
   const rowMatch = updatedRange.match(/(\d+)$/);
   const sheetRow = rowMatch ? parseInt(rowMatch[1], 10) : 0;
 
-  return {sheetRow, postId: row.postId};
+  return {sheetRow, postId: row.postId, sheetTimestamp: row.timestamp};
 }
 
 /**

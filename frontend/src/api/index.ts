@@ -1181,7 +1181,9 @@ export interface SubmitHydrationRecordRequest {
 export interface SubmitHydrationRecordResponse {
   postId: string;
   sheetRow: number;
-  webhookSent: boolean;
+  /** Sheet A検索用タイムスタンプ（編集時に使用） */
+  sheetTimestamp: string;
+  webhookSent?: boolean;
 }
 
 /**

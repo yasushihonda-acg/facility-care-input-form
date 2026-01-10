@@ -347,23 +347,8 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
         return;
       }
 
-      // consumptionSummary.lastRecordedAtをJST形式に変換
-      // ISO8601 → "YYYY/MM/DD HH:mm:ss"
-      const lastRecordedAt = item.consumptionSummary?.lastRecordedAt;
-      let sheetTimestamp: string | null = null;
-      if (lastRecordedAt) {
-        const date = new Date(lastRecordedAt);
-        sheetTimestamp = date.toLocaleString('ja-JP', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-          hour12: false,
-          timeZone: 'Asia/Tokyo',
-        }).replace(/-/g, '/');
-      }
+      // Firestoreに保存されたsheetTimestampを使用（Sheet A検索用の正確なタイムスタンプ）
+      const sheetTimestamp = latestLog.sheetTimestamp || null;
 
       setSelectedItem(item);
       setIsEditMode(true);

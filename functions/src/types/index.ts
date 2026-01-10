@@ -823,6 +823,8 @@ export interface ConsumptionLog {
   recordedAt: Timestamp;
   updatedAt?: Timestamp;
   updatedBy?: string;
+  /** Sheet A検索用タイムスタンプ（水分記録編集時に使用） */
+  sheetTimestamp?: string;
 }
 
 /** 消費ログ記録リクエスト */
@@ -843,6 +845,8 @@ export interface RecordConsumptionLogRequest {
   remainingHandlingOther?: string;
   // Phase 29: 水分量（飲み物カテゴリの場合）
   hydrationAmount?: number;
+  /** Sheet A検索用タイムスタンプ（水分記録編集時に使用） */
+  sheetTimestamp?: string;
 }
 
 /** 消費ログ記録レスポンス */
