@@ -24,6 +24,9 @@ import {
   ItemStatus,
   ItemCategory,
   MealFormSettings,
+  RemainingHandlingInstruction,
+  RemainingHandlingCondition,
+  ServingSchedule,
 } from "../types";
 import {
   sendToGoogleChat,
@@ -84,9 +87,9 @@ function validateCareItemInput(
     return {valid: false, error: "item.sentDate must be a string (YYYY-MM-DD) if provided"};
   }
 
-  // item.quantity
-  if (typeof item.quantity !== "number" || item.quantity < 1) {
-    return {valid: false, error: "item.quantity must be a positive number"};
+  // item.quantity（オプショナル: 数量管理しない場合はundefined）
+  if (item.quantity !== undefined && (typeof item.quantity !== "number" || item.quantity < 1)) {
+    return {valid: false, error: "item.quantity must be a positive number if provided"};
   }
 
   // item.unit
@@ -118,16 +121,20 @@ function validateCareItemInput(
       userId: req.userId as string,
       item: {
         itemName: item.itemName as string,
+        normalizedName: item.normalizedName as string | undefined,
         category: item.category as ItemCategory,
-        sentDate: item.sentDate as string,
-        quantity: item.quantity as number,
+        sentDate: item.sentDate as string | undefined,
+        quantity: item.quantity as number | undefined,
         unit: item.unit as string,
         expirationDate: item.expirationDate as string | undefined,
         storageMethod: item.storageMethod as "room_temp" | "refrigerated" | "frozen" | undefined,
         servingMethod: item.servingMethod as "as_is" | "cut" | "peeled" | "heated" | "other",
         servingMethodDetail: item.servingMethodDetail as string | undefined,
         plannedServeDate: item.plannedServeDate as string | undefined,
+        servingSchedule: item.servingSchedule as ServingSchedule | undefined,
         noteToStaff: item.noteToStaff as string | undefined,
+        remainingHandlingInstruction: item.remainingHandlingInstruction as RemainingHandlingInstruction | undefined,
+        remainingHandlingConditions: item.remainingHandlingConditions as RemainingHandlingCondition[] | undefined,
       },
     },
   };
