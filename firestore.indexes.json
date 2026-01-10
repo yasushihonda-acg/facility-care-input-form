@@ -251,6 +251,20 @@
       ]
     },
     {
+      "collectionGroup": "consumption_logs",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "servedDate",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "recordedAt",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "item_events",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
