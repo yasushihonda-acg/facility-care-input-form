@@ -23,6 +23,8 @@ import {updateDailyRecordLog} from "../services/dailyRecordLogService";
 interface SubmitHydrationRecordResponse {
   postId: string;
   sheetRow: number;
+  /** Sheet A検索用タイムスタンプ（編集時に使用） */
+  sheetTimestamp: string;
 }
 
 /**
@@ -255,7 +257,7 @@ async function submitHydrationRecordHandler(
     });
 
     // 水分摂取量シートに追記
-    const {sheetRow, postId} = await appendHydrationRecordToSheet(hydrationRecord);
+    const {sheetRow, postId, sheetTimestamp} = await appendHydrationRecordToSheet(hydrationRecord);
 
     // Google Chat Webhook通知（非同期・エラーでも処理続行）
     try {
@@ -284,6 +286,7 @@ async function submitHydrationRecordHandler(
     const responseData: SubmitHydrationRecordResponse = {
       postId,
       sheetRow,
+      sheetTimestamp,
     };
 
     const response: ApiResponse<SubmitHydrationRecordResponse> = {

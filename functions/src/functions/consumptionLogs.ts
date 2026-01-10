@@ -127,6 +127,8 @@ function validateRecordConsumptionLogRequest(
       remainingHandlingOther: req.remainingHandlingOther as string | undefined,
       // Phase 29: 水分量（飲み物カテゴリの場合）
       hydrationAmount: typeof req.hydrationAmount === "number" ? req.hydrationAmount : undefined,
+      // Sheet A検索用タイムスタンプ（水分記録編集時に使用）
+      sheetTimestamp: typeof req.sheetTimestamp === "string" ? req.sheetTimestamp : undefined,
     },
   };
 }
@@ -321,6 +323,8 @@ async function recordConsumptionLogHandler(
         recordedAt: now,
         // Phase 29: 水分量（飲み物カテゴリの場合）
         hydrationAmount: input.hydrationAmount ?? null,
+        // Sheet A検索用タイムスタンプ（水分記録編集時に使用）
+        sheetTimestamp: input.sheetTimestamp ?? null,
       };
 
       transaction.set(logRef, logData);
@@ -535,6 +539,8 @@ async function getConsumptionLogsHandler(
         updatedBy: data.updatedBy ?? undefined,
         // Phase 29: 水分量
         hydrationAmount: data.hydrationAmount ?? undefined,
+        // Sheet A検索用タイムスタンプ（水分記録編集時に使用）
+        sheetTimestamp: data.sheetTimestamp ?? undefined,
       };
     });
 
