@@ -125,6 +125,8 @@ function validateRecordConsumptionLogRequest(
       // Phase 15.7: 残り対応
       remainingHandling: req.remainingHandling as RemainingHandling | undefined,
       remainingHandlingOther: req.remainingHandlingOther as string | undefined,
+      // Phase 29: 水分量（飲み物カテゴリの場合）
+      hydrationAmount: typeof req.hydrationAmount === "number" ? req.hydrationAmount : undefined,
     },
   };
 }
@@ -317,6 +319,8 @@ async function recordConsumptionLogHandler(
         noteToFamily: input.noteToFamily ?? null,
         recordedBy: input.recordedBy,
         recordedAt: now,
+        // Phase 29: 水分量（飲み物カテゴリの場合）
+        hydrationAmount: input.hydrationAmount ?? null,
       };
 
       transaction.set(logRef, logData);
