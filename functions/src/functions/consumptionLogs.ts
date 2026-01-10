@@ -667,6 +667,10 @@ async function getAllConsumptionLogsHandler(
     const db = getFirestore();
     const limit = params.limit ? Math.min(params.limit, 500) : 100;
 
+    // 日付フィルター用のパラメータを保存
+    const startDate = params.startDate;
+    const endDate = params.endDate;
+
     // 各品物の消費ログを並列取得
     const logPromises = itemIds.map(async (itemId) => {
       const logsRef = db
@@ -674,18 +678,11 @@ async function getAllConsumptionLogsHandler(
         .doc(itemId)
         .collection(CONSUMPTION_LOGS_SUBCOLLECTION);
 
-      let query = logsRef.orderBy("servedDate", "desc").orderBy("recordedAt", "desc");
-
-      if (params.startDate) {
-        query = query.where("servedDate", ">=", params.startDate);
-      }
-      if (params.endDate) {
-        query = query.where("servedDate", "<=", params.endDate);
-      }
-
-      // 各品物あたりの取得件数を制限（全体のlimitを品物数で分割）
-      const perItemLimit = Math.ceil(limit / itemIds.length);
-      query = query.limit(Math.max(perItemLimit, 10)); // 最低10件は取得
+      // 範囲フィルターなしでクエリ（インデックス問題回避）
+      // servedDateで降順ソートのみ
+      const query = logsRef
+        .orderBy("servedDate", "desc")
+        .limit(50); // 各品物あたり最大50件取得
 
       const snapshot = await query.get();
       return snapshot.docs.map((doc) => {
@@ -721,6 +718,15 @@ async function getAllConsumptionLogsHandler(
 
     const logsArrays = await Promise.all(logPromises);
     let allLogs = logsArrays.flat();
+
+    // 日付フィルタリング（クエリではなくJavaScriptで行う）
+    if (startDate || endDate) {
+      allLogs = allLogs.filter((log) => {
+        if (startDate && log.servedDate < startDate) return false;
+        if (endDate && log.servedDate > endDate) return false;
+        return true;
+      });
+    }
 
     // 全体を日付順でソート（新しい順）
     allLogs.sort((a, b) => {
