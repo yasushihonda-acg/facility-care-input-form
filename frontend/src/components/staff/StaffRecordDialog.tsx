@@ -300,8 +300,8 @@ export function StaffRecordDialog({
     return Object.keys(newErrors).length === 0;
   }, [formData, currentQuantity, item.unit, isDiscardedItem, isEdit, existingLog]);
 
-  // デモモード用のローディング状態
-  const [isDemoSubmitting, setIsDemoSubmitting] = useState(false);
+  // ローディング状態（デモ・編集共通）
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 送信ハンドラ
   const handleSubmit = useCallback(async () => {
@@ -309,10 +309,10 @@ export function StaffRecordDialog({
 
     // デモモードの場合はAPIを呼び出さずにフィードバックを表示
     if (isDemo) {
-      setIsDemoSubmitting(true);
+      setIsSubmitting(true);
       // 少し遅延を入れてUXを向上
       await new Promise(resolve => setTimeout(resolve, 800));
-      setIsDemoSubmitting(false);
+      setIsSubmitting(false);
       alert('✅ デモモードのため実際には保存されていませんが、\n入力内容は正常です！\n\n本番環境では記録がスプレッドシートに保存されます。');
       onSuccess?.();
       onClose();
@@ -322,6 +322,7 @@ export function StaffRecordDialog({
     try {
       // 編集モード: 水分記録の更新
       if (isEdit && existingLog && sheetTimestamp) {
+        setIsSubmitting(true);
         // 編集前の水分量を取得（特記事項に「※{前の値}ccから編集」を追加するため）
         const previousHydrationAmount = (existingLog as { hydrationAmount?: number }).hydrationAmount;
         await updateHydrationRecord({
@@ -334,8 +335,9 @@ export function StaffRecordDialog({
           updatedBy: formData.staffName,
           previousHydrationAmount,
         });
-        onSuccess?.();
+        // 即座にダイアログを閉じて、バックグラウンドでデータ更新
         onClose();
+        onSuccess?.();
         return;
       }
 
@@ -486,6 +488,7 @@ export function StaffRecordDialog({
       onSuccess?.();
       onClose();
     } catch (err) {
+      setIsSubmitting(false);
       setErrors({ submit: err instanceof Error ? err.message : '記録に失敗しました' });
     }
   }, [formData, item, settings, recordMutation, correctDiscardedMutation, validate, onSuccess, onClose, isDemo, isDiscardedItem, isEdit, existingLog, sheetTimestamp]);
@@ -1104,17 +1107,17 @@ export function StaffRecordDialog({
         <div className="sticky bottom-0 bg-white flex justify-end gap-2 p-4 border-t">
           <button
             onClick={onClose}
-            disabled={recordMutation.isPending || correctDiscardedMutation.isPending || isDemoSubmitting}
+            disabled={recordMutation.isPending || correctDiscardedMutation.isPending || isSubmitting}
             className="px-4 py-2 text-gray-700 border rounded-lg hover:bg-gray-100 disabled:opacity-50"
           >
             キャンセル
           </button>
           <button
             onClick={handleSubmit}
-            disabled={recordMutation.isPending || correctDiscardedMutation.isPending || isDemoSubmitting}
+            disabled={recordMutation.isPending || correctDiscardedMutation.isPending || isSubmitting}
             className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50"
           >
-            {(recordMutation.isPending || correctDiscardedMutation.isPending || isDemoSubmitting) ? '記録中...' : (isDemo ? '記録を保存（デモ）' : '記録を保存')}
+            {(recordMutation.isPending || correctDiscardedMutation.isPending || isSubmitting) ? '記録中...' : (isDemo ? '記録を保存（デモ）' : (isEdit ? '更新する' : '記録を保存'))}
           </button>
         </div>
       </div>
