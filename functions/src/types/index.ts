@@ -131,7 +131,9 @@ export interface SubmitCareRecordRequest {
 export interface UploadCareImageRequest {
   staffId: string;
   residentId: string;
-  recordType?: string;
+  mealTime?: string;
+  date?: string;
+  staffName?: string;
 }
 
 export interface GetPlanDataRequest {

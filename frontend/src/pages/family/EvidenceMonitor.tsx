@@ -25,6 +25,7 @@ import {
 } from '../../data/demoFamilyData';
 import { useFamilyMealRecords } from '../../hooks/useFamilyMealRecords';
 import { useCarePhotoList } from '../../hooks/useCarePhotos';
+import { DEMO_RESIDENT_ID } from '../../hooks/useDemoMode';
 
 /**
  * タイムスタンプをフォーマット（表示用）
@@ -67,7 +68,7 @@ export function EvidenceMonitor() {
 
   // Phase 17: Firebase Storage から写真を取得
   const { photos, isLoading: isPhotosLoading } = useCarePhotoList({
-    residentId: 'resident-001', // デモ版では固定
+    residentId: DEMO_RESIDENT_ID,
     date: targetDate,
     mealTime: mealTime === 'breakfast' ? 'breakfast'
             : mealTime === 'lunch' ? 'lunch'
