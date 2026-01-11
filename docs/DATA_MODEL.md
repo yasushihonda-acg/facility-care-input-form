@@ -242,6 +242,29 @@ type ItemStatus =
   | 'discarded';        // 廃棄完了（Phase 49）
 ```
 
+### consumptionSummary（消費サマリー）
+
+品物の提供・摂食履歴を集約したサマリーフィールド。
+
+```typescript
+// items/{itemId}.consumptionSummary
+interface ConsumptionSummary {
+  totalServed: number;             // 累計提供回数
+  totalServedQuantity: number;     // 累計提供数量
+  totalConsumedQuantity: number;   // 累計摂食数量
+  avgConsumptionRate: number;      // 平均摂食率（0-100）
+  lastServedDate?: string;         // 最終提供日（YYYY-MM-DD）
+  lastServedBy?: string;           // 最終提供者
+  lastRecordedAt?: string;         // 最終記録日時（ISO8601）
+}
+```
+
+**lastRecordedAtの用途**:
+- 「入力済み（本日）」セクションで記録時刻を表示
+- 消費ログ記録時に自動更新
+
+---
+
 ### normalizedName（Phase 43: 統計用の品物名正規化）
 
 統計集計時に品物名のバリエーションをまとめるためのフィールド。
@@ -596,6 +619,7 @@ interface ItemEvent {
 
 | 日付 | 変更内容 |
 |------|----------|
+| 2026-01-11 | consumptionSummary構造追加（lastRecordedAtフィールド含む） |
 | 2026-01-11 | Phase 61: consumption_logs, item_eventsサブコレクション追加、hydrationAmount/sheetTimestampフィールド追加 |
 | 2026-01-03 | Phase 52: allowed_users, care_photos.source追加、認証フロー追加 |
 | 2025-12-24 | Phase 42: RemainingHandlingLog型・残り対応タブ仕様追加 |
