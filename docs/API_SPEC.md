@@ -2,7 +2,7 @@
 status: canonical
 scope: core
 owner: core-team
-last_reviewed: 2025-12-20
+last_reviewed: 2026-01-11
 ---
 
 # API仕様書
@@ -111,6 +111,8 @@ https://asia-northeast1-facility-care-input-form.cloudfunctions.net
 | GET | `/getFoodStats` | 食品傾向統計を取得 | Phase 9.3 | ✅ |
 | POST | `/recordConsumptionLog` | 消費ログを記録 | Phase 9.2 | ✅ |
 | GET | `/getConsumptionLogs` | 消費ログ一覧を取得 | Phase 9.2 | ✅ |
+| POST | `/getAllConsumptionLogs` | 全品物の消費ログを一括取得 | Phase 61 | ✅ |
+| POST | `/updateHydrationRecord` | 水分記録を編集 | Phase 61 | ✅ |
 | POST | `/correctDiscardedRecord` | 破棄記録を修正 | Phase 59 | ✅ |
 | GET | `/getProhibitions` | 禁止ルール一覧を取得 | Phase 9.x | ✅ |
 | POST | `/createProhibition` | 禁止ルールを作成 | Phase 9.x | ✅ |
@@ -1635,10 +1637,111 @@ interface SyncResult {
 
 ---
 
+### 4.53 POST /getAllConsumptionLogs (Phase 61)
+
+複数品物の消費ログを一括取得します。過去記録の閲覧・編集に使用。
+
+#### リクエストボディ
+
+```typescript
+interface GetAllConsumptionLogsRequest {
+  itemIds: string[];          // 取得対象の品物IDリスト（最大100件）
+  startDate?: string;         // 開始日（YYYY-MM-DD）- この日以降のログを取得
+  endDate?: string;           // 終了日（YYYY-MM-DD）- この日以前のログを取得
+  limit?: number;             // 取得件数上限（デフォルト: 100、最大: 500）
+}
+```
+
+#### レスポンス
+
+```typescript
+interface GetAllConsumptionLogsResponse {
+  logs: ConsumptionLog[];     // 消費ログの配列（日付降順）
+  total: number;              // 取得件数
+}
+```
+
+#### 処理フロー
+
+1. 各品物の`consumption_logs`サブコレクションを並列取得
+2. 日付フィルタリング（JavaScriptで実行 - インデックス問題回避）
+3. 全体を日付順でソート（新しい順）
+4. limit適用
+
+#### 制限事項
+
+- `itemIds`は最大100件まで
+- 各品物あたり最大50件取得
+- 日付範囲フィルタはFirestoreクエリではなくJS側で実行
+
+---
+
+### 4.54 POST /updateHydrationRecord (Phase 61)
+
+水分記録を編集します。Firestoreの消費ログとSheet A（水分摂取量シート）を同時に更新。
+
+#### リクエストボディ
+
+```typescript
+interface UpdateHydrationRecordRequest {
+  itemId: string;                         // 品物ID
+  logId: string;                          // 消費ログID
+  hydrationAmount: number;                // 新しい水分量（ml）
+  remainingHandling?: RemainingHandling;  // 残り対応（オプション）
+  remainingHandlingOther?: string;        // その他詳細（オプション）
+  sheetTimestamp: string;                 // Sheet A検索用タイムスタンプ（例: "2024/09/01 9:37:34"）
+  updatedBy: string;                      // 更新者
+  previousHydrationAmount?: number;       // 編集前の水分量（履歴記録用）
+}
+```
+
+#### レスポンス
+
+```typescript
+interface UpdateHydrationRecordResponse {
+  logId: string;
+  itemId: string;
+  hydrationAmount: number;
+  sheetUpdated: boolean;      // Sheet A更新成功フラグ
+  sheetRow?: number;          // 更新した行番号（成功時のみ）
+}
+```
+
+#### 処理フロー
+
+1. Firestoreの`consumption_logs/{logId}`を更新
+   - `hydrationAmount`フィールドを更新
+   - `consumptionNote`に「※{前の値}ccから編集」を追加
+   - `updatedAt`, `updatedBy`を設定
+2. Sheet A（水分摂取量シート）のD列を更新
+   - `sheetTimestamp`でA列を検索し該当行を特定
+   - D列（水分量）のみを更新
+
+#### 特記事項への編集履歴追加
+
+- 編集時、`consumptionNote`に「※{previousHydrationAmount}ccから編集」を自動追加
+- 「【ケアに関すること】」ヘッダーがある場合はその直後に挿入
+
+#### エラーコード
+
+| コード | 説明 |
+|--------|------|
+| MISSING_REQUIRED_FIELD | 必須パラメータ不足 |
+| INVALID_REQUEST | 消費ログが見つからない |
+| FIRESTORE_ERROR | Firestore更新エラー |
+
+#### 注意事項
+
+- Sheet A更新失敗でもFirestore更新は成功扱い（`sheetUpdated: false`で応答）
+- Sheet Aの行特定は`sheetTimestamp`の完全一致で行う
+
+---
+
 ## 6. 変更履歴
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
+| 2026-01-11 | 1.23.0 | Phase 61: getAllConsumptionLogs/updateHydrationRecord API追加（水分記録編集） |
 | 2026-01-07 | 1.22.0 | Phase 59: correctDiscardedRecord API追加（破棄記録修正） |
 | 2026-01-04 | 1.21.1 | syncChatImages: orphan削除条件を修正（fullSync+year指定時のみ）、staffName制限事項を追記 |
 | 2026-01-04 | 1.21.0 | Phase 53: syncChatImages API追加（fullSyncモード対応） |

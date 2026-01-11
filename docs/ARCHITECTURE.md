@@ -668,7 +668,7 @@ sequenceDiagram
 
 ## 11. 開発状況
 
-**Phase 1〜40 完了**
+**Phase 1〜62 完了**
 
 実装済み機能・パス一覧は [HANDOVER.md](./HANDOVER.md) を参照。
 
