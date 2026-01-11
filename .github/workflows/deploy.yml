@@ -8,6 +8,7 @@ on:
       - 'frontend/**'
       - 'firestore.rules'
       - 'firestore.indexes.json'
+      - 'storage.rules'
       - 'firebase.json'
 
   workflow_dispatch:
@@ -64,8 +65,11 @@ jobs:
       - name: Deploy Functions
         run: firebase deploy --only functions --project facility-care-input-form --force
 
-      - name: Deploy Firestore Rules
+      - name: Deploy Firestore Rules and Indexes
         run: firebase deploy --only firestore:rules,firestore:indexes --project facility-care-input-form
+
+      - name: Deploy Storage Rules
+        run: firebase deploy --only storage --project facility-care-input-form
 
       - name: Install frontend dependencies
         working-directory: frontend
