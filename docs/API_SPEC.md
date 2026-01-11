@@ -506,6 +506,7 @@ Content-Type: multipart/form-data
 | `staffId` | string | Yes | スタッフID |
 | `residentId` | string | Yes | 入居者ID |
 | `mealTime` | string | No | 食事時間（breakfast/lunch/dinner/snack）デフォルト: snack |
+| `date` | string | No | 記録日（YYYY-MM-DD）デフォルト: 今日 |
 | `staffName` | string | No | スタッフ名 |
 
 #### レスポンス
