@@ -1101,22 +1101,26 @@ export function StaffRecordDialog({
           </div>
 
           {/* 記録後の残量プレビュー (Phase 15.7対応) */}
-          <div className="bg-blue-50 rounded-lg p-3 text-center">
-            <span className="text-sm text-gray-600">記録後の残量: </span>
-            <span className="text-lg font-semibold text-blue-700">
-              {quantityAfter.toFixed(1)}{item.unit}
-            </span>
-            {consumptionAmounts.wastedQuantity > 0 && (
-              <span className="text-xs text-orange-600 block mt-1">
-                🗑️ 廃棄: {consumptionAmounts.wastedQuantity.toFixed(1)}{item.unit}
+          {/* 編集モードでは非表示（在庫は既に元の記録で調整済みのため） */}
+          {/* 数量管理しない品物も非表示 */}
+          {!isEdit && !skipQuantity && (
+            <div className="bg-blue-50 rounded-lg p-3 text-center">
+              <span className="text-sm text-gray-600">記録後の残量: </span>
+              <span className="text-lg font-semibold text-blue-700">
+                {quantityAfter.toFixed(1)}{item.unit}
               </span>
-            )}
-            {quantityAfter <= 0 && (
-              <span className="text-xs text-orange-600 block mt-1">
-                ※ 在庫がなくなります（品物は「消費完了」になります）
-              </span>
-            )}
-          </div>
+              {consumptionAmounts.wastedQuantity > 0 && (
+                <span className="text-xs text-orange-600 block mt-1">
+                  🗑️ 廃棄: {consumptionAmounts.wastedQuantity.toFixed(1)}{item.unit}
+                </span>
+              )}
+              {quantityAfter <= 0 && (
+                <span className="text-xs text-orange-600 block mt-1">
+                  ※ 在庫がなくなります（品物は「消費完了」になります）
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* フッター */}
