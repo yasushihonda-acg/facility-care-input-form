@@ -240,11 +240,14 @@ async function recordConsumptionLogHandler(
 
       const item = itemDoc.data() as CareItem;
 
-      // 現在の残量を取得（currentQuantityがなければremainingQuantityを使用）
-      const currentQty = item.currentQuantity ?? item.remainingQuantity ?? item.quantity ?? 0;
+      // 数量管理しない品物の判定（quantity が null/undefined）
+      const skipQuantity = item.quantity == null;
 
-      // バリデーション: 提供数量が残量を超えていないか
-      if (input.servedQuantity > currentQty) {
+      // 現在の残量を取得（数量管理しない品物は1として扱う）
+      const currentQty = skipQuantity ? 1 : (item.currentQuantity ?? item.remainingQuantity ?? item.quantity ?? 0);
+
+      // バリデーション: 提供数量が残量を超えていないか（数量管理しない品物はスキップ）
+      if (!skipQuantity && input.servedQuantity > currentQty) {
         throw new Error(`提供数量(${input.servedQuantity})が残量(${currentQty})を超えています`);
       }
 
