@@ -282,6 +282,7 @@ async function recordConsumptionLogHandler(
         Math.round((newTotalConsumedQty / newTotalServedQty) * 100) :
         0;
 
+      const now = Timestamp.now();
       const newSummary = {
         totalServed: newTotalServed,
         totalServedQuantity: newTotalServedQty,
@@ -289,6 +290,7 @@ async function recordConsumptionLogHandler(
         avgConsumptionRate: newAvgRate,
         lastServedDate: input.servedDate,
         lastServedBy: input.servedBy,
+        lastRecordedAt: now.toDate().toISOString(),
       };
 
       // ステータスを判定
@@ -300,7 +302,6 @@ async function recordConsumptionLogHandler(
 
       // 消費ログを作成
       const logRef = itemRef.collection(CONSUMPTION_LOGS_SUBCOLLECTION).doc();
-      const now = Timestamp.now();
 
       const logData = {
         id: logRef.id,
