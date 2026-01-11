@@ -2,22 +2,21 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     /**
-     * Phase 52: Firebase Authentication によるアクセス制御
-     *
      * care-photos:
-     * - 読み取り: 認証済みユーザーのみ
-     * - 書き込み: 認証済みユーザー または Cloud Functions（Admin SDK）
+     * - 読み取り: 公開（Google Chat経由での閲覧を許可するため）
+     * - 書き込み: Cloud Functions（Admin SDK）のみ
      *
-     * ※ Cloud FunctionsはAdmin SDKを使用するためセキュリティルールをバイパス
+     * ※ URLを知っている人は誰でも閲覧可能
+     * ※ 書き込みはCloud Functions経由でのみ許可（Admin SDKでルールをバイパス）
      */
 
     match /care-photos/{allPaths=**} {
-      // 読み取り: 認証済みユーザーのみ
-      allow read: if request.auth != null;
+      // 読み取り: 公開（Google Chatで共有した画像を閲覧可能にするため）
+      allow read: if true;
 
-      // 書き込み: 認証済みユーザーのみ
-      // Cloud FunctionsからのアップロードはAdmin SDKでバイパス
-      allow write: if request.auth != null;
+      // 書き込み: Cloud Functionsのみ（Admin SDKでバイパス）
+      // フロントエンドからの直接アップロードは禁止
+      allow write: if false;
     }
   }
 }
