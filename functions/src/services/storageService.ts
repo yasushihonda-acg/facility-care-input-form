@@ -14,7 +14,7 @@ import {getTodayString} from "../utils/scheduleUtils";
  * Storage保存先パス設定
  */
 const STORAGE_CONFIG = {
-  BUCKET_NAME: "facility-care-input-form.appspot.com",
+  BUCKET_NAME: "facility-care-input-form.firebasestorage.app",
   CARE_PHOTOS_PATH: "care-photos",
 };
 
