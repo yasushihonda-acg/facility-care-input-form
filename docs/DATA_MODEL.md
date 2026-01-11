@@ -124,7 +124,7 @@ PWAからの入力データを保存するシート。
 ## 5. Firebase Storage 構造
 
 ```
-gs://facility-care-input-form.appspot.com/
+gs://facility-care-input-form.firebasestorage.app/
 ├── photos/
 │   ├── meal/           # 食事写真
 │   │   └── YYYY-MM-DD/

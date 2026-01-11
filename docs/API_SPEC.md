@@ -516,7 +516,7 @@ Content-Type: multipart/form-data
   "data": {
     "photoId": "abc123def456",
     "fileName": "resident-001_20251219160000_x7k9m2.jpg",
-    "photoUrl": "https://firebasestorage.googleapis.com/v0/b/facility-care-input-form.appspot.com/o/care-photos%2F2025%2F12%2Fresident-001_20251219160000_x7k9m2.jpg?alt=media",
+    "photoUrl": "https://firebasestorage.googleapis.com/v0/b/facility-care-input-form.firebasestorage.app/o/care-photos%2F2025%2F12%2Fresident-001_20251219160000_x7k9m2.jpg?alt=media",
     "storagePath": "care-photos/2025/12/resident-001_20251219160000_x7k9m2.jpg"
   },
   "timestamp": "2025-12-19T16:00:05.000Z"
