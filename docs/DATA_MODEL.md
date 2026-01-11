@@ -2,7 +2,7 @@
 status: working
 scope: data
 owner: core-team
-last_reviewed: 2026-01-03
+last_reviewed: 2026-01-11
 links:
   - docs/archive/SHEET_A_STRUCTURE.md
   - docs/archive/SHEET_B_STRUCTURE.md
@@ -116,6 +116,8 @@ PWAからの入力データを保存するシート。
 | `care_photos` | 写真メタデータ（Phase 17/52） | photoUrl, residentId, source |
 | `chat_messages` | チャットメッセージ | content, sender, timestamp |
 | `staffNotes` | スタッフ注意事項（Phase 40） | content, priority, startDate, endDate |
+| `care_items/{id}/consumption_logs` | 消費ログ（サブコレクション） | servedDate, hydrationAmount, sheetTimestamp |
+| `care_items/{id}/item_events` | 品物イベント（サブコレクション） | eventType, eventAt |
 
 ---
 
@@ -403,6 +405,158 @@ interface CarePhoto {
 
 ---
 
+## 5.6 consumption_logsサブコレクション（消費ログ）
+
+品物の提供・摂食履歴を記録するサブコレクション。
+
+### パス
+
+```
+care_items/{itemId}/consumption_logs/{logId}
+```
+
+### 構造
+
+```typescript
+interface ConsumptionLog {
+  // 識別情報
+  id: string;
+  itemId: string;
+
+  // 提供情報
+  servedDate: string;              // YYYY-MM-DD
+  servedTime?: string;             // HH:mm
+  mealTime?: MealTime;             // 'breakfast' | 'lunch' | 'dinner' | 'snack'
+  servedQuantity: number;
+  servedBy: string;
+
+  // 摂食情報
+  consumedQuantity: number;
+  consumptionRate: number;         // 0-100
+  consumptionStatus: ConsumptionStatus;  // 'full' | 'most' | 'half' | 'little' | 'none'
+
+  // 残り対応（Phase 15.7）
+  remainingHandling?: RemainingHandling;  // 'discarded' | 'stored' | 'other'
+  remainingHandlingOther?: string;
+  inventoryDeducted?: number;      // 在庫から引いた量
+  wastedQuantity?: number;         // 廃棄量（破棄時のみ）
+
+  // 残量情報
+  quantityBefore: number;
+  quantityAfter: number;
+
+  // 特記事項
+  consumptionNote?: string;
+  noteToFamily?: string;
+
+  // 家族指示対応
+  followedInstruction?: boolean;
+  instructionNote?: string;
+
+  // 連携情報
+  linkedMealRecordId?: string;     // Sheet Bとの紐づけ
+  sourceType?: 'meal_form' | 'item_detail' | 'task';
+
+  // 水分記録（Phase 29/61）
+  hydrationAmount?: number;        // 水分量（ml）- 飲み物カテゴリの場合
+  sheetTimestamp?: string;         // Sheet A検索用タイムスタンプ（水分記録編集時に使用）
+
+  // メタ情報
+  recordedBy: string;
+  recordedAt: Timestamp;
+  updatedAt?: Timestamp;
+  updatedBy?: string;
+}
+```
+
+### 水分記録編集機能（Phase 61）
+
+飲み物カテゴリの品物で水分記録を行う際、Sheet A（水分摂取量シート）との連携が必要。
+
+| フィールド | 用途 |
+|-----------|------|
+| `hydrationAmount` | 水分量（ml）。Sheet BのD列に記録 |
+| `sheetTimestamp` | Sheet Aの該当行を特定するためのタイムスタンプ。編集時に使用 |
+
+**編集フロー**:
+1. 消費ログ記録時に`sheetTimestamp`を保存
+2. 編集時は`sheetTimestamp`でSheet Aの行を特定
+3. `updateHydrationRecord` APIで水分量を更新
+
+### インデックス（COLLECTION_GROUP）
+
+`consumption_logs`はサブコレクションのため、COLLECTION_GROUPスコープのインデックスが必要。
+
+```json
+// firestore.indexes.json
+[
+  {
+    "collectionGroup": "consumption_logs",
+    "queryScope": "COLLECTION_GROUP",
+    "fields": [
+      { "fieldPath": "remainingHandling", "order": "ASCENDING" },
+      { "fieldPath": "recordedAt", "order": "DESCENDING" }
+    ]
+  },
+  {
+    "collectionGroup": "consumption_logs",
+    "queryScope": "COLLECTION_GROUP",
+    "fields": [
+      { "fieldPath": "servedDate", "order": "DESCENDING" },
+      { "fieldPath": "recordedAt", "order": "DESCENDING" }
+    ]
+  },
+  {
+    "collectionGroup": "consumption_logs",
+    "queryScope": "COLLECTION_GROUP",
+    "fields": [
+      { "fieldPath": "servedDate", "order": "ASCENDING" },
+      { "fieldPath": "recordedAt", "order": "DESCENDING" }
+    ]
+  }
+]
+```
+
+---
+
+## 5.7 item_eventsサブコレクション（品物イベント）
+
+品物のライフサイクルイベントを記録するサブコレクション。
+
+### パス
+
+```
+care_items/{itemId}/item_events/{eventId}
+```
+
+### 構造
+
+```typescript
+interface ItemEvent {
+  id: string;
+  itemId: string;
+  eventType: 'created' | 'updated' | 'served' | 'consumed' | 'discarded' | 'status_changed';
+  eventAt: Timestamp;
+  eventBy: string;
+  details?: Record<string, unknown>;
+}
+```
+
+### インデックス（COLLECTION_GROUP）
+
+```json
+{
+  "collectionGroup": "item_events",
+  "queryScope": "COLLECTION_GROUP",
+  "fields": [
+    { "fieldPath": "eventType", "order": "ASCENDING" },
+    { "fieldPath": "eventAt", "order": "DESCENDING" }
+  ]
+}
+```
+
+---
+
 ## 6. エンティティ関連図
 
 ```
@@ -442,6 +596,7 @@ interface CarePhoto {
 
 | 日付 | 変更内容 |
 |------|----------|
+| 2026-01-11 | Phase 61: consumption_logs, item_eventsサブコレクション追加、hydrationAmount/sheetTimestampフィールド追加 |
 | 2026-01-03 | Phase 52: allowed_users, care_photos.source追加、認証フロー追加 |
 | 2025-12-24 | Phase 42: RemainingHandlingLog型・残り対応タブ仕様追加 |
 | 2025-12-23 | Phase 41設計を削除（既存フォーム構造と不整合のためリバート） |

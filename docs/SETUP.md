@@ -2,7 +2,7 @@
 status: canonical
 scope: ops
 owner: core-team
-last_reviewed: 2025-12-20
+last_reviewed: 2026-01-11
 ---
 
 # 環境セットアップガイド（CLI版）
