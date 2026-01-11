@@ -257,8 +257,12 @@ export function StaffRecordDialog({
       newErrors.servedQuantity = '提供数量を入力してください。';
     }
     // Phase 59 Fix: 廃棄記録がある品物の修正記録の場合、在庫は復元されるためこのチェックをスキップ
-    if (!isDiscardedItem && formData.servedQuantity > currentQuantity) {
-      newErrors.servedQuantity = `提供数量が残量(${currentQuantity}${item.unit})を超えています`;
+    // Phase 62 Fix: 編集モードの場合、元の提供数を「利用可能」として加算
+    const availableQuantity = isEdit && existingLog
+      ? currentQuantity + (existingLog.servedQuantity || 0)
+      : currentQuantity;
+    if (!isDiscardedItem && formData.servedQuantity > availableQuantity) {
+      newErrors.servedQuantity = `提供数量が残量(${availableQuantity}${item.unit})を超えています`;
     }
 
     // Phase 29: タブ別バリデーション
@@ -294,7 +298,7 @@ export function StaffRecordDialog({
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [formData, currentQuantity, item.unit, isDiscardedItem]);
+  }, [formData, currentQuantity, item.unit, isDiscardedItem, isEdit, existingLog]);
 
   // デモモード用のローディング状態
   const [isDemoSubmitting, setIsDemoSubmitting] = useState(false);
