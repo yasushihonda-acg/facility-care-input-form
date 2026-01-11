@@ -198,3 +198,9 @@ export {exchangeOAuthCode, checkOAuthToken, getOAuthUrl} from "./functions/oauth
 // =============================================================================
 
 export {getItemEvents} from "./functions/itemEvents";
+
+// =============================================================================
+// データマイグレーション（一時的）
+// =============================================================================
+
+export {migrateLastRecordedAt} from "./functions/migrateLastRecordedAt";
