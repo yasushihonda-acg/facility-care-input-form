@@ -125,14 +125,27 @@ PWAからの入力データを保存するシート。
 
 ```
 gs://facility-care-input-form.firebasestorage.app/
-├── photos/
-│   ├── meal/           # 食事写真
-│   │   └── YYYY-MM-DD/
-│   │       └── {timestamp}_{type}.jpg
-│   └── evidence/       # エビデンス写真
-│       └── YYYY-MM-DD/
-│           └── {timestamp}.jpg
+└── care-photos/
+    └── {YYYY}/
+        └── {MM}/
+            └── {residentId}_{timestamp}_{random}.{ext}
 ```
+
+### パス構成
+
+| セグメント | 説明 | 例 |
+|-----------|------|-----|
+| `care-photos` | ルートフォルダ | - |
+| `{YYYY}` | 年 | `2026` |
+| `{MM}` | 月 | `01` |
+| `{residentId}_{timestamp}_{random}.{ext}` | ファイル名 | `resident-001_20260112120000_x7k9m2.jpg` |
+
+### アクセス権限（storage.rules）
+
+| 操作 | 許可 | 備考 |
+|------|------|------|
+| 読み取り | 公開 | Google Chat共有画像の閲覧用 |
+| 書き込み | Cloud Functionsのみ | Admin SDKでルールをバイパス |
 
 ---
 
@@ -415,6 +428,19 @@ interface CarePhoto {
 | `google_chat` | Google Chatスペースから取得 |
 
 後方互換性のため、既存データはsource未設定（取得時に`direct_upload`としてフォールバック）。
+
+### residentIdの運用
+
+現在のシステムは単一入居者（`resident-001`）を前提に設計。
+
+| モード | residentId | 定義場所 |
+|--------|-----------|---------|
+| デモ | `resident-001` | `useDemoMode.ts:DEMO_RESIDENT_ID` |
+| 本番 | `resident-001` | 同上（現在は単一入居者運用） |
+
+**将来の複数入居者対応時**:
+- 認証ユーザーと入居者の紐付けテーブルを追加
+- `useResidentId()`フックで動的に取得
 
 ### Google Chat同期時の制限事項
 
