@@ -253,16 +253,19 @@ export function StaffRecordDialog({
     if (formData.dayServiceUsage === '利用中' && !formData.dayServiceName) {
       newErrors.dayServiceName = 'デイサービスを選択してください。';
     }
-    if (formData.servedQuantity <= 0) {
-      newErrors.servedQuantity = '提供数量を入力してください。';
-    }
-    // Phase 59 Fix: 廃棄記録がある品物の修正記録の場合、在庫は復元されるためこのチェックをスキップ
-    // Phase 62 Fix: 編集モードの場合、元の提供数を「利用可能」として加算
-    const availableQuantity = isEdit && existingLog
-      ? currentQuantity + (existingLog.servedQuantity || 0)
-      : currentQuantity;
-    if (!isDiscardedItem && formData.servedQuantity > availableQuantity) {
-      newErrors.servedQuantity = `提供数量が残量(${availableQuantity}${item.unit})を超えています`;
+    // 数量管理しない品物は提供数バリデーションをスキップ（自動的に1が設定される）
+    if (!skipQuantity) {
+      if (formData.servedQuantity <= 0) {
+        newErrors.servedQuantity = '提供数量を入力してください。';
+      }
+      // Phase 59 Fix: 廃棄記録がある品物の修正記録の場合、在庫は復元されるためこのチェックをスキップ
+      // Phase 62 Fix: 編集モードの場合、元の提供数を「利用可能」として加算
+      const availableQuantity = isEdit && existingLog
+        ? currentQuantity + (existingLog.servedQuantity || 0)
+        : currentQuantity;
+      if (!isDiscardedItem && formData.servedQuantity > availableQuantity) {
+        newErrors.servedQuantity = `提供数量が残量(${availableQuantity}${item.unit})を超えています`;
+      }
     }
 
     // Phase 29: タブ別バリデーション
@@ -597,7 +600,12 @@ export function StaffRecordDialog({
                 <p className="font-bold">{item.itemName}</p>
                 <p className="text-sm text-gray-500">
                   {/* Phase 59 Fix: 廃棄記録がある場合は復元される数量を表示 */}
-                  残り: {isDiscardedItem ? discardedQty : currentQuantity}{item.unit}
+                  {/* 数量管理しない品物の場合は「数量管理なし」を表示 */}
+                  {skipQuantity ? (
+                    <span className="text-green-600">数量管理なし</span>
+                  ) : (
+                    <>残り: {isDiscardedItem ? discardedQty : currentQuantity}{item.unit}</>
+                  )}
                   {item.expirationDate && (
                     <span className="ml-2">
                       期限: {new Date(item.expirationDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}
@@ -687,33 +695,41 @@ export function StaffRecordDialog({
             </div>
           )}
 
-          {/* 提供数量 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              提供数 <span className="text-red-500">*</span>
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                min="0.5"
-                max={currentQuantity}
-                step="0.5"
-                value={formData.servedQuantity}
-                onChange={(e) => {
-                  const value = parseFloat(e.target.value) || 0;
-                  setFormData(prev => ({
-                    ...prev,
-                    servedQuantity: value,
-                  }));
-                }}
-                className={`w-24 border rounded-lg px-3 py-2 text-sm ${errors.servedQuantity ? 'border-red-500' : 'border-gray-300'}`}
-              />
-              <span className="text-gray-600">{item.unit}</span>
+          {/* 提供数量（数量管理する品物のみ表示） */}
+          {skipQuantity ? (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-sm text-blue-700">
+                ℹ️ この品物は数量管理していません。提供数は自動的に1として記録されます。
+              </p>
             </div>
-            {errors.servedQuantity && (
-              <p className="mt-1 text-sm text-red-500">{errors.servedQuantity}</p>
-            )}
-          </div>
+          ) : (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                提供数 <span className="text-red-500">*</span>
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="0.5"
+                  max={currentQuantity}
+                  step="0.5"
+                  value={formData.servedQuantity}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value) || 0;
+                    setFormData(prev => ({
+                      ...prev,
+                      servedQuantity: value,
+                    }));
+                  }}
+                  className={`w-24 border rounded-lg px-3 py-2 text-sm ${errors.servedQuantity ? 'border-red-500' : 'border-gray-300'}`}
+                />
+                <span className="text-gray-600">{item.unit}</span>
+              </div>
+              {errors.servedQuantity && (
+                <p className="mt-1 text-sm text-red-500">{errors.servedQuantity}</p>
+              )}
+            </div>
+          )}
 
           {/* Phase 29: 水分タブ - 水分量入力 */}
           {formData.activeTab === 'hydration' && (
