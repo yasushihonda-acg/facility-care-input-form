@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { useCreatePreset } from '../../hooks/usePresets';
+import { useOptimisticSubmit } from '../../hooks/useOptimisticSubmit';
 import type { CareItemInput, ItemCategory } from '../../types/careItem';
 
 // カテゴリラベル（Phase 31: 2カテゴリに簡素化）
@@ -60,17 +61,31 @@ export function SaveManualPresetDialog({
 
   const createPresetMutation = useCreatePreset();
 
+  // 楽観的送信フック: 二重送信防止とUX改善
+  // onClose=onSaved: 保存ボタン押下で即座にリストへ遷移
+  const { submit, isSubmitting } = useOptimisticSubmit({
+    onClose: onSaved, // 即座にリストへ遷移
+    loadingMessage: 'プリセットを保存中...',
+    successMessage: 'プリセットを保存しました',
+  });
+
   if (!isOpen) return null;
 
+  // 送信ハンドラ
+  // useOptimisticSubmitにより、即座にダイアログが閉じ、
+  // API処理はバックグラウンドで実行される（二重送信防止 + UX改善）
   const handleSave = async () => {
-    try {
+    // バリデーション失敗時は何もしない
+    if (!presetName.trim()) return;
+
+    // submit()を呼び出すと即座にダイアログが閉じ、トースト通知が表示される
+    await submit(async () => {
       await createPresetMutation.mutateAsync({
         residentId,
         userId,
         preset: {
           name: presetName,
           icon: selectedIcon,
-          // 品物登録フォームの値をそのままプリセットに保存
           itemCategory: formData.category,
           storageMethod: formData.storageMethod,
           servingMethod: formData.servingMethod,
@@ -84,10 +99,7 @@ export function SaveManualPresetDialog({
         },
         source: 'manual',
       });
-      onSaved();
-    } catch {
-      alert('プリセットの保存に失敗しました');
-    }
+    });
   };
 
   // ×ボタン: ダイアログを閉じるだけ（ナビゲーションなし）
@@ -228,10 +240,10 @@ export function SaveManualPresetDialog({
           </button>
           <button
             onClick={handleSave}
-            disabled={createPresetMutation.isPending || !presetName.trim()}
+            disabled={isSubmitting || createPresetMutation.isPending || !presetName.trim()}
             className="flex-1 py-3 px-4 bg-primary text-white rounded-lg font-bold disabled:opacity-50"
           >
-            {createPresetMutation.isPending ? '保存中...' : '保存して完了'}
+            {isSubmitting || createPresetMutation.isPending ? '保存中...' : '保存して完了'}
           </button>
         </div>
       </div>
