@@ -32,8 +32,6 @@
  *   );
  * }
  * ```
- *
- * @see /Users/yyyhhh/.claude/plans/frolicking-sleeping-peach.md
  */
 
 import { useRef, useCallback, useState } from 'react';

@@ -21,7 +21,6 @@ export function MealInputPage() {
   const backPath = isDemo ? '/demo/view' : '/view';
 
   const { settings, isLoading: isSettingsLoading, saveSettings } = useMealFormSettings();
-  // showSuccess削除: useOptimisticSubmitのトースト通知に統一
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   return (
@@ -87,8 +86,6 @@ export function MealInputPage() {
         />
       )}
 
-      {/* 成功トースト: useOptimisticSubmitのsonner通知に統一 */}
-
       {/* ローディング */}
       {isSettingsLoading && (
         <div className="p-4 text-center text-gray-500">
@@ -99,9 +96,6 @@ export function MealInputPage() {
       {/* メインコンテンツ: 品物リストのみ */}
       {!isSettingsLoading && (
         <div className="pb-16">
-          {/* Phase 15.8: 品物から記録（メインエリア） */}
-          {/* 入力は各品物のダイアログで完結 */}
-          {/* onRecordComplete削除: useOptimisticSubmitのトースト通知に統一 */}
           <ItemBasedSnackRecord
             residentId="resident-001"
           />

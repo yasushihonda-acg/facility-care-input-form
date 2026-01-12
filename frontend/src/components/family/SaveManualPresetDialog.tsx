@@ -171,11 +171,13 @@ export function SaveManualPresetDialog({
               {formData.storageMethod && (
                 <p>
                   保存方法:{' '}
-                  {formData.storageMethod === 'room_temp'
-                    ? '常温'
-                    : formData.storageMethod === 'refrigerated'
-                      ? '冷蔵'
-                      : '冷凍'}
+                  {(() => {
+                    switch (formData.storageMethod) {
+                      case 'room_temp': return '常温';
+                      case 'refrigerated': return '冷蔵';
+                      default: return '冷凍';
+                    }
+                  })()}
                 </p>
               )}
               {formData.noteToStaff && (

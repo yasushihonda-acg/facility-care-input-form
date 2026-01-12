@@ -232,5 +232,3 @@ export function StaffNoteModal({
     </div>
   );
 }
-
-export default StaffNoteModal;
