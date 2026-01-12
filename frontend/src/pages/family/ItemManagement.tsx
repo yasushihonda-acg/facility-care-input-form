@@ -282,6 +282,13 @@ export function ItemManagement() {
               <span className="hidden sm:inline">いつもの指示</span>
             </Link>
             <Link
+              to={`${pathPrefix}/family/items/bulk-import`}
+              className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium text-sm flex items-center gap-1 hover:bg-gray-50 transition-colors"
+            >
+              <span>📥</span>
+              <span className="hidden sm:inline">一括登録</span>
+            </Link>
+            <Link
               to={`${pathPrefix}/family/items/new?returnUrl=${encodeURIComponent(`${pathPrefix}/family/items${currentFilterUrl}`)}`}
               className="px-4 py-2 bg-primary text-white rounded-lg font-medium text-sm"
             >

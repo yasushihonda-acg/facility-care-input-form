@@ -70,6 +70,7 @@ import { ItemManagement } from './pages/family/ItemManagement';
 import { ItemForm } from './pages/family/ItemForm';
 import { ItemDetail } from './pages/family/ItemDetail';
 import { ItemEditPage } from './pages/family/ItemEditPage';
+import { BulkItemImport } from './pages/family/BulkItemImport';
 import { PresetManagement } from './pages/family/PresetManagement';
 // Phase 26: 入居者設定削除
 // import { ResidentSettings } from './pages/family/ResidentSettings';
@@ -140,6 +141,7 @@ function App() {
       {/* 品物管理 */}
       <Route path="/family/items" element={<ItemManagement />} />
       <Route path="/family/items/new" element={<ItemForm />} />
+      <Route path="/family/items/bulk-import" element={<BulkItemImport />} />
       <Route path="/family/items/:id" element={<ItemDetail />} />
       <Route path="/family/items/:id/edit" element={<ItemEditPage />} />
 
@@ -180,6 +182,7 @@ function App() {
       <Route path="/demo/family" element={<FamilyDashboard />} />
       <Route path="/demo/family/items" element={<ItemManagement />} />
       <Route path="/demo/family/items/new" element={<ItemForm />} />
+      <Route path="/demo/family/items/bulk-import" element={<BulkItemImport />} />
       <Route path="/demo/family/items/:id" element={<ItemDetail />} />
       <Route path="/demo/family/items/:id/edit" element={<ItemEditPage />} />
       <Route path="/demo/family/presets" element={<PresetManagement />} />
