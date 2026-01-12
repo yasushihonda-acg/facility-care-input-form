@@ -165,6 +165,7 @@ firebase deploy --only functions --debug
 | 品物詳細 | `/family/items/:id` | 品物の詳細表示 |
 | 品物編集 | `/family/items/:id/edit` | 品物の編集 |
 | 品物登録 | `/family/items/new` | 新規品物の登録フォーム |
+| 品物一括登録 | `/family/items/bulk-import` | Excelファイルから複数品物を一括登録 |
 | プリセット | `/family/presets` | よく送る品物の組み合わせ保存 |
 | エビデンス確認 | `/family/evidence/:date` | 日別エビデンス確認 |
 
@@ -198,6 +199,7 @@ frontend/src/
 │   │   ├── ItemManagement   # 品物一覧（日付ナビ）
 │   │   ├── ItemDetail       # 品物詳細
 │   │   ├── ItemForm         # 品物登録・編集
+│   │   ├── BulkItemImport   # Excel一括登録
 │   │   └── PresetManagement # プリセット管理
 │   ├── staff/               # スタッフ向けページ（Phase 40）
 │   │   └── StaffNotesPage   # 注意事項・廃棄指示
@@ -214,6 +216,7 @@ frontend/src/
 │   └── Layout               # 共通レイアウト
 ├── hooks/                   # カスタムフック
 │   ├── useCareItems         # 品物CRUD
+│   ├── useBulkImport        # Excel一括登録
 │   ├── useStaffNotes        # 注意事項CRUD（Phase 40）
 │   └── useRoleTheme         # ロール別テーマ（Phase 39）
 ├── utils/
@@ -252,5 +255,6 @@ Phase 1〜62まで完了。詳細は `git log` を参照。
 - **Phase 53.1**: fullSyncモード - 初回同期と増分同期の分離
 - **refactor**: タスク機能を完全削除 - sentDateスキーマ変更による不具合解消、品物一覧・Chat Webhookで代替
 - **Phase 59**: 修正記録フォームのフォールバック修正 - 廃棄済み品物（status: consumed + remainingHandlingLogs: discarded）の修正記録が正しく動作するように。残り数量表示・提供数初期値・バリデーション・API選択ロジックを修正。Firestoreインデックス追加（consumption_logs, item_events）
+- **feat(bulk-import)**: Excel一括登録機能 - Excelファイルから複数品物を一括登録。テンプレートダウンロード（ドロップダウン付き）、バリデーション、重複チェック、自動修正機能
 
 E2Eテスト: 479件定義

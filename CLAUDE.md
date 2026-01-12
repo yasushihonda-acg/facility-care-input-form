@@ -196,6 +196,7 @@ graph TD
 | **家族ホーム** | /family | /demo/family | FamilyDashboard | ✅ | ✅ |
 | **品物管理** | /family/items | /demo/family/items | ItemManagement | ✅ | ✅ |
 | **品物登録** | /family/items/new | /demo/family/items/new | ItemForm | ✅ | ✅ |
+| **品物一括登録** | /family/items/bulk-import | /demo/family/items/bulk-import | BulkItemImport | ✅ | ✅ |
 | **品物詳細** | /family/items/:id | /demo/family/items/:id | ItemDetail | ✅ | ✅ |
 | **品物編集** | /family/items/:id/edit | /demo/family/items/:id/edit | ItemEditPage | ✅ | ✅ |
 | **プリセット** | /family/presets | /demo/family/presets | PresetManagement | ✅ | ✅ |
