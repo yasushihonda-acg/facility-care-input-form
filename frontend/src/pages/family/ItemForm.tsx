@@ -14,6 +14,7 @@ import { PresetFormModal } from '../../components/family/PresetFormModal';
 import { ServingScheduleInput } from '../../components/family/ServingScheduleInput';
 import { useSubmitCareItem } from '../../hooks/useCareItems';
 import { useDemoMode } from '../../hooks/useDemoMode';
+import { useOptimisticSubmit } from '../../hooks/useOptimisticSubmit';
 import { useAISuggest } from '../../hooks/useAISuggest';
 import { usePresets, useCreatePreset, useUpdatePreset } from '../../hooks/usePresets';
 import {
@@ -71,7 +72,13 @@ export function ItemForm() {
   const [skipQuantity, setSkipQuantity] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 楽観的送信: 二重送信防止とトースト通知
+  const { submit, isSubmitting } = useOptimisticSubmit({
+    onClose: () => {}, // フォームページなので閉じない
+    loadingMessage: '登録中...',
+    successMessage: '登録しました',
+  });
 
   // AI提案保存ダイアログ用state
   const [showSaveDialog, setShowSaveDialog] = useState(false);
@@ -355,36 +362,26 @@ export function ItemForm() {
 
   // 送信処理
   // @see docs/DEMO_SHOWCASE_SPEC.md セクション11 - デモモードでの書き込み操作
+  // useOptimisticSubmit: 二重送信防止 & トースト通知
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validate()) return;
 
-    // デモモードの場合: APIを呼ばず、プリセット保存ダイアログを表示
-    if (isDemo) {
-      // デモでも同じUXを提供（プリセット保存は実際には行われない）
-      setRegisteredFormData({ ...formData });
-      setShowManualPresetDialog(true);
-      return;
-    }
-
-    // 本番モードの場合: 通常通りAPI呼び出し
-    setIsSubmitting(true);
-    try {
+    // submit()はデモモードを内部で判定し、API呼び出しをスキップする
+    const result = await submit(async () => {
       await submitItem.mutateAsync({
         residentId: DEMO_RESIDENT_ID,
         userId: DEMO_USER_ID,
         item: formData,
       });
+      return formData; // 成功時にformDataを返す
+    });
 
-      // 成功時はプリセット保存ダイアログを表示
+    // resultがnullでない場合（成功または二重送信でない場合）、ダイアログを表示
+    if (result !== null) {
       setRegisteredFormData({ ...formData });
       setShowManualPresetDialog(true);
-    } catch (error) {
-      console.error('Submit error:', error);
-      alert('登録に失敗しました: ' + (error instanceof Error ? error.message : 'Unknown error'));
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
