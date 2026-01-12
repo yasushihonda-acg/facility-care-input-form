@@ -78,6 +78,7 @@ export function ItemForm() {
     onClose: () => {}, // フォームページなので閉じない
     loadingMessage: '登録中...',
     successMessage: '登録しました',
+    isDemo, // デモモードではAPIを呼ばない
   });
 
   // AI提案保存ダイアログ用state

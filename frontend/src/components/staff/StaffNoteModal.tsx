@@ -8,6 +8,7 @@ import type { StaffNote, StaffNotePriority, CreateStaffNoteInput } from '../../t
 import { STAFF_NOTE_PRIORITIES } from '../../types/staffNote';
 import { getTodayString, formatDateString } from '../../utils/scheduleUtils';
 import { useOptimisticSubmit } from '../../hooks/useOptimisticSubmit';
+import { useDemoMode } from '../../hooks/useDemoMode';
 
 interface StaffNoteModalProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ export function StaffNoteModal({
   staffName,
 }: StaffNoteModalProps) {
   const isEditing = !!editingNote;
+  const isDemo = useDemoMode();
 
   const [content, setContent] = useState('');
   const [priority, setPriority] = useState<StaffNotePriority>('normal');
@@ -37,6 +39,7 @@ export function StaffNoteModal({
     onClose,
     loadingMessage: isEditing ? '更新中...' : '保存中...',
     successMessage: isEditing ? '更新しました' : '追加しました',
+    isDemo, // デモモードではAPIを呼ばない（親のonSubmitで制御）
   });
 
   // criticalは期間不要、warning/normalは期間必須

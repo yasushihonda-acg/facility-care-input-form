@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { useCreatePreset } from '../../hooks/usePresets';
 import { useOptimisticSubmit } from '../../hooks/useOptimisticSubmit';
+import { useDemoMode } from '../../hooks/useDemoMode';
 import type { CareItemInput, ItemCategory } from '../../types/careItem';
 
 // カテゴリラベル（Phase 31: 2カテゴリに簡素化）
@@ -46,6 +47,8 @@ export function SaveManualPresetDialog({
   userId,
   formData,
 }: SaveManualPresetDialogProps) {
+  const isDemo = useDemoMode();
+
   // プリセット名のデフォルト値（品物名をそのまま使用）
   const defaultPresetName = formData.itemName;
 
@@ -67,6 +70,7 @@ export function SaveManualPresetDialog({
     onClose: onSaved, // 即座にリストへ遷移
     loadingMessage: 'プリセットを保存中...',
     successMessage: 'プリセットを保存しました',
+    isDemo, // デモモードではAPIを呼ばない
   });
 
   if (!isOpen) return null;
