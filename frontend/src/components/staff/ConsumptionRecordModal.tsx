@@ -9,6 +9,7 @@ import { isQuantitySkipped, CONSUMPTION_STATUSES } from '../../types/careItem';
 import type { MealTime, RecordConsumptionLogRequest, ConsumptionStatus } from '../../types/consumptionLog';
 import { MEAL_TIMES, determineConsumptionStatus, calculateConsumptionRate } from '../../types/consumptionLog';
 import { useRecordConsumptionLog } from '../../hooks/useConsumptionLogs';
+import { useOptimisticSubmit } from '../../hooks/useOptimisticSubmit';
 import { getTodayString } from '../../utils/scheduleUtils';
 
 interface ConsumptionRecordModalProps {
@@ -47,6 +48,14 @@ export function ConsumptionRecordModal({
 
   const [error, setError] = useState<string | null>(null);
   const recordMutation = useRecordConsumptionLog();
+
+  // 楽観的送信フック: 二重送信防止とUX改善
+  const { submit, isSubmitting } = useOptimisticSubmit({
+    onClose,
+    onSuccess,
+    loadingMessage: '記録中...',
+    successMessage: '記録しました',
+  });
 
   // 提供数量の上限
   const maxServeQuantity = currentQuantity;
@@ -98,10 +107,12 @@ export function ConsumptionRecordModal({
   }, [formData.servedQuantity]);
 
   // 送信ハンドラ
+  // useOptimisticSubmitにより、バリデーション後は即座にダイアログが閉じ、
+  // API処理はバックグラウンドで実行される（二重送信防止 + UX改善）
   const handleSubmit = useCallback(async () => {
     setError(null);
 
-    // バリデーション
+    // バリデーション失敗時はダイアログを閉じない
     if (!formData.servedBy.trim()) {
       setError('提供者名を入力してください');
       return;
@@ -131,14 +142,11 @@ export function ConsumptionRecordModal({
       recordedBy: formData.servedBy,
     };
 
-    try {
+    // submit()を呼び出すと即座にダイアログが閉じ、トースト通知が表示される
+    await submit(async () => {
       await recordMutation.mutateAsync(request);
-      onSuccess?.();
-      onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '記録に失敗しました');
-    }
-  }, [formData, item, currentQuantity, recordMutation, onSuccess, onClose]);
+    });
+  }, [formData, item, currentQuantity, recordMutation, submit]);
 
   // 記録後の残量を計算
   const quantityAfter = currentQuantity - formData.consumedQuantity;
@@ -342,17 +350,17 @@ export function ConsumptionRecordModal({
         <div className="flex justify-end gap-2 p-4 border-t">
           <button
             onClick={onClose}
-            disabled={recordMutation.isPending}
+            disabled={isSubmitting || recordMutation.isPending}
             className="px-4 py-2 text-gray-700 border rounded-lg hover:bg-gray-50 disabled:opacity-50"
           >
             キャンセル
           </button>
           <button
             onClick={handleSubmit}
-            disabled={recordMutation.isPending}
+            disabled={isSubmitting || recordMutation.isPending}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
           >
-            {recordMutation.isPending ? '記録中...' : '記録する'}
+            {isSubmitting || recordMutation.isPending ? '記録中...' : '記録する'}
           </button>
         </div>
       </div>

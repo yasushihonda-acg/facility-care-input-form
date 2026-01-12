@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import type { StaffNote, StaffNotePriority, CreateStaffNoteInput } from '../../types/staffNote';
 import { STAFF_NOTE_PRIORITIES } from '../../types/staffNote';
 import { getTodayString, formatDateString } from '../../utils/scheduleUtils';
+import { useOptimisticSubmit } from '../../hooks/useOptimisticSubmit';
 
 interface StaffNoteModalProps {
   isOpen: boolean;
@@ -29,8 +30,14 @@ export function StaffNoteModal({
   const [priority, setPriority] = useState<StaffNotePriority>('normal');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 楽観的送信フック: 二重送信防止とUX改善
+  const { submit, isSubmitting } = useOptimisticSubmit({
+    onClose,
+    loadingMessage: isEditing ? '更新中...' : '保存中...',
+    successMessage: isEditing ? '更新しました' : '追加しました',
+  });
 
   // criticalは期間不要、warning/normalは期間必須
   const needsPeriod = priority !== 'critical';
@@ -72,10 +79,13 @@ export function StaffNoteModal({
     }
   }, [priority, startDate, endDate]);
 
+  // 送信ハンドラ
+  // useOptimisticSubmitにより、バリデーション後は即座にダイアログが閉じ、
+  // API処理はバックグラウンドで実行される（二重送信防止 + UX改善）
   const handleSubmit = async () => {
     setError(null);
 
-    // バリデーション
+    // バリデーション失敗時はダイアログを閉じない
     if (!content.trim()) {
       setError('内容を入力してください');
       return;
@@ -91,23 +101,17 @@ export function StaffNoteModal({
       return;
     }
 
-    setIsSubmitting(true);
+    const input: CreateStaffNoteInput = {
+      content: content.trim(),
+      priority,
+      createdBy: staffName,
+      ...(needsPeriod && { startDate, endDate }),
+    };
 
-    try {
-      const input: CreateStaffNoteInput = {
-        content: content.trim(),
-        priority,
-        createdBy: staffName,
-        ...(needsPeriod && { startDate, endDate }),
-      };
-
+    // submit()を呼び出すと即座にダイアログが閉じ、トースト通知が表示される
+    await submit(async () => {
       await onSubmit(input);
-      onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '保存に失敗しました');
-    } finally {
-      setIsSubmitting(false);
-    }
+    });
   };
 
   if (!isOpen) return null;

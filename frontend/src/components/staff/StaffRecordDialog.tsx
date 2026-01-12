@@ -19,6 +19,7 @@ import { DAY_SERVICE_OPTIONS } from '../../types/mealForm';
 import type { SnackRecord } from '../../types/mealForm';
 import { calculateConsumptionAmounts } from '../../utils/consumptionCalc';
 import { getTodayString } from '../../utils/scheduleUtils';
+import { useOptimisticSubmit } from '../../hooks/useOptimisticSubmit';
 
 // Phase 29: タブ種別
 type RecordTab = 'meal' | 'hydration';
@@ -303,30 +304,28 @@ export function StaffRecordDialog({
     return Object.keys(newErrors).length === 0;
   }, [formData, currentQuantity, item.unit, isDiscardedItem, isEdit, existingLog]);
 
-  // ローディング状態（デモ・編集共通）
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // 楽観的送信フック: 二重送信防止とUX改善
+  const { submit, isSubmitting } = useOptimisticSubmit({
+    onClose,
+    onSuccess,
+    loadingMessage: isEdit ? '更新中...' : '記録中...',
+    successMessage: isEdit ? '更新しました' : '記録しました',
+    isDemo,
+    demoDelay: 800,
+  });
 
   // 送信ハンドラ
+  // useOptimisticSubmitにより、バリデーション後は即座にダイアログが閉じ、
+  // API処理はバックグラウンドで実行される（二重送信防止 + UX改善）
   const handleSubmit = useCallback(async () => {
+    // バリデーション失敗時はダイアログを閉じない
     if (!validate()) return;
 
-    // デモモードの場合はAPIを呼び出さずにフィードバックを表示
-    if (isDemo) {
-      setIsSubmitting(true);
-      // 少し遅延を入れてUXを向上
-      await new Promise(resolve => setTimeout(resolve, 800));
-      setIsSubmitting(false);
-      alert('✅ デモモードのため実際には保存されていませんが、\n入力内容は正常です！\n\n本番環境では記録がスプレッドシートに保存されます。');
-      onSuccess?.();
-      onClose();
-      return;
-    }
-
-    try {
+    // submit()を呼び出すと即座にダイアログが閉じ、トースト通知が表示される
+    // デモモードの場合はAPIを呼ばずにシミュレーション
+    await submit(async () => {
       // 編集モード: 水分記録の更新
       if (isEdit && existingLog && sheetTimestamp) {
-        setIsSubmitting(true);
-        // 編集前の水分量を取得（特記事項に「※{前の値}ccから編集」を追加するため）
         const previousHydrationAmount = (existingLog as { hydrationAmount?: number }).hydrationAmount;
         await updateHydrationRecord({
           itemId: item.id,
@@ -338,9 +337,6 @@ export function StaffRecordDialog({
           updatedBy: formData.staffName,
           previousHydrationAmount,
         });
-        // 即座にダイアログを閉じて、バックグラウンドでデータ更新
-        onClose();
-        onSuccess?.();
         return;
       }
 
@@ -354,24 +350,19 @@ export function StaffRecordDialog({
           staffName: formData.staffName,
           date: getTodayString(),
         });
-        // ApiResponse<UploadCareImageResponse> からphotoUrlを取得
         photoUrl = uploadResult.data?.photoUrl;
       }
 
-      // 1. consumption_log に記録（在庫更新）
-      // Phase 29: 水分タブの場合は消費率を100%として記録
+      // consumption_log に記録（在庫更新）
       const consumptionRate = formData.activeTab === 'meal'
         ? formData.consumptionRateInput * 10
-        : 100; // 水分は全量消費として扱う
+        : 100;
       const consumedQuantity = (consumptionRate / 100) * formData.servedQuantity;
       const consumptionStatus = determineConsumptionStatus(consumptionRate);
 
-      // 破棄済みの品物に対する修正記録の場合は correctDiscardedRecord API を使用
-      // Phase 59 Fix: status が 'consumed' でも remainingHandlingLogs に discarded があれば修正記録
       const isCorrection = isDiscardedItem;
 
       // 水分タブの場合: シート記録を先に行いsheetTimestampを取得
-      // (編集時にSheet Aの該当行を特定するため)
       let sheetTimestampForLog: string | undefined;
       if (formData.activeTab === 'hydration') {
         const hydrationResult = await submitHydrationRecord({
@@ -384,12 +375,10 @@ export function StaffRecordDialog({
           facility: settings.defaultFacility || '',
           dayServiceUsage: formData.dayServiceUsage,
           ...(formData.dayServiceName && { dayServiceName: formData.dayServiceName }),
-          // 品物連携情報
           itemId: item.id,
           itemName: item.itemName,
           servedQuantity: formData.servedQuantity,
           unit: item.unit,
-          // Phase 61: 残った分への対応
           ...(formData.remainingHandling && {
             remainingHandling: formData.remainingHandling,
             remainingHandlingOther: formData.remainingHandlingOther || undefined,
@@ -399,7 +388,6 @@ export function StaffRecordDialog({
       }
 
       if (isCorrection) {
-        // 修正記録API: 破棄ログを無効化し、新しい記録で置き換える
         await correctDiscardedMutation.mutateAsync({
           itemId: item.id,
           servedDate: getTodayString(),
@@ -412,19 +400,17 @@ export function StaffRecordDialog({
           consumptionNote: formData.consumptionNote || undefined,
           noteToFamily: formData.noteToFamily || undefined,
           recordedBy: formData.staffName,
-          // Phase 15.7 + Phase 61: 残り対応をAPIに送信（食事・水分タブ共通）
           ...(formData.remainingHandling && {
             remainingHandling: formData.remainingHandling,
             remainingHandlingOther: formData.remainingHandlingOther || undefined,
           }),
         });
       } else {
-        // 通常記録API
         await recordMutation.mutateAsync({
           itemId: item.id,
           servedDate: getTodayString(),
           servedTime: new Date().toTimeString().slice(0, 5),
-          mealTime: 'snack', // 品物ベースの記録はすべて間食として消費ログに記録
+          mealTime: 'snack',
           servedQuantity: formData.servedQuantity,
           servedBy: formData.staffName,
           consumedQuantity: consumedQuantity,
@@ -432,26 +418,21 @@ export function StaffRecordDialog({
           consumptionNote: formData.consumptionNote || undefined,
           noteToFamily: formData.noteToFamily || undefined,
           recordedBy: formData.staffName,
-          // Phase 15.7 + Phase 61: 残り対応をAPIに送信（食事・水分タブ共通）
           ...(formData.remainingHandling && {
             remainingHandling: formData.remainingHandling,
             remainingHandlingOther: formData.remainingHandlingOther || undefined,
           }),
-          // Phase 29: 水分量（飲み物カテゴリの場合）
           ...(formData.hydrationAmount && {
             hydrationAmount: formData.hydrationAmount,
           }),
-          // Sheet A検索用タイムスタンプ（水分記録編集時に使用）
           ...(sheetTimestampForLog && {
             sheetTimestamp: sheetTimestampForLog,
           }),
         });
       }
 
-      // Phase 29: タブ別にシート記録APIを呼び出し（食事タブのみ）
-      // 水分タブは上で先に呼び出し済み
+      // 食事タブの場合: Sheet B に記録
       if (formData.activeTab === 'meal') {
-        // 食事タブ: Sheet B に記録
         const snackRecord: SnackRecord = {
           itemId: item.id,
           itemName: item.itemName,
@@ -463,7 +444,6 @@ export function StaffRecordDialog({
           instructionNote: item.noteToStaff || undefined,
           note: formData.consumptionNote || undefined,
           noteToFamily: formData.noteToFamily || undefined,
-          // Phase 15.6: 残り対応
           ...(formData.remainingHandling && { remainingHandling: formData.remainingHandling as RemainingHandling }),
           ...(formData.remainingHandlingOther && { remainingHandlingOther: formData.remainingHandlingOther }),
         };
@@ -480,21 +460,11 @@ export function StaffRecordDialog({
           ...(formData.note && { note: formData.note }),
           snackRecords: [snackRecord],
           residentId: item.residentId,
-          // Phase 15.9: 写真URLを渡す（Google Chat Webhook連携用）
           ...(photoUrl && { photoUrl }),
         });
       }
-
-      // 注: 破棄済みの品物に対する修正記録の場合、
-      // correctDiscardedRecord API がステータス復旧を処理するため手動更新は不要
-
-      onSuccess?.();
-      onClose();
-    } catch (err) {
-      setIsSubmitting(false);
-      setErrors({ submit: err instanceof Error ? err.message : '記録に失敗しました' });
-    }
-  }, [formData, item, settings, recordMutation, correctDiscardedMutation, validate, onSuccess, onClose, isDemo, isDiscardedItem, isEdit, existingLog, sheetTimestamp]);
+    });
+  }, [formData, item, settings, recordMutation, correctDiscardedMutation, validate, submit, isDiscardedItem, isEdit, existingLog, sheetTimestamp]);
 
   // Phase 15.7: 残り対応に基づいて消費量・残量を計算
   // Phase 29修正: タブ別に計算ロジックを分岐（水分タブも残り対応を考慮）
