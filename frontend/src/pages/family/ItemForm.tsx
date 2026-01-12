@@ -107,6 +107,7 @@ export function ItemForm() {
 
   // 重複チェック状態
   const [duplicateResult, setDuplicateResult] = useState<DuplicateCheckResult>({ isDuplicate: false });
+  const duplicateWarningRef = useRef<HTMLDivElement>(null);
 
   // プリセット一覧を取得（本番モードのみAPIを使用）
   const { data: presetsData } = usePresets({
@@ -397,6 +398,10 @@ export function ItemForm() {
     // 重複がある場合は登録不可
     if (result.isDuplicate) {
       newErrors.duplicate = '同じ品物が既に登録されています';
+      // 重複警告へスクロール
+      setTimeout(() => {
+        duplicateWarningRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
     }
 
     setErrors(newErrors);
@@ -464,7 +469,7 @@ export function ItemForm() {
         <form onSubmit={handleSubmit} className="p-4 space-y-6 pb-8">
           {/* 重複警告 */}
           {duplicateResult.isDuplicate && duplicateResult.duplicateItem && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div ref={duplicateWarningRef} className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <span className="text-yellow-600 text-xl">⚠️</span>
                 <div className="flex-1">
