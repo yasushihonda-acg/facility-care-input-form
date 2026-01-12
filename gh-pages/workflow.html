@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>連携フロー - 施設ケア入力フォーム</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        .mermaid {
+            background: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+        .mermaid svg {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-teal-600 to-cyan-700 text-white py-8">
+        <div class="container mx-auto px-4">
+            <nav class="mb-4">
+                <a href="index.html" class="text-teal-200 hover:text-white transition">
+                    ← トップに戻る
+                </a>
+            </nav>
+            <h1 class="text-3xl font-bold">家族・スタッフ連携フロー</h1>
+            <p class="text-teal-200 mt-2">施設ケア入力フォーム - 役割分担と連絡フロー</p>
+            <p class="text-teal-300 text-sm mt-1">最終更新: 2026年1月13日</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-12">
+
+        <!-- Overview Section -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-teal-500 pb-2">全体像：家族とスタッフの役割分担</h2>
+
+            <div class="grid md:grid-cols-2 gap-6 mb-8">
+                <!-- 家族の役割 -->
+                <div class="bg-pink-50 rounded-xl p-6 border-2 border-pink-200">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="text-4xl">👨‍👩‍👧</span>
+                        <div>
+                            <h3 class="text-xl font-bold text-pink-800">家族</h3>
+                            <p class="text-sm text-pink-600">品物の準備・状況確認</p>
+                        </div>
+                    </div>
+                    <ul class="space-y-3 text-pink-700">
+                        <li class="flex items-start gap-2">
+                            <span class="text-pink-500 font-bold">1.</span>
+                            <span><strong>品物を登録</strong>：お菓子・飲み物などをアプリに登録</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-pink-500 font-bold">2.</span>
+                            <span><strong>提供方法を指示</strong>：「小分けにして」「午後に」など</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-pink-500 font-bold">3.</span>
+                            <span><strong>消費状況を確認</strong>：タイムラインで摂食記録を閲覧</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-pink-500 font-bold">4.</span>
+                            <span><strong>廃棄を依頼</strong>：期限切れ品物の廃棄をスタッフに依頼</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- スタッフの役割 -->
+                <div class="bg-green-50 rounded-xl p-6 border-2 border-green-200">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="text-4xl">👨‍⚕️</span>
+                        <div>
+                            <h3 class="text-xl font-bold text-green-800">スタッフ</h3>
+                            <p class="text-sm text-green-600">品物の提供・記録入力</p>
+                        </div>
+                    </div>
+                    <ul class="space-y-3 text-green-700">
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 font-bold">1.</span>
+                            <span><strong>注意事項を確認</strong>：提供方法・アレルギーなどを確認</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 font-bold">2.</span>
+                            <span><strong>品物を提供</strong>：指示に従って入居者様に提供</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 font-bold">3.</span>
+                            <span><strong>摂食記録を入力</strong>：食べた量・状況を記録</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 font-bold">4.</span>
+                            <span><strong>廃棄を実行</strong>：家族からの依頼に基づき廃棄処理</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 全体フロー図 -->
+            <div class="bg-white rounded-lg shadow-md p-6 overflow-x-auto">
+                <h3 class="font-semibold text-gray-800 mb-4">基本的な連携フロー</h3>
+                <div class="mermaid">
+flowchart LR
+    subgraph Family["👨‍👩‍👧 家族"]
+        F1["品物を登録"]
+        F2["提供指示を設定"]
+        F3["消費状況を確認"]
+    end
+
+    subgraph App["📱 アプリ"]
+        A1["品物一覧"]
+        A2["注意事項"]
+        A3["タイムライン"]
+    end
+
+    subgraph Staff["👨‍⚕️ スタッフ"]
+        S1["注意事項を確認"]
+        S2["品物を提供"]
+        S3["摂食記録を入力"]
+    end
+
+    F1 --> A1
+    F2 --> A2
+    A2 --> S1
+    S1 --> S2
+    S2 --> S3
+    S3 --> A3
+    A3 --> F3
+
+    style Family fill:#fce7f3,stroke:#ec4899
+    style Staff fill:#dcfce7,stroke:#22c55e
+    style App fill:#e0f2fe,stroke:#0ea5e9
+                </div>
+            </div>
+        </section>
+
+        <!-- Item Registration Flow -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-pink-500 pb-2">Flow 1: 品物登録フロー</h2>
+            <p class="text-gray-600 mb-4">家族が品物を登録し、スタッフに提供指示が伝わるまでのフロー</p>
+
+            <div class="bg-white rounded-lg shadow-md p-6 overflow-x-auto mb-6">
+                <div class="mermaid">
+sequenceDiagram
+    participant F as 👨‍👩‍👧 家族
+    participant App as 📱 アプリ
+    participant DB as 🔥 Firestore
+    participant S as 👨‍⚕️ スタッフ
+
+    F->>App: 品物登録画面を開く
+    F->>App: 品物情報を入力
+    Note over F,App: 品名・数量・賞味期限<br/>提供方法・スケジュール
+
+    App->>DB: care_items に保存
+    DB-->>App: 登録完了
+
+    Note over App: 提供指示があれば<br/>注意事項として自動登録
+
+    S->>App: 注意事項ページを開く
+    App->>DB: staff_notes 取得
+    DB-->>App: 注意事項一覧
+    App-->>S: 品物の提供指示を表示
+
+    Note over S: 「○○さん宛のプリン<br/>小分けにして提供」など
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-4">
+                <div class="bg-pink-50 rounded-lg p-4">
+                    <h4 class="font-semibold text-pink-800 mb-2">家族が入力する情報</h4>
+                    <ul class="text-sm text-pink-700 space-y-1">
+                        <li>・品名（AI正規化対応）</li>
+                        <li>・数量・単位</li>
+                        <li>・賞味期限（任意）</li>
+                        <li>・カテゴリ（食品/日用品）</li>
+                        <li>・提供方法（切る/そのまま等）</li>
+                        <li>・提供スケジュール</li>
+                    </ul>
+                </div>
+                <div class="bg-blue-50 rounded-lg p-4">
+                    <h4 class="font-semibold text-blue-800 mb-2">自動生成される注意事項</h4>
+                    <ul class="text-sm text-blue-700 space-y-1">
+                        <li>・品物名と提供指示</li>
+                        <li>・期限（スケジュール終了日）</li>
+                        <li>・優先度（通常）</li>
+                        <li>・カテゴリ（家族からの品物）</li>
+                    </ul>
+                </div>
+                <div class="bg-green-50 rounded-lg p-4">
+                    <h4 class="font-semibold text-green-800 mb-2">スタッフに表示される内容</h4>
+                    <ul class="text-sm text-green-700 space-y-1">
+                        <li>・注意事項ページの「品物指示」タブ</li>
+                        <li>・提供方法・スケジュール</li>
+                        <li>・期限切れ品物は赤枠表示</li>
+                        <li>・家族依頼タブで廃棄指示</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Consumption Record Flow -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-green-500 pb-2">Flow 2: 摂食記録フロー</h2>
+            <p class="text-gray-600 mb-4">スタッフが品物を提供し、摂食記録を入力するフロー</p>
+
+            <div class="bg-white rounded-lg shadow-md p-6 overflow-x-auto mb-6">
+                <div class="mermaid">
+sequenceDiagram
+    participant S as 👨‍⚕️ スタッフ
+    participant App as 📱 アプリ
+    participant DB as 🔥 Firestore
+    participant Chat as 💬 Google Chat
+    participant F as 👨‍👩‍👧 家族
+
+    S->>App: 記録入力ページを開く
+    App->>DB: 提供可能な品物を取得
+    DB-->>App: 品物一覧
+
+    S->>App: 品物を選択
+    S->>App: 摂食量を入力
+    Note over S,App: 完食/半分/少量/残し
+
+    opt 写真あり
+        S->>App: 写真を撮影
+        App->>DB: Firebase Storageに保存
+    end
+
+    S->>App: 記録を送信
+    App->>DB: consumption_logs に保存
+    App->>DB: care_items の残量を更新
+    App->>Chat: Webhook通知
+
+    Chat-->>F: 通知「○○を提供しました」
+
+    F->>App: タイムラインを確認
+    App->>DB: 摂食記録を取得
+    App-->>F: 写真付きで記録表示
+                </div>
+            </div>
+
+            <div class="bg-green-50 rounded-lg p-4">
+                <h4 class="font-semibold text-green-800 mb-2">摂食記録の詳細</h4>
+                <div class="grid md:grid-cols-2 gap-4 text-sm text-green-700">
+                    <div>
+                        <p class="font-medium mb-1">入力項目</p>
+                        <ul class="space-y-1">
+                            <li>・対象品物（ドロップダウン選択）</li>
+                            <li>・提供数量</li>
+                            <li>・摂食量（完食〜残し）</li>
+                            <li>・写真（任意）</li>
+                            <li>・メモ（任意）</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <p class="font-medium mb-1">自動処理</p>
+                        <ul class="space-y-1">
+                            <li>・品物の残量を自動計算</li>
+                            <li>・タイムラインに記録追加</li>
+                            <li>・Google Chatに通知</li>
+                            <li>・統計データに反映</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Discard Flow -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-red-500 pb-2">Flow 3: 廃棄指示フロー</h2>
+            <p class="text-gray-600 mb-4">家族が期限切れ品物の廃棄をスタッフに依頼するフロー</p>
+
+            <div class="bg-white rounded-lg shadow-md p-6 overflow-x-auto mb-6">
+                <div class="mermaid">
+sequenceDiagram
+    participant F as 👨‍👩‍👧 家族
+    participant App as 📱 アプリ
+    participant DB as 🔥 Firestore
+    participant S as 👨‍⚕️ スタッフ
+
+    Note over F: 品物一覧で<br/>期限切れ品物を発見
+
+    F->>App: 「廃棄」ボタンをタップ
+    App->>DB: status: pending_discard
+    App-->>F: 「スタッフに通知中...」表示
+
+    Note over App: 注意事項ページに<br/>バッジ表示
+
+    S->>App: 注意事項ページを開く
+    Note over S: 「家族依頼」タブに<br/>赤いバッジ表示
+
+    S->>App: 家族依頼タブを確認
+    App->>DB: pending_discard品物取得
+    App-->>S: 廃棄指示リスト表示
+
+    S->>S: 実際に品物を廃棄
+    S->>App: 「廃棄完了」ボタン
+    App->>DB: status: discarded
+
+    Note over F,S: 品物が一覧から消える
+                </div>
+            </div>
+
+            <div class="bg-red-50 rounded-lg p-4">
+                <h4 class="font-semibold text-red-800 mb-2">ステータス遷移</h4>
+                <table class="text-sm w-full">
+                    <thead class="bg-red-100">
+                        <tr>
+                            <th class="px-3 py-2 text-left">ステータス</th>
+                            <th class="px-3 py-2 text-left">家族側の表示</th>
+                            <th class="px-3 py-2 text-left">スタッフ側の表示</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-red-700">
+                        <tr class="border-b border-red-200">
+                            <td class="px-3 py-2 font-mono text-xs">pending / in_progress</td>
+                            <td class="px-3 py-2">廃棄ボタン表示</td>
+                            <td class="px-3 py-2">品物指示タブに表示</td>
+                        </tr>
+                        <tr class="border-b border-red-200">
+                            <td class="px-3 py-2 font-mono text-xs">pending_discard</td>
+                            <td class="px-3 py-2">「スタッフに通知中...」</td>
+                            <td class="px-3 py-2">家族依頼タブに赤枠表示</td>
+                        </tr>
+                        <tr>
+                            <td class="px-3 py-2 font-mono text-xs">discarded</td>
+                            <td class="px-3 py-2">一覧から消える</td>
+                            <td class="px-3 py-2">一覧から消える</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Unregistered Item Flow -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-yellow-500 pb-2">Flow 4: 未登録品物の対応フロー（現状）</h2>
+            <p class="text-gray-600 mb-4">スタッフが未登録の品物を発見した場合の連絡フロー</p>
+
+            <div class="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-6 mb-6">
+                <div class="flex items-start gap-3 mb-4">
+                    <span class="text-3xl">⚠️</span>
+                    <div>
+                        <h3 class="font-bold text-yellow-800 text-lg">現状の課題</h3>
+                        <p class="text-yellow-700">スタッフが記録を入力しようとしても、品物がアプリに登録されていない場合があります。</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg p-4">
+                    <h4 class="font-semibold text-gray-800 mb-3">発生するケース</h4>
+                    <ul class="text-gray-700 space-y-2">
+                        <li class="flex items-start gap-2">
+                            <span class="text-yellow-500">●</span>
+                            <span>家族が品物を持参したが、アプリへの登録を忘れた</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-yellow-500">●</span>
+                            <span>家族がアプリの使い方を知らない</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-yellow-500">●</span>
+                            <span>面会時に直接渡したため登録の機会がなかった</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 overflow-x-auto mb-6">
+                <h3 class="font-semibold text-gray-800 mb-4">現状の連絡フロー</h3>
+                <div class="mermaid">
+sequenceDiagram
+    participant S as 👨‍⚕️ スタッフ<br/>（現場）
+    participant Dev as 🧑‍💻 開発者<br/>（本田）
+    participant F as 👨‍👩‍👧 家族
+
+    Note over S: 未登録の品物を発見<br/>「このお菓子、登録されてない...」
+
+    S->>Dev: 連絡<br/>「○○さん宛の△△が<br/>登録されていません」
+    Note over S,Dev: 電話 / LINE / 口頭
+
+    Dev->>F: 連絡<br/>「品物の登録をお願いします」
+    Note over Dev,F: 電話 / メール
+
+    F->>F: アプリで品物登録
+
+    Note over S,F: 登録完了後、<br/>スタッフが記録入力可能に
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-red-50 rounded-lg p-4 border-l-4 border-red-500">
+                    <h4 class="font-semibold text-red-800 mb-2">現状の問題点</h4>
+                    <ul class="text-sm text-red-700 space-y-2">
+                        <li class="flex items-start gap-2">
+                            <span>❌</span>
+                            <span>開発者（本田）が中継点になっている</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span>❌</span>
+                            <span>連絡に時間がかかる</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span>❌</span>
+                            <span>スタッフがすぐに記録を入力できない</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span>❌</span>
+                            <span>本田不在時に対応できない</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="bg-green-50 rounded-lg p-4 border-l-4 border-green-500">
+                    <h4 class="font-semibold text-green-800 mb-2">改善案（将来）</h4>
+                    <ul class="text-sm text-green-700 space-y-2">
+                        <li class="flex items-start gap-2">
+                            <span>✅</span>
+                            <span>スタッフが直接家族に通知できる機能</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span>✅</span>
+                            <span>未登録品物の仮登録機能（スタッフ用）</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span>✅</span>
+                            <span>Google Chatへの自動通知</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span>✅</span>
+                            <span>品物登録リマインダー（面会予定後）</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Communication Channels -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-blue-500 pb-2">連絡チャネル一覧</h2>
+
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-4 py-3 text-left">連絡内容</th>
+                            <th class="px-4 py-3 text-left">発信元</th>
+                            <th class="px-4 py-3 text-left">受信先</th>
+                            <th class="px-4 py-3 text-left">チャネル</th>
+                            <th class="px-4 py-3 text-left">自動/手動</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                        <tr>
+                            <td class="px-4 py-3">品物提供の通知</td>
+                            <td class="px-4 py-3">📱 アプリ</td>
+                            <td class="px-4 py-3">👨‍👩‍👧 家族</td>
+                            <td class="px-4 py-3">💬 Google Chat</td>
+                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs">自動</span></td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-3">品物の提供指示</td>
+                            <td class="px-4 py-3">👨‍👩‍👧 家族</td>
+                            <td class="px-4 py-3">👨‍⚕️ スタッフ</td>
+                            <td class="px-4 py-3">📱 アプリ（注意事項）</td>
+                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs">自動</span></td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-3">廃棄指示</td>
+                            <td class="px-4 py-3">👨‍👩‍👧 家族</td>
+                            <td class="px-4 py-3">👨‍⚕️ スタッフ</td>
+                            <td class="px-4 py-3">📱 アプリ（家族依頼タブ）</td>
+                            <td class="px-4 py-3"><span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs">自動</span></td>
+                        </tr>
+                        <tr class="bg-yellow-50">
+                            <td class="px-4 py-3">未登録品物の連絡</td>
+                            <td class="px-4 py-3">👨‍⚕️ スタッフ</td>
+                            <td class="px-4 py-3">🧑‍💻 開発者</td>
+                            <td class="px-4 py-3">📞 電話 / LINE</td>
+                            <td class="px-4 py-3"><span class="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded text-xs">手動</span></td>
+                        </tr>
+                        <tr class="bg-yellow-50">
+                            <td class="px-4 py-3">品物登録の依頼</td>
+                            <td class="px-4 py-3">🧑‍💻 開発者</td>
+                            <td class="px-4 py-3">👨‍👩‍👧 家族</td>
+                            <td class="px-4 py-3">📞 電話 / メール</td>
+                            <td class="px-4 py-3"><span class="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded text-xs">手動</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-4 bg-blue-50 rounded-lg p-4">
+                <p class="text-sm text-blue-700">
+                    <strong>💡 ポイント：</strong>
+                    黄色の行は現状手動で行っている連絡です。将来的にアプリ内で完結できるよう改善予定です。
+                </p>
+            </div>
+        </section>
+
+        <!-- Quick Reference -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-purple-500 pb-2">クイックリファレンス</h2>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-pink-50 rounded-xl p-6">
+                    <h3 class="font-bold text-pink-800 text-lg mb-4">👨‍👩‍👧 家族向けチェックリスト</h3>
+                    <ul class="space-y-3 text-pink-700">
+                        <li class="flex items-center gap-2">
+                            <input type="checkbox" class="w-4 h-4 text-pink-600">
+                            <span>品物を持参したら、アプリに登録する</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <input type="checkbox" class="w-4 h-4 text-pink-600">
+                            <span>提供方法・スケジュールを設定する</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <input type="checkbox" class="w-4 h-4 text-pink-600">
+                            <span>期限切れ品物は廃棄依頼する</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <input type="checkbox" class="w-4 h-4 text-pink-600">
+                            <span>タイムラインで消費状況を確認する</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="bg-green-50 rounded-xl p-6">
+                    <h3 class="font-bold text-green-800 text-lg mb-4">👨‍⚕️ スタッフ向けチェックリスト</h3>
+                    <ul class="space-y-3 text-green-700">
+                        <li class="flex items-center gap-2">
+                            <input type="checkbox" class="w-4 h-4 text-green-600">
+                            <span>注意事項ページで提供指示を確認する</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <input type="checkbox" class="w-4 h-4 text-green-600">
+                            <span>品物提供後は摂食記録を入力する</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <input type="checkbox" class="w-4 h-4 text-green-600">
+                            <span>家族依頼タブで廃棄指示を確認する</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <input type="checkbox" class="w-4 h-4 text-green-600">
+                            <span>未登録品物は開発者に連絡する</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-400">
+                © 2025-2026 施設ケア入力フォーム プロジェクト
+            </p>
+            <div class="mt-4 space-x-4">
+                <a href="index.html" class="text-gray-400 hover:text-white transition">トップ</a>
+                <a href="architecture.html" class="text-gray-400 hover:text-white transition">アーキテクチャ</a>
+                <a href="https://github.com/yasushihonda-acg/facility-care-input-form" target="_blank"
+                   class="text-gray-400 hover:text-white transition">GitHub</a>
+                <a href="https://facility-care-input-form.web.app/demo" target="_blank"
+                   class="text-gray-400 hover:text-white transition">デモ</a>
+            </div>
+            <p class="text-gray-500 text-sm mt-4">
+                最終更新: 2026年1月13日
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            },
+            sequence: {
+                useMaxWidth: true,
+                actorMargin: 50,
+                messageMargin: 40
+            }
+        });
+    </script>
+</body>
+</html>
