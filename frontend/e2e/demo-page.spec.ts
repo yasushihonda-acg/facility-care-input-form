@@ -202,16 +202,7 @@ test.describe('デモ機能ページ', () => {
     await expect(page.locator('text=品物管理').first()).toBeVisible({ timeout: 15000 });
   });
 
-  test('DEMO-024: デモタスク一覧にアクセスできる', async ({ page }) => {
-    await page.goto('/demo/family/tasks', { waitUntil: 'networkidle' });
-    await waitForSpaLoad(page);
-
-    // ページが正常に読み込まれる
-    await expect(page).toHaveURL(/\/demo\/family\/tasks/);
-
-    // タスクのタイトルが表示される
-    await expect(page.getByRole('heading', { name: /タスク/ }).first()).toBeVisible({ timeout: 15000 });
-  });
+  // DEMO-024: 削除（タスク機能はPhase 56で削除済み）
 
   test('DEMO-025: デモプリセット管理にアクセスできる', async ({ page }) => {
     await page.goto('/demo/family/presets', { waitUntil: 'networkidle' });
@@ -251,13 +242,7 @@ test.describe('デモデータ表示', () => {
     expect(hasTabs).toBeGreaterThanOrEqual(0); // タブがなくても正常（UIによる）
   });
 
-  test('DEMO-032: タスク一覧にフィルタタブが表示される', async ({ page }) => {
-    await page.goto('/demo/family/tasks', { waitUntil: 'networkidle' });
-    await waitForSpaLoad(page);
-
-    // タスク一覧のフィルタタブが表示される
-    await expect(page.locator('text=全て').first()).toBeVisible({ timeout: 15000 });
-  });
+  // DEMO-032: 削除（タスク機能はPhase 56で削除済み）
 });
 
 test.describe('ナビゲーション', () => {
@@ -392,17 +377,7 @@ test.describe('デモモードナビゲーション維持（重要）', () => {
     }
   });
 
-  test('DEMO-NAV-006: デモタスク一覧のフッターからホームに戻る→デモページ内に留まる', async ({ page }) => {
-    await page.goto('/demo/family/tasks', { waitUntil: 'networkidle' });
-    await waitForSpaLoad(page);
-
-    // フッターの「ホーム」をクリック
-    const footer = page.locator('nav[aria-label="家族用ナビゲーション"]');
-    await footer.getByText('ホーム').click();
-
-    // /demo/family に遷移すべき（/family ではない）
-    await expect(page).toHaveURL(/^.*\/demo\/family$/, { timeout: 10000 });
-  });
+  // DEMO-NAV-006: 削除（タスク機能はPhase 56で削除済み）
 
   test('DEMO-NAV-007: デモ統計画面から戻ってもデモ内に留まる', async ({ page }) => {
     await page.goto('/demo/stats', { waitUntil: 'networkidle' });
