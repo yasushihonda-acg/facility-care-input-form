@@ -36,6 +36,7 @@ import type { CarePreset } from '../../types/family';
 import { ServingScheduleInput } from '../../components/family/ServingScheduleInput';
 import { scheduleToPlannedDate, plannedDateToSchedule } from '../../utils/scheduleUtils';
 import { parseNumericInput } from '../../utils/inputHelpers';
+import { checkItemDuplicate, type DuplicateCheckResult } from '../../utils/duplicateCheck';
 import { DEMO_PRESETS } from '../../data/demoFamilyData';
 
 // デモ用の入居者ID（将来は認証から取得）
@@ -151,6 +152,12 @@ export function ItemEditPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 既存品物（重複チェック用）- 自分自身を除外
+  const existingItems = data?.items || [];
+
+  // 重複チェック状態
+  const [duplicateResult, setDuplicateResult] = useState<DuplicateCheckResult>({ isDuplicate: false });
 
   // プリセット編集・新規追加用state
   const [editingPreset, setEditingPreset] = useState<CarePreset | null>(null);
@@ -301,6 +308,22 @@ export function ItemEditPage() {
     }));
   }, []);
 
+  // スケジュールから提供日を取得するヘルパー
+  const getServingDateFromSchedule = (schedule: ServingSchedule | undefined): string | undefined => {
+    if (!schedule) return undefined;
+    switch (schedule.type) {
+      case 'once':
+        return schedule.date;
+      case 'daily':
+      case 'weekly':
+        return schedule.startDate;
+      case 'specific_dates':
+        return schedule.dates?.[0];
+      default:
+        return undefined;
+    }
+  };
+
   // バリデーション
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -341,6 +364,23 @@ export function ItemEditPage() {
           }
           break;
       }
+    }
+
+    // 重複チェック（品物名+提供日+提供タイミング）- 自分自身を除外
+    const servingDate = getServingDateFromSchedule(formData.servingSchedule);
+    const servingTimeSlot = formData.servingSchedule?.timeSlot;
+    const result = checkItemDuplicate(
+      formData.itemName,
+      servingDate,
+      servingTimeSlot,
+      existingItems,
+      id // 編集中の品物IDを除外
+    );
+    setDuplicateResult(result);
+
+    // 重複がある場合は更新不可
+    if (result.isDuplicate) {
+      newErrors.duplicate = '同じ品物が既に登録されています';
     }
 
     setErrors(newErrors);
@@ -431,6 +471,38 @@ export function ItemEditPage() {
   return (
     <Layout title="品物を編集" showBackButton>
       <form onSubmit={handleSubmit} className="p-4 pb-24 space-y-6">
+        {/* 重複警告 */}
+        {duplicateResult.isDuplicate && duplicateResult.duplicateItem && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <span className="text-yellow-600 text-xl">⚠️</span>
+              <div className="flex-1">
+                <h3 className="font-medium text-yellow-800">
+                  同じ品物が既に登録されています
+                </h3>
+                <p className="mt-1 text-sm text-yellow-700">
+                  「{duplicateResult.duplicateItem.itemName}」は同じ提供日・提供タイミングで既に登録されています。
+                </p>
+                <div className="mt-3 text-sm text-yellow-700">
+                  <p className="font-medium mb-1">対応方法:</p>
+                  <ul className="list-disc list-inside space-y-1 ml-2">
+                    <li>
+                      <Link
+                        to={`${pathPrefix}/family/items/${duplicateResult.duplicateItem.id}/edit`}
+                        className="text-yellow-800 underline hover:text-yellow-900"
+                      >
+                        既存品物を編集する →
+                      </Link>
+                    </li>
+                    <li>品物名を変更する</li>
+                    <li>提供日または提供タイミングを変更する</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* いつもの指示（プリセット）- 品物名の上に配置 */}
         <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
           {/* ヘッダー：タイトル + 新規追加ボタン */}
