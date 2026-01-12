@@ -5,6 +5,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { submitCareItem } from '../api';
 import { parseExcelFile } from '../utils/excelParser';
+import { checkBulkItemDuplicate } from '../utils/duplicateCheck';
 import type { CareItem, CareItemInput, RemainingHandlingCondition } from '../types/careItem';
 import type { ParsedBulkItem, BulkImportResult, BulkImportItemResult } from '../types/bulkImport';
 
@@ -61,36 +62,6 @@ async function pLimit<T>(
   return results;
 }
 
-/**
- * 重複チェック: 品物名 + 提供日 + 提供タイミング
- */
-function checkDuplicate(
-  item: ParsedBulkItem,
-  existingItems: CareItem[]
-): { isDuplicate: boolean; duplicateInfo?: { existingItemId: string; existingItemName: string } } {
-  const duplicate = existingItems.find(existing => {
-    const scheduleDate = existing.servingSchedule?.date;
-    const scheduleTimeSlot = existing.servingSchedule?.timeSlot;
-
-    return (
-      existing.itemName === item.parsed.itemName &&
-      scheduleDate === item.parsed.servingDate &&
-      scheduleTimeSlot === item.parsed.servingTimeSlot
-    );
-  });
-
-  if (duplicate) {
-    return {
-      isDuplicate: true,
-      duplicateInfo: {
-        existingItemId: duplicate.id,
-        existingItemName: duplicate.itemName,
-      },
-    };
-  }
-
-  return { isDuplicate: false };
-}
 
 export function useBulkImport({
   residentId,
@@ -135,7 +106,12 @@ export function useBulkImport({
           if (item.errors.length > 0) {
             return item; // エラーがある場合は重複チェックしない
           }
-          const { isDuplicate, duplicateInfo } = checkDuplicate(item, existingItems);
+          const { isDuplicate, duplicateInfo } = checkBulkItemDuplicate(
+            item.parsed.itemName,
+            item.parsed.servingDate,
+            item.parsed.servingTimeSlot,
+            existingItems
+          );
           return { ...item, isDuplicate, duplicateInfo };
         });
 
