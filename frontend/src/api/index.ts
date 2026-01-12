@@ -14,7 +14,9 @@ import type {
   ChatWithRecordsResponse,
 } from '../types/chat';
 
-const API_BASE = 'https://asia-northeast1-facility-care-input-form.cloudfunctions.net';
+// エミュレーター接続時は VITE_API_BASE_URL を設定
+// 例: VITE_API_BASE_URL=http://127.0.0.1:5001/facility-care-input-form/asia-northeast1
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://asia-northeast1-facility-care-input-form.cloudfunctions.net';
 
 export async function syncPlanData(options?: { incremental?: boolean }): Promise<ApiResponse<SyncPlanDataResponse>> {
   const response = await fetch(`${API_BASE}/syncPlanData`, {
