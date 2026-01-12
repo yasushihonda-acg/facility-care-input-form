@@ -21,7 +21,7 @@ export function MealInputPage() {
   const backPath = isDemo ? '/demo/view' : '/view';
 
   const { settings, isLoading: isSettingsLoading, saveSettings } = useMealFormSettings();
-  const [showSuccess, setShowSuccess] = useState(false);
+  // showSuccess削除: useOptimisticSubmitのトースト通知に統一
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   return (
@@ -87,17 +87,7 @@ export function MealInputPage() {
         />
       )}
 
-      {/* 成功トースト */}
-      {showSuccess && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-xl shadow-lg bg-secondary text-white">
-          <div className="flex items-center gap-3">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            <span className="text-sm font-medium">記録しました</span>
-          </div>
-        </div>
-      )}
+      {/* 成功トースト: useOptimisticSubmitのsonner通知に統一 */}
 
       {/* ローディング */}
       {isSettingsLoading && (
@@ -111,12 +101,9 @@ export function MealInputPage() {
         <div className="pb-16">
           {/* Phase 15.8: 品物から記録（メインエリア） */}
           {/* 入力は各品物のダイアログで完結 */}
+          {/* onRecordComplete削除: useOptimisticSubmitのトースト通知に統一 */}
           <ItemBasedSnackRecord
             residentId="resident-001"
-            onRecordComplete={() => {
-              setShowSuccess(true);
-              setTimeout(() => setShowSuccess(false), 3000);
-            }}
           />
         </div>
       )}
