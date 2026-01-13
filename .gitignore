@@ -26,6 +26,9 @@ firebase-debug.*.log
 .DS_Store
 *.log
 
+# Local config
+.gitconfig.local
+
 # Playwright test results
 test-results/
 playwright-report/
