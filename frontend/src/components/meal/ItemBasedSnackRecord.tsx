@@ -8,6 +8,7 @@
  */
 
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { useDemoMode } from '../../hooks/useDemoMode';
 import { useCareItems, useDiscardItem } from '../../hooks/useCareItems';
 import type { CareItem, ItemStatus } from '../../types/careItem';
@@ -198,6 +199,21 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
   const [discardTarget, setDiscardTarget] = useState<CareItem | null>(null);
   const discardMutation = useDiscardItem();
 
+  // 編集可能なログかどうかを検証するヘルパー（sheetTimestampがないと編集不可）
+  const validateEditableLog = (
+    log: ConsumptionLog | undefined
+  ): log is ConsumptionLog & { sheetTimestamp: string } => {
+    if (!log) {
+      toast.error('編集対象の記録が見つかりません');
+      return false;
+    }
+    if (!log.sheetTimestamp) {
+      toast.error('この記録は編集できません（シート連携情報がありません）');
+      return false;
+    }
+    return true;
+  };
+
   // 品物取得（pending/in_progress/consumed/discarded）
   // Phase 49: discardedも取得して「破棄済み」タブに表示
   // Phase 58: consumedも取得して今日記録済みのものを「入力済み」として表示
@@ -343,21 +359,19 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
       const logsResponse = await getConsumptionLogs({ itemId: item.id, limit: 1 });
       const latestLog = logsResponse.data?.logs[0];
 
-      if (!latestLog) {
-        console.error('編集対象のログが見つかりません');
+      // 編集可能かどうかを検証（sheetTimestampがないと編集不可）
+      if (!validateEditableLog(latestLog)) {
         return;
       }
 
-      // Firestoreに保存されたsheetTimestampを使用（Sheet A検索用の正確なタイムスタンプ）
-      const sheetTimestamp = latestLog.sheetTimestamp || null;
-
       setSelectedItem(item);
       setIsEditMode(true);
-      setEditSheetTimestamp(sheetTimestamp);
+      setEditSheetTimestamp(latestLog.sheetTimestamp);
       setEditingLog(latestLog);
       setIsModalOpen(true);
     } catch (error) {
-      console.error('ログの取得に失敗しました:', error);
+      console.error('記録の取得に失敗しました:', error);
+      toast.error('記録の取得に失敗しました');
     }
   };
 
@@ -389,12 +403,14 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
 
   // 過去記録の編集ハンドラ
   const handlePastRecordEdit = (log: ConsumptionLog, item: CareItem) => {
-    // Firestoreに保存されたsheetTimestampを使用（Sheet A検索用の正確なタイムスタンプ）
-    const sheetTimestamp = log.sheetTimestamp || null;
+    // 編集可能かどうかを検証（sheetTimestampがないと編集不可）
+    if (!validateEditableLog(log)) {
+      return;
+    }
 
     setSelectedItem(item);
     setIsEditMode(true);
-    setEditSheetTimestamp(sheetTimestamp);
+    setEditSheetTimestamp(log.sheetTimestamp);
     setEditingLog(log);
     setIsModalOpen(true);
   };
