@@ -257,4 +257,4 @@ Phase 1〜62まで完了。詳細は `git log` を参照。
 - **Phase 59**: 修正記録フォームのフォールバック修正 - 廃棄済み品物（status: consumed + remainingHandlingLogs: discarded）の修正記録が正しく動作するように。残り数量表示・提供数初期値・バリデーション・API選択ロジックを修正。Firestoreインデックス追加（consumption_logs, item_events）
 - **feat(bulk-import)**: Excel一括登録機能 - Excelファイルから複数品物を一括登録。テンプレートダウンロード（ドロップダウン付き）、バリデーション、重複チェック、自動修正機能
 
-E2Eテスト: 482件定義
+E2Eテスト: 487件定義
