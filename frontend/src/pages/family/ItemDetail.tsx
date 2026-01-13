@@ -252,11 +252,17 @@ export function ItemDetail() {
               </div>
             </div>
 
-            {/* 在庫バー（数量管理する品物のみ）/ 在庫あり表示（数量管理しない品物） */}
+            {/* 在庫バー（数量管理する品物のみ）/ 在庫状態表示（数量管理しない品物） */}
             <div className="mb-4">
               {skipQuantity ? (
                 <div className="flex items-center gap-2 py-2">
-                  <span className="text-green-600 font-medium text-lg">✓ 在庫あり</span>
+                  {/* 数量管理なし品物: 提供記録がある場合は「提供済み」と表示 */}
+                  {/* in_progress: 提供中、served: 旧ステータス（互換性のため） */}
+                  {(item.status === 'in_progress' || item.status === 'served') ? (
+                    <span className="text-gray-500 font-medium text-lg">✓ 提供済み</span>
+                  ) : (
+                    <span className="text-green-600 font-medium text-lg">✓ 在庫あり</span>
+                  )}
                   <span className="text-sm text-gray-500">（数量管理なし）</span>
                 </div>
               ) : (

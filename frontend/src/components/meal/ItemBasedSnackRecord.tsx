@@ -759,7 +759,13 @@ function ItemCard({ item, highlight, onRecordClick, onDiscardClick, onEditClick 
           <div className="mt-2 text-sm text-gray-600 space-y-1">
             <div className="flex items-center gap-2">
               {skipQuantity ? (
-                <span className="text-green-600 font-medium">在庫あり</span>
+                // 数量管理なし品物: 提供記録がある場合は「提供済み」と表示
+                // in_progress: 提供中、served: 旧ステータス（互換性のため）
+                (item.status === 'in_progress' || item.status === 'served') ? (
+                  <span className="text-gray-500 font-medium">提供済み</span>
+                ) : (
+                  <span className="text-green-600 font-medium">在庫あり</span>
+                )
               ) : (
                 <span>残り {remainingQty}{item.unit}</span>
               )}
@@ -912,7 +918,8 @@ function RemainingItemCard({ item, type, showButtons = true, onRecordClick }: Re
           <div className="mt-2 text-sm text-gray-600 space-y-1">
             <div className="flex items-center gap-2">
               {skipQuantity ? (
-                <span className="text-green-600 font-medium">在庫あり</span>
+                // 数量管理なし品物: 残り対応タブでは常に「提供済み」と表示
+                <span className="text-gray-500 font-medium">提供済み</span>
               ) : (
                 <span>残り {remainingQty}{item.unit}</span>
               )}

@@ -110,7 +110,13 @@ export function FamilyItemCard({
       {/* 在庫・期限情報 */}
       <div className="mt-1 flex items-center gap-2 text-sm text-gray-600">
         {skipQuantity ? (
-          <span className="text-green-600 font-medium">在庫あり</span>
+          // 数量管理なし品物: 提供記録がある場合は「提供済み」と表示
+          // in_progress: 提供中、served: 旧ステータス（互換性のため）
+          (item.status === 'in_progress' || item.status === 'served') ? (
+            <span className="text-gray-500 font-medium">提供済み</span>
+          ) : (
+            <span className="text-green-600 font-medium">在庫あり</span>
+          )
         ) : (
           <span>
             残り {currentQty}{item.unit}
