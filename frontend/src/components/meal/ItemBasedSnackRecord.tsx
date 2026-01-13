@@ -292,12 +292,12 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
 
       const logs = item.remainingHandlingLogs ?? [];
 
-      // Phase 63: ログがない場合でも、今日記録があり残りがある場合はstored扱い
+      // Phase 63/64: ログがない場合でも、記録があり残りがある場合はstored扱い
+      // Phase 64: 日付に関係なく表示（翌日以降も保存済みタブに残す）
       if (logs.length === 0) {
-        // 今日記録された品物で、残りがある（avgConsumptionRate < 100）場合
-        const isToday = isRecordedToday(item);
+        const hasRecorded = !!item.consumptionSummary?.lastServedDate;
         const hasRemaining = item.consumptionSummary && item.consumptionSummary.avgConsumptionRate < 100;
-        if (isToday && hasRemaining) {
+        if (hasRecorded && hasRemaining) {
           stored.push(item);
         }
         return;
