@@ -86,7 +86,7 @@ export function StaffRecordDialog({
   existingLog,
   sheetTimestamp,
 }: StaffRecordDialogProps) {
-  const { settings } = useMealFormSettings();
+  const { settings, isLoading: isSettingsLoading } = useMealFormSettings();
   const recordMutation = useRecordConsumptionLog();
   const correctDiscardedMutation = useCorrectDiscardedRecord();
 
@@ -318,6 +318,11 @@ export function StaffRecordDialog({
   // useOptimisticSubmitにより、バリデーション後は即座にダイアログが閉じ、
   // API処理はバックグラウンドで実行される（二重送信防止 + UX改善）
   const handleSubmit = useCallback(async () => {
+    // 設定がロード中の場合は送信を防止（空の入居者名を防ぐ）
+    if (isSettingsLoading) {
+      console.warn('[StaffRecordDialog] Settings still loading, blocking submit');
+      return;
+    }
     // バリデーション失敗時はダイアログを閉じない
     if (!validate()) return;
 
@@ -464,7 +469,7 @@ export function StaffRecordDialog({
         });
       }
     });
-  }, [formData, item, settings, recordMutation, correctDiscardedMutation, validate, submit, isDiscardedItem, isEdit, existingLog, sheetTimestamp]);
+  }, [formData, item, settings, isSettingsLoading, recordMutation, correctDiscardedMutation, validate, submit, isDiscardedItem, isEdit, existingLog, sheetTimestamp]);
 
   // Phase 15.7: 残り対応に基づいて消費量・残量を計算
   // Phase 29修正: タブ別に計算ロジックを分岐（水分タブも残り対応を考慮）
@@ -1104,10 +1109,10 @@ export function StaffRecordDialog({
           </button>
           <button
             onClick={handleSubmit}
-            disabled={recordMutation.isPending || correctDiscardedMutation.isPending || isSubmitting}
+            disabled={recordMutation.isPending || correctDiscardedMutation.isPending || isSubmitting || isSettingsLoading}
             className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50"
           >
-            {(recordMutation.isPending || correctDiscardedMutation.isPending || isSubmitting) ? '記録中...' : (isDemo ? '記録を保存（デモ）' : (isEdit ? '更新する' : '記録を保存'))}
+            {isSettingsLoading ? '設定読込中...' : (recordMutation.isPending || correctDiscardedMutation.isPending || isSubmitting) ? '記録中...' : (isDemo ? '記録を保存（デモ）' : (isEdit ? '更新する' : '記録を保存'))}
           </button>
         </div>
       </div>
