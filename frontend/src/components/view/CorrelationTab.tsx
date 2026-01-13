@@ -6,6 +6,7 @@
 import { useState, useMemo } from 'react';
 import { useSheetRecords } from '../../hooks/usePlanData';
 import { LoadingSpinner } from '../LoadingSpinner';
+import { CorrelationDetailModal } from './CorrelationDetailModal';
 import type { PlanDataRecord } from '../../types';
 
 // 1ページあたりの表示件数
@@ -242,6 +243,8 @@ function Pagination({
 export function CorrelationTab() {
   // ページネーション状態
   const [currentPage, setCurrentPage] = useState(1);
+  // 選択行の状態（詳細モーダル用）
+  const [selectedRow, setSelectedRow] = useState<CorrelationDataPoint | null>(null);
 
   // 内服と排便・排尿シートのデータを取得（全期間）
   const { records: medicationRecords, isLoading: medicationLoading } = useSheetRecords('内服');
@@ -373,7 +376,11 @@ export function CorrelationTab() {
                 </thead>
                 <tbody>
                   {paginatedData.map((row) => (
-                    <tr key={row.date} className={`border-b hover:bg-gray-50 ${row.hasEffect ? '' : 'bg-red-50'}`}>
+                    <tr
+                      key={row.date}
+                      onClick={() => setSelectedRow(row)}
+                      className={`border-b hover:bg-blue-50 cursor-pointer transition-colors ${row.hasEffect ? '' : 'bg-red-50'}`}
+                    >
                       <td className="p-2 font-medium">{row.displayDate}</td>
                       <td className="p-2 text-gray-600">{row.magnesiumTime || '-'}</td>
                       <td className="p-2">
@@ -424,6 +431,15 @@ export function CorrelationTab() {
         )}
       </div>
 
+      {/* 詳細モーダル */}
+      {selectedRow && (
+        <CorrelationDetailModal
+          correlationData={selectedRow}
+          medicationRecords={medicationRecords}
+          excretionRecords={excretionRecords}
+          onClose={() => setSelectedRow(null)}
+        />
+      )}
     </div>
   );
 }
