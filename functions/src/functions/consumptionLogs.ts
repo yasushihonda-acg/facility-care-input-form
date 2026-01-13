@@ -353,11 +353,15 @@ async function recordConsumptionLogHandler(
       };
 
       // 残り対応がある場合、ログを追加
-      if (input.remainingHandling === "discarded" || input.remainingHandling === "stored") {
+      // Phase 63: 残りがあるのにremainingHandling未指定の場合は自動でstored扱い
+      const effectiveRemainingHandling = input.remainingHandling ||
+        (consumptionRate < 100 ? "stored" : undefined);
+
+      if (effectiveRemainingHandling === "discarded" || effectiveRemainingHandling === "stored") {
         const remainingQuantity = input.servedQuantity - input.consumedQuantity;
         const handlingLog: RemainingHandlingLog = {
           id: `RHL_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
-          handling: input.remainingHandling,
+          handling: effectiveRemainingHandling,
           quantity: remainingQuantity,
           note: input.remainingHandlingOther || undefined,
           recordedBy: input.recordedBy,

@@ -276,6 +276,7 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
   // Phase 42: 残り対応タブ用 - 品物ベースでグループ化
   // 最新の残り対応ログに基づいて品物を分類
   // Phase 49: status === 'discarded' の品物も破棄済みタブに表示
+  // Phase 63: 残りがあるのにremainingHandlingLogsがない場合は自動でstored扱い
   const remainingItems = useMemo(() => {
     const discarded: CareItem[] = [];
     const stored: CareItem[] = [];
@@ -290,7 +291,17 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
       }
 
       const logs = item.remainingHandlingLogs ?? [];
-      if (logs.length === 0) return;
+
+      // Phase 63: ログがない場合でも、今日記録があり残りがある場合はstored扱い
+      if (logs.length === 0) {
+        // 今日記録された品物で、残りがある（avgConsumptionRate < 100）場合
+        const isToday = isRecordedToday(item);
+        const hasRemaining = item.consumptionSummary && item.consumptionSummary.avgConsumptionRate < 100;
+        if (isToday && hasRemaining) {
+          stored.push(item);
+        }
+        return;
+      }
 
       // 最新ログを取得（recordedAt降順でソート）
       const sortedLogs = [...logs].sort(
