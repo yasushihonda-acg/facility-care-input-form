@@ -30,3 +30,6 @@ firebase-debug.*.log
 test-results/
 playwright-report/
 .envrc
+
+# GitHub CLI local auth (Environment Isolation)
+.gh/
