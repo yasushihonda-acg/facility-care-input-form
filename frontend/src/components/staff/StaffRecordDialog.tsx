@@ -1112,7 +1112,7 @@ export function StaffRecordDialog({
             disabled={recordMutation.isPending || correctDiscardedMutation.isPending || isSubmitting || isSettingsLoading}
             className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50"
           >
-            {isSettingsLoading ? '設定読込中...' : (recordMutation.isPending || correctDiscardedMutation.isPending || isSubmitting) ? '記録中...' : (isDemo ? '記録を保存（デモ）' : (isEdit ? '更新する' : '記録を保存'))}
+            {(recordMutation.isPending || correctDiscardedMutation.isPending || isSubmitting) ? (isEdit ? '更新中...' : '記録中...') : isEdit ? '更新する' : (isSettingsLoading ? '設定読込中...' : (isDemo ? '記録を保存（デモ）' : '記録を保存'))}
           </button>
         </div>
       </div>
