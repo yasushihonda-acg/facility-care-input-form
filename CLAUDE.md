@@ -205,7 +205,7 @@ graph TD
 | **記録入力** | /staff/input/meal | /demo/staff/input/meal | MealInputPage | ✅ | ✅ |
 | **統計** | /stats | /demo/stats | StatsDashboard | ✅ | ✅ |
 | **記録閲覧** | /view | /demo/view | ViewPage | ✅ | ✅ |
-| **品物タイムライン** | /items/:id/timeline | /demo/items/:id/timeline | ItemTimeline | ✅ | ⚠️ デモのみ |
+| **品物タイムライン** | /items/:id/timeline | /demo/items/:id/timeline | ItemTimeline | ✅ | ✅ |
 | **設定** | /settings | なし（独立） | SettingsPage | ✅ | ✅ |
 
 **凡例:**
@@ -230,12 +230,10 @@ graph TD
 
 | 機能 | Phase | 状態 | 理由 |
 |------|-------|------|------|
-| 入居者設定（禁止品目） | Phase 26 | 孤立 | 運用で代替、ルートは残存 |
-| チャット機能 | Phase 21 | 孤立 | 一時非表示、ルートは残存 |
-| 家族連絡一覧/詳細 | Phase 40 | 孤立 | 注意事項に統合、ルートは残存 |
+| 入居者設定（禁止品目） | Phase 26 | 孤立 | 運用で代替、ルートはコメント化 |
+| チャット機能 | Phase 21 | 孤立 | 一時非表示、ルートはコメント化 |
 | タスク機能 | Phase 56 | 削除 | 品物管理で代替 |
 | AI提案ボタン | Phase 41 | 非表示 | UIのみ非表示 |
-| 品物タイムライン | - | デモのみ | 消費履歴がモック（ConsumptionLog API未連携） |
 
 **注意**: 「孤立」= ルートは存在するがナビからアクセス不可。後方互換または将来の再有効化のため残存。
 
