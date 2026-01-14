@@ -552,9 +552,16 @@ async function getConsumptionLogsHandler(
       };
     });
 
-    // 総数を取得（日付フィルタなし）
-    const countSnapshot = await logsRef.count().get();
-    const total = countSnapshot.data().count;
+    // 総数を取得
+    // limit=1かつ日付フィルタなしの場合（編集ボタンでの最新1件取得）は
+    // カウント操作をスキップしてパフォーマンスを向上
+    let total: number;
+    if (!hasDateFilter && limit === 1) {
+      total = logs.length; // 取得したログ数をそのまま使用
+    } else {
+      const countSnapshot = await logsRef.count().get();
+      total = countSnapshot.data().count;
+    }
 
     functions.logger.info("getConsumptionLogs success", {
       itemId: params.itemId,
