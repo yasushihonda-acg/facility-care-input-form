@@ -117,8 +117,8 @@ export function ItemForm() {
   const createPresetMutation = useCreatePreset();
   const updatePresetMutation = useUpdatePreset();
 
-  // プリセット一覧（デモモード: DEMO_PRESETS、本番: APIデータ）
-  const presets = isDemo ? DEMO_PRESETS : (presetsData?.presets || DEMO_PRESETS);
+  // プリセット一覧（デモモード: DEMO_PRESETS、本番: APIデータのみ）
+  const presets = isDemo ? DEMO_PRESETS : (presetsData?.presets || []);
 
   // プリセットのフィルタリング・ソート・グループ化
   const processedPresets = useMemo(() => {

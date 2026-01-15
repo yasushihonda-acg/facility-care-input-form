@@ -27,8 +27,8 @@ export function FamilyDashboard() {
   // 食事シートから当日の実績データを取得（予実管理）
   const { records: mealResults, isLoading } = useDailyMealRecords(selectedDate);
 
-  // デモモード判定（将来の拡張用）
-  useDemoMode();
+  // デモモード判定
+  const isDemo = useDemoMode();
 
   // 日付の前後移動
   const handlePrevDay = () => {
@@ -67,9 +67,12 @@ export function FamilyDashboard() {
 
     regularMealTimes.forEach((mealTime) => {
       const result = mealResults.find((r) => r.mealTime === mealTime);
-      const instruction = DEMO_CARE_INSTRUCTIONS.find(
-        (i) => i.targetDate === selectedDate && i.mealTime === mealTime
-      );
+      // デモモードの場合のみデモ指示データを使用（本番では指示機能未実装）
+      const instruction = isDemo
+        ? DEMO_CARE_INSTRUCTIONS.find(
+            (i) => i.targetDate === selectedDate && i.mealTime === mealTime
+          )
+        : undefined;
 
       let status: TimelineStatus = 'pending';
       if (result) {
@@ -135,7 +138,7 @@ export function FamilyDashboard() {
     items.sort((a, b) => mealTimeOrder[a.mealTime] - mealTimeOrder[b.mealTime]);
 
     return items;
-  }, [selectedDate, mealResults]);
+  }, [selectedDate, mealResults, isDemo]);
 
   // 日付選択用の近隣日付生成
   const nearbyDates = useMemo(() => {
