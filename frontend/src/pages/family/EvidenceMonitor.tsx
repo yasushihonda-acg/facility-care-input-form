@@ -25,7 +25,7 @@ import {
 } from '../../data/demoFamilyData';
 import { useFamilyMealRecords } from '../../hooks/useFamilyMealRecords';
 import { useCarePhotoList } from '../../hooks/useCarePhotos';
-import { DEMO_RESIDENT_ID } from '../../hooks/useDemoMode';
+import { DEMO_RESIDENT_ID, useDemoMode } from '../../hooks/useDemoMode';
 
 /**
  * タイムスタンプをフォーマット（表示用）
@@ -56,6 +56,9 @@ export function EvidenceMonitor() {
   const [searchParams] = useSearchParams();
   const mealTime = (searchParams.get('meal') || 'lunch') as MealTime;
 
+  // デモモード判定
+  const isDemo = useDemoMode();
+
   // 対象日（URLパラメータがない場合は今日）
   const targetDate = date || getTodayString();
 
@@ -79,16 +82,18 @@ export function EvidenceMonitor() {
 
   // エビデンスデータを構築（Plan: モック、Result: 実データ優先）
   const evidence = useMemo<EvidenceData>(() => {
-    // Plan: モックデータから取得（将来的にはFirestoreから）
-    const instruction = DEMO_CARE_INSTRUCTIONS.find(
-      (i) => i.targetDate === targetDate && i.mealTime === mealTime
-    );
+    // Plan: デモモードの場合のみデモ指示データを使用（本番では指示機能未実装）
+    const instruction = isDemo
+      ? DEMO_CARE_INSTRUCTIONS.find(
+          (i) => i.targetDate === targetDate && i.mealTime === mealTime
+        )
+      : undefined;
 
     // Result: 食事シートから取得した実績（最新1件）
     const result = mealResults.length > 0 ? mealResults[0] : undefined;
 
-    // 実データがない場合はモックにフォールバック
-    const fallbackEvidence = getEvidenceData(targetDate, mealTime);
+    // デモモードの場合のみフォールバック用のデモデータを取得
+    const fallbackEvidence = isDemo ? getEvidenceData(targetDate, mealTime) : null;
 
     // Phase 17: Firestoreから取得した写真URLを優先（最新1件）
     const firestorePhotoUrl = photos.length > 0 ? photos[0].photoUrl : undefined;
@@ -111,10 +116,10 @@ export function EvidenceMonitor() {
             conditions: instruction.conditions,
           }
         : fallbackEvidence?.plan,
-      // 実データ優先、なければモックのresult（写真URLはFirestore優先）
+      // 実データ優先、デモモードの場合はデモのresultにフォールバック（写真URLはFirestore優先）
       result: resultWithPhoto,
     };
-  }, [targetDate, mealTime, mealResults, photos]);
+  }, [targetDate, mealTime, mealResults, photos, isDemo]);
 
   const mealLabel = MEAL_TIME_LABELS[evidence.mealTime];
   const mealIcon = MEAL_TIME_ICONS[evidence.mealTime];

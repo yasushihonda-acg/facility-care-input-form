@@ -87,7 +87,8 @@ export function ItemEditPage() {
   });
   const createPresetMutation = useCreatePreset();
   const updatePresetMutation = useUpdatePreset();
-  const presets = isDemo ? DEMO_PRESETS : (presetsData?.presets || DEMO_PRESETS);
+  // プリセット一覧（デモモード: DEMO_PRESETS、本番: APIデータのみ）
+  const presets = isDemo ? DEMO_PRESETS : (presetsData?.presets || []);
 
   // プリセット検索・ソート・グループ化用state
   const [presetSearch, setPresetSearch] = useState('');

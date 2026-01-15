@@ -17,29 +17,34 @@ import type {
   UpdateProhibitionRequest,
 } from '../types/careItem';
 import { DEMO_PROHIBITIONS } from '../data/demoFamilyData';
+import { useDemoMode } from './useDemoMode';
 
 // クエリキー
 const PROHIBITIONS_QUERY_KEY = 'prohibitions';
 
 /**
  * 禁止ルール一覧を取得
- * APIが空の場合はデモデータをフォールバック
+ * デモモード: デモデータを返す、本番: APIデータのみ（空の場合は空配列）
  */
 export function useProhibitions(residentId: string, activeOnly = true) {
+  const isDemo = useDemoMode();
+
   return useQuery({
-    queryKey: [PROHIBITIONS_QUERY_KEY, residentId, activeOnly],
+    queryKey: [PROHIBITIONS_QUERY_KEY, residentId, activeOnly, isDemo],
     queryFn: async () => {
-      const response = await getProhibitions({ residentId, activeOnly });
-      if (!response.success || !response.data) {
-        throw new Error('Failed to fetch prohibitions');
-      }
-      // APIからデータがない場合、デモデータをフォールバック
-      if (response.data.prohibitions.length === 0) {
+      // デモモードの場合はデモデータを返す
+      if (isDemo) {
         return {
           prohibitions: DEMO_PROHIBITIONS.filter(
             (p) => p.residentId === residentId && (!activeOnly || p.isActive)
           ),
         };
+      }
+
+      // 本番モード: APIからデータを取得（空の場合は空配列）
+      const response = await getProhibitions({ residentId, activeOnly });
+      if (!response.success || !response.data) {
+        throw new Error('Failed to fetch prohibitions');
       }
       return response.data;
     },
