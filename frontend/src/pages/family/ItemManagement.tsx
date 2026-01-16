@@ -413,7 +413,7 @@ export function ItemManagement() {
       {selectedItem && (
         <ItemDetailModal
           item={selectedItem}
-          selectedDate={selectedDate.toISOString().split('T')[0]}
+          selectedDate={`${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`}
           onClose={() => setSelectedItem(null)}
           onEdit={() => {
             setSelectedItem(null);
@@ -605,18 +605,20 @@ function ItemDetailModal({ item, onClose, onEdit, onDelete, selectedDate }: {
   const initialQty = skipQuantity ? 1 : (item.quantity ?? 1);
 
   // 選択日の消費ログを取得
-  const { data: logsData } = useConsumptionLogs({
+  const { data: logsData, isLoading: isLogsLoading } = useConsumptionLogs({
     itemId: item.id,
     startDate: selectedDate,
     endDate: selectedDate,
   });
 
-  // 選択日の摂食率を計算
+  // 選択日の摂食率を計算（加重平均：総消費量/総提供量）
   const dateConsumptionRate = useMemo(() => {
     if (!logsData?.logs || logsData.logs.length === 0) return null;
-    // 同日に複数ログがある場合は平均を計算
-    const rates = logsData.logs.map(log => log.consumptionRate);
-    return Math.round(rates.reduce((a, b) => a + b, 0) / rates.length);
+    // 加重平均: sum(consumedQuantity) / sum(servedQuantity) * 100
+    const totalServed = logsData.logs.reduce((sum, log) => sum + log.servedQuantity, 0);
+    const totalConsumed = logsData.logs.reduce((sum, log) => sum + log.consumedQuantity, 0);
+    if (totalServed === 0) return 0;
+    return Math.round((totalConsumed / totalServed) * 100);
   }, [logsData]);
 
   return (
@@ -756,7 +758,16 @@ function ItemDetailModal({ item, onClose, onEdit, onDelete, selectedDate }: {
           )}
 
           {/* 摂食状況（選択日の記録を表示） */}
-          {dateConsumptionRate !== null ? (
+          {isLogsLoading ? (
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-2 text-gray-400">
+                <span className="text-sm">
+                  {new Date(selectedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}の摂食:
+                </span>
+                <span className="text-sm">読み込み中...</span>
+              </div>
+            </div>
+          ) : dateConsumptionRate !== null ? (
             <div className="p-3 bg-gray-50 rounded-lg">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-500">
