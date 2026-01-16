@@ -23,6 +23,7 @@ const CARE_ITEMS_KEY = 'careItems';
 
 /**
  * 消費ログ一覧を取得するフック
+ * startDate/endDateでの日付フィルタリング対応（デモモード含む）
  */
 export function useConsumptionLogs(params: GetConsumptionLogsParams) {
   const isDemo = useDemoMode();
@@ -32,7 +33,18 @@ export function useConsumptionLogs(params: GetConsumptionLogsParams) {
     queryFn: async (): Promise<GetConsumptionLogsResponse> => {
       // デモモードではローカルデータを返却
       if (isDemo) {
-        const logs = getDemoConsumptionLogsForItem(params.itemId);
+        let logs = getDemoConsumptionLogsForItem(params.itemId);
+
+        // 日付フィルタリング（startDate/endDate）
+        if (params.startDate || params.endDate) {
+          logs = logs.filter(log => {
+            const logDate = log.servedDate; // YYYY-MM-DD形式
+            if (params.startDate && logDate < params.startDate) return false;
+            if (params.endDate && logDate > params.endDate) return false;
+            return true;
+          });
+        }
+
         const limit = params.limit ?? 50;
         const paginatedLogs = logs.slice(0, limit);
         return {

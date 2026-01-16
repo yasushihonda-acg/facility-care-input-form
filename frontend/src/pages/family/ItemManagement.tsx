@@ -17,6 +17,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import { useCareItems, useDeleteCareItem, useExpiredItems } from '../../hooks/useCareItems';
+import { useConsumptionLogs } from '../../hooks/useConsumptionLogs';
 import { useDemoMode } from '../../hooks/useDemoMode';
 import { useSkipDateManager } from '../../hooks/useSkipDates';
 import {
@@ -412,6 +413,7 @@ export function ItemManagement() {
       {selectedItem && (
         <ItemDetailModal
           item={selectedItem}
+          selectedDate={selectedDate.toISOString().split('T')[0]}
           onClose={() => setSelectedItem(null)}
           onEdit={() => {
             setSelectedItem(null);
@@ -589,17 +591,33 @@ function ItemCard({ item, onDelete, onEdit, onShowDetail }: {
  * 品物詳細モーダルコンポーネント
  * スタッフ用カード（ItemBasedSnackRecord.tsx）と同じ表示形式
  */
-function ItemDetailModal({ item, onClose, onEdit, onDelete }: {
+function ItemDetailModal({ item, onClose, onEdit, onDelete, selectedDate }: {
   item: CareItem;
   onClose: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  selectedDate: string; // YYYY-MM-DD形式
 }) {
   const statusColor = getStatusColorClass(item.status);
   const daysUntilExpiration = item.expirationDate ? getDaysUntilExpiration(item.expirationDate) : null;
   const skipQuantity = isQuantitySkipped(item);
   const currentQty = skipQuantity ? undefined : (item.remainingQuantity ?? item.quantity ?? 0);
   const initialQty = skipQuantity ? 1 : (item.quantity ?? 1);
+
+  // 選択日の消費ログを取得
+  const { data: logsData } = useConsumptionLogs({
+    itemId: item.id,
+    startDate: selectedDate,
+    endDate: selectedDate,
+  });
+
+  // 選択日の摂食率を計算
+  const dateConsumptionRate = useMemo(() => {
+    if (!logsData?.logs || logsData.logs.length === 0) return null;
+    // 同日に複数ログがある場合は平均を計算
+    const rates = logsData.logs.map(log => log.consumptionRate);
+    return Math.round(rates.reduce((a, b) => a + b, 0) / rates.length);
+  }, [logsData]);
 
   return (
     <div
@@ -737,21 +755,32 @@ function ItemDetailModal({ item, onClose, onEdit, onDelete }: {
             </div>
           )}
 
-          {/* 摂食状況（消費済みの場合） */}
-          {item.status === 'consumed' && item.consumptionRate !== undefined && (
+          {/* 摂食状況（選択日の記録を表示） */}
+          {dateConsumptionRate !== null ? (
             <div className="p-3 bg-gray-50 rounded-lg">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">摂食:</span>
+                <span className="text-sm text-gray-500">
+                  {new Date(selectedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}の摂食:
+                </span>
                 <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-green-500 transition-all"
-                    style={{ width: `${item.consumptionRate}%` }}
+                    style={{ width: `${dateConsumptionRate}%` }}
                   />
                 </div>
-                <span className="text-sm font-medium">{item.consumptionRate}%</span>
+                <span className="text-sm font-medium">{dateConsumptionRate}%</span>
               </div>
             </div>
-          )}
+          ) : item.status === 'consumed' || item.status === 'in_progress' ? (
+            <div className="p-3 bg-gray-100 rounded-lg">
+              <div className="flex items-center gap-2 text-gray-500">
+                <span className="text-sm">
+                  {new Date(selectedDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}の摂食:
+                </span>
+                <span className="text-sm">未記録</span>
+              </div>
+            </div>
+          ) : null}
         </div>
 
         {/* フッター（アクションボタン） */}
