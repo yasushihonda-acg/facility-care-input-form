@@ -119,12 +119,16 @@ export function ItemDetail() {
   const deleteItem = useDeleteCareItem();
   const item = data?.items.find((i) => i.id === id);
 
+  // Phase 63: タイムライン表示件数（「もっと見る」機能）
+  const [logsLimit, setLogsLimit] = useState(10);
+
   // 消費ログを取得
   const { data: logsData, isLoading: logsLoading } = useConsumptionLogs({
     itemId: id || '',
-    limit: 10,
+    limit: logsLimit,
   });
   const consumptionLogs = logsData?.logs || [];
+  const hasMoreLogs = logsData?.total !== undefined && consumptionLogs.length < logsData.total;
 
   // 品物イベント（編集履歴）を取得
   // @see docs/ITEM_MANAGEMENT_SPEC.md セクション9.4
@@ -381,7 +385,11 @@ export function ItemDetail() {
           <div className="bg-white rounded-lg shadow-card p-4">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-bold text-sm text-gray-700">タイムライン（履歴）</h2>
-              <span className="text-xs text-gray-400">最新10件を表示</span>
+              <span className="text-xs text-gray-400">
+                {logsData?.total !== undefined
+                  ? `${consumptionLogs.length}/${logsData.total}件を表示`
+                  : `最新${logsLimit}件を表示`}
+              </span>
             </div>
 
             {(logsLoading || eventsLoading) ? (
@@ -578,6 +586,17 @@ export function ItemDetail() {
                     }
                   });
                 })()}
+
+                {/* Phase 63: もっと見るボタン */}
+                {hasMoreLogs && (
+                  <button
+                    onClick={() => setLogsLimit(prev => prev + 20)}
+                    className="w-full mt-4 py-2 text-sm text-primary border border-primary rounded-lg hover:bg-primary/5 transition-colors"
+                    data-testid="load-more-logs"
+                  >
+                    もっと見る（さらに20件）
+                  </button>
+                )}
               </div>
             )}
           </div>

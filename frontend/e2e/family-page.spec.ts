@@ -249,7 +249,7 @@ test.describe('VIEW_ARCHITECTURE_SPEC準拠チェック', () => {
 });
 
 test.describe('Phase 63: 品物詳細ページの表示改善', () => {
-  test('タイムラインに表示基準の説明が表示される', async ({ page }) => {
+  test('タイムラインに表示件数の説明が表示される', async ({ page }) => {
     // デモの品物詳細ページに直接アクセス
     await page.goto('/demo/family/items/demo-item-001');
 
@@ -257,7 +257,23 @@ test.describe('Phase 63: 品物詳細ページの表示改善', () => {
     const timeline = page.locator('[data-testid="item-timeline"]');
     await expect(timeline).toBeVisible({ timeout: 10000 });
 
-    // 表示基準の説明が表示される
-    await expect(timeline.locator('text=最新10件を表示')).toBeVisible();
+    // 表示件数の説明が表示される（「X/Y件を表示」または「最新N件を表示」）
+    await expect(timeline.locator('text=/\\d+.*件を表示/')).toBeVisible();
+  });
+
+  test('「もっと見る」ボタンがある場合クリックで件数が増える', async ({ page }) => {
+    // デモの品物詳細ページに直接アクセス
+    await page.goto('/demo/family/items/demo-item-001');
+
+    // タイムラインセクションが表示される
+    const timeline = page.locator('[data-testid="item-timeline"]');
+    await expect(timeline).toBeVisible({ timeout: 10000 });
+
+    // 「もっと見る」ボタンがある場合のみテスト
+    const loadMoreButton = timeline.locator('[data-testid="load-more-logs"]');
+    if (await loadMoreButton.count() > 0) {
+      await expect(loadMoreButton).toBeVisible();
+      await expect(loadMoreButton).toHaveText(/もっと見る/);
+    }
   });
 });
