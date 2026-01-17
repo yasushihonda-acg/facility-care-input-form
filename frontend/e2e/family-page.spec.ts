@@ -247,3 +247,17 @@ test.describe('VIEW_ARCHITECTURE_SPEC準拠チェック', () => {
     await expect(page.getByRole('button', { name: /登録/ })).toBeVisible();
   });
 });
+
+test.describe('Phase 63: 品物詳細ページの表示改善', () => {
+  test('タイムラインに表示基準の説明が表示される', async ({ page }) => {
+    // デモの品物詳細ページに直接アクセス
+    await page.goto('/demo/family/items/demo-item-001');
+
+    // タイムラインセクションが表示される
+    const timeline = page.locator('[data-testid="item-timeline"]');
+    await expect(timeline).toBeVisible({ timeout: 10000 });
+
+    // 表示基準の説明が表示される
+    await expect(timeline.locator('text=最新10件を表示')).toBeVisible();
+  });
+});

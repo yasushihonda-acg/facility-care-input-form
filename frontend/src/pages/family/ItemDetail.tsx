@@ -379,7 +379,10 @@ export function ItemDetail() {
         {/* @see docs/ITEM_MANAGEMENT_SPEC.md セクション9.4 */}
         <div className="px-4 mb-4" data-testid="item-timeline">
           <div className="bg-white rounded-lg shadow-card p-4">
-            <h2 className="font-bold text-sm text-gray-700 mb-3">タイムライン（履歴）</h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-bold text-sm text-gray-700">タイムライン（履歴）</h2>
+              <span className="text-xs text-gray-400">最新10件を表示</span>
+            </div>
 
             {(logsLoading || eventsLoading) ? (
               <p className="text-gray-500 text-center py-4">読み込み中...</p>
@@ -481,6 +484,27 @@ export function ItemDetail() {
                           <p className="text-xs text-gray-500 mt-1">
                             → 残り {log.quantityAfter}{item.unit}
                           </p>
+
+                          {/* Phase 63: 残り対応表示（破棄・保存など） */}
+                          {log.remainingHandling && log.consumptionRate !== undefined && log.consumptionRate < 100 && (
+                            <p className="text-xs text-gray-600 mt-1">
+                              {log.remainingHandling === 'discarded' && (
+                                <span className="inline-flex items-center gap-1">
+                                  🗑️ <span className="text-red-600 font-medium">{100 - log.consumptionRate}%分を破棄</span>
+                                </span>
+                              )}
+                              {log.remainingHandling === 'stored' && (
+                                <span className="inline-flex items-center gap-1">
+                                  📦 <span className="text-blue-600 font-medium">{100 - log.consumptionRate}%分を保存</span>
+                                </span>
+                              )}
+                              {log.remainingHandling === 'other' && (
+                                <span className="inline-flex items-center gap-1">
+                                  📝 <span className="text-gray-600">{log.remainingHandlingOther || 'その他の対応'}</span>
+                                </span>
+                              )}
+                            </p>
+                          )}
 
                           {/* 家族指示対応表示 */}
                           {log.followedInstruction && (
