@@ -7,6 +7,7 @@ import { useState, useMemo } from 'react';
 import { useSheetRecords } from '../../hooks/usePlanData';
 import { LoadingSpinner } from '../LoadingSpinner';
 import { CorrelationDetailModal } from './CorrelationDetailModal';
+import { CorrelationScreenshotModal } from './CorrelationScreenshotModal';
 import type { PlanDataRecord } from '../../types';
 
 // 1ページあたりの表示件数
@@ -20,11 +21,12 @@ function getDateKey(timestamp: string): string {
   return `${match[1]}/${match[2].padStart(2, '0')}/${match[3].padStart(2, '0')}`;
 }
 
-// 表示用の日付文字列（M/D形式）- モバイルで横スクロール不要に
+// 表示用の日付文字列（YY/M/D形式）- 年をまたぐデータ対応 + 横幅節約
 function getDisplayDate(dateKey: string): string {
   const parts = dateKey.split('/');
   if (parts.length < 3) return dateKey;
-  return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
+  const year2digit = String(parseInt(parts[0], 10)).slice(-2); // 2桁年
+  return `${year2digit}/${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
 }
 
 // 日付を1日進める
@@ -245,6 +247,8 @@ export function CorrelationTab() {
   const [currentPage, setCurrentPage] = useState(1);
   // 選択行の状態（詳細モーダル用）
   const [selectedRow, setSelectedRow] = useState<CorrelationDataPoint | null>(null);
+  // スクショ用モーダル状態
+  const [showScreenshotModal, setShowScreenshotModal] = useState(false);
 
   // 内服と排便・排尿シートのデータを取得（全期間）
   const { records: medicationRecords, isLoading: medicationLoading } = useSheetRecords('内服');
@@ -334,10 +338,22 @@ export function CorrelationTab() {
     <div className="flex-1 p-4 space-y-6">
       {/* マグミット × 排便 */}
       <div className="bg-white rounded-lg shadow-card p-4">
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <span>💊</span>
-          <span>マグミット × 排便 の相関</span>
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <span>💊</span>
+            <span>マグミット × 排便 の相関</span>
+          </h3>
+          {correlationData.length > 0 && (
+            <button
+              onClick={() => setShowScreenshotModal(true)}
+              className="sm:hidden p-2 text-gray-500 hover:text-primary hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="スクリーンショット用表示"
+              title="スクショ用表示"
+            >
+              📷
+            </button>
+          )}
+        </div>
 
         {correlationData.length === 0 ? (
           <div className="text-center py-8">
@@ -438,6 +454,16 @@ export function CorrelationTab() {
           medicationRecords={medicationRecords}
           excretionRecords={excretionRecords}
           onClose={() => setSelectedRow(null)}
+        />
+      )}
+
+      {/* スクショ用モーダル */}
+      {showScreenshotModal && (
+        <CorrelationScreenshotModal
+          correlationData={correlationData}
+          correlationRate={correlationRate}
+          sameDayRate={sameDayRate}
+          onClose={() => setShowScreenshotModal(false)}
         />
       )}
     </div>
