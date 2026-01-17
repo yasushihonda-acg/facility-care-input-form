@@ -854,6 +854,8 @@ export function StaffRecordDialog({
                     const hasInstruction = item.remainingHandlingInstruction && item.remainingHandlingInstruction !== 'none';
                     const isAllowed = !hasInstruction || option.value === item.remainingHandlingInstruction;
                     const isDisabled = hasInstruction && !isAllowed;
+                    // Phase 63: 残り割合を計算
+                    const remainingPercent = (10 - formData.hydrationRateInput) * 10;
 
                     return (
                       <label
@@ -875,7 +877,13 @@ export function StaffRecordDialog({
                           onChange={(e) => setFormData(prev => ({ ...prev, remainingHandling: e.target.value as RemainingHandling }))}
                           className="w-4 h-4"
                         />
-                        <span className="text-sm">{option.label}</span>
+                        <span className="text-sm">
+                          {option.label}
+                          {/* Phase 63: 選択時に残り割合を表示 */}
+                          {formData.remainingHandling === option.value && option.value !== 'other' && (
+                            <span className="ml-1 text-gray-500">（{remainingPercent}%分）</span>
+                          )}
+                        </span>
                         {isDisabled && (
                           <span className="text-xs text-gray-400 ml-auto">（家族指示により選択不可）</span>
                         )}
@@ -974,26 +982,36 @@ export function StaffRecordDialog({
               )}
 
               <div className="space-y-2">
-                {REMAINING_HANDLING_OPTIONS.map(option => (
-                  <label
-                    key={option.value}
-                    className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
-                      formData.remainingHandling === option.value
-                        ? 'border-primary bg-primary/5'
-                        : 'border-gray-200 hover:bg-gray-50'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="remainingHandling"
-                      value={option.value}
-                      checked={formData.remainingHandling === option.value}
-                      onChange={(e) => setFormData(prev => ({ ...prev, remainingHandling: e.target.value as RemainingHandling }))}
-                      className="w-4 h-4"
-                    />
-                    <span className="text-sm">{option.label}</span>
-                  </label>
-                ))}
+                {REMAINING_HANDLING_OPTIONS.map(option => {
+                  // Phase 63: 残り割合を計算（食事タブ）
+                  const remainingPercent = (10 - formData.consumptionRateInput) * 10;
+                  return (
+                    <label
+                      key={option.value}
+                      className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+                        formData.remainingHandling === option.value
+                          ? 'border-primary bg-primary/5'
+                          : 'border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="remainingHandling"
+                        value={option.value}
+                        checked={formData.remainingHandling === option.value}
+                        onChange={(e) => setFormData(prev => ({ ...prev, remainingHandling: e.target.value as RemainingHandling }))}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm">
+                        {option.label}
+                        {/* Phase 63: 選択時に残り割合を表示 */}
+                        {formData.remainingHandling === option.value && option.value !== 'other' && (
+                          <span className="ml-1 text-gray-500">（{remainingPercent}%分）</span>
+                        )}
+                      </span>
+                    </label>
+                  );
+                })}
               </div>
               {errors.remainingHandling && (
                 <p className="mt-1 text-sm text-red-500">{errors.remainingHandling}</p>
