@@ -1216,6 +1216,9 @@ export interface SubmitHydrationRecordRequest {
   // Phase 61: 残った分への対応（任意）
   remainingHandling?: 'discarded' | 'stored' | 'other';
   remainingHandlingOther?: string;
+  // Phase 63: 摂取割合
+  consumptionRate?: number;  // 0-100
+  consumptionStatus?: 'full' | 'most' | 'half' | 'little' | 'none';
 }
 
 export interface SubmitHydrationRecordResponse {
@@ -1260,6 +1263,9 @@ export interface UpdateHydrationRecordRequest {
   updatedBy: string;
   /** 編集前の水分量（特記事項に「※{前の値}ccから編集」を追加するため） */
   previousHydrationAmount?: number;
+  // Phase 63: 摂取割合
+  consumptionRate?: number;  // 0-100
+  consumptionStatus?: 'full' | 'most' | 'half' | 'little' | 'none';
 }
 
 /**

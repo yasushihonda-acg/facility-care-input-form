@@ -127,6 +127,8 @@ export function StaffRecordDialog({
     photoPreview: '',
     // Phase 29: 水分記録
     hydrationAmount: null as number | null,
+    // Phase 63: 水分摂取割合
+    hydrationRateInput: 10 as number, // 0-10（デフォルト: 全部飲んだ）
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -137,6 +139,10 @@ export function StaffRecordDialog({
       // 編集モード: 既存ログから初期化
       if (isEdit && existingLog) {
         const defaultTab = getDefaultTab(item.category);
+        // Phase 63: 水分摂取割合を復元（未設定の場合は100%として扱う）
+        const existingHydrationRate = existingLog.consumptionRate !== undefined && existingLog.consumptionRate !== null
+          ? Math.round(existingLog.consumptionRate / 10)
+          : 10;
         // eslint-disable-next-line react-hooks/set-state-in-effect -- ダイアログ初期化処理
         setFormData({
           activeTab: defaultTab,
@@ -158,6 +164,8 @@ export function StaffRecordDialog({
           // 水分量: existingLogにhydrationAmountがあればそれを使用、なければ計算
           hydrationAmount: (existingLog as { hydrationAmount?: number }).hydrationAmount ??
             calculateHydrationAmount(existingLog.servedQuantity || 1, item.unit),
+          // Phase 63: 水分摂取割合
+          hydrationRateInput: existingHydrationRate,
         });
         setErrors({});
         return;
@@ -212,6 +220,8 @@ export function StaffRecordDialog({
         photoPreview: '',
         // Phase 29: 水分量
         hydrationAmount: autoHydrationAmount,
+        // Phase 63: 水分摂取割合（デフォルト: 全部飲んだ）
+        hydrationRateInput: 10,
       });
       setErrors({});
     }
@@ -229,19 +239,33 @@ export function StaffRecordDialog({
     }
   }, [formData.consumptionRateInput]);
 
-  // Phase 29修正: 提供数変更時に水分量を自動再計算
+  // Phase 63: 水分タブでも摂取割合が10になったら残り対応をリセット
+  useEffect(() => {
+    if (formData.activeTab === 'hydration' && formData.hydrationRateInput === 10) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 派生状態の自動更新
+      setFormData(prev => ({
+        ...prev,
+        remainingHandling: '',
+        remainingHandlingOther: '',
+      }));
+    }
+  }, [formData.hydrationRateInput, formData.activeTab]);
+
+  // Phase 63修正: 提供数または摂取割合変更時に水分量を自動再計算
   useEffect(() => {
     if (formData.activeTab === 'hydration') {
-      const newHydrationAmount = calculateHydrationAmount(formData.servedQuantity, item.unit);
-      if (newHydrationAmount !== null) {
+      const maxHydrationAmount = calculateHydrationAmount(formData.servedQuantity, item.unit);
+      if (maxHydrationAmount !== null) {
+        // 摂取割合から水分量を計算
+        const calculatedAmount = Math.round(maxHydrationAmount * (formData.hydrationRateInput / 10));
         // eslint-disable-next-line react-hooks/set-state-in-effect -- 派生状態の自動更新
         setFormData(prev => ({
           ...prev,
-          hydrationAmount: newHydrationAmount,
+          hydrationAmount: calculatedAmount,
         }));
       }
     }
-  }, [formData.servedQuantity, formData.activeTab, item.unit]);
+  }, [formData.servedQuantity, formData.hydrationRateInput, formData.activeTab, item.unit]);
 
   // バリデーション
   const validate = useCallback((): boolean => {
@@ -282,17 +306,13 @@ export function StaffRecordDialog({
       }
     } else {
       // 水分タブ: 水分量バリデーション
-      if (formData.hydrationAmount === null || formData.hydrationAmount <= 0) {
+      // Phase 63: 摂取割合が0の場合は水分量0も許可
+      if (formData.hydrationRateInput > 0 && (formData.hydrationAmount === null || formData.hydrationAmount <= 0)) {
         newErrors.hydrationAmount = '水分量を入力してください。';
       }
-      // Phase 29追加 + Phase 61修正: 残った分への対応バリデーション
-      // 単位がcc換算可能で残りがある場合のみ必須
-      // 単位がcc換算不可（個など）の場合は任意のためスキップ
-      const maxHydrationAmount = calculateHydrationAmount(formData.servedQuantity, item.unit);
-      if (maxHydrationAmount !== null &&
-          formData.hydrationAmount !== null &&
-          formData.hydrationAmount < maxHydrationAmount &&
-          !formData.remainingHandling) {
+      // Phase 63: 残った分への対応バリデーション（食事タブと統一）
+      // 摂取割合 < 10 の場合に残り対応を必須
+      if (formData.hydrationRateInput < 10 && !formData.remainingHandling) {
         newErrors.remainingHandling = '残った分への対応を選択してください。';
       }
       if (formData.remainingHandling === 'other' && !formData.remainingHandlingOther.trim()) {
@@ -332,6 +352,9 @@ export function StaffRecordDialog({
       // 編集モード: 水分記録の更新
       if (isEdit && existingLog && sheetTimestamp) {
         const previousHydrationAmount = (existingLog as { hydrationAmount?: number }).hydrationAmount;
+        // Phase 63: 摂取割合の計算
+        const editConsumptionRate = formData.hydrationRateInput * 10;
+        const editConsumptionStatus = determineConsumptionStatus(editConsumptionRate);
         await updateHydrationRecord({
           itemId: item.id,
           logId: existingLog.id,
@@ -341,6 +364,9 @@ export function StaffRecordDialog({
           sheetTimestamp: sheetTimestamp,
           updatedBy: formData.staffName,
           previousHydrationAmount,
+          // Phase 63: 摂取割合を追加
+          consumptionRate: editConsumptionRate,
+          consumptionStatus: editConsumptionStatus,
         });
         return;
       }
@@ -359,9 +385,10 @@ export function StaffRecordDialog({
       }
 
       // consumption_log に記録（在庫更新）
+      // Phase 63: 水分タブでも摂取割合を使用
       const consumptionRate = formData.activeTab === 'meal'
         ? formData.consumptionRateInput * 10
-        : 100;
+        : formData.hydrationRateInput * 10;
       const consumedQuantity = (consumptionRate / 100) * formData.servedQuantity;
       const consumptionStatus = determineConsumptionStatus(consumptionRate);
 
@@ -388,6 +415,9 @@ export function StaffRecordDialog({
             remainingHandling: formData.remainingHandling,
             remainingHandlingOther: formData.remainingHandlingOther || undefined,
           }),
+          // Phase 63: 摂取割合を追加
+          consumptionRate: consumptionRate,
+          consumptionStatus: consumptionStatus,
         });
         sheetTimestampForLog = hydrationResult.data?.sheetTimestamp;
       }
@@ -706,11 +736,55 @@ export function StaffRecordDialog({
             </div>
           )}
 
+          {/* Phase 63: 水分タブ - 摂取した割合（0-10数値入力） */}
+          {formData.activeTab === 'hydration' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                摂取した割合 <span className="text-red-500">*</span>
+              </label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="number"
+                  min="0"
+                  max="10"
+                  step="1"
+                  value={formData.hydrationRateInput}
+                  onChange={(e) => {
+                    const value = Math.min(10, Math.max(0, parseInt(e.target.value) || 0));
+                    setFormData(prev => ({ ...prev, hydrationRateInput: value }));
+                  }}
+                  data-testid="hydration-rate-input"
+                  className="w-20 border border-gray-300 rounded-lg px-3 py-2 text-center text-lg font-semibold"
+                />
+                <span className="text-gray-600 font-medium">/ 10</span>
+                <span className="text-sm text-gray-500 ml-2">
+                  （{formData.hydrationRateInput * 10}%）
+                </span>
+              </div>
+              {/* スライダー補助（視覚的なフィードバック） */}
+              <input
+                type="range"
+                min="0"
+                max="10"
+                step="1"
+                value={formData.hydrationRateInput}
+                onChange={(e) => setFormData(prev => ({ ...prev, hydrationRateInput: parseInt(e.target.value) }))}
+                data-testid="hydration-rate-slider"
+                className="w-full mt-2 accent-primary"
+              />
+              <div className="flex justify-between text-xs text-gray-400 mt-1">
+                <span>0（飲まず）</span>
+                <span>5（半分）</span>
+                <span>10（全部）</span>
+              </div>
+            </div>
+          )}
+
           {/* Phase 29: 水分タブ - 水分量入力 */}
           {formData.activeTab === 'hydration' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                水分量（cc） <span className="text-red-500">*</span>
+                実際に飲んだ水分量（cc） <span className="text-red-500">*</span>
               </label>
               <div className="flex items-center gap-2">
                 <input
@@ -741,22 +815,12 @@ export function StaffRecordDialog({
             </div>
           )}
 
-          {/* Phase 29追加: 水分タブ - 残った分への対応 */}
-          {/* Phase 61: 単位がcc換算不可（個など）の場合は常に表示・任意入力 */}
-          {formData.activeTab === 'hydration' && (() => {
-            const maxHydrationAmount = calculateHydrationAmount(formData.servedQuantity, item.unit);
-            const isUnitConvertible = maxHydrationAmount !== null;
-            const hasRemaining = isUnitConvertible &&
-              formData.hydrationAmount !== null &&
-              formData.hydrationAmount < maxHydrationAmount;
-            // 単位がcc換算可能で残りがない場合のみ非表示
-            if (isUnitConvertible && !hasRemaining) return null;
-            // 単位がcc換算不可の場合は任意入力として常に表示
-            const isRequired = isUnitConvertible && hasRemaining;
+          {/* Phase 63: 水分タブ - 残った分への対応（摂取割合 < 10の場合のみ）*/}
+          {formData.activeTab === 'hydration' && formData.hydrationRateInput < 10 && (() => {
             return (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  残った分への対応 {isRequired && <span className="text-red-500">*</span>}
+                  残った分への対応 <span className="text-red-500">*</span>
                 </label>
 
                 {/* Phase 33: 家族からの処置指示バナー */}

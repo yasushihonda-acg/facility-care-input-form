@@ -443,16 +443,41 @@ export function ItemDetail() {
                                 食事入力
                               </span>
                             )}
+                            {log.sourceType === 'hydration' && (
+                              <span className="px-2 py-0.5 bg-cyan-100 text-cyan-700 rounded text-xs">
+                                💧 水分入力
+                              </span>
+                            )}
                           </div>
                           <p className="text-sm mt-1">
                             {log.servedBy}さんが提供: {log.servedQuantity}{item.unit}
                           </p>
-                          <p className="text-sm">
-                            摂食: {log.consumedQuantity}{item.unit} ({log.consumptionRate}%)
-                            <span className={`ml-1 ${statusDisplay.color}`}>
-                              {statusDisplay.emoji}{statusDisplay.label}
-                            </span>
-                          </p>
+                          {/* 水分記録と食事記録で表示を分岐 */}
+                          {log.sourceType === 'hydration' ? (
+                            <>
+                              <p className="text-sm">
+                                💧 水分摂取: {log.hydrationAmount ?? log.consumedQuantity}cc
+                                {log.consumptionRate !== undefined && log.consumptionRate < 100 && (
+                                  <>
+                                    {' '}({log.consumptionRate}%)
+                                    <span className={`ml-1 ${statusDisplay.color}`}>
+                                      {statusDisplay.emoji}{statusDisplay.label}
+                                    </span>
+                                  </>
+                                )}
+                                {(log.consumptionRate === undefined || log.consumptionRate === 100) && (
+                                  <span className="ml-1 text-green-600">🎉完食</span>
+                                )}
+                              </p>
+                            </>
+                          ) : (
+                            <p className="text-sm">
+                              摂食: {log.consumedQuantity}{item.unit} ({log.consumptionRate}%)
+                              <span className={`ml-1 ${statusDisplay.color}`}>
+                                {statusDisplay.emoji}{statusDisplay.label}
+                              </span>
+                            </p>
+                          )}
                           <p className="text-xs text-gray-500 mt-1">
                             → 残り {log.quantityAfter}{item.unit}
                           </p>

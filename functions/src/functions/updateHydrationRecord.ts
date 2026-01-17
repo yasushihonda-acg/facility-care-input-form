@@ -33,6 +33,9 @@ interface UpdateHydrationRecordRequest {
   updatedBy: string;
   // 編集前の水分量（特記事項に「※{前の値}ccから編集」を追加するため）
   previousHydrationAmount?: number;
+  // Phase 63: 摂取割合（任意）
+  consumptionRate?: number; // 0-100
+  consumptionStatus?: "full" | "most" | "half" | "little" | "none";
 }
 
 /**
@@ -99,6 +102,9 @@ function validateRequest(
       previousHydrationAmount: typeof req.previousHydrationAmount === "number" ?
         req.previousHydrationAmount :
         undefined,
+      // Phase 63: 摂取割合
+      consumptionRate: typeof req.consumptionRate === "number" ? req.consumptionRate : undefined,
+      consumptionStatus: req.consumptionStatus as "full" | "most" | "half" | "little" | "none" | undefined,
     },
   };
 }
@@ -218,6 +224,12 @@ async function updateHydrationRecordHandler(
     if (input.remainingHandling !== undefined) {
       updateData.remainingHandling = input.remainingHandling;
       updateData.remainingHandlingOther = input.remainingHandlingOther ?? null;
+    }
+
+    // Phase 63: 摂取割合がある場合は更新
+    if (input.consumptionRate !== undefined) {
+      updateData.consumptionRate = input.consumptionRate;
+      updateData.consumptionStatus = input.consumptionStatus ?? null;
     }
 
     await logRef.update(updateData);

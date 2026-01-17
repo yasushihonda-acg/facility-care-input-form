@@ -112,6 +112,9 @@ export interface SubmitHydrationRecordRequest {
   // Phase 61: 残った分への対応（任意）
   remainingHandling?: "discarded" | "stored" | "other";
   remainingHandlingOther?: string;
+  // Phase 63: 摂取割合（任意）
+  consumptionRate?: number; // 0-100
+  consumptionStatus?: "full" | "most" | "half" | "little" | "none";
 }
 
 /**
