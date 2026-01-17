@@ -4,14 +4,7 @@
  */
 
 import { useState } from 'react';
-
-// 表示用の日付文字列（YY/M/D形式）
-function formatDisplayDate(dateKey: string): string {
-  const parts = dateKey.split('/');
-  if (parts.length < 3) return dateKey;
-  const year2digit = String(parseInt(parts[0], 10)).slice(-2);
-  return `${year2digit}/${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
-}
+import { getDisplayDate } from './CorrelationTab';
 
 interface CorrelationDataPoint {
   date: string;
@@ -55,7 +48,7 @@ export function CorrelationScreenshotModal({
 
   // 期間の算出
   const dateRange = correlationData.length > 0
-    ? `${formatDisplayDate(correlationData[correlationData.length - 1].date)} 〜 ${formatDisplayDate(correlationData[0].date)}`
+    ? `${getDisplayDate(correlationData[correlationData.length - 1].date)} 〜 ${getDisplayDate(correlationData[0].date)}`
     : '';
 
   // 生成日時
@@ -164,7 +157,7 @@ export function CorrelationScreenshotModal({
                   key={row.date}
                   className={`border-b ${row.hasEffect ? '' : 'bg-red-50'}`}
                 >
-                  <td className="p-2 font-medium">{formatDisplayDate(row.date)}</td>
+                  <td className="p-2 font-medium">{getDisplayDate(row.date)}</td>
                   <td className="p-2 text-gray-600">{row.magnesiumTime || '-'}</td>
                   <td className="p-2">
                     {row.hasBowelSameDay ? (
@@ -207,7 +200,7 @@ export function CorrelationScreenshotModal({
               >
                 {/* ヘッダー行 */}
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-bold">{formatDisplayDate(row.date)}</span>
+                  <span className="font-bold">{getDisplayDate(row.date)}</span>
                   <span className={`font-bold ${row.hasEffect ? 'text-green-600' : 'text-red-500'}`}>
                     {row.hasEffect ? '○ 効果あり' : '✗ 効果なし'}
                   </span>
