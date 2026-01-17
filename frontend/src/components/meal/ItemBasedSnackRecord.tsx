@@ -7,7 +7,7 @@
  * Phase 13.1で構造化スケジュール対応
  */
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useDemoMode } from '../../hooks/useDemoMode';
 import { useCareItems, useDiscardItem } from '../../hooks/useCareItems';
@@ -894,12 +894,15 @@ function RemainingItemCard({ item, type, showButtons = true, onRecordClick }: Re
   const skipQuantity = isQuantitySkipped(item);
   const remainingQty = skipQuantity ? undefined : (item.currentQuantity ?? item.remainingQuantity ?? item.quantity);
 
+  // Phase 63: 消費ログから破棄割合を取得（フォールバック用）
+  const [logBasedPercent, setLogBasedPercent] = useState<number | null>(null);
+
   const borderColor = type === 'discarded'
     ? 'border-red-300 bg-red-50'
     : 'border-blue-300 bg-blue-50';
 
   // Phase 63: 破棄割合を計算
-  // 優先順位: consumptionSummary.avgConsumptionRate → item.consumptionRate
+  // 優先順位: consumptionSummary.avgConsumptionRate → item.consumptionRate → 消費ログ
   const getDiscardedPercent = (): number | null => {
     if (type !== 'discarded') return null;
     // consumptionSummary.avgConsumptionRate を優先
@@ -910,9 +913,29 @@ function RemainingItemCard({ item, type, showButtons = true, onRecordClick }: Re
     if (item.consumptionRate !== undefined) {
       return Math.round(100 - item.consumptionRate);
     }
-    return null;
+    // 最終フォールバック: 消費ログから取得した値
+    return logBasedPercent;
   };
   const discardedPercent = getDiscardedPercent();
+
+  // Phase 63: 破棄割合がない場合、消費ログから取得
+  useEffect(() => {
+    if (type !== 'discarded') return;
+    if (item.consumptionSummary?.avgConsumptionRate !== undefined) return;
+    if (item.consumptionRate !== undefined) return;
+
+    // 消費ログから最新の破棄割合を取得
+    getConsumptionLogs({ itemId: item.id, limit: 1 })
+      .then((response) => {
+        const latestLog = response.data?.logs[0];
+        if (latestLog?.consumptionRate !== undefined) {
+          setLogBasedPercent(Math.round(100 - latestLog.consumptionRate));
+        }
+      })
+      .catch((error) => {
+        console.error('消費ログの取得に失敗しました:', error);
+      });
+  }, [item.id, item.consumptionSummary?.avgConsumptionRate, item.consumptionRate, type]);
 
   const statusBadge = type === 'discarded'
     ? { icon: '🗑️', text: '破棄済み', bgColor: 'bg-red-100 text-red-700' }
