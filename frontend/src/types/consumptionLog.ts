@@ -73,7 +73,7 @@ export interface ConsumptionLog {
 
   // 連携情報
   linkedMealRecordId?: string;    // 食事記録からの連携時の投稿ID
-  sourceType?: 'meal_form' | 'item_detail' | 'task';  // 記録のソース
+  sourceType?: 'meal_form' | 'item_detail' | 'task' | 'hydration';  // 記録のソース
 
   // Phase 29: 水分量（飲み物カテゴリの場合）
   hydrationAmount?: number;

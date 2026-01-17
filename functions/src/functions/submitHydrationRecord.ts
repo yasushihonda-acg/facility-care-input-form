@@ -48,8 +48,10 @@ function validateRequest(
     return {valid: false, error: "residentName is required"};
   }
 
-  if (typeof req.hydrationAmount !== "number" || req.hydrationAmount <= 0) {
-    return {valid: false, error: "hydrationAmount must be a positive number"};
+  // Phase 63: 摂取割合が0の場合は水分量0を許可
+  const consumptionRate = typeof req.consumptionRate === "number" ? req.consumptionRate : 100;
+  if (typeof req.hydrationAmount !== "number" || (consumptionRate > 0 && req.hydrationAmount <= 0)) {
+    return {valid: false, error: "hydrationAmount must be a positive number (or 0 when consumptionRate is 0)"};
   }
 
   if (!req.facility || typeof req.facility !== "string") {
@@ -91,6 +93,9 @@ function validateRequest(
       // Phase 61: 残った分への対応（任意）
       remainingHandling: req.remainingHandling as "discarded" | "stored" | "other" | undefined,
       remainingHandlingOther: req.remainingHandlingOther as string | undefined,
+      // Phase 63: 摂取割合（任意）
+      consumptionRate: typeof req.consumptionRate === "number" ? req.consumptionRate : undefined,
+      consumptionStatus: req.consumptionStatus as "full" | "most" | "half" | "little" | "none" | undefined,
     },
   };
 }
@@ -134,7 +139,12 @@ function buildWebhookMessage(
   parts.push(`記録者：${record.staffName}`);
 
   parts.push("");
-  parts.push(`摂取量：${record.hydrationAmount}cc`);
+  // Phase 63: 摂取割合が100%未満の場合は割合も表示
+  if (record.consumptionRate !== undefined && record.consumptionRate < 100) {
+    parts.push(`摂取量：${record.hydrationAmount}cc（${record.consumptionRate}%摂取）`);
+  } else {
+    parts.push(`摂取量：${record.hydrationAmount}cc`);
+  }
 
   // Phase 61: 残った分への対応
   if (record.remainingHandling) {
@@ -254,7 +264,17 @@ async function submitHydrationRecordHandler(
       residentName: hydrationRecord.residentName,
       hydrationAmount: hydrationRecord.hydrationAmount,
       facility: hydrationRecord.facility,
+      consumptionRate: hydrationRecord.consumptionRate,
     });
+
+    // Phase 63: 摂取割合が100%未満の場合、特記事項に追記
+    if (hydrationRecord.consumptionRate !== undefined && hydrationRecord.consumptionRate < 100) {
+      const rateNote = `(${hydrationRecord.consumptionRate}%摂取)`;
+      // 特記事項の末尾に追記
+      hydrationRecord.note = hydrationRecord.note ?
+        `${hydrationRecord.note}\n${rateNote}` :
+        rateNote;
+    }
 
     // 水分摂取量シートに追記
     const {sheetRow, postId, sheetTimestamp} = await appendHydrationRecordToSheet(hydrationRecord);
