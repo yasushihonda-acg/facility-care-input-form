@@ -898,10 +898,21 @@ function RemainingItemCard({ item, type, showButtons = true, onRecordClick }: Re
     ? 'border-red-300 bg-red-50'
     : 'border-blue-300 bg-blue-50';
 
-  // Phase 63: 破棄割合を計算（consumptionSummaryから取得）
-  const discardedPercent = type === 'discarded' && item.consumptionSummary?.avgConsumptionRate !== undefined
-    ? Math.round(100 - item.consumptionSummary.avgConsumptionRate)
-    : null;
+  // Phase 63: 破棄割合を計算
+  // 優先順位: consumptionSummary.avgConsumptionRate → item.consumptionRate
+  const getDiscardedPercent = (): number | null => {
+    if (type !== 'discarded') return null;
+    // consumptionSummary.avgConsumptionRate を優先
+    if (item.consumptionSummary?.avgConsumptionRate !== undefined) {
+      return Math.round(100 - item.consumptionSummary.avgConsumptionRate);
+    }
+    // フォールバック: item.consumptionRate
+    if (item.consumptionRate !== undefined) {
+      return Math.round(100 - item.consumptionRate);
+    }
+    return null;
+  };
+  const discardedPercent = getDiscardedPercent();
 
   const statusBadge = type === 'discarded'
     ? { icon: '🗑️', text: '破棄済み', bgColor: 'bg-red-100 text-red-700' }
