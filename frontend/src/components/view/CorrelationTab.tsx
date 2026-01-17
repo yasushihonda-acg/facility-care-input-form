@@ -22,7 +22,8 @@ function getDateKey(timestamp: string): string {
 }
 
 // 表示用の日付文字列（YY/M/D形式）- 年をまたぐデータ対応 + 横幅節約
-function getDisplayDate(dateKey: string): string {
+// CorrelationScreenshotModalでも使用するためエクスポート
+export function getDisplayDate(dateKey: string): string {
   const parts = dateKey.split('/');
   if (parts.length < 3) return dateKey;
   const year2digit = String(parseInt(parts[0], 10)).slice(-2); // 2桁年
