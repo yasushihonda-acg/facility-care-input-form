@@ -20,11 +20,11 @@ function getDateKey(timestamp: string): string {
   return `${match[1]}/${match[2].padStart(2, '0')}/${match[3].padStart(2, '0')}`;
 }
 
-// 表示用の日付文字列（YYYY/M/D形式）
+// 表示用の日付文字列（M/D形式）- モバイルで横スクロール不要に
 function getDisplayDate(dateKey: string): string {
   const parts = dateKey.split('/');
   if (parts.length < 3) return dateKey;
-  return `${parts[0]}/${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
+  return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
 }
 
 // 日付を1日進める
