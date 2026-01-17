@@ -344,7 +344,16 @@ export function StaffRecordDialog({
       return;
     }
     // バリデーション失敗時はダイアログを閉じない
-    if (!validate()) return;
+    if (!validate()) {
+      // Phase 63: エラー箇所にスクロール
+      setTimeout(() => {
+        const errorElement = document.querySelector('.text-red-500');
+        if (errorElement) {
+          errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+      return;
+    }
 
     // submit()を呼び出すと即座にダイアログが閉じ、トースト通知が表示される
     // デモモードの場合はAPIを呼ばずにシミュレーション
