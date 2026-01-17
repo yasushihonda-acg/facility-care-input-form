@@ -898,6 +898,11 @@ function RemainingItemCard({ item, type, showButtons = true, onRecordClick }: Re
     ? 'border-red-300 bg-red-50'
     : 'border-blue-300 bg-blue-50';
 
+  // Phase 63: 破棄割合を計算（consumptionSummaryから取得）
+  const discardedPercent = type === 'discarded' && item.consumptionSummary?.avgConsumptionRate !== undefined
+    ? Math.round(100 - item.consumptionSummary.avgConsumptionRate)
+    : null;
+
   const statusBadge = type === 'discarded'
     ? { icon: '🗑️', text: '破棄済み', bgColor: 'bg-red-100 text-red-700' }
     : { icon: '📦', text: '保存済み', bgColor: 'bg-blue-100 text-blue-700' };
@@ -912,6 +917,10 @@ function RemainingItemCard({ item, type, showButtons = true, onRecordClick }: Re
             </span>
             <span className={`text-xs px-2 py-0.5 rounded ${statusBadge.bgColor}`}>
               {statusBadge.icon} {statusBadge.text}
+              {/* Phase 63: 破棄割合の表示 */}
+              {discardedPercent !== null && discardedPercent > 0 && (
+                <span className="ml-1 text-red-600 font-medium">（{discardedPercent}%分）</span>
+              )}
             </span>
           </div>
 
