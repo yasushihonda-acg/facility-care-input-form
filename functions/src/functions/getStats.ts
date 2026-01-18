@@ -22,6 +22,7 @@ import type {
 } from "../types";
 
 const CARE_ITEMS_COLLECTION = "care_items";
+const DISMISSED_ALERTS_COLLECTION = "dismissed_alerts";
 
 /**
  * 日付文字列から日数差を計算（日本時間）
@@ -135,6 +136,12 @@ async function generateAlerts(
   const alerts: Alert[] = [];
   const today = getTodayString();
 
+  // Phase 63: 確認済みアラートIDを取得
+  const dismissedSnapshot = await db.collection(DISMISSED_ALERTS_COLLECTION).get();
+  const dismissedAlertIds = new Set(
+    dismissedSnapshot.docs.map((doc) => doc.data().alertId as string)
+  );
+
   // 品物データを取得
   let query: FirebaseFirestore.Query = db.collection(CARE_ITEMS_COLLECTION);
   if (residentId) {
@@ -187,6 +194,9 @@ async function generateAlerts(
     }
   });
 
+  // Phase 63: 確認済みアラートを除外
+  const filteredAlerts = alerts.filter((alert) => !dismissedAlertIds.has(alert.id));
+
   // 重要度でソート
   const severityOrder: Record<AlertSeverity, number> = {
     urgent: 0,
@@ -194,7 +204,7 @@ async function generateAlerts(
     info: 2,
   };
 
-  return alerts.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
+  return filteredAlerts.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
 }
 
 /**
