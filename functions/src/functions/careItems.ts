@@ -336,7 +336,7 @@ async function getCareItemsHandler(
       category: req.query.category as ItemCategory | undefined,
       startDate: req.query.startDate as string | undefined,
       endDate: req.query.endDate as string | undefined,
-      limit: req.query.limit ? parseInt(req.query.limit as string, 10) : 50,
+      limit: req.query.limit ? parseInt(req.query.limit as string, 10) : 500,
       offset: req.query.offset ? parseInt(req.query.offset as string, 10) : 0,
     };
 
@@ -456,10 +456,9 @@ async function getCareItemsHandler(
     const countSnapshot = await query.count().get();
     const total = countSnapshot.data().count;
 
-    // ページネーション適用（デフォルト500件に増加 - Phase 63: 古いデータ表示問題修正）
+    // ページネーション適用
     const limit = params.limit || 500;
     const offset = params.offset || 0;
-    functions.logger.info("getCareItems pagination", {limit, offset, paramsLimit: params.limit});
     const snapshot = await query.limit(limit).offset(offset).get();
 
     const items: CareItem[] = snapshot.docs.map((doc) => {
@@ -506,12 +505,11 @@ async function getCareItemsHandler(
       total,
     });
 
-    const responseData = {
+    const responseData: GetCareItemsResponse = {
       items,
       total,
       hasMore: offset + items.length < total,
-      _debug: {limit, offset, paramsLimit: params.limit, version: "500-v2"},
-    } as GetCareItemsResponse;
+    };
 
     const response: ApiResponse<GetCareItemsResponse> = {
       success: true,
