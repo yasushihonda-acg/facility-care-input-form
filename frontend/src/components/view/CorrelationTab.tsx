@@ -30,16 +30,21 @@ export function getDisplayDate(dateKey: string): string {
   return `${year2digit}/${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
 }
 
-// 日付を1日進める
-function getNextDate(dateKey: string): string {
+// 日付をN日進める
+function getDatePlusN(dateKey: string, days: number): string {
   const parts = dateKey.split('/');
   if (parts.length < 3) return '';
   const date = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-  date.setDate(date.getDate() + 1);
+  date.setDate(date.getDate() + days);
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}/${m}/${d}`;
+}
+
+// 日付を1日進める（後方互換）
+function getNextDate(dateKey: string): string {
+  return getDatePlusN(dateKey, 1);
 }
 
 // 内服シートからマグミット頓服の日付・時刻を抽出
@@ -136,6 +141,11 @@ interface CorrelationDataPoint {
   bowelCountNextDay: number;
   bowelTimesNextDay: string;
   nextDayDisplayDate: string;
+  // 2日後（3日目）
+  hasBowelTwoDaysLater: boolean;
+  bowelCountTwoDaysLater: number;
+  bowelTimesTwoDaysLater: string;
+  twoDaysLaterDisplayDate: string;
   hasEffect: boolean;
 }
 
@@ -275,11 +285,14 @@ export function CorrelationTab() {
 
     magnesiumDates.forEach((magInfo, dateKey) => {
       const nextDateKey = getNextDate(dateKey);
+      const twoDaysLaterKey = getDatePlusN(dateKey, 2);
       const bowelSameDay = bowelData.get(dateKey);
       const bowelNextDay = bowelData.get(nextDateKey);
+      const bowelTwoDaysLater = bowelData.get(twoDaysLaterKey);
 
       const hasBowelSameDay = bowelSameDay?.hasBowel || false;
       const hasBowelNextDay = bowelNextDay?.hasBowel || false;
+      const hasBowelTwoDaysLater = bowelTwoDaysLater?.hasBowel || false;
 
       data.push({
         date: dateKey,
@@ -294,6 +307,12 @@ export function CorrelationTab() {
         bowelCountNextDay: bowelNextDay?.count || 0,
         bowelTimesNextDay: bowelNextDay?.times.join(', ') || '',
         nextDayDisplayDate: getDisplayDate(nextDateKey),
+        // 2日後（3日目）
+        hasBowelTwoDaysLater,
+        bowelCountTwoDaysLater: bowelTwoDaysLater?.count || 0,
+        bowelTimesTwoDaysLater: bowelTwoDaysLater?.times.join(', ') || '',
+        twoDaysLaterDisplayDate: getDisplayDate(twoDaysLaterKey),
+        // 効果判定は当日〜翌日のまま（通常タブは変更しない）
         hasEffect: hasBowelSameDay || hasBowelNextDay,
       });
     });
