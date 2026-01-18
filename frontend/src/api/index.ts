@@ -1643,3 +1643,44 @@ export async function getItemEvents(
   return response.json();
 }
 
+// =============================================================================
+// アラート確認（Phase 63）
+// =============================================================================
+
+/**
+ * アラート確認リクエスト型
+ */
+export interface DismissAlertRequest {
+  alertId: string;
+  residentId: string;
+  dismissedBy?: string;
+}
+
+/**
+ * アラート確認レスポンス型
+ */
+export interface DismissAlertResponse {
+  alertId: string;
+  dismissedAt: string;
+}
+
+/**
+ * アラートを確認済みにする
+ */
+export async function dismissAlert(
+  data: DismissAlertRequest
+): Promise<ApiResponse<DismissAlertResponse>> {
+  const response = await fetch(`${API_BASE}/dismissAlert`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to dismiss alert: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+

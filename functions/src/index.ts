@@ -79,6 +79,7 @@ export {
 // =============================================================================
 
 export {getStats} from "./functions/getStats";
+export {dismissAlert} from "./functions/dismissAlert"; // Phase 63: アラート確認
 
 // =============================================================================
 // AI連携（Phase 8.4）

@@ -4,11 +4,12 @@
  * @see docs/STATS_DASHBOARD_SPEC.md
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
 import { Layout } from '../../components/Layout';
 import { useStats } from '../../hooks/useStats';
-import { getFoodStats } from '../../api';
+import { getFoodStats, dismissAlert } from '../../api';
 import { AIAnalysis } from '../../components/family/AIAnalysis';
 import { DEMO_FOOD_STATS } from '../../data/demo';
 import type {
@@ -68,6 +69,26 @@ export function StatsDashboard() {
     };
     fetchFoodStats();
   }, [isDemo]);
+
+  // Phase 63: アラート確認ハンドラ
+  const handleDismissAlert = useCallback(async (alertId: string) => {
+    if (isDemo) {
+      toast.info('デモモードではアラートを確認できません');
+      return;
+    }
+
+    try {
+      await dismissAlert({
+        alertId,
+        residentId: DEMO_RESIDENT_ID,
+      });
+      toast.success('アラートを確認しました');
+      refetch(); // アラートリストを更新
+    } catch (err) {
+      console.error('Failed to dismiss alert:', err);
+      toast.error('アラートの確認に失敗しました');
+    }
+  }, [isDemo, refetch]);
 
   const handleRefresh = () => {
     refetch();
@@ -145,7 +166,13 @@ export function StatsDashboard() {
             {activeTab === 'consumption' && !foodStatsLoading && !foodStatsError && (
               <ConsumptionStatsTab data={foodStats} />
             )}
-            {activeTab === 'alerts' && <AlertsTab alerts={alerts} />}
+            {activeTab === 'alerts' && (
+              <AlertsTab
+                alerts={alerts}
+                onDismiss={handleDismissAlert}
+                isDemo={isDemo}
+              />
+            )}
           </>
         )}
       </div>
@@ -376,9 +403,11 @@ function ExpirationList({ data }: ExpirationListProps) {
 
 interface AlertsTabProps {
   alerts: Alert[];
+  onDismiss: (alertId: string) => void;
+  isDemo: boolean;
 }
 
-function AlertsTab({ alerts }: AlertsTabProps) {
+function AlertsTab({ alerts, onDismiss, isDemo }: AlertsTabProps) {
   if (alerts.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-card p-6 text-center">
@@ -400,18 +429,24 @@ function AlertsTab({ alerts }: AlertsTabProps) {
         <AlertGroup
           severity="urgent"
           alerts={urgentAlerts}
+          onDismiss={onDismiss}
+          isDemo={isDemo}
         />
       )}
       {warningAlerts.length > 0 && (
         <AlertGroup
           severity="warning"
           alerts={warningAlerts}
+          onDismiss={onDismiss}
+          isDemo={isDemo}
         />
       )}
       {infoAlerts.length > 0 && (
         <AlertGroup
           severity="info"
           alerts={infoAlerts}
+          onDismiss={onDismiss}
+          isDemo={isDemo}
         />
       )}
     </div>
@@ -425,9 +460,11 @@ function AlertsTab({ alerts }: AlertsTabProps) {
 interface AlertGroupProps {
   severity: AlertSeverity;
   alerts: Alert[];
+  onDismiss: (alertId: string) => void;
+  isDemo: boolean;
 }
 
-function AlertGroup({ severity, alerts }: AlertGroupProps) {
+function AlertGroup({ severity, alerts, onDismiss, isDemo }: AlertGroupProps) {
   const colors = ALERT_SEVERITY_COLORS[severity];
   const severityIcons: Record<AlertSeverity, string> = {
     urgent: '🔴',
@@ -460,6 +497,19 @@ function AlertGroup({ severity, alerts }: AlertGroupProps) {
                   {ALERT_TYPE_LABELS[alert.type]}
                 </p>
               </div>
+              {/* Phase 63: 確認ボタン */}
+              <button
+                onClick={() => onDismiss(alert.id)}
+                className={`shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                  isDemo
+                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 active:bg-gray-100'
+                }`}
+                disabled={isDemo}
+                title={isDemo ? 'デモモードでは確認できません' : '確認済みにする'}
+              >
+                ✓ 確認
+              </button>
             </div>
           </div>
         ))}
