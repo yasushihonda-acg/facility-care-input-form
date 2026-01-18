@@ -904,16 +904,16 @@ function RemainingItemCard({ item, type, showButtons = true, onRecordClick }: Re
     : 'border-blue-300 bg-blue-50';
 
   // Phase 63: 破棄割合を計算
-  // 優先順位: consumptionSummary.avgConsumptionRate → item.consumptionRate → 消費ログ
+  // 優先順位: item.consumptionRate（編集値）→ consumptionSummary.avgConsumptionRate → 消費ログ
   const getDiscardedPercent = (): number | null => {
     if (type !== 'discarded') return null;
-    // consumptionSummary.avgConsumptionRate を優先
-    if (item.consumptionSummary?.avgConsumptionRate !== undefined) {
-      return Math.round(100 - item.consumptionSummary.avgConsumptionRate);
-    }
-    // フォールバック: item.consumptionRate
+    // item.consumptionRate を優先（編集で明示的に設定された値）
     if (item.consumptionRate !== undefined) {
       return Math.round(100 - item.consumptionRate);
+    }
+    // フォールバック: consumptionSummary.avgConsumptionRate（集計値）
+    if (item.consumptionSummary?.avgConsumptionRate !== undefined) {
+      return Math.round(100 - item.consumptionSummary.avgConsumptionRate);
     }
     // 最終フォールバック: 消費ログから取得した値
     return logBasedPercent;
@@ -923,8 +923,8 @@ function RemainingItemCard({ item, type, showButtons = true, onRecordClick }: Re
   // Phase 63: 破棄割合がない場合、消費ログから取得
   useEffect(() => {
     if (type !== 'discarded') return;
-    if (item.consumptionSummary?.avgConsumptionRate !== undefined) return;
     if (item.consumptionRate !== undefined) return;
+    if (item.consumptionSummary?.avgConsumptionRate !== undefined) return;
 
     // デモモードではローカルデータを使用
     if (isDemo) {
