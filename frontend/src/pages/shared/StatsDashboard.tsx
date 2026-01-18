@@ -473,7 +473,12 @@ function AlertGroup({ severity, alerts, onDismiss, isDemo }: AlertGroupProps) {
     info: '🔵',
   };
 
-  const handleDismiss = async (alertId: string) => {
+  const handleDismiss = async (alertId: string, alertTitle: string) => {
+    // 確認ダイアログ
+    if (!window.confirm(`「${alertTitle}」を確認済みにしますか？\n\n確認済みにすると、このアラートは表示されなくなります。`)) {
+      return;
+    }
+
     setDismissingId(alertId);
     try {
       await onDismiss(alertId);
@@ -511,7 +516,7 @@ function AlertGroup({ severity, alerts, onDismiss, isDemo }: AlertGroupProps) {
                 </div>
                 {/* Phase 63: 確認ボタン（ローディング対応） */}
                 <button
-                  onClick={() => handleDismiss(alert.id)}
+                  onClick={() => handleDismiss(alert.id, alert.title)}
                   className={`shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                     isDemo || isDismissing
                       ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
