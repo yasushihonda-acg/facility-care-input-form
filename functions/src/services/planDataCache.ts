@@ -43,9 +43,9 @@ export async function getCachedPlanData(
     const cacheAge = Math.round((now - planDataCache.cachedAt) / 1000);
     const requestedLimit = options.limit || DEFAULT_CACHE_LIMIT;
     // リクエストされたlimitに応じてキャッシュからsliceして返す
-    const records = requestedLimit < planDataCache.records.length
-      ? planDataCache.records.slice(0, requestedLimit)
-      : planDataCache.records;
+    const records = requestedLimit < planDataCache.records.length ?
+      planDataCache.records.slice(0, requestedLimit) :
+      planDataCache.records;
     functions.logger.info("planDataCache HIT", {
       cacheAge: `${cacheAge}s`,
       cachedRecordCount: planDataCache.records.length,
@@ -79,9 +79,9 @@ export async function getCachedPlanData(
   };
 
   // リクエストされたlimitに応じてsliceして返す
-  const records = requestedLimit < result.records.length
-    ? result.records.slice(0, requestedLimit)
-    : result.records;
+  const records = requestedLimit < result.records.length ?
+    result.records.slice(0, requestedLimit) :
+    result.records;
 
   functions.logger.info("planDataCache updated", {
     cachedRecordCount: result.records.length,
