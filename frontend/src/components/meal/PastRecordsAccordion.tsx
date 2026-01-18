@@ -7,9 +7,10 @@
  * - 並び順切り替え（新しい順、古い順、品物名あいうえお順）
  * - 過去記録カード表示
  * - 編集ボタン
+ * - 品物IDのページネーション（50件ずつ読み込み）
  */
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getAllConsumptionLogs } from '../../api';
 import type { ConsumptionLog } from '../../types/consumptionLog';
@@ -19,6 +20,9 @@ import { useDemoMode } from '../../hooks/useDemoMode';
 
 // 並び順の種類
 type SortOrder = 'newest' | 'oldest' | 'itemName';
+
+// 1回のリクエストで取得する品物数
+const ITEMS_PER_PAGE = 50;
 
 interface PastRecordsAccordionProps {
   /** 品物リスト（品物名取得用） */
@@ -34,7 +38,7 @@ function getMonthsAgo(months: number): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
-// 1ヶ月前の日付を取得（後方互換）
+// 1ヶ月前の日付を取得
 function getOneMonthAgo(): string {
   return getMonthsAgo(1);
 }
@@ -52,11 +56,10 @@ export function PastRecordsAccordion({ items, onEditClick }: PastRecordsAccordio
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
 
-  // Phase 63: ページネーション用の状態
-  const [monthsBack, setMonthsBack] = useState(1); // 何ヶ月分遡るか
+  // ページネーション用の状態
+  const [itemsLoaded, setItemsLoaded] = useState(ITEMS_PER_PAGE); // 何件の品物を読み込んだか
   const [additionalLogs, setAdditionalLogs] = useState<ConsumptionLog[]>([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasMoreData, setHasMoreData] = useState(true);
 
   // 品物IDから品物情報を取得するMap
   const itemMap = useMemo(() => {
@@ -65,36 +68,41 @@ export function PastRecordsAccordion({ items, onEditClick }: PastRecordsAccordio
     return map;
   }, [items]);
 
-  // 品物IDリスト
-  const itemIds = useMemo(() => items.map(item => item.id), [items]);
+  // 全品物IDリスト
+  const allItemIds = useMemo(() => items.map(item => item.id), [items]);
 
-  // 過去ログ取得（アコーディオンが開いている時のみ）
+  // 最初に読み込む品物IDリスト（最初の50件）
+  const initialItemIds = useMemo(() => allItemIds.slice(0, ITEMS_PER_PAGE), [allItemIds]);
+
+  // さらに読み込むべき品物があるか
+  const hasMoreItems = allItemIds.length > itemsLoaded;
+
+  // 過去ログ取得（アコーディオンが開いている時のみ、最初の50品物）
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['pastConsumptionLogs', itemIds],
+    queryKey: ['pastConsumptionLogs', initialItemIds],
     queryFn: async () => {
       if (isDemo) {
-        // デモモードではダミーデータを返す
         return { logs: [], total: 0 };
       }
-      if (itemIds.length === 0) {
+      if (initialItemIds.length === 0) {
         return { logs: [], total: 0 };
       }
       const response = await getAllConsumptionLogs({
-        itemIds,
+        itemIds: initialItemIds,
         startDate: getOneMonthAgo(),
         endDate: getYesterday(),
         limit: 100,
       });
       return response.data ?? { logs: [], total: 0 };
     },
-    enabled: isOpen && !isDemo && itemIds.length > 0,
+    enabled: isOpen && !isDemo && initialItemIds.length > 0,
     staleTime: 5 * 60 * 1000, // 5分間キャッシュ
   });
 
   // ログデータをメモ化
   const baseLogs = useMemo(() => data?.logs ?? [], [data?.logs]);
 
-  // Phase 63: 基本ログと追加ログをマージ（重複除外）
+  // 基本ログと追加ログをマージ（重複除外）
   const logs = useMemo(() => {
     const existingIds = new Set(baseLogs.map(log => log.id));
     const merged = [...baseLogs];
@@ -107,17 +115,19 @@ export function PastRecordsAccordion({ items, onEditClick }: PastRecordsAccordio
     return merged;
   }, [baseLogs, additionalLogs]);
 
-  // Phase 63: 追加の過去データを読み込む
-  const loadMorePastRecords = async () => {
-    if (isLoadingMore || !hasMoreData || isDemo || itemIds.length === 0) return;
+  // 追加の品物のログを読み込む
+  const loadMoreItems = useCallback(async () => {
+    if (isLoadingMore || !hasMoreItems || isDemo) return;
 
     setIsLoadingMore(true);
     try {
-      const newMonthsBack = monthsBack + 1;
+      const nextItemIds = allItemIds.slice(itemsLoaded, itemsLoaded + ITEMS_PER_PAGE);
+      if (nextItemIds.length === 0) return;
+
       const response = await getAllConsumptionLogs({
-        itemIds,
-        startDate: getMonthsAgo(newMonthsBack),
-        endDate: getMonthsAgo(monthsBack), // 前回の開始日の前日まで
+        itemIds: nextItemIds,
+        startDate: getOneMonthAgo(),
+        endDate: getYesterday(),
         limit: 100,
       });
 
@@ -125,20 +135,15 @@ export function PastRecordsAccordion({ items, onEditClick }: PastRecordsAccordio
         const newLogs = response.data.logs;
         if (newLogs.length > 0) {
           setAdditionalLogs(prev => [...prev, ...newLogs]);
-          setMonthsBack(newMonthsBack);
         }
-        // 12ヶ月（1年）を超えたらもうデータはないとみなす
-        setHasMoreData(newLogs.length > 0 && newMonthsBack < 12);
-      } else {
-        setHasMoreData(false);
+        setItemsLoaded(prev => prev + ITEMS_PER_PAGE);
       }
     } catch (err) {
-      console.error('Failed to load more past records:', err);
-      setHasMoreData(false);
+      console.error('Failed to load more items:', err);
     } finally {
       setIsLoadingMore(false);
     }
-  };
+  }, [isLoadingMore, hasMoreItems, isDemo, allItemIds, itemsLoaded]);
 
   // ログと品物情報を結合してフィルタ・ソート
   const filteredAndSortedLogs = useMemo(() => {
@@ -170,22 +175,18 @@ export function PastRecordsAccordion({ items, onEditClick }: PastRecordsAccordio
     result.sort((a, b) => {
       switch (sortOrder) {
         case 'newest': {
-          // 日付降順、同日は記録時刻降順
           const dateCompareNew = b.log.servedDate.localeCompare(a.log.servedDate);
           if (dateCompareNew !== 0) return dateCompareNew;
           return (b.log.recordedAt || '').localeCompare(a.log.recordedAt || '');
         }
         case 'oldest': {
-          // 日付昇順、同日は記録時刻昇順
           const dateCompareOld = a.log.servedDate.localeCompare(b.log.servedDate);
           if (dateCompareOld !== 0) return dateCompareOld;
           return (a.log.recordedAt || '').localeCompare(b.log.recordedAt || '');
         }
         case 'itemName': {
-          // 品物名のあいうえお順
           const nameCompare = (a.item?.itemName || '').localeCompare(b.item?.itemName || '', 'ja');
           if (nameCompare !== 0) return nameCompare;
-          // 同じ品物は日付降順
           return b.log.servedDate.localeCompare(a.log.servedDate);
         }
         default:
@@ -198,10 +199,18 @@ export function PastRecordsAccordion({ items, onEditClick }: PastRecordsAccordio
 
   // アコーディオンを開いた時にデータを再取得
   useEffect(() => {
-    if (isOpen && !isDemo && itemIds.length > 0) {
+    if (isOpen && !isDemo && initialItemIds.length > 0) {
       refetch();
     }
-  }, [isOpen, isDemo, itemIds.length, refetch]);
+  }, [isOpen, isDemo, initialItemIds.length, refetch]);
+
+  // アコーディオンを閉じた時に追加読み込み状態をリセット
+  useEffect(() => {
+    if (!isOpen) {
+      setItemsLoaded(ITEMS_PER_PAGE);
+      setAdditionalLogs([]);
+    }
+  }, [isOpen]);
 
   return (
     <div className="mt-6">
@@ -335,15 +344,22 @@ export function PastRecordsAccordion({ items, onEditClick }: PastRecordsAccordio
                   全{logs.length}件中
                 </>
               ) : (
-                <>過去{monthsBack}ヶ月: {filteredAndSortedLogs.length}件</>
+                <>
+                  過去1ヶ月: {filteredAndSortedLogs.length}件
+                  {hasMoreItems && (
+                    <span className="text-gray-400 ml-1">
+                      ({Math.min(itemsLoaded, allItemIds.length)}/{allItemIds.length}品物)
+                    </span>
+                  )}
+                </>
               )}
             </div>
           )}
 
-          {/* Phase 63: さらに表示ボタン */}
-          {!isLoading && !error && !isDemo && hasMoreData && filteredAndSortedLogs.length > 0 && (
+          {/* さらに表示ボタン */}
+          {!isLoading && !error && !isDemo && hasMoreItems && (
             <button
-              onClick={loadMorePastRecords}
+              onClick={loadMoreItems}
               disabled={isLoadingMore}
               className="w-full py-3 text-center text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg border border-blue-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-3"
             >
@@ -356,7 +372,7 @@ export function PastRecordsAccordion({ items, onEditClick }: PastRecordsAccordio
                   読み込み中...
                 </span>
               ) : (
-                '📋 さらに古い記録を表示'
+                `📋 さらに表示 (残り${allItemIds.length - itemsLoaded}品物)`
               )}
             </button>
           )}
