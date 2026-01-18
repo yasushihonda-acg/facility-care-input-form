@@ -239,6 +239,20 @@ async function updateHydrationRecordHandler(
       hydrationAmount: input.hydrationAmount,
     });
 
+    // Phase 63: 品物ドキュメントのconsumptionRateも更新（破棄割合表示用）
+    if (input.consumptionRate !== undefined) {
+      const itemUpdateData: Record<string, unknown> = {
+        consumptionRate: input.consumptionRate,
+        consumptionStatus: input.consumptionStatus ?? null,
+        updatedAt: now,
+      };
+      await itemRef.update(itemUpdateData);
+      functions.logger.info("Firestore care_item consumptionRate updated", {
+        itemId: input.itemId,
+        consumptionRate: input.consumptionRate,
+      });
+    }
+
     // 2. SHEET_Aの「水分摂取量」シートを更新
     let sheetUpdated = false;
     let sheetRow: number | undefined;
