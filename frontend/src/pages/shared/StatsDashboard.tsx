@@ -403,7 +403,7 @@ function ExpirationList({ data }: ExpirationListProps) {
 
 interface AlertsTabProps {
   alerts: Alert[];
-  onDismiss: (alertId: string) => void;
+  onDismiss: (alertId: string) => Promise<void>;
   isDemo: boolean;
 }
 
@@ -460,16 +460,26 @@ function AlertsTab({ alerts, onDismiss, isDemo }: AlertsTabProps) {
 interface AlertGroupProps {
   severity: AlertSeverity;
   alerts: Alert[];
-  onDismiss: (alertId: string) => void;
+  onDismiss: (alertId: string) => Promise<void>;
   isDemo: boolean;
 }
 
 function AlertGroup({ severity, alerts, onDismiss, isDemo }: AlertGroupProps) {
+  const [dismissingId, setDismissingId] = useState<string | null>(null);
   const colors = ALERT_SEVERITY_COLORS[severity];
   const severityIcons: Record<AlertSeverity, string> = {
     urgent: '🔴',
     warning: '🟠',
     info: '🔵',
+  };
+
+  const handleDismiss = async (alertId: string) => {
+    setDismissingId(alertId);
+    try {
+      await onDismiss(alertId);
+    } finally {
+      setDismissingId(null);
+    }
   };
 
   return (
@@ -481,38 +491,48 @@ function AlertGroup({ severity, alerts, onDismiss, isDemo }: AlertGroupProps) {
         </span>
       </div>
       <div className="space-y-2">
-        {alerts.map((alert) => (
-          <div
-            key={alert.id}
-            className={`rounded-lg p-3 border ${colors.bg} ${colors.border}`}
-          >
-            <div className="flex items-start gap-2">
-              <span className="text-lg">
-                {getAlertIcon(alert.type)}
-              </span>
-              <div className="flex-1">
-                <p className={`text-sm font-medium ${colors.text}`}>{alert.title}</p>
-                <p className="text-xs text-gray-600 mt-0.5">{alert.description}</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  {ALERT_TYPE_LABELS[alert.type]}
-                </p>
+        {alerts.map((alert) => {
+          const isDismissing = dismissingId === alert.id;
+          return (
+            <div
+              key={alert.id}
+              className={`rounded-lg p-3 border ${colors.bg} ${colors.border} ${isDismissing ? 'opacity-60' : ''}`}
+            >
+              <div className="flex items-start gap-2">
+                <span className="text-lg">
+                  {getAlertIcon(alert.type)}
+                </span>
+                <div className="flex-1">
+                  <p className={`text-sm font-medium ${colors.text}`}>{alert.title}</p>
+                  <p className="text-xs text-gray-600 mt-0.5">{alert.description}</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {ALERT_TYPE_LABELS[alert.type]}
+                  </p>
+                </div>
+                {/* Phase 63: 確認ボタン（ローディング対応） */}
+                <button
+                  onClick={() => handleDismiss(alert.id)}
+                  className={`shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                    isDemo || isDismissing
+                      ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 active:bg-gray-100'
+                  }`}
+                  disabled={isDemo || isDismissing}
+                  title={isDemo ? 'デモモードでは確認できません' : '確認済みにする'}
+                >
+                  {isDismissing ? (
+                    <span className="flex items-center gap-1">
+                      <span className="inline-block w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                      確認中
+                    </span>
+                  ) : (
+                    '✓ 確認'
+                  )}
+                </button>
               </div>
-              {/* Phase 63: 確認ボタン */}
-              <button
-                onClick={() => onDismiss(alert.id)}
-                className={`shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                  isDemo
-                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 active:bg-gray-100'
-                }`}
-                disabled={isDemo}
-                title={isDemo ? 'デモモードでは確認できません' : '確認済みにする'}
-              >
-                ✓ 確認
-              </button>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
