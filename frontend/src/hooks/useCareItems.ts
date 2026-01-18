@@ -83,8 +83,8 @@ function filterDemoCareItems(params: GetCareItemsParams): { items: CareItem[]; t
 
   const total = items.length;
 
-  // ページネーション
-  const limit = params.limit ?? 50;
+  // ページネーション（デフォルト500件に増加 - 古いデータが表示されない問題を修正）
+  const limit = params.limit ?? 500;
   const offset = params.offset ?? 0;
   items = items.slice(offset, offset + limit);
 
