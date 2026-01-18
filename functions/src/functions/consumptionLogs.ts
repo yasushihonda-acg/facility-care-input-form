@@ -655,13 +655,13 @@ async function getAllConsumptionLogsHandler(
       return;
     }
 
-    // 最大100品物まで
-    if (params.itemIds.length > 100) {
+    // 最大500品物まで（品物一覧のデフォルトlimit=500に合わせる）
+    if (params.itemIds.length > 500) {
       const response: ApiResponse<null> = {
         success: false,
         error: {
           code: ErrorCodes.INVALID_REQUEST,
-          message: "itemIds cannot exceed 100 items",
+          message: "itemIds cannot exceed 500 items",
         },
         timestamp,
       };
