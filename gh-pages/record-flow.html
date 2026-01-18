@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>記録が届くまでの流れ - 施設ケア入力フォーム</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .flow-arrow {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .step-card {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .step-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+        }
+        .timeline-dot {
+            animation: bounce 1s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-blue-50 to-white min-h-screen">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-6">
+        <div class="container mx-auto px-4">
+            <a href="index.html" class="inline-flex items-center gap-2 text-blue-200 hover:text-white mb-4 text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                トップページに戻る
+            </a>
+            <h1 class="text-2xl md:text-3xl font-bold mb-2">記録が届くまでの流れ</h1>
+            <p class="text-blue-100">スタッフの入力から、ご家族が見るまで</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 max-w-4xl">
+
+        <!-- Introduction -->
+        <section class="bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-8">
+            <div class="flex items-start gap-4">
+                <div class="text-4xl">💡</div>
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-2">このページについて</h2>
+                    <p class="text-gray-600 leading-relaxed">
+                        スタッフが食事や水分の記録を入力してから、ご家族がアプリで確認できるようになるまでの流れを、
+                        分かりやすくご説明します。
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Summary Card -->
+        <section class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl shadow-lg p-6 md:p-8 mb-8 border-2 border-green-200">
+            <h2 class="text-xl font-bold text-green-800 mb-4 flex items-center gap-2">
+                <span class="text-2xl">✅</span>
+                スタッフの記録は確実にご家族に届きます
+            </h2>
+            <div class="bg-white rounded-xl p-4">
+                <div class="flex items-center justify-center gap-4 flex-wrap">
+                    <div class="text-center">
+                        <div class="text-3xl mb-1">👨‍⚕️</div>
+                        <div class="text-sm text-gray-600">スタッフが入力</div>
+                    </div>
+                    <div class="text-green-500 text-2xl flow-arrow">→</div>
+                    <div class="text-center">
+                        <div class="text-3xl mb-1">📊</div>
+                        <div class="text-sm text-gray-600">安全に保存</div>
+                    </div>
+                    <div class="text-green-500 text-2xl flow-arrow">→</div>
+                    <div class="text-center">
+                        <div class="text-3xl mb-1">🔄</div>
+                        <div class="text-sm text-gray-600">自動で反映</div>
+                    </div>
+                    <div class="text-green-500 text-2xl flow-arrow">→</div>
+                    <div class="text-center">
+                        <div class="text-3xl mb-1">👨‍👩‍👧</div>
+                        <div class="text-sm text-gray-600">ご家族が閲覧</div>
+                    </div>
+                </div>
+            </div>
+            <p class="text-green-700 text-sm mt-4 text-center">
+                入力が完了した時点で記録は安全に保存され、自動的にアプリに反映されます
+            </p>
+        </section>
+
+        <!-- Detailed Flow -->
+        <section class="mb-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <span class="text-2xl">📋</span>
+                詳しい流れ
+            </h2>
+
+            <!-- Step 1 -->
+            <div class="step-card bg-white rounded-2xl shadow-lg p-6 mb-4 border-l-4 border-blue-500">
+                <div class="flex items-start gap-4">
+                    <div class="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-xl flex-shrink-0">
+                        1
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-bold text-gray-800 mb-2">スタッフが記録を入力</h3>
+                        <div class="bg-blue-50 rounded-xl p-4 mb-3">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="text-3xl">👨‍⚕️</span>
+                                <span class="text-gray-600">スタッフがアプリで入力</span>
+                            </div>
+                            <div class="grid md:grid-cols-2 gap-3">
+                                <div class="bg-white rounded-lg p-3 border border-blue-200">
+                                    <div class="font-semibold text-blue-800 mb-1">🍚 食事記録</div>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>・提供数</li>
+                                        <li>・<strong class="text-blue-700">摂取した割合</strong>（0〜10の10段階）</li>
+                                        <li>・残った分への対応</li>
+                                    </ul>
+                                </div>
+                                <div class="bg-white rounded-lg p-3 border border-blue-200">
+                                    <div class="font-semibold text-blue-800 mb-1">💧 水分記録</div>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>・提供数</li>
+                                        <li>・<strong class="text-blue-700">摂取した割合</strong>（0〜10の10段階）</li>
+                                        <li>・実際に飲んだ水分量（cc単位）</li>
+                                        <li>・残った分への対応</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Consumption Rate Slider Example -->
+                            <div class="mt-4 bg-white rounded-lg p-4 border border-blue-200">
+                                <h4 class="font-semibold text-blue-800 mb-3">「摂取した割合」の入力方法</h4>
+                                <div class="bg-gray-50 rounded-lg p-3 mb-3">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm text-gray-600">摂取した割合</span>
+                                        <span class="font-bold text-gray-800">6 / 10 <span class="text-green-600">(60%)</span></span>
+                                    </div>
+                                    <div class="relative w-full h-3 bg-gray-300 rounded-full">
+                                        <div class="absolute left-0 top-0 h-3 bg-green-500 rounded-full" style="width: 60%"></div>
+                                        <div class="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow" style="left: calc(60% - 8px)"></div>
+                                    </div>
+                                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                        <span>0（飲まず）</span>
+                                        <span>5（半分）</span>
+                                        <span>10（全部）</span>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                                    <div class="bg-red-50 rounded p-2">
+                                        <div class="font-bold text-red-600">0〜2</div>
+                                        <div class="text-gray-500">ほぼ摂取なし</div>
+                                    </div>
+                                    <div class="bg-yellow-50 rounded p-2">
+                                        <div class="font-bold text-yellow-600">3〜7</div>
+                                        <div class="text-gray-500">一部を摂取</div>
+                                    </div>
+                                    <div class="bg-green-50 rounded p-2">
+                                        <div class="font-bold text-green-600">8〜10</div>
+                                        <div class="text-gray-500">ほぼ全量摂取</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Remaining Handling -->
+                            <div class="mt-3 bg-white rounded-lg p-4 border border-blue-200">
+                                <h4 class="font-semibold text-blue-800 mb-2">「残った分への対応」の選択肢</h4>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm">破棄した</span>
+                                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">保存した</span>
+                                    <span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm">その他</span>
+                                </div>
+                            </div>
+
+                            <div class="mt-3 p-2 bg-blue-100 rounded-lg">
+                                <p class="text-xs text-blue-800">
+                                    <strong>ポイント：</strong>スライダーで細かく摂取割合を記録でき、この情報が品物管理画面のパーセンテージ表示に反映されます。
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 text-sm text-gray-500">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span>入力完了まで：約1〜2分</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="flex justify-center my-2">
+                <div class="w-0.5 h-8 bg-gradient-to-b from-blue-500 to-green-500"></div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="step-card bg-white rounded-2xl shadow-lg p-6 mb-4 border-l-4 border-green-500">
+                <div class="flex items-start gap-4">
+                    <div class="w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-xl flex-shrink-0">
+                        2
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-bold text-gray-800 mb-2">記録シートに保存される</h3>
+                        <div class="bg-green-50 rounded-xl p-4 mb-3">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="text-3xl">📊</span>
+                                <span class="text-gray-600">Googleスプレッドシートに自動保存</span>
+                            </div>
+                            <div class="bg-white rounded-lg p-4 border border-green-200">
+                                <p class="text-gray-600 text-sm mb-2">
+                                    入力した内容は、施設の記録管理用スプレッドシートに自動的に追加されます。
+                                </p>
+                                <div class="flex items-center gap-2 bg-green-100 rounded-lg px-3 py-2">
+                                    <span class="text-green-600">✓</span>
+                                    <span class="text-green-800 text-sm font-medium">この時点で記録は安全に保存されています</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 text-sm text-gray-500">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span>保存完了：即座（数秒）</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="flex justify-center my-2">
+                <div class="w-0.5 h-8 bg-gradient-to-b from-green-500 to-orange-500"></div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="step-card bg-white rounded-2xl shadow-lg p-6 mb-4 border-l-4 border-orange-500">
+                <div class="flex items-start gap-4">
+                    <div class="w-12 h-12 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold text-xl flex-shrink-0">
+                        3
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-bold text-gray-800 mb-2">定期的な同期処理</h3>
+                        <div class="bg-orange-50 rounded-xl p-4 mb-3">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="text-3xl">🔄</span>
+                                <span class="text-gray-600">1時間ごとに自動でアプリに取り込み</span>
+                            </div>
+                            <div class="bg-white rounded-lg p-4 border border-orange-200">
+                                <h4 class="font-semibold text-orange-800 mb-3">同期のタイミング</h4>
+                                <div class="space-y-3">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                            <span class="text-orange-600">差</span>
+                                        </div>
+                                        <div>
+                                            <div class="font-medium text-gray-800">差分同期（毎時0分）</div>
+                                            <div class="text-sm text-gray-600">新しい記録のみを取り込みます</div>
+                                            <div class="text-xs text-gray-400 mt-1">例：9:00, 10:00, 11:00...</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                            <span class="text-orange-600">全</span>
+                                        </div>
+                                        <div>
+                                            <div class="font-medium text-gray-800">完全同期（毎日 午前3時）</div>
+                                            <div class="text-sm text-gray-600">すべてのデータを再取り込みします</div>
+                                            <div class="text-xs text-gray-400 mt-1">データの整合性を確保</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 text-sm text-gray-500">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span>反映まで：最大1時間（次の同期タイミングまで）</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="flex justify-center my-2">
+                <div class="w-0.5 h-8 bg-gradient-to-b from-orange-500 to-pink-500"></div>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="step-card bg-white rounded-2xl shadow-lg p-6 mb-4 border-l-4 border-pink-500">
+                <div class="flex items-start gap-4">
+                    <div class="w-12 h-12 bg-pink-500 text-white rounded-full flex items-center justify-center font-bold text-xl flex-shrink-0">
+                        4
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-bold text-gray-800 mb-2">ご家族がアプリで確認</h3>
+                        <div class="bg-pink-50 rounded-xl p-4 mb-3">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="text-3xl">👨‍👩‍👧</span>
+                                <span class="text-gray-600">いつでもどこでもスマートフォンで閲覧</span>
+                            </div>
+                            <div class="bg-white rounded-lg p-4 border border-pink-200">
+                                <h4 class="font-semibold text-pink-800 mb-3">確認できる画面</h4>
+                                <div class="grid md:grid-cols-2 gap-3">
+                                    <div class="flex items-start gap-2">
+                                        <span class="text-pink-500">📋</span>
+                                        <div>
+                                            <div class="font-medium text-gray-800">記録閲覧</div>
+                                            <div class="text-xs text-gray-500">日付・シート別に記録を検索</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start gap-2">
+                                        <span class="text-pink-500">📊</span>
+                                        <div>
+                                            <div class="font-medium text-gray-800">グラフ表示</div>
+                                            <div class="text-xs text-gray-500">バイタル・体重の推移</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start gap-2">
+                                        <span class="text-pink-500">🏠</span>
+                                        <div>
+                                            <div class="font-medium text-gray-800">家族ホーム</div>
+                                            <div class="text-xs text-gray-500">今日の様子をタイムラインで</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start gap-2">
+                                        <span class="text-pink-500">🔍</span>
+                                        <div>
+                                            <div class="font-medium text-gray-800">相関分析</div>
+                                            <div class="text-xs text-gray-500">AI による傾向分析</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 text-sm text-green-600 font-medium">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span>同期完了後は、いつでも最新の記録を確認できます</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Timeline Example -->
+        <section class="bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <span class="text-2xl">🕐</span>
+                具体例：間食の記録が届くまで
+            </h2>
+            <div class="relative">
+                <!-- Timeline -->
+                <div class="absolute left-4 md:left-8 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+
+                <div class="space-y-6">
+                    <!-- Event 1 -->
+                    <div class="relative flex items-start gap-4 pl-12 md:pl-20">
+                        <div class="absolute left-2 md:left-6 w-4 h-4 bg-blue-500 rounded-full timeline-dot"></div>
+                        <div class="bg-blue-50 rounded-lg p-4 flex-1">
+                            <div class="text-sm font-bold text-blue-600">15:00</div>
+                            <div class="text-gray-800">スタッフが間食の記録を入力</div>
+                            <div class="text-sm text-gray-500">「柿：全量摂取、乳飲料：半量」</div>
+                        </div>
+                    </div>
+
+                    <!-- Event 2 -->
+                    <div class="relative flex items-start gap-4 pl-12 md:pl-20">
+                        <div class="absolute left-2 md:left-6 w-4 h-4 bg-green-500 rounded-full timeline-dot"></div>
+                        <div class="bg-green-50 rounded-lg p-4 flex-1">
+                            <div class="text-sm font-bold text-green-600">15:00</div>
+                            <div class="text-gray-800">データベースに保存完了</div>
+                            <div class="text-sm text-gray-500">摂食記録はすぐにクラウドに保存されます</div>
+                        </div>
+                    </div>
+
+                    <!-- Event 3 -->
+                    <div class="relative flex items-start gap-4 pl-12 md:pl-20">
+                        <div class="absolute left-2 md:left-6 w-4 h-4 bg-pink-500 rounded-full timeline-dot"></div>
+                        <div class="bg-pink-50 rounded-lg p-4 flex-1">
+                            <div class="text-sm font-bold text-pink-600">15:00〜</div>
+                            <div class="text-gray-800">ご家族がアプリで確認可能に</div>
+                            <div class="text-sm text-gray-500">品物管理に摂食率が表示される</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                <div class="flex items-start gap-3">
+                    <span class="text-2xl">✅</span>
+                    <div>
+                        <div class="font-medium text-green-800">摂食記録はすぐに反映されます</div>
+                        <div class="text-sm text-green-700">スタッフが入力を完了すると、数秒でご家族のアプリに反映されます</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Item Management & Consumption Section -->
+        <section class="bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <span class="text-2xl">📦</span>
+                品物管理と摂食率について
+            </h2>
+
+            <p class="text-gray-600 mb-6">
+                ご家族が送った品物（お菓子、飲み物など）がどのくらい召し上がったかを、
+                「摂食率」としてパーセンテージで確認できます。
+            </p>
+
+            <!-- Consumption Rate Explanation -->
+            <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-5 mb-6 border border-green-200">
+                <h3 class="font-bold text-green-800 mb-4 flex items-center gap-2">
+                    <span class="text-xl">📊</span>
+                    摂食率（パーセンテージ）とは
+                </h3>
+
+                <!-- Progress Bar Example -->
+                <div class="bg-white rounded-lg p-4 mb-4">
+                    <p class="text-sm text-gray-600 mb-3">品物管理画面では、各品物に「摂食:」として緑のバーとパーセンテージが表示されます。</p>
+                    <div class="mb-3 border rounded-lg p-3">
+                        <div class="font-medium text-gray-800 mb-1">プロセスチーズ <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">消費完了</span></div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-gray-600">摂食:</span>
+                            <div class="flex-1 bg-gray-200 rounded-full h-2">
+                                <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
+                            </div>
+                            <span class="text-sm font-bold text-gray-700">100%</span>
+                        </div>
+                    </div>
+                    <div class="mb-3 border rounded-lg p-3">
+                        <div class="font-medium text-gray-800 mb-1">ヨーグルト <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">提供中</span></div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-gray-600">摂食:</span>
+                            <div class="flex-1 bg-gray-200 rounded-full h-2">
+                                <div class="bg-green-500 h-2 rounded-full" style="width: 50%"></div>
+                            </div>
+                            <span class="text-sm font-bold text-gray-700">50%</span>
+                        </div>
+                    </div>
+                    <div class="border rounded-lg p-3">
+                        <div class="font-medium text-gray-800 mb-1">柿 <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">提供中</span></div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-gray-600">摂食:</span>
+                            <div class="flex-1 bg-gray-200 rounded-full h-2">
+                                <div class="bg-green-500 h-2 rounded-full" style="width: 30%"></div>
+                            </div>
+                            <span class="text-sm font-bold text-gray-700">30%</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Staff Input Flow -->
+            <div class="bg-blue-50 rounded-xl p-5 mb-6 border border-blue-200">
+                <h3 class="font-bold text-blue-800 mb-4 flex items-center gap-2">
+                    <span class="text-xl">👨‍⚕️</span>
+                    スタッフ側：摂取割合の入力
+                </h3>
+
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div class="bg-white rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-800 mb-3">入力する内容</h4>
+                        <ul class="space-y-2 text-sm text-gray-600">
+                            <li class="flex items-start gap-2">
+                                <span class="text-blue-500">✓</span>
+                                <span><strong>提供数量</strong>：何個（何本/何cc）提供したか</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-blue-500">✓</span>
+                                <span><strong>摂取した割合</strong>：0〜10の10段階スライダー</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-blue-500">✓</span>
+                                <span><strong>残った分への対応</strong>：破棄した・保存した・その他</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-blue-500">✓</span>
+                                <span><strong>写真</strong>：提供時の様子（任意）</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="bg-white rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-800 mb-3">摂取した割合（10段階）</h4>
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-3">
+                                <span class="w-20 text-center bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs font-bold">10（全部）</span>
+                                <span class="text-sm text-gray-600">100% - すべて召し上がった</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="w-20 text-center bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs font-bold">5（半分）</span>
+                                <span class="text-sm text-gray-600">50% - 半分程度</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="w-20 text-center bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs font-bold">0（飲まず）</span>
+                                <span class="text-sm text-gray-600">0% - 召し上がらなかった</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Family View -->
+            <div class="bg-pink-50 rounded-xl p-5 border border-pink-200">
+                <h3 class="font-bold text-pink-800 mb-4 flex items-center gap-2">
+                    <span class="text-xl">👨‍👩‍👧</span>
+                    ご家族側：品物管理画面での確認
+                </h3>
+
+                <div class="bg-white rounded-lg p-4 mb-4">
+                    <h4 class="font-semibold text-gray-800 mb-3">確認できる情報</h4>
+                    <div class="grid md:grid-cols-2 gap-4 text-sm">
+                        <div class="space-y-2">
+                            <div class="flex items-start gap-2">
+                                <span class="text-pink-500">📦</span>
+                                <span>品物名と残り数量</span>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <span class="text-pink-500">📅</span>
+                                <span>提供スケジュール（朝食時、間食時など）</span>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <span class="text-pink-500">📊</span>
+                                <span>摂食率（緑のバーで表示）</span>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex items-start gap-2">
+                                <span class="text-pink-500">🏷️</span>
+                                <span>ステータス（提供中・消費完了など）</span>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <span class="text-pink-500">❄️</span>
+                                <span>保管方法（冷蔵・常温）</span>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <span class="text-pink-500">💬</span>
+                                <span>提供方法の指示内容</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 bg-pink-100 rounded-lg px-4 py-2">
+                    <span class="text-pink-600">💡</span>
+                    <span class="text-pink-800 text-sm">日・週・月単位で表示を切り替えて確認できます</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Remaining Item Handling Section -->
+        <section class="bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <span class="text-2xl">🗑️</span>
+                残った品物への対応（廃棄・保管）
+            </h2>
+
+            <p class="text-gray-600 mb-6">
+                品物が残った場合や期限が近づいた場合、ご家族とスタッフが連携して対応します。
+            </p>
+
+            <!-- Remaining Handling Options -->
+            <div class="bg-gray-50 rounded-xl p-5 mb-6 border border-gray-200">
+                <h3 class="font-bold text-gray-800 mb-4">提供時の「残った分への対応」（3つの選択肢）</h3>
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div class="bg-white rounded-xl p-4 border border-red-200">
+                        <div class="text-center mb-3">
+                            <div class="w-12 h-12 bg-red-100 rounded-full mx-auto flex items-center justify-center">
+                                <span class="text-2xl">🗑️</span>
+                            </div>
+                        </div>
+                        <h3 class="font-bold text-red-800 text-center mb-2">破棄した</h3>
+                        <p class="text-sm text-gray-600 text-center">
+                            残った分を廃棄しました（在庫から引かれます）
+                        </p>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 border border-blue-200">
+                        <div class="text-center mb-3">
+                            <div class="w-12 h-12 bg-blue-100 rounded-full mx-auto flex items-center justify-center">
+                                <span class="text-2xl">❄️</span>
+                            </div>
+                        </div>
+                        <h3 class="font-bold text-blue-800 text-center mb-2">保存した</h3>
+                        <p class="text-sm text-gray-600 text-center">
+                            冷蔵庫などで保管し、次回提供時に使用します
+                        </p>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 border border-gray-300">
+                        <div class="text-center mb-3">
+                            <div class="w-12 h-12 bg-gray-100 rounded-full mx-auto flex items-center justify-center">
+                                <span class="text-2xl">📝</span>
+                            </div>
+                        </div>
+                        <h3 class="font-bold text-gray-700 text-center mb-2">その他</h3>
+                        <p class="text-sm text-gray-600 text-center">
+                            返却など、上記以外の対応（詳細を入力）
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Discard Flow -->
+            <div class="bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-5 border border-orange-200">
+                <h3 class="font-bold text-orange-800 mb-4 flex items-center gap-2">
+                    <span class="text-xl">📋</span>
+                    品物の廃棄指示フロー（期限切れ品の処分）
+                </h3>
+                <p class="text-sm text-gray-600 mb-4">
+                    期限切れなどで品物全体を廃棄したい場合の流れです。上記の「残った分への対応」とは異なり、
+                    品物そのものを処分する場合に使用します。
+                </p>
+
+                <div class="relative">
+                    <!-- Flow Steps -->
+                    <div class="space-y-4">
+                        <!-- Step 1 -->
+                        <div class="flex items-start gap-4">
+                            <div class="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                                1
+                            </div>
+                            <div class="bg-white rounded-lg p-3 flex-1 border border-orange-200">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-lg">👨‍👩‍👧</span>
+                                    <span class="font-semibold text-gray-800">ご家族が廃棄を依頼</span>
+                                </div>
+                                <p class="text-sm text-gray-600">
+                                    期限切れの品物を確認し、アプリで「廃棄」ボタンを押します
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Arrow -->
+                        <div class="flex justify-start pl-4">
+                            <div class="w-0.5 h-4 bg-orange-300"></div>
+                        </div>
+
+                        <!-- Step 2 -->
+                        <div class="flex items-start gap-4">
+                            <div class="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                                2
+                            </div>
+                            <div class="bg-white rounded-lg p-3 flex-1 border border-orange-200">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-lg">🔔</span>
+                                    <span class="font-semibold text-gray-800">スタッフに通知</span>
+                                </div>
+                                <p class="text-sm text-gray-600">
+                                    スタッフの「注意事項」画面に廃棄指示が表示されます
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Arrow -->
+                        <div class="flex justify-start pl-4">
+                            <div class="w-0.5 h-4 bg-orange-300"></div>
+                        </div>
+
+                        <!-- Step 3 -->
+                        <div class="flex items-start gap-4">
+                            <div class="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                                3
+                            </div>
+                            <div class="bg-white rounded-lg p-3 flex-1 border border-orange-200">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-lg">👨‍⚕️</span>
+                                    <span class="font-semibold text-gray-800">スタッフが廃棄実施</span>
+                                </div>
+                                <p class="text-sm text-gray-600">
+                                    実際に品物を廃棄し、「廃棄完了」ボタンを押します
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Arrow -->
+                        <div class="flex justify-start pl-4">
+                            <div class="w-0.5 h-4 bg-orange-300"></div>
+                        </div>
+
+                        <!-- Step 4 -->
+                        <div class="flex items-start gap-4">
+                            <div class="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                                ✓
+                            </div>
+                            <div class="bg-green-50 rounded-lg p-3 flex-1 border border-green-200">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-lg">✅</span>
+                                    <span class="font-semibold text-gray-800">完了・一覧から消える</span>
+                                </div>
+                                <p class="text-sm text-gray-600">
+                                    品物が「廃棄完了」となり、一覧から自動的に消えます
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <div class="flex items-start gap-2">
+                        <span class="text-yellow-600">💡</span>
+                        <p class="text-sm text-yellow-800">
+                            <strong>ポイント：</strong>
+                            品物登録時にご家族が「残った場合は破棄」と指示している場合や、指示がない場合は、スタッフの判断で破棄することがあります。
+                            上記の廃棄指示フローは、期限切れなどでご家族から改めて廃棄を依頼する場合の流れです。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ Section -->
+        <section class="bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <span class="text-2xl">❓</span>
+                よくあるご質問
+            </h2>
+
+            <div class="space-y-4">
+                <!-- FAQ 1 -->
+                <div class="border border-gray-200 rounded-xl overflow-hidden">
+                    <div class="bg-gray-50 px-4 py-3">
+                        <h3 class="font-semibold text-gray-800">Q. 記録がすぐに見えないのはなぜ？</h3>
+                    </div>
+                    <div class="px-4 py-3">
+                        <p class="text-gray-600 text-sm leading-relaxed">
+                            システムの安定性とコスト効率を保つため、1時間ごとの定期同期を採用しています。
+                            リアルタイムではありませんが、確実に記録が反映される仕組みになっています。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FAQ 2 -->
+                <div class="border border-gray-200 rounded-xl overflow-hidden">
+                    <div class="bg-gray-50 px-4 py-3">
+                        <h3 class="font-semibold text-gray-800">Q. 入力した記録が消えることはある？</h3>
+                    </div>
+                    <div class="px-4 py-3">
+                        <p class="text-gray-600 text-sm leading-relaxed">
+                            いいえ、ありません。入力完了時点で記録シートに保存されるため、
+                            同期前でもデータは安全に保管されています。万が一同期に問題があっても、
+                            翌日の完全同期で必ず反映されます。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FAQ 3 -->
+                <div class="border border-gray-200 rounded-xl overflow-hidden">
+                    <div class="bg-gray-50 px-4 py-3">
+                        <h3 class="font-semibold text-gray-800">Q. 写真はいつ見れるようになる？</h3>
+                    </div>
+                    <div class="px-4 py-3">
+                        <p class="text-gray-600 text-sm leading-relaxed">
+                            スタッフが写真付きで記録を入力した場合、写真はすぐにクラウドに保存されます。
+                            アプリでの閲覧は同期後になります。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FAQ 4 -->
+                <div class="border border-gray-200 rounded-xl overflow-hidden">
+                    <div class="bg-gray-50 px-4 py-3">
+                        <h3 class="font-semibold text-gray-800">Q. 品物の摂食率はリアルタイムで更新される？</h3>
+                    </div>
+                    <div class="px-4 py-3">
+                        <p class="text-gray-600 text-sm leading-relaxed">
+                            <strong>はい、品物管理の摂食記録は通常の記録同期とは異なり、すぐに反映されます。</strong><br>
+                            スタッフが入力を完了すると、数秒でアプリのデータベースに保存され、次回画面を開いたときには最新の状態が表示されます。
+                            ただし、アプリ画面を開いたままの場合は、画面を更新（リロード）すると最新の状態が表示されます。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- System Overview (Simple) -->
+        <section class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl shadow-lg p-6 md:p-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <span class="text-2xl">🖥️</span>
+                システム全体のイメージ
+            </h2>
+
+            <div class="bg-white rounded-xl p-6">
+                <div class="grid md:grid-cols-3 gap-6">
+                    <!-- Input Side -->
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-blue-100 rounded-full mx-auto flex items-center justify-center mb-3">
+                            <span class="text-4xl">📱</span>
+                        </div>
+                        <h3 class="font-bold text-gray-800 mb-2">入力側</h3>
+                        <p class="text-sm text-gray-600">
+                            スタッフがスマートフォンやタブレットから記録を入力
+                        </p>
+                    </div>
+
+                    <!-- Processing -->
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-green-100 rounded-full mx-auto flex items-center justify-center mb-3">
+                            <span class="text-4xl">☁️</span>
+                        </div>
+                        <h3 class="font-bold text-gray-800 mb-2">クラウド</h3>
+                        <p class="text-sm text-gray-600">
+                            記録シートに保存され、定期的にアプリ用データベースに同期
+                        </p>
+                    </div>
+
+                    <!-- Output Side -->
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-pink-100 rounded-full mx-auto flex items-center justify-center mb-3">
+                            <span class="text-4xl">👀</span>
+                        </div>
+                        <h3 class="font-bold text-gray-800 mb-2">閲覧側</h3>
+                        <p class="text-sm text-gray-600">
+                            ご家族がいつでもどこでもアプリで確認
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Flow arrows for desktop -->
+                <div class="hidden md:flex justify-center items-center mt-6 gap-8">
+                    <div class="flex items-center gap-2">
+                        <span class="text-gray-400">入力</span>
+                        <div class="w-16 h-0.5 bg-gray-300"></div>
+                        <span class="text-2xl">→</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-gray-400">同期</span>
+                        <div class="w-16 h-0.5 bg-gray-300"></div>
+                        <span class="text-2xl">→</span>
+                    </div>
+                    <span class="text-gray-400">閲覧</span>
+                </div>
+            </div>
+
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-500">
+                    ※ 詳しいシステム構成は
+                    <a href="architecture.html" class="text-indigo-600 hover:underline">アーキテクチャ図</a>
+                    をご覧ください（技術者向け）
+                </p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-400">
+                © 2025 施設ケア入力フォーム プロジェクト
+            </p>
+            <div class="mt-3 flex justify-center gap-4 flex-wrap">
+                <a href="index.html" class="text-gray-400 hover:text-white text-sm">トップページ</a>
+                <a href="workflow.html" class="text-gray-400 hover:text-white text-sm">連携フロー</a>
+                <a href="architecture.html" class="text-gray-400 hover:text-white text-sm">アーキテクチャ図</a>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
