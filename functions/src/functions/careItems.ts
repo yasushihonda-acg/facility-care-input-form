@@ -456,7 +456,7 @@ async function getCareItemsHandler(
     const countSnapshot = await query.count().get();
     const total = countSnapshot.data().count;
 
-    // ページネーション適用（デフォルト500件に増加 - 古いデータが表示されない問題を修正）
+    // ページネーション適用（デフォルト500件に増加 - Phase 63: 古いデータ表示問題修正）
     const limit = params.limit || 500;
     const offset = params.offset || 0;
     const snapshot = await query.limit(limit).offset(offset).get();
