@@ -824,12 +824,24 @@ export function ItemForm() {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               賞味期限
             </label>
-            <input
-              type="date"
-              value={formData.expirationDate || ''}
-              onChange={(e) => updateField('expirationDate', e.target.value || undefined)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
-            />
+            <div className="flex gap-2">
+              <input
+                type="date"
+                value={formData.expirationDate || ''}
+                onChange={(e) => updateField('expirationDate', e.target.value || undefined)}
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+              />
+              {formData.expirationDate && (
+                <button
+                  type="button"
+                  onClick={() => updateField('expirationDate', undefined)}
+                  className="px-3 py-2 text-gray-500 hover:text-red-500 hover:bg-red-50 border border-gray-300 rounded-lg transition-colors"
+                  title="賞味期限をクリア"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
             <p className="mt-1 text-xs text-gray-500">
               賞味期限が近づくとスタッフに通知されます
             </p>

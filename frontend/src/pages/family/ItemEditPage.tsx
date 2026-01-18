@@ -801,14 +801,26 @@ export function ItemEditPage() {
           <label htmlFor="expirationDate" className="block text-sm font-medium text-gray-700 mb-1">
             賞味期限
           </label>
-          <input
-            type="date"
-            id="expirationDate"
-            name="expirationDate"
-            value={formData.expirationDate}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-          />
+          <div className="flex gap-2">
+            <input
+              type="date"
+              id="expirationDate"
+              name="expirationDate"
+              value={formData.expirationDate}
+              onChange={handleChange}
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            />
+            {formData.expirationDate && (
+              <button
+                type="button"
+                onClick={() => setFormData((prev) => ({ ...prev, expirationDate: '' }))}
+                className="px-3 py-2 text-gray-500 hover:text-red-500 hover:bg-red-50 border border-gray-300 rounded-lg transition-colors"
+                title="賞味期限をクリア"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         </div>
 
         {/* 保存方法 */}
