@@ -2,7 +2,7 @@
 status: canonical
 scope: core
 owner: core-team
-last_reviewed: 2026-01-11
+last_reviewed: 2026-01-18
 ---
 
 # API仕様書
@@ -794,7 +794,7 @@ Webhook URLの動作確認テスト。管理者が設定保存前にURLの有効
 | `status` | string | No | ステータスで絞り込み（`pending`, `served`, `consumed`, `expired`, `discarded`） |
 | `sortBy` | string | No | ソート項目（`expirationDate`, `createdAt`）※デフォルト: `createdAt` |
 | `sortOrder` | string | No | ソート順（`asc`, `desc`） |
-| `limit` | number | No | 取得件数上限（デフォルト: 50） |
+| `limit` | number | No | 取得件数上限（デフォルト: 500） |
 
 **成功レスポンス (200)**:
 ```json
@@ -1646,7 +1646,7 @@ interface SyncResult {
 
 ```typescript
 interface GetAllConsumptionLogsRequest {
-  itemIds: string[];          // 取得対象の品物IDリスト（最大100件）
+  itemIds: string[];          // 取得対象の品物IDリスト（最大500件）
   startDate?: string;         // 開始日（YYYY-MM-DD）- この日以降のログを取得
   endDate?: string;           // 終了日（YYYY-MM-DD）- この日以前のログを取得
   limit?: number;             // 取得件数上限（デフォルト: 100、最大: 500）
@@ -1671,7 +1671,7 @@ interface GetAllConsumptionLogsResponse {
 
 #### 制限事項
 
-- `itemIds`は最大100件まで
+- `itemIds`は最大500件まで
 - 各品物あたり最大50件取得
 - 日付範囲フィルタはFirestoreクエリではなくJS側で実行
 

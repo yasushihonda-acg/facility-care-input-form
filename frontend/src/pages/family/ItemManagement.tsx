@@ -36,7 +36,7 @@ import { DateNavigator, type DateViewMode } from '../../components/family/DateNa
 import { UnscheduledDatesBanner } from '../../components/family/UnscheduledDatesBanner';
 import { UnscheduledDatesModal } from '../../components/family/UnscheduledDatesModal';
 import { ScheduleDisplay } from '../../components/meal/ScheduleDisplay';
-import { getUnscheduledDates, isScheduledForDate, getMissedScheduleItems, type ScheduleTypeExclusion } from '../../utils/scheduleUtils';
+import { getUnscheduledDates, isScheduledForDate, getMissedScheduleItems, getWeekStartDate, formatDateString, type ScheduleTypeExclusion } from '../../utils/scheduleUtils';
 
 // デモ用の入居者ID・ユーザーID（将来は認証から取得）
 const DEMO_RESIDENT_ID = 'resident-001';
@@ -57,9 +57,8 @@ function filterItemsByDateRange(
 
   // 週・月の範囲を設定
   if (viewMode === 'week') {
-    const day = start.getDay();
-    const diff = day === 0 ? -6 : 1 - day;
-    start.setDate(start.getDate() + diff);
+    const weekStart = getWeekStartDate(selectedDate);
+    start.setTime(weekStart.getTime());
     // endもstartをベースに計算（月をまたぐ場合の誤計算を防止）
     end = new Date(start);
     end.setDate(end.getDate() + 6);
@@ -104,23 +103,23 @@ function filterItemsByDateRange(
 function getItemServingDate(item: CareItem, selectedDate: Date, viewMode: DateViewMode): string {
   // 日ビューの場合は選択日を使用
   if (viewMode === 'day') {
-    const d = new Date(selectedDate);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    return formatDateString(selectedDate);
   }
 
   // 期間の開始・終了日を計算
-  const start = new Date(selectedDate);
-  start.setHours(0, 0, 0, 0);
-  let end = new Date(selectedDate);
+  let start: Date;
+  let end: Date;
 
   if (viewMode === 'week') {
-    const day = start.getDay();
-    const diff = day === 0 ? -6 : 1 - day;
-    start.setDate(start.getDate() + diff);
+    start = getWeekStartDate(selectedDate);
     end = new Date(start);
     end.setDate(end.getDate() + 6);
-  } else if (viewMode === 'month') {
+  } else {
+    // month
+    start = new Date(selectedDate);
     start.setDate(1);
+    start.setHours(0, 0, 0, 0);
+    end = new Date(selectedDate);
     end.setMonth(end.getMonth() + 1);
     end.setDate(0);
   }
@@ -130,7 +129,7 @@ function getItemServingDate(item: CareItem, selectedDate: Date, viewMode: DateVi
   if (item.servingSchedule) {
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       if (isScheduledForDate(item.servingSchedule, d)) {
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        return formatDateString(d);
       }
     }
   }
