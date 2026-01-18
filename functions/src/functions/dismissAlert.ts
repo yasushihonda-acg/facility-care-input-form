@@ -37,7 +37,7 @@ export const dismissAlert = functions
   .region(FUNCTIONS_CONFIG.REGION)
   .runWith({
     timeoutSeconds: 30,
-    memory: "128MB",
+    memory: "256MB",
     serviceAccount: FUNCTIONS_CONFIG.SERVICE_ACCOUNT,
   })
   .https.onRequest(async (req, res) => {
