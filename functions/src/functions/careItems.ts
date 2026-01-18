@@ -459,6 +459,7 @@ async function getCareItemsHandler(
     // ページネーション適用（デフォルト500件に増加 - Phase 63: 古いデータ表示問題修正）
     const limit = params.limit || 500;
     const offset = params.offset || 0;
+    functions.logger.info("getCareItems pagination", {limit, offset, paramsLimit: params.limit});
     const snapshot = await query.limit(limit).offset(offset).get();
 
     const items: CareItem[] = snapshot.docs.map((doc) => {
@@ -505,11 +506,12 @@ async function getCareItemsHandler(
       total,
     });
 
-    const responseData: GetCareItemsResponse = {
+    const responseData = {
       items,
       total,
       hasMore: offset + items.length < total,
-    };
+      _debug: {limit, offset, paramsLimit: params.limit, version: "500-v2"},
+    } as GetCareItemsResponse;
 
     const response: ApiResponse<GetCareItemsResponse> = {
       success: true,
