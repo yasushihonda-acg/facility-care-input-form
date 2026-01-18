@@ -51,7 +51,7 @@ async function calculateItemStats(
   }
 
   const snapshot = await query.get();
-  const items = snapshot.docs.map((doc) => doc.data() as CareItem);
+  const items = snapshot.docs.map((doc) => ({id: doc.id, ...doc.data()} as CareItem));
 
   // サマリ計算
   const summary: ItemStatsSummary = {
@@ -149,7 +149,7 @@ async function generateAlerts(
   }
 
   const snapshot = await query.get();
-  const items = snapshot.docs.map((doc) => doc.data() as CareItem);
+  const items = snapshot.docs.map((doc) => ({id: doc.id, ...doc.data()} as CareItem));
 
   items.forEach((item) => {
     if (item.expirationDate && item.status === "pending") {
