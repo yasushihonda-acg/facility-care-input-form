@@ -267,6 +267,24 @@ export const DEMO_CONSUMPTION_LOGS: ConsumptionLog[] = [
     recordedAt: getDateTimeString(0, 15, 30),
   },
 
+  // ===== Phase 63: 廃棄済み品物（consumptionSummaryなし）の消費ログ =====
+  // demo-item-discarded-001: consumptionSummaryがないので、消費ログからフォールバック取得をテスト
+  {
+    id: 'log-discarded-001',
+    itemId: 'demo-item-discarded-001',
+    servedDate: getDateString(-2),
+    servedQuantity: 1.5,
+    servedBy: '山田',
+    consumedQuantity: 1.05,  // 70%消費 = 30%破棄
+    consumptionRate: 70,
+    consumptionStatus: 'most',
+    quantityBefore: 2,
+    quantityAfter: 0.5,
+    noteToFamily: '7割程度召し上がりました',
+    recordedBy: '山田',
+    recordedAt: getDateTimeString(-2, 15, 0),
+  },
+
   // ===== 黒豆 (demo-item-011) のログ =====
   {
     id: 'log-016',
