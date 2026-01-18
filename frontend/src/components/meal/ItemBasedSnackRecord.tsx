@@ -24,6 +24,7 @@ import {
 import { StaffRecordDialog } from '../staff/StaffRecordDialog';
 import { getConsumptionLogs } from '../../api';
 import type { ConsumptionLog } from '../../types/consumptionLog';
+import { getDemoConsumptionLogsForItem } from '../../data/demo';
 import {
   isScheduledForToday as checkScheduledForToday,
   isScheduledForTomorrow as checkScheduledForTomorrow,
@@ -896,6 +897,7 @@ function RemainingItemCard({ item, type, showButtons = true, onRecordClick }: Re
 
   // Phase 63: 消費ログから破棄割合を取得（フォールバック用）
   const [logBasedPercent, setLogBasedPercent] = useState<number | null>(null);
+  const isDemo = useDemoMode();
 
   const borderColor = type === 'discarded'
     ? 'border-red-300 bg-red-50'
@@ -924,6 +926,16 @@ function RemainingItemCard({ item, type, showButtons = true, onRecordClick }: Re
     if (item.consumptionSummary?.avgConsumptionRate !== undefined) return;
     if (item.consumptionRate !== undefined) return;
 
+    // デモモードではローカルデータを使用
+    if (isDemo) {
+      const demoLogs = getDemoConsumptionLogsForItem(item.id);
+      const latestLog = demoLogs[0];
+      if (latestLog?.consumptionRate !== undefined) {
+        setLogBasedPercent(Math.round(100 - latestLog.consumptionRate));
+      }
+      return;
+    }
+
     // 消費ログから最新の破棄割合を取得
     getConsumptionLogs({ itemId: item.id, limit: 1 })
       .then((response) => {
@@ -935,7 +947,7 @@ function RemainingItemCard({ item, type, showButtons = true, onRecordClick }: Re
       .catch((error) => {
         console.error('消費ログの取得に失敗しました:', error);
       });
-  }, [item.id, item.consumptionSummary?.avgConsumptionRate, item.consumptionRate, type]);
+  }, [item.id, item.consumptionSummary?.avgConsumptionRate, item.consumptionRate, type, isDemo]);
 
   const statusBadge = type === 'discarded'
     ? { icon: '🗑️', text: '破棄済み', bgColor: 'bg-red-100 text-red-700' }
