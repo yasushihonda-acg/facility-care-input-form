@@ -21,6 +21,7 @@ interface CachedPlanData {
 
 // キャッシュ設定
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5分
+const DEFAULT_CACHE_LIMIT = 2000; // キャッシュ取得時のデフォルト件数
 
 // インメモリキャッシュ（Cloud Functionsインスタンス間で共有されない）
 let planDataCache: CachedPlanData | null = null;
@@ -40,23 +41,32 @@ export async function getCachedPlanData(
     now - planDataCache.cachedAt < CACHE_TTL_MS
   ) {
     const cacheAge = Math.round((now - planDataCache.cachedAt) / 1000);
+    const requestedLimit = options.limit || DEFAULT_CACHE_LIMIT;
+    // リクエストされたlimitに応じてキャッシュからsliceして返す
+    const records = requestedLimit < planDataCache.records.length ?
+      planDataCache.records.slice(0, requestedLimit) :
+      planDataCache.records;
     functions.logger.info("planDataCache HIT", {
       cacheAge: `${cacheAge}s`,
-      recordCount: planDataCache.records.length,
+      cachedRecordCount: planDataCache.records.length,
+      returnedRecordCount: records.length,
+      requestedLimit,
     });
     return {
-      records: planDataCache.records,
+      records,
       fromCache: true,
       cacheAge,
     };
   }
 
   // キャッシュミス: Firestoreから取得
+  // 常に最大件数でキャッシュを構築し、返す時にlimitを適用
   functions.logger.info("planDataCache MISS - fetching from Firestore");
   const startTime = Date.now();
+  const requestedLimit = options.limit || DEFAULT_CACHE_LIMIT;
 
   const result = await getPlanData({
-    limit: options.limit || 2000,
+    limit: DEFAULT_CACHE_LIMIT, // 常に最大件数で取得
   });
 
   const fetchDuration = Date.now() - startTime;
@@ -68,13 +78,20 @@ export async function getCachedPlanData(
     totalCount: result.totalCount,
   };
 
+  // リクエストされたlimitに応じてsliceして返す
+  const records = requestedLimit < result.records.length ?
+    result.records.slice(0, requestedLimit) :
+    result.records;
+
   functions.logger.info("planDataCache updated", {
-    recordCount: result.records.length,
+    cachedRecordCount: result.records.length,
+    returnedRecordCount: records.length,
+    requestedLimit,
     fetchDuration: `${fetchDuration}ms`,
   });
 
   return {
-    records: result.records,
+    records,
     fromCache: false,
   };
 }

@@ -62,6 +62,15 @@ async function createRecordMessagesFromSnackRecords(
       // 品物情報を取得
       const itemRef = db.collection("care_items").doc(itemId);
       const itemDoc = await itemRef.get();
+
+      // 品物が存在しない場合はスキップ（削除済みなど）
+      if (!itemDoc.exists) {
+        const warnMsg = `Skipping record message: item ${itemId} does not exist`;
+        functions.logger.warn(warnMsg);
+        errors.push(warnMsg);
+        continue;
+      }
+
       const itemData = itemDoc.data() as CareItem | undefined;
       const itemName = itemData?.itemName || record.itemName || "品物";
 

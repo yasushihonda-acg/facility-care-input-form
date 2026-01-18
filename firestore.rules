@@ -26,7 +26,8 @@ service cloud.firestore {
 
       // 個別メールが許可されているかチェック
       // Firestoreはドキュメント名に "." を含められないため、"_" に置換
-      let emailKey = email.replace('.', '_');
+      // replace()は最初のマッチのみ置換するため、複数回呼び出して最大5つの"."に対応
+      let emailKey = email.replace('.', '_').replace('.', '_').replace('.', '_').replace('.', '_').replace('.', '_');
       let emailAllowed = exists(/databases/$(database)/documents/allowed_emails/$(emailKey));
 
       return domainAllowed || emailAllowed;

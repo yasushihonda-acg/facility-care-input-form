@@ -50,8 +50,17 @@ export function PastRecordsAccordion({ items, onEditClick }: PastRecordsAccordio
     return map;
   }, [items]);
 
-  // 全品物IDリスト
-  const allItemIds = useMemo(() => items.map(item => item.id), [items]);
+  // 全品物IDリスト（最新記録日時でソート: 新しい記録がある品物から読み込む）
+  const allItemIds = useMemo(() => {
+    return [...items]
+      .sort((a, b) => {
+        const aDate = a.consumptionSummary?.lastRecordedAt || a.consumptionSummary?.lastServedDate || '';
+        const bDate = b.consumptionSummary?.lastRecordedAt || b.consumptionSummary?.lastServedDate || '';
+        // 降順ソート（新しい順）
+        return bDate.localeCompare(aDate);
+      })
+      .map(item => item.id);
+  }, [items]);
 
   // 最初に読み込む品物IDリスト（最初の50件）
   const initialItemIds = useMemo(() => allItemIds.slice(0, ITEMS_PER_PAGE), [allItemIds]);
