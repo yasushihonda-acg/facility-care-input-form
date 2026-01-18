@@ -253,6 +253,16 @@ function Pagination({
   );
 }
 
+// 3段階判定の型
+type EffectLevel = 'effect' | 'delayed' | 'none';
+
+// 3段階判定を計算
+function getEffectLevel(d: CorrelationDataPoint, includeThirdDay: boolean): EffectLevel {
+  if (d.hasBowelSameDay || d.hasBowelNextDay) return 'effect';  // ○
+  if (includeThirdDay && d.hasBowelTwoDaysLater) return 'delayed';  // △
+  return 'none';  // ✗
+}
+
 export function CorrelationTab() {
   // ページネーション状態
   const [currentPage, setCurrentPage] = useState(1);
@@ -260,6 +270,8 @@ export function CorrelationTab() {
   const [selectedRow, setSelectedRow] = useState<CorrelationDataPoint | null>(null);
   // スクショ用モーダル状態
   const [showScreenshotModal, setShowScreenshotModal] = useState(false);
+  // 3日目を含めるかどうか
+  const [includeThirdDay, setIncludeThirdDay] = useState(false);
 
   // 内服と排便・排尿シートのデータを取得（全期間）
   const { records: medicationRecords, isLoading: medicationLoading } = useSheetRecords('内服');
@@ -328,12 +340,21 @@ export function CorrelationTab() {
     return correlationData.slice(start, start + ITEMS_PER_PAGE);
   }, [correlationData, currentPage]);
 
-  // 相関率の計算（全データベース）
+  // 相関率の計算（3日目オプションに応じて動的に計算）
   const correlationRate = useMemo(() => {
     if (correlationData.length === 0) return 0;
-    const withEffect = correlationData.filter(d => d.hasEffect).length;
+    const withEffect = correlationData.filter(d =>
+      getEffectLevel(d, includeThirdDay) !== 'none'
+    ).length;
     return Math.round((withEffect / correlationData.length) * 100);
-  }, [correlationData]);
+  }, [correlationData, includeThirdDay]);
+
+  // 効果ありの件数
+  const effectCount = useMemo(() => {
+    return correlationData.filter(d =>
+      getEffectLevel(d, includeThirdDay) !== 'none'
+    ).length;
+  }, [correlationData, includeThirdDay]);
 
   const sameDayRate = useMemo(() => {
     if (correlationData.length === 0) return 0;
@@ -388,14 +409,26 @@ export function CorrelationTab() {
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 mb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">服用後の排便率（当日〜翌日）</p>
+                  <p className="text-sm text-gray-600">
+                    服用後の排便率（当日〜{includeThirdDay ? '2日後' : '翌日'}）
+                  </p>
                   <p className="text-3xl font-bold text-primary">{correlationRate}%</p>
                 </div>
                 <div className="text-right text-sm text-gray-500">
-                  <p>{correlationData.filter(d => d.hasEffect).length} / {correlationData.length} 回</p>
+                  <p>{effectCount} / {correlationData.length} 回</p>
                   <p className="text-xs text-gray-400">当日のみ: {sameDayRate}%</p>
                 </div>
               </div>
+              {/* 3日目を含めるオプション */}
+              <label className="flex items-center gap-2 mt-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={includeThirdDay}
+                  onChange={(e) => setIncludeThirdDay(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                />
+                <span className="text-sm text-gray-600">3日目（2日後）も含める</span>
+              </label>
             </div>
 
             {/* データテーブル */}
@@ -407,47 +440,69 @@ export function CorrelationTab() {
                     <th className="text-left p-2 font-medium">時刻</th>
                     <th className="text-left p-2 font-medium">当日</th>
                     <th className="text-left p-2 font-medium">翌日</th>
+                    {includeThirdDay && (
+                      <th className="text-left p-2 font-medium">2日後</th>
+                    )}
                     <th className="text-center p-2 font-medium">効果</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedData.map((row) => (
-                    <tr
-                      key={row.date}
-                      onClick={() => setSelectedRow(row)}
-                      className={`border-b hover:bg-blue-50 cursor-pointer transition-colors ${row.hasEffect ? '' : 'bg-red-50'}`}
-                    >
-                      <td className="p-2 font-medium">{row.displayDate}</td>
-                      <td className="p-2 text-gray-600">{row.magnesiumTime || '-'}</td>
-                      <td className="p-2">
-                        {row.hasBowelSameDay ? (
-                          <span className="text-green-600">
-                            ✓ {row.bowelTimesSameDay || 'あり'}
-                            {row.bowelCountSameDay > 1 && ` (${row.bowelCountSameDay}回)`}
-                          </span>
-                        ) : (
-                          <span className="text-gray-400">なし</span>
+                  {paginatedData.map((row) => {
+                    const effectLevel = getEffectLevel(row, includeThirdDay);
+                    const bgClass = effectLevel === 'none' ? 'bg-red-50' :
+                                    effectLevel === 'delayed' ? 'bg-yellow-50' : '';
+                    return (
+                      <tr
+                        key={row.date}
+                        onClick={() => setSelectedRow(row)}
+                        className={`border-b hover:bg-blue-50 cursor-pointer transition-colors ${bgClass}`}
+                      >
+                        <td className="p-2 font-medium">{row.displayDate}</td>
+                        <td className="p-2 text-gray-600">{row.magnesiumTime || '-'}</td>
+                        <td className="p-2">
+                          {row.hasBowelSameDay ? (
+                            <span className="text-green-600">
+                              ✓ {row.bowelTimesSameDay || 'あり'}
+                              {row.bowelCountSameDay > 1 && ` (${row.bowelCountSameDay}回)`}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">なし</span>
+                          )}
+                        </td>
+                        <td className="p-2">
+                          {row.hasBowelNextDay ? (
+                            <span className="text-blue-600">
+                              ✓ {row.nextDayDisplayDate} {row.bowelTimesNextDay || ''}
+                              {row.bowelCountNextDay > 1 && ` (${row.bowelCountNextDay}回)`}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">なし</span>
+                          )}
+                        </td>
+                        {includeThirdDay && (
+                          <td className="p-2">
+                            {row.hasBowelTwoDaysLater ? (
+                              <span className="text-purple-600">
+                                ✓ {row.twoDaysLaterDisplayDate} {row.bowelTimesTwoDaysLater || ''}
+                                {row.bowelCountTwoDaysLater > 1 && ` (${row.bowelCountTwoDaysLater}回)`}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400">なし</span>
+                            )}
+                          </td>
                         )}
-                      </td>
-                      <td className="p-2">
-                        {row.hasBowelNextDay ? (
-                          <span className="text-blue-600">
-                            ✓ {row.nextDayDisplayDate} {row.bowelTimesNextDay || ''}
-                            {row.bowelCountNextDay > 1 && ` (${row.bowelCountNextDay}回)`}
-                          </span>
-                        ) : (
-                          <span className="text-gray-400">なし</span>
-                        )}
-                      </td>
-                      <td className="p-2 text-center">
-                        {row.hasEffect ? (
-                          <span className="text-green-600 font-bold">○</span>
-                        ) : (
-                          <span className="text-red-500 font-bold">✗</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                        <td className="p-2 text-center">
+                          {effectLevel === 'effect' ? (
+                            <span className="text-green-600 font-bold">○</span>
+                          ) : effectLevel === 'delayed' ? (
+                            <span className="text-yellow-600 font-bold">△</span>
+                          ) : (
+                            <span className="text-red-500 font-bold">✗</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -473,6 +528,7 @@ export function CorrelationTab() {
           correlationData={selectedRow}
           medicationRecords={medicationRecords}
           excretionRecords={excretionRecords}
+          includeThirdDay={includeThirdDay}
           onClose={() => setSelectedRow(null)}
         />
       )}

@@ -20,6 +20,11 @@ interface CorrelationDataPoint {
   bowelCountNextDay: number;
   bowelTimesNextDay: string;
   nextDayDisplayDate: string;
+  // 2日後（3日目）
+  hasBowelTwoDaysLater: boolean;
+  bowelCountTwoDaysLater: number;
+  bowelTimesTwoDaysLater: string;
+  twoDaysLaterDisplayDate: string;
   hasEffect: boolean;
 }
 
@@ -27,6 +32,7 @@ interface CorrelationDetailModalProps {
   correlationData: CorrelationDataPoint;
   medicationRecords: PlanDataRecord[];
   excretionRecords: PlanDataRecord[];
+  includeThirdDay: boolean;
   onClose: () => void;
 }
 
@@ -37,16 +43,31 @@ function getDateKey(timestamp: string): string {
   return `${match[1]}/${match[2].padStart(2, '0')}/${match[3].padStart(2, '0')}`;
 }
 
-// 翌日の日付キー取得
-function getNextDate(dateKey: string): string {
+// 日付をN日進める
+function getDatePlusN(dateKey: string, days: number): string {
   const parts = dateKey.split('/');
   if (parts.length < 3) return '';
   const date = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-  date.setDate(date.getDate() + 1);
+  date.setDate(date.getDate() + days);
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}/${m}/${d}`;
+}
+
+// 翌日の日付キー取得（後方互換）
+function getNextDate(dateKey: string): string {
+  return getDatePlusN(dateKey, 1);
+}
+
+// 3段階判定の型
+type EffectLevel = 'effect' | 'delayed' | 'none';
+
+// 3段階判定を計算
+function getEffectLevel(d: CorrelationDataPoint, includeThirdDay: boolean): EffectLevel {
+  if (d.hasBowelSameDay || d.hasBowelNextDay) return 'effect';  // ○
+  if (includeThirdDay && d.hasBowelTwoDaysLater) return 'delayed';  // △
+  return 'none';  // ✗
 }
 
 // 時刻を抽出
@@ -59,9 +80,11 @@ export function CorrelationDetailModal({
   correlationData,
   medicationRecords,
   excretionRecords,
+  includeThirdDay,
   onClose,
 }: CorrelationDetailModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const effectLevel = getEffectLevel(correlationData, includeThirdDay);
 
   // ESCキーで閉じる
   useEffect(() => {
@@ -79,6 +102,7 @@ export function CorrelationDetailModal({
 
   const targetDate = correlationData.date;
   const nextDate = getNextDate(targetDate);
+  const twoDaysLaterDate = getDatePlusN(targetDate, 2);
 
   // 当日のマグミット関連内服レコード
   const sameDayMedication = useMemo(() => {
@@ -117,6 +141,17 @@ export function CorrelationDetailModal({
       .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
   }, [excretionRecords, nextDate]);
 
+  // 2日後の排便レコード（排便ありのみ）
+  const twoDaysLaterExcretion = useMemo(() => {
+    return excretionRecords
+      .filter(r => {
+        if (getDateKey(r.timestamp) !== twoDaysLaterDate) return false;
+        // 排便ありのレコードのみ
+        return r.data['排便はありましたか？']?.includes('あり');
+      })
+      .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+  }, [excretionRecords, twoDaysLaterDate]);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
@@ -136,8 +171,10 @@ export function CorrelationDetailModal({
             </h2>
             <p className="text-sm text-gray-600 mt-0.5">
               {correlationData.displayDate}
-              {correlationData.hasEffect ? (
-                <span className="ml-2 text-green-600 font-medium">✓ 効果あり</span>
+              {effectLevel === 'effect' ? (
+                <span className="ml-2 text-green-600 font-medium">○ 効果あり</span>
+              ) : effectLevel === 'delayed' ? (
+                <span className="ml-2 text-yellow-600 font-medium">△ 遅延効果</span>
               ) : (
                 <span className="ml-2 text-red-500 font-medium">× 効果なし</span>
               )}
@@ -202,12 +239,29 @@ export function CorrelationDetailModal({
               ))
             )}
           </RecordSection>
+
+          {/* 2日後の排便セクション（3日目含む場合のみ） */}
+          {includeThirdDay && (
+            <RecordSection
+              icon="🚽"
+              title="排便記録（2日後）"
+              subtitle={correlationData.twoDaysLaterDisplayDate}
+            >
+              {twoDaysLaterExcretion.length === 0 ? (
+                <p className="text-sm text-gray-400 italic py-2 px-4">排便なし</p>
+              ) : (
+                twoDaysLaterExcretion.map((r, idx) => (
+                  <BowelRecordItem key={idx} record={r} />
+                ))
+              )}
+            </RecordSection>
+          )}
         </div>
 
         {/* フッター */}
         <div className="px-5 py-3 border-t border-gray-200 bg-gray-50 rounded-b-xl">
           <span className="text-xs text-gray-400">
-            データ対象: {correlationData.date} - {nextDate}
+            データ対象: {correlationData.date} - {includeThirdDay ? twoDaysLaterDate : nextDate}
           </span>
         </div>
       </div>
