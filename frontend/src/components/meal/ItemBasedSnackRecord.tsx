@@ -195,6 +195,8 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
   const [isEditMode, setIsEditMode] = useState(false);
   const [editSheetTimestamp, setEditSheetTimestamp] = useState<string | null>(null);
   const [editingLog, setEditingLog] = useState<ConsumptionLog | null>(null);
+  // 編集ボタンのローディング状態（どのアイテムがローディング中かを追跡）
+  const [editLoadingItemId, setEditLoadingItemId] = useState<string | null>(null);
 
   // 廃棄確認ダイアログ
   const [discardTarget, setDiscardTarget] = useState<CareItem | null>(null);
@@ -424,6 +426,8 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
 
   // 編集ボタンクリック時のハンドラ（水分記録編集用）
   const handleEditClick = async (item: CareItem) => {
+    // ローディング開始
+    setEditLoadingItemId(item.id);
     try {
       // 最新のconsumption_logを取得
       const logsResponse = await getConsumptionLogs({ itemId: item.id, limit: 1 });
@@ -442,6 +446,9 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
     } catch (error) {
       console.error('記録の取得に失敗しました:', error);
       toast.error('記録の取得に失敗しました');
+    } finally {
+      // ローディング終了
+      setEditLoadingItemId(null);
     }
   };
 
@@ -603,6 +610,7 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
                     onRecordClick={() => handleRecordClick(item)}
                     // 水分カテゴリの品物のみ編集ボタンを表示
                     onEditClick={migrateCategory(item.category) === 'drink' ? () => handleEditClick(item) : undefined}
+                    isEditLoading={editLoadingItemId === item.id}
                   />
                 ))}
               </div>
@@ -804,9 +812,11 @@ interface ItemCardProps {
   onDiscardClick?: () => void;
   /** 編集ボタンクリック時のハンドラ（水分記録編集用） */
   onEditClick?: () => void;
+  /** 編集ボタンのローディング状態 */
+  isEditLoading?: boolean;
 }
 
-function ItemCard({ item, highlight, onRecordClick, onDiscardClick, onEditClick }: ItemCardProps) {
+function ItemCard({ item, highlight, onRecordClick, onDiscardClick, onEditClick, isEditLoading }: ItemCardProps) {
   const daysUntil = getDaysUntilExpiration(item);
   const skipQuantity = isQuantitySkipped(item);
   const remainingQty = skipQuantity ? undefined : (item.currentQuantity ?? item.remainingQuantity ?? item.quantity);
@@ -940,10 +950,23 @@ function ItemCard({ item, highlight, onRecordClick, onDiscardClick, onEditClick 
           {isRecorded && onEditClick && (
             <button
               onClick={onEditClick}
-              className="px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-1"
+              disabled={isEditLoading}
+              className="px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-wait"
             >
-              <span>✏️</span>
-              <span>編集</span>
+              {isEditLoading ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  <span>読込中...</span>
+                </>
+              ) : (
+                <>
+                  <span>✏️</span>
+                  <span>編集</span>
+                </>
+              )}
             </button>
           )}
           {onDiscardClick && (
