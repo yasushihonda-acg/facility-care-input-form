@@ -22,7 +22,7 @@ import {
   migrateCategory,
 } from '../../types/careItem';
 import { StaffRecordDialog } from '../staff/StaffRecordDialog';
-import { getConsumptionLogs } from '../../api';
+import { getConsumptionLogs, getCareItems } from '../../api';
 import type { ConsumptionLog } from '../../types/consumptionLog';
 import { getDemoConsumptionLogsForItem } from '../../data/demo';
 import {
@@ -200,6 +200,13 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
   const [discardTarget, setDiscardTarget] = useState<CareItem | null>(null);
   const discardMutation = useDiscardItem();
 
+  // Phase 63: 破棄済みタブのページネーション
+  const [discardedOffset, setDiscardedOffset] = useState(0);
+  const [additionalDiscarded, setAdditionalDiscarded] = useState<CareItem[]>([]);
+  const [hasMoreDiscarded, setHasMoreDiscarded] = useState(true);
+  const [isLoadingMoreDiscarded, setIsLoadingMoreDiscarded] = useState(false);
+  const DISCARDED_PAGE_SIZE = 50;
+
   // 編集可能なログかどうかを検証するヘルパー（sheetTimestampがないと編集不可）
   const validateEditableLog = (
     log: ConsumptionLog | undefined
@@ -327,8 +334,59 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
     return { discarded, stored };
   }, [items]);
 
+  // Phase 63: 追加読み込みした破棄済みをマージ（重複除外）
+  const allDiscardedItems = useMemo(() => {
+    const existingIds = new Set(remainingItems.discarded.map(item => item.id));
+    const merged = [...remainingItems.discarded];
+    for (const item of additionalDiscarded) {
+      if (!existingIds.has(item.id)) {
+        merged.push(item);
+        existingIds.add(item.id);
+      }
+    }
+    // 破棄日時でソート（新しい順）
+    return merged.sort((a, b) => {
+      const dateA = a.discardedAt || a.updatedAt || '';
+      const dateB = b.discardedAt || b.updatedAt || '';
+      return new Date(dateB).getTime() - new Date(dateA).getTime();
+    });
+  }, [remainingItems.discarded, additionalDiscarded]);
+
+  // Phase 63: 追加の破棄済みデータを読み込む
+  const loadMoreDiscarded = async () => {
+    if (isLoadingMoreDiscarded || !hasMoreDiscarded || isDemo) return;
+
+    setIsLoadingMoreDiscarded(true);
+    try {
+      const newOffset = discardedOffset + DISCARDED_PAGE_SIZE;
+      const response = await getCareItems({
+        residentId,
+        status: ['discarded'] as ItemStatus[],
+        limit: DISCARDED_PAGE_SIZE,
+        offset: newOffset,
+      });
+
+      if (response.success && response.data) {
+        const newItems = response.data.items;
+        if (newItems.length > 0) {
+          setAdditionalDiscarded(prev => [...prev, ...newItems]);
+          setDiscardedOffset(newOffset);
+        }
+        // 返ってきた件数がページサイズ未満なら、これ以上データがない
+        setHasMoreDiscarded(newItems.length >= DISCARDED_PAGE_SIZE);
+      } else {
+        setHasMoreDiscarded(false);
+      }
+    } catch (err) {
+      console.error('Failed to load more discarded items:', err);
+      toast.error('追加データの読み込みに失敗しました');
+    } finally {
+      setIsLoadingMoreDiscarded(false);
+    }
+  };
+
   // 各サブタブの品物数
-  const discardedCount = remainingItems.discarded.length;
+  const discardedCount = allDiscardedItems.length;
   const storedCount = remainingItems.stored.length;
 
   if (isLoading) {
@@ -629,16 +687,38 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
           {/* 破棄済みサブタブ（修正記録用ボタンあり） */}
           {remainingSubTab === 'discarded' && (
             <div className="space-y-3">
-              {remainingItems.discarded.length > 0 ? (
-                remainingItems.discarded.map((item) => (
-                  <RemainingItemCard
-                    key={item.id}
-                    item={item}
-                    type="discarded"
-                    showButtons={true}
-                    onRecordClick={() => handleRecordClick(item)}
-                  />
-                ))
+              {allDiscardedItems.length > 0 ? (
+                <>
+                  {allDiscardedItems.map((item) => (
+                    <RemainingItemCard
+                      key={item.id}
+                      item={item}
+                      type="discarded"
+                      showButtons={true}
+                      onRecordClick={() => handleRecordClick(item)}
+                    />
+                  ))}
+                  {/* Phase 63: さらに表示ボタン */}
+                  {hasMoreDiscarded && !isDemo && (
+                    <button
+                      onClick={loadMoreDiscarded}
+                      disabled={isLoadingMoreDiscarded}
+                      className="w-full py-3 text-center text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg border border-blue-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isLoadingMoreDiscarded ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          読み込み中...
+                        </span>
+                      ) : (
+                        '📋 さらに表示'
+                      )}
+                    </button>
+                  )}
+                </>
               ) : (
                 <div className="p-8 text-center text-gray-500">
                   <div className="text-4xl mb-4">🗑️</div>

@@ -27,11 +27,16 @@ interface PastRecordsAccordionProps {
   onEditClick: (log: ConsumptionLog, item: CareItem) => void;
 }
 
-// 1ヶ月前の日付を取得
-function getOneMonthAgo(): string {
+// 指定月数前の日付を取得
+function getMonthsAgo(months: number): string {
   const date = new Date();
-  date.setMonth(date.getMonth() - 1);
+  date.setMonth(date.getMonth() - months);
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+// 1ヶ月前の日付を取得（後方互換）
+function getOneMonthAgo(): string {
+  return getMonthsAgo(1);
 }
 
 // 昨日の日付を取得
@@ -46,6 +51,12 @@ export function PastRecordsAccordion({ items, onEditClick }: PastRecordsAccordio
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
+
+  // Phase 63: ページネーション用の状態
+  const [monthsBack, setMonthsBack] = useState(1); // 何ヶ月分遡るか
+  const [additionalLogs, setAdditionalLogs] = useState<ConsumptionLog[]>([]);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMoreData, setHasMoreData] = useState(true);
 
   // 品物IDから品物情報を取得するMap
   const itemMap = useMemo(() => {
@@ -81,7 +92,53 @@ export function PastRecordsAccordion({ items, onEditClick }: PastRecordsAccordio
   });
 
   // ログデータをメモ化
-  const logs = useMemo(() => data?.logs ?? [], [data?.logs]);
+  const baseLogs = useMemo(() => data?.logs ?? [], [data?.logs]);
+
+  // Phase 63: 基本ログと追加ログをマージ（重複除外）
+  const logs = useMemo(() => {
+    const existingIds = new Set(baseLogs.map(log => log.id));
+    const merged = [...baseLogs];
+    for (const log of additionalLogs) {
+      if (!existingIds.has(log.id)) {
+        merged.push(log);
+        existingIds.add(log.id);
+      }
+    }
+    return merged;
+  }, [baseLogs, additionalLogs]);
+
+  // Phase 63: 追加の過去データを読み込む
+  const loadMorePastRecords = async () => {
+    if (isLoadingMore || !hasMoreData || isDemo || itemIds.length === 0) return;
+
+    setIsLoadingMore(true);
+    try {
+      const newMonthsBack = monthsBack + 1;
+      const response = await getAllConsumptionLogs({
+        itemIds,
+        startDate: getMonthsAgo(newMonthsBack),
+        endDate: getMonthsAgo(monthsBack), // 前回の開始日の前日まで
+        limit: 100,
+      });
+
+      if (response.data) {
+        const newLogs = response.data.logs;
+        if (newLogs.length > 0) {
+          setAdditionalLogs(prev => [...prev, ...newLogs]);
+          setMonthsBack(newMonthsBack);
+        }
+        // 12ヶ月（1年）を超えたらもうデータはないとみなす
+        setHasMoreData(newLogs.length > 0 && newMonthsBack < 12);
+      } else {
+        setHasMoreData(false);
+      }
+    } catch (err) {
+      console.error('Failed to load more past records:', err);
+      setHasMoreData(false);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   // ログと品物情報を結合してフィルタ・ソート
   const filteredAndSortedLogs = useMemo(() => {
@@ -278,9 +335,30 @@ export function PastRecordsAccordion({ items, onEditClick }: PastRecordsAccordio
                   全{logs.length}件中
                 </>
               ) : (
-                <>過去1ヶ月: {filteredAndSortedLogs.length}件</>
+                <>過去{monthsBack}ヶ月: {filteredAndSortedLogs.length}件</>
               )}
             </div>
+          )}
+
+          {/* Phase 63: さらに表示ボタン */}
+          {!isLoading && !error && !isDemo && hasMoreData && filteredAndSortedLogs.length > 0 && (
+            <button
+              onClick={loadMorePastRecords}
+              disabled={isLoadingMore}
+              className="w-full py-3 text-center text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg border border-blue-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-3"
+            >
+              {isLoadingMore ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  読み込み中...
+                </span>
+              ) : (
+                '📋 さらに古い記録を表示'
+              )}
+            </button>
           )}
         </div>
       )}
