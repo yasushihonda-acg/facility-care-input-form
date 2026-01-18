@@ -17,6 +17,7 @@ import type { ConsumptionLog } from '../../types/consumptionLog';
 import type { CareItem } from '../../types/careItem';
 import { getCategoryIcon, migrateCategory } from '../../types/careItem';
 import { useDemoMode } from '../../hooks/useDemoMode';
+import { getMonthsAgoString, getYesterdayString } from '../../utils/scheduleUtils';
 
 // 並び順の種類
 type SortOrder = 'newest' | 'oldest' | 'itemName';
@@ -29,25 +30,6 @@ interface PastRecordsAccordionProps {
   items: CareItem[];
   /** 編集ボタンクリック時のハンドラ */
   onEditClick: (log: ConsumptionLog, item: CareItem) => void;
-}
-
-// 指定月数前の日付を取得
-function getMonthsAgo(months: number): string {
-  const date = new Date();
-  date.setMonth(date.getMonth() - months);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-}
-
-// 1ヶ月前の日付を取得
-function getOneMonthAgo(): string {
-  return getMonthsAgo(1);
-}
-
-// 昨日の日付を取得
-function getYesterday(): string {
-  const date = new Date();
-  date.setDate(date.getDate() - 1);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
 export function PastRecordsAccordion({ items, onEditClick }: PastRecordsAccordionProps) {
@@ -89,8 +71,8 @@ export function PastRecordsAccordion({ items, onEditClick }: PastRecordsAccordio
       }
       const response = await getAllConsumptionLogs({
         itemIds: initialItemIds,
-        startDate: getOneMonthAgo(),
-        endDate: getYesterday(),
+        startDate: getMonthsAgoString(1),
+        endDate: getYesterdayString(),
         limit: 100,
       });
       return response.data ?? { logs: [], total: 0 };
@@ -126,8 +108,8 @@ export function PastRecordsAccordion({ items, onEditClick }: PastRecordsAccordio
 
       const response = await getAllConsumptionLogs({
         itemIds: nextItemIds,
-        startDate: getOneMonthAgo(),
-        endDate: getYesterday(),
+        startDate: getMonthsAgoString(1),
+        endDate: getYesterdayString(),
         limit: 100,
       });
 

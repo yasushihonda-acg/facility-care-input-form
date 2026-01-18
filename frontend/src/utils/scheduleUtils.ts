@@ -30,6 +30,39 @@ export function getTodayString(): string {
 }
 
 /**
+ * 昨日の日付を YYYY-MM-DD 形式で取得（ローカル時間）
+ */
+export function getYesterdayString(): string {
+  const date = new Date();
+  date.setDate(date.getDate() - 1);
+  return formatDateString(date);
+}
+
+/**
+ * N ヶ月前の日付を YYYY-MM-DD 形式で取得（ローカル時間）
+ * @param months 何ヶ月前か
+ */
+export function getMonthsAgoString(months: number): string {
+  const date = new Date();
+  date.setMonth(date.getMonth() - months);
+  return formatDateString(date);
+}
+
+/**
+ * 週の開始日（月曜日）を取得
+ * @param date 基準日
+ * @returns 週の開始日（月曜日）
+ */
+export function getWeekStartDate(date: Date): Date {
+  const result = new Date(date);
+  result.setHours(0, 0, 0, 0);
+  const day = result.getDay();
+  const diff = day === 0 ? -6 : 1 - day; // 月曜日を週の開始に
+  result.setDate(result.getDate() + diff);
+  return result;
+}
+
+/**
  * 日付を M/D 形式でフォーマット（表示用）
  */
 export function formatDateDisplay(dateStr: string): string {
