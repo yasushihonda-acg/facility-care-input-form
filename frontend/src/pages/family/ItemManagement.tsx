@@ -6,7 +6,7 @@
  * 1. 期限切れアラート（常時表示・廃棄アクション付き）
  * 2. 未設定日通知（期間変更・除外フィルタ付き）
  * 3. 日付ナビゲーション（日/週/月 + カレンダー）
- * 4. 品物リスト
+ * 4. 品物リスト（週/月ビューでは提供日の昇順/降順切り替え可能）
  *
  * ※ ステータスフィルタタブは削除
  *
@@ -97,6 +97,56 @@ function filterItemsByDateRange(
   });
 }
 
+/**
+ * 品物の提供日を取得（ソート用）
+ * 週/月ビューでは、選択期間内の最初の提供日を返す
+ */
+function getItemServingDate(item: CareItem, selectedDate: Date, viewMode: DateViewMode): string {
+  // 日ビューの場合は選択日を使用
+  if (viewMode === 'day') {
+    const d = new Date(selectedDate);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  // 期間の開始・終了日を計算
+  const start = new Date(selectedDate);
+  start.setHours(0, 0, 0, 0);
+  let end = new Date(selectedDate);
+
+  if (viewMode === 'week') {
+    const day = start.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    start.setDate(start.getDate() + diff);
+    end = new Date(start);
+    end.setDate(end.getDate() + 6);
+  } else if (viewMode === 'month') {
+    start.setDate(1);
+    end.setMonth(end.getMonth() + 1);
+    end.setDate(0);
+  }
+  end.setHours(23, 59, 59, 999);
+
+  // servingScheduleがある場合: 期間内の最初の提供日を探す
+  if (item.servingSchedule) {
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      if (isScheduledForDate(item.servingSchedule, d)) {
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      }
+    }
+  }
+
+  // plannedServeDateがある場合
+  if (item.plannedServeDate) {
+    return item.plannedServeDate;
+  }
+
+  // それ以外は登録日を使用
+  return item.createdAt.split('T')[0];
+}
+
+// ソート順の型
+type DateSortOrder = 'asc' | 'desc';
+
 export function ItemManagement() {
   // URL同期用
   const [searchParams, setSearchParams] = useSearchParams();
@@ -118,6 +168,8 @@ export function ItemManagement() {
   const [excludeWeekly, setExcludeWeekly] = useState(initialExW);
   // 詳細展開状態（URLから初期化）
   const [isExpanded, setIsExpanded] = useState(initialExp);
+  // 週/月ビューでの提供日ソート順（降順=新しい順が初期値）
+  const [dateSortOrder, setDateSortOrder] = useState<DateSortOrder>('desc');
 
   const isDemo = useDemoMode();
   const navigate = useNavigate();
@@ -175,12 +227,35 @@ export function ItemManagement() {
 
   const deleteItem = useDeleteCareItem();
 
-  // 日付範囲でフィルタリング + 提供タイミング順でソート
+  // 日付範囲でフィルタリング + ソート
   // eslint-disable-next-line react-hooks/preserve-manual-memoization -- React Compiler最適化スキップ許容
   const filteredItems = useMemo(() => {
     if (!data?.items) return [];
     const filtered = filterItemsByDateRange(data.items, selectedDate, viewMode);
-    // 提供タイミング順でソート（朝食時 → 昼食時 → おやつ時 → 夕食時 → いつでも）
+
+    // 週/月ビューでは提供日でソート
+    if (viewMode === 'week' || viewMode === 'month') {
+      return filtered.sort((a, b) => {
+        const dateA = getItemServingDate(a, selectedDate, viewMode);
+        const dateB = getItemServingDate(b, selectedDate, viewMode);
+        const dateCompare = dateSortOrder === 'desc'
+          ? dateB.localeCompare(dateA)  // 降順（新しい順）
+          : dateA.localeCompare(dateB); // 昇順（古い順）
+        if (dateCompare !== 0) return dateCompare;
+        // 同日なら提供タイミング順
+        const timingDiff = getServingTimeSlotOrder(a) - getServingTimeSlotOrder(b);
+        if (timingDiff !== 0) return timingDiff;
+        // 同じタイミングなら期限順
+        if (a.expirationDate && b.expirationDate) {
+          return new Date(a.expirationDate).getTime() - new Date(b.expirationDate).getTime();
+        }
+        if (a.expirationDate) return -1;
+        if (b.expirationDate) return 1;
+        return 0;
+      });
+    }
+
+    // 日ビューでは提供タイミング順でソート（朝食時 → 昼食時 → おやつ時 → 夕食時 → いつでも）
     return filtered.sort((a, b) => {
       const timingDiff = getServingTimeSlotOrder(a) - getServingTimeSlotOrder(b);
       if (timingDiff !== 0) return timingDiff;
@@ -192,7 +267,7 @@ export function ItemManagement() {
       if (b.expirationDate) return 1;
       return 0;
     });
-  }, [data?.items, selectedDate, viewMode]);
+  }, [data?.items, selectedDate, viewMode, dateSortOrder]);
 
   // スケジュールタイプ除外オプション
   const scheduleExclusion: ScheduleTypeExclusion = useMemo(() => ({
@@ -335,6 +410,35 @@ export function ItemManagement() {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
       />
+
+      {/* 週/月ビュー時のソート切り替え */}
+      {(viewMode === 'week' || viewMode === 'month') && (
+        <div className="px-4 py-2 bg-gray-50 border-b flex items-center justify-between">
+          <span className="text-sm text-gray-600">提供日順:</span>
+          <div className="flex gap-1">
+            <button
+              onClick={() => setDateSortOrder('desc')}
+              className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+                dateSortOrder === 'desc'
+                  ? 'bg-primary text-white'
+                  : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-100'
+              }`}
+            >
+              新しい順 ↓
+            </button>
+            <button
+              onClick={() => setDateSortOrder('asc')}
+              className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+                dateSortOrder === 'asc'
+                  ? 'bg-primary text-white'
+                  : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-100'
+              }`}
+            >
+              古い順 ↑
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* コンテンツ */}
       <div className="flex-1 overflow-y-auto p-4 pb-24">
