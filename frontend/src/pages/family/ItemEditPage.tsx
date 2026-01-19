@@ -399,6 +399,24 @@ export function ItemEditPage() {
     return Object.keys(newErrors).length === 0;
   };
 
+  // EditFormData → CareItemInput 変換ヘルパー（DRY原則）
+  const toCareItemInput = useCallback((): CareItemInput => ({
+    itemName: formData.itemName,
+    normalizedName: formData.normalizedName || undefined,
+    category: formData.category,
+    quantity: formData.quantity,
+    unit: formData.unit,
+    expirationDate: formData.expirationDate || undefined,
+    storageMethod: formData.storageMethod || undefined,
+    servingMethod: formData.servingMethod,
+    servingMethodDetail: formData.servingMethodDetail || undefined,
+    plannedServeDate: formData.plannedServeDate || undefined,
+    noteToStaff: formData.noteToStaff || undefined,
+    remainingHandlingInstruction: formData.remainingHandlingInstruction,
+    remainingHandlingConditions: formData.remainingHandlingConditions,
+    servingSchedule: formData.servingSchedule,
+  }), [formData]);
+
   // 送信ハンドラ
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -410,23 +428,7 @@ export function ItemEditPage() {
 
     // デモモードの場合: APIを呼ばず、プリセット保存ダイアログを表示
     if (isDemo) {
-      // プリセット保存用にCareItemInput形式でデータを準備
-      setRegisteredFormData({
-        itemName: formData.itemName,
-        normalizedName: formData.normalizedName || undefined,
-        category: formData.category,
-        quantity: formData.quantity,
-        unit: formData.unit,
-        expirationDate: formData.expirationDate || undefined,
-        storageMethod: formData.storageMethod || undefined,
-        servingMethod: formData.servingMethod,
-        servingMethodDetail: formData.servingMethodDetail || undefined,
-        plannedServeDate: formData.plannedServeDate || undefined,
-        noteToStaff: formData.noteToStaff || undefined,
-        remainingHandlingInstruction: formData.remainingHandlingInstruction,
-        remainingHandlingConditions: formData.remainingHandlingConditions,
-        servingSchedule: formData.servingSchedule,
-      });
+      setRegisteredFormData(toCareItemInput());
       setShowManualPresetDialog(true);
       setIsSubmitting(false);
       return;
@@ -456,23 +458,8 @@ export function ItemEditPage() {
           servingSchedule: formData.servingSchedule,
         },
       });
-      // プリセット保存用にCareItemInput形式でデータを準備
-      setRegisteredFormData({
-        itemName: formData.itemName,
-        normalizedName: formData.normalizedName || undefined,
-        category: formData.category,
-        quantity: formData.quantity,
-        unit: formData.unit,
-        expirationDate: formData.expirationDate || undefined,
-        storageMethod: formData.storageMethod || undefined,
-        servingMethod: formData.servingMethod,
-        servingMethodDetail: formData.servingMethodDetail || undefined,
-        plannedServeDate: formData.plannedServeDate || undefined,
-        noteToStaff: formData.noteToStaff || undefined,
-        remainingHandlingInstruction: formData.remainingHandlingInstruction,
-        remainingHandlingConditions: formData.remainingHandlingConditions,
-        servingSchedule: formData.servingSchedule,
-      });
+      // プリセット保存ダイアログを表示
+      setRegisteredFormData(toCareItemInput());
       setShowManualPresetDialog(true);
     } catch (error) {
       console.error('Update failed:', error);
