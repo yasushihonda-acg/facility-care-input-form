@@ -89,6 +89,13 @@ test.describe('【Phase 22.1】品物編集機能', () => {
       const submitButton = page.getByRole('button', { name: /更新/ });
       if (await submitButton.isEnabled()) {
         await submitButton.click();
+
+        // プリセット保存ダイアログが表示される
+        const presetDialog = page.getByText('この設定を「いつもの指示」として保存しますか？');
+        await expect(presetDialog).toBeVisible();
+
+        // 「今回だけ」ボタンをクリック
+        await page.getByRole('button', { name: '今回だけ' }).click();
         await waitForSpaLoad(page);
 
         // 品物一覧にリダイレクトされることを確認
