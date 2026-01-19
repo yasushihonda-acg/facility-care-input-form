@@ -8,6 +8,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import { PresetFormModal } from '../../components/family/PresetFormModal';
+import { SaveManualPresetDialog } from '../../components/family/SaveManualPresetDialog';
 import { useCareItems, useUpdateCareItem } from '../../hooks/useCareItems';
 import { useDemoMode } from '../../hooks/useDemoMode';
 import { usePresets, useCreatePreset, useUpdatePreset } from '../../hooks/usePresets';
@@ -31,6 +32,7 @@ import type {
   RemainingHandlingInstruction,
   RemainingHandlingCondition,
   ServingSchedule,
+  CareItemInput,
 } from '../../types/careItem';
 import type { CarePreset } from '../../types/family';
 import { ServingScheduleInput } from '../../components/family/ServingScheduleInput';
@@ -164,6 +166,10 @@ export function ItemEditPage() {
   // プリセット編集・新規追加用state
   const [editingPreset, setEditingPreset] = useState<CarePreset | null>(null);
   const [isCreatingPreset, setIsCreatingPreset] = useState(false);
+
+  // プリセット保存ダイアログの状態
+  const [showManualPresetDialog, setShowManualPresetDialog] = useState(false);
+  const [registeredFormData, setRegisteredFormData] = useState<CareItemInput | null>(null);
 
   // 品物名正規化の状態
   const [isNormalizing, setIsNormalizing] = useState(false);
@@ -402,10 +408,26 @@ export function ItemEditPage() {
 
     setIsSubmitting(true);
 
-    // デモモードの場合: APIを呼ばず、成功メッセージを表示
+    // デモモードの場合: APIを呼ばず、プリセット保存ダイアログを表示
     if (isDemo) {
-      alert('更新しました（デモモード - 実際には更新されません）');
-      navigate(`/demo/family/items`);
+      // プリセット保存用にCareItemInput形式でデータを準備
+      setRegisteredFormData({
+        itemName: formData.itemName,
+        normalizedName: formData.normalizedName || undefined,
+        category: formData.category,
+        quantity: formData.quantity,
+        unit: formData.unit,
+        expirationDate: formData.expirationDate || undefined,
+        storageMethod: formData.storageMethod || undefined,
+        servingMethod: formData.servingMethod,
+        servingMethodDetail: formData.servingMethodDetail || undefined,
+        plannedServeDate: formData.plannedServeDate || undefined,
+        noteToStaff: formData.noteToStaff || undefined,
+        remainingHandlingInstruction: formData.remainingHandlingInstruction,
+        remainingHandlingConditions: formData.remainingHandlingConditions,
+        servingSchedule: formData.servingSchedule,
+      });
+      setShowManualPresetDialog(true);
       setIsSubmitting(false);
       return;
     }
@@ -434,8 +456,24 @@ export function ItemEditPage() {
           servingSchedule: formData.servingSchedule,
         },
       });
-      alert('更新しました');
-      navigate(`/family/items`);
+      // プリセット保存用にCareItemInput形式でデータを準備
+      setRegisteredFormData({
+        itemName: formData.itemName,
+        normalizedName: formData.normalizedName || undefined,
+        category: formData.category,
+        quantity: formData.quantity,
+        unit: formData.unit,
+        expirationDate: formData.expirationDate || undefined,
+        storageMethod: formData.storageMethod || undefined,
+        servingMethod: formData.servingMethod,
+        servingMethodDetail: formData.servingMethodDetail || undefined,
+        plannedServeDate: formData.plannedServeDate || undefined,
+        noteToStaff: formData.noteToStaff || undefined,
+        remainingHandlingInstruction: formData.remainingHandlingInstruction,
+        remainingHandlingConditions: formData.remainingHandlingConditions,
+        servingSchedule: formData.servingSchedule,
+      });
+      setShowManualPresetDialog(true);
     } catch (error) {
       console.error('Update failed:', error);
       alert('更新に失敗しました');
@@ -448,6 +486,40 @@ export function ItemEditPage() {
   const handleCancel = () => {
     navigate(`${pathPrefix}/family/items`);
   };
+
+  // プリセット保存ダイアログ: ×ボタン（ダイアログを閉じるだけ）
+  const handleDialogDismiss = useCallback(() => {
+    setShowManualPresetDialog(false);
+    // registeredFormDataはクリアしない（再度ダイアログを開ける可能性を残す）
+  }, []);
+
+  // プリセット保存ダイアログ: 「今回だけ」を選択
+  const handleManualPresetSkip = useCallback(() => {
+    setShowManualPresetDialog(false);
+    setRegisteredFormData(null);
+    // デモモードの場合はアラート表示
+    if (isDemo) {
+      alert('更新しました（デモモード - 実際には更新されません）');
+    } else {
+      alert('更新しました');
+    }
+    // 品物一覧へ遷移
+    navigate(`${pathPrefix}/family/items`);
+  }, [isDemo, navigate, pathPrefix]);
+
+  // プリセット保存ダイアログ: 「保存して完了」後
+  const handleManualPresetSaved = useCallback(() => {
+    setShowManualPresetDialog(false);
+    setRegisteredFormData(null);
+    // デモモードの場合はアラート表示
+    if (isDemo) {
+      alert('更新しました（デモモード - プリセット保存も実際には行われません）');
+    } else {
+      alert('更新しました');
+    }
+    // 品物一覧へ遷移
+    navigate(`${pathPrefix}/family/items`);
+  }, [isDemo, navigate, pathPrefix]);
 
   if (isLoading) {
     return (
@@ -1079,6 +1151,19 @@ export function ItemEditPage() {
             setEditingPreset(null);
           }}
           isSaving={createPresetMutation.isPending || updatePresetMutation.isPending}
+        />
+      )}
+
+      {/* 更新後のプリセット保存ダイアログ */}
+      {registeredFormData && (
+        <SaveManualPresetDialog
+          isOpen={showManualPresetDialog}
+          onDismiss={handleDialogDismiss}
+          onSkip={handleManualPresetSkip}
+          onSaved={handleManualPresetSaved}
+          residentId={DEMO_RESIDENT_ID}
+          userId={DEMO_USER_ID}
+          formData={registeredFormData}
         />
       )}
     </Layout>
