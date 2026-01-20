@@ -264,24 +264,13 @@ export function ItemForm() {
   // プリセット（いつもの指示）を適用
   // @see docs/ITEM_MANAGEMENT_SPEC.md - プリセット適用フロー（推奨パス）
   const handleApplyPreset = useCallback((preset: CarePreset) => {
-    // プリセット名から品物名を抽出（カッコ前の部分）
-    // 例: "キウイ（8等分・半月切り）" → "キウイ"
-    // 例: "黒豆（煮汁を切って器へ）" → "黒豆"
-    const extractItemName = (presetName: string): string => {
-      const match = presetName.match(/^([^（(]+)/);
-      return match ? match[1].trim() : presetName;
-    };
-
-    const itemName = extractItemName(preset.name);
-
     // プリセット切り替え時は全てのプリセット関連フィールドをリセットしてから適用
     // 条件付きスプレッドだと前のプリセットの値が残ってしまうため、明示的に設定
     setFormData((prev) => ({
       ...prev,
-      // 品物名（プリセット名からカッコ前を抽出）
-      itemName,
-      // 統計用の表示名（品物名と同じ）
-      normalizedName: itemName,
+      // 品物名（プリセット名をそのまま使用）
+      itemName: preset.name,
+      // 統計用の表示名は変更しない（ユーザーが手動で設定）
       // カテゴリ（食べ物/飲み物）- 未設定なら前の値を維持（必須フィールドのため）
       category: preset.itemCategory || prev.category,
       // 保存方法 - 未設定ならundefinedにリセット
@@ -587,7 +576,7 @@ export function ItemForm() {
                         >
                           <span className="text-xl">{preset.icon}</span>
                           <span className="text-xs text-gray-700 line-clamp-2">
-                            {preset.name.replace(/[（(].*/g, '')}
+                            {preset.name}
                           </span>
                         </button>
                       </div>
