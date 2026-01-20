@@ -42,8 +42,8 @@ export function PresetManagement() {
   const filteredPresets = (data?.presets || []).filter((preset) => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      // processingDetail優先、旧形式 instruction.content もフォールバック
-      const detailText = preset.processingDetail || preset.instruction?.content || '';
+      // servingMethodDetail優先、旧形式 processingDetail, instruction.content もフォールバック
+      const detailText = preset.servingMethodDetail || preset.processingDetail || preset.instruction?.content || '';
       return (
         preset.name.toLowerCase().includes(query) ||
         detailText.toLowerCase().includes(query) ||
@@ -234,7 +234,7 @@ function PresetCard({
         <div className="flex-1 min-w-0">
           <h3 className="font-bold text-gray-900 truncate">{preset.name}</h3>
           <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-            {preset.processingDetail || preset.instruction?.content}
+            {preset.servingMethodDetail || preset.processingDetail || preset.instruction?.content}
           </p>
 
           {/* メタ情報 */}
