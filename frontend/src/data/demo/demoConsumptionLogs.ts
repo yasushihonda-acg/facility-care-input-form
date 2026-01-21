@@ -38,6 +38,7 @@ export const DEMO_CONSUMPTION_LOGS: ConsumptionLog[] = [
     consumptionStatus: 'most',
     quantityBefore: 4,
     quantityAfter: 3.5,
+    remainingHandling: 'stored', // 残り対応（実績）
     noteToFamily: 'おいしそうに召し上がっていました',
     recordedBy: '田中花子',
     recordedAt: getDateTimeString(-3, 12, 30),
@@ -82,6 +83,7 @@ export const DEMO_CONSUMPTION_LOGS: ConsumptionLog[] = [
     consumptionStatus: 'most',
     quantityBefore: 2.5,
     quantityAfter: 2,
+    remainingHandling: 'stored', // 残り対応（実績）
     noteToFamily: '本日も元気に召し上がりました',
     sourceType: 'meal_form',  // 食事入力フォームから記録
     linkedMealRecordId: 'meal-2024-001',
@@ -102,6 +104,7 @@ export const DEMO_CONSUMPTION_LOGS: ConsumptionLog[] = [
     consumptionStatus: 'full',
     quantityBefore: 3,
     quantityAfter: 2,
+    remainingHandling: 'discarded', // 残り対応（実績）
     noteToFamily: '8等分・半月切りで提供。とても喜ばれました。',
     followedInstruction: true,  // 家族指示に従った
     instructionNote: '8等分・半月切りの指示に対応',

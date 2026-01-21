@@ -19,7 +19,7 @@ import {
 } from '../../types/careItem';
 import type { CareItem, ItemStatus } from '../../types/careItem';
 
-// デモ用の入居者ID（将来は認証から取得）
+// 入居者ID（単一入居者専用アプリのため固定値）
 const DEMO_RESIDENT_ID = 'resident-001';
 
 /** フィルタタブ定義 */

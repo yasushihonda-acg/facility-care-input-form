@@ -38,8 +38,11 @@ export function useDemoMode(): boolean {
 }
 
 /**
- * デモモード用の入居者ID
- * デモデータと一致させるための定数
+ * 入居者ID（単一入居者専用アプリのため固定値）
+ *
+ * このアプリは単一入居者専用として設計されているため、
+ * residentIdは全ページで同一の固定値を使用する。
+ * @see docs/ARCHITECTURE.md - 設計前提: 単一入居者専用
  */
 export const DEMO_RESIDENT_ID = 'resident-001';
 

@@ -37,8 +37,9 @@ import { UnscheduledDatesBanner } from '../../components/family/UnscheduledDates
 import { UnscheduledDatesModal } from '../../components/family/UnscheduledDatesModal';
 import { ScheduleDisplay } from '../../components/meal/ScheduleDisplay';
 import { getUnscheduledDates, isScheduledForDate, getMissedScheduleItems, getWeekStartDate, formatDateString, type ScheduleTypeExclusion } from '../../utils/scheduleUtils';
+import { formatRemainingHandlingLabel, formatRemainingHandlingLabelFull, type RemainingHandling } from '../../types/consumptionLog';
 
-// デモ用の入居者ID・ユーザーID（将来は認証から取得）
+// 入居者ID（単一入居者専用アプリのため固定値）
 const DEMO_RESIDENT_ID = 'resident-001';
 
 /**
@@ -684,6 +685,15 @@ function ItemCard({ item, onDelete, onEdit, onShowDetail }: {
             </div>
             <span className="text-sm font-medium">{item.consumptionRate}%</span>
           </div>
+          {/* 残りの処理（実績） */}
+          {item.consumptionSummary?.lastRemainingHandling && (
+            <div className="mt-1 text-xs text-gray-500">
+              ↪ {formatRemainingHandlingLabel(
+                item.consumptionSummary.lastRemainingHandling as RemainingHandling,
+                item.consumptionSummary.lastRemainingHandlingOther
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -884,6 +894,18 @@ function ItemDetailModal({ item, onClose, onEdit, onDelete, selectedDate }: {
                 </div>
                 <span className="text-sm font-medium">{dateConsumptionRate}%</span>
               </div>
+              {/* 残りの処理（実績）- 選択日のログから取得 */}
+              {logsData?.logs?.some(log => log.remainingHandling) && (() => {
+                const logWithHandling = logsData.logs.find(log => log.remainingHandling);
+                return logWithHandling?.remainingHandling && (
+                  <div className="mt-2 text-sm text-gray-600">
+                    残りの処理: {formatRemainingHandlingLabelFull(
+                      logWithHandling.remainingHandling as RemainingHandling,
+                      logWithHandling.remainingHandlingOther
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           ) : item.status === 'consumed' || item.status === 'in_progress' ? (
             <div className="p-3 bg-gray-100 rounded-lg">

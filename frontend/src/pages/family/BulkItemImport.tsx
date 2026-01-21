@@ -14,7 +14,7 @@ import { BulkImportPreview } from '../../components/family/BulkImportPreview';
 import { BulkImportConfirmDialog } from '../../components/family/BulkImportConfirmDialog';
 import { downloadTemplate } from '../../utils/excelParser';
 
-// デモ用の入居者ID・ユーザーID（将来は認証から取得）
+// 入居者ID・ユーザーID（単一入居者専用アプリのため固定値）
 const DEMO_RESIDENT_ID = 'resident-001';
 const DEMO_USER_ID = 'family-001';
 

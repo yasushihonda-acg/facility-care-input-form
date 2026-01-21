@@ -31,7 +31,7 @@ import {
   getNotificationLabel,
 } from '../../data/demo/demoItemEvents';
 
-// デモ用スタッフ名（将来は認証から取得）
+// スタッフ名（単一入居者専用アプリのため固定値）
 const DEMO_STAFF_NAME = 'スタッフA';
 
 // タブ定義
