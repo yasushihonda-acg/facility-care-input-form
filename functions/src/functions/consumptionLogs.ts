@@ -297,9 +297,9 @@ async function recordConsumptionLogHandler(
         lastRecordedAt: now.toDate().toISOString(),
         // 残り対応（実績）
         lastRemainingHandling: input.remainingHandling || prevRemainingHandling,
-        lastRemainingHandlingOther: input.remainingHandling === "other"
-          ? input.remainingHandlingOther
-          : (input.remainingHandling ? undefined : prevRemainingHandlingOther),
+        lastRemainingHandlingOther: input.remainingHandling === "other" ?
+          input.remainingHandlingOther :
+          (input.remainingHandling ? undefined : prevRemainingHandlingOther),
       };
 
       // ステータスを判定
@@ -968,9 +968,9 @@ async function correctDiscardedRecordHandler(
         lastServedBy: input.servedBy,
         // 残り対応（実績）
         lastRemainingHandling: input.remainingHandling || prevRemainingHandling,
-        lastRemainingHandlingOther: input.remainingHandling === "other"
-          ? input.remainingHandlingOther
-          : (input.remainingHandling ? undefined : prevRemainingHandlingOther),
+        lastRemainingHandlingOther: input.remainingHandling === "other" ?
+          input.remainingHandlingOther :
+          (input.remainingHandling ? undefined : prevRemainingHandlingOther),
       };
 
       // === 5. ステータスを判定 ===
