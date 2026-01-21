@@ -49,6 +49,7 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
       totalServedQuantity: 2.5,
       totalConsumedQuantity: 1.88,
       avgConsumptionRate: 75,
+      lastRemainingHandling: 'stored', // 残り対応（実績）
     },
     consumptionRate: 75,
     remainingHandlingInstruction: 'stored' as RemainingHandlingInstruction, // Phase 33: 残ったら保存
@@ -102,12 +103,14 @@ export const DEMO_CARE_ITEMS: CareItem[] = [
       totalServedQuantity: 3,
       totalConsumedQuantity: 2.8,
       avgConsumptionRate: 93,
+      lastRemainingHandling: 'discarded', // 残り対応（実績）
     },
     consumptionRate: 93,
     noteToFamily: '大変喜んで召し上がっていました',
     actualServeDate: getDateString(-2),
-    createdAt: getDateTimeString(-7),
-    updatedAt: getDateTimeString(-2),
+    // デモ表示用: 今日の日付に表示されるようにcreatedAtを今日に設定
+    createdAt: getDateTimeString(0),
+    updatedAt: getDateTimeString(0),
   },
   {
     id: 'demo-item-003',

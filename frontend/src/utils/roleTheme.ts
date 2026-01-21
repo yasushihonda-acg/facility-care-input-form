@@ -29,34 +29,39 @@ const ROLE_COLORS: Record<UserRole, { primary: string; primaryLight: string; pri
 /**
  * パスからロールを判定
  *
- * @returns ロール、または設定ページなど対象外の場合はnull
+ * @returns { role, isExplicit }
+ *   - role: ロール、または設定ページなど対象外の場合はnull
+ *   - isExplicit: パスから明示的に判定されたか（localStorageへの保存判定用）
  */
-export function detectRole(pathname: string): UserRole | null {
+export function detectRole(pathname: string): { role: UserRole | null; isExplicit: boolean } {
   // 設定ページはロール対象外
   if (pathname === '/settings') {
-    return null;
+    return { role: null, isExplicit: false };
   }
 
   // 家族判定（/family/*、/demo、または /demo/family/*）
   // /demo は家族デモホーム（DemoHome.tsx）
   if (pathname.startsWith('/family') || pathname === '/demo' || pathname.startsWith('/demo/family')) {
-    return 'family';
+    return { role: 'family', isExplicit: true };
   }
 
   // スタッフ判定（/staff/* または /demo/staff/*）
   if (pathname.startsWith('/staff') || pathname.startsWith('/demo/staff')) {
-    return 'staff';
+    return { role: 'staff', isExplicit: true };
   }
 
-  // 共有ページ（/view, /stats等）: localStorageから直前ロール取得
+  // 共有ページ（/view, /stats等）: localStorageから直前ロール取得（保存はしない）
   const savedRole = localStorage.getItem(USER_ROLE_KEY) as UserRole | null;
-  return savedRole || 'staff';
+  return { role: savedRole || 'staff', isExplicit: false };
 }
 
 /**
  * HTML要素にdata-role属性を設定し、CSS変数でテーマカラーを適用
+ *
+ * @param role ロール
+ * @param persist localStorageに保存するか（明示的なパスからの判定時のみtrue）
  */
-export function applyRoleTheme(role: UserRole | null): void {
+export function applyRoleTheme(role: UserRole | null, persist: boolean = false): void {
   const root = document.documentElement;
 
   // ロール対象外の場合は何もしない（デフォルトテーマ維持）
@@ -75,6 +80,9 @@ export function applyRoleTheme(role: UserRole | null): void {
   root.style.setProperty('--color-primary-light', colors.primaryLight);
   root.style.setProperty('--color-primary-dark', colors.primaryDark);
 
-  // ロールをlocalStorageに保存（共有ページでの復元用）
-  localStorage.setItem(USER_ROLE_KEY, role);
+  // 明示的なパスから判定された場合のみlocalStorageに保存
+  // （共有ページでのデフォルト値を保存しないことで、ルーティングへの影響を防止）
+  if (persist) {
+    localStorage.setItem(USER_ROLE_KEY, role);
+  }
 }

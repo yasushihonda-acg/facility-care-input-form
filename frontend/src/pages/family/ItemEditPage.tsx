@@ -41,10 +41,8 @@ import { parseNumericInput } from '../../utils/inputHelpers';
 import { checkItemDuplicate, type DuplicateCheckResult } from '../../utils/duplicateCheck';
 import { DEMO_PRESETS } from '../../data/demoFamilyData';
 
-// デモ用の入居者ID（将来は認証から取得）
+// 入居者ID・ユーザーID（単一入居者専用アプリのため固定値）
 const DEMO_RESIDENT_ID = 'resident-001';
-
-// デモ用のユーザーID
 const DEMO_USER_ID = 'family-001';
 
 interface EditFormData {

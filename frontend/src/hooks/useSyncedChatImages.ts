@@ -158,8 +158,8 @@ export function useSyncedChatImages(): UseSyncedChatImagesResult {
         });
         // 同期成功時は再認証フラグをリセット
         setNeedsReauth(false);
-        // キャッシュを更新
-        queryClient.invalidateQueries({ queryKey: ['syncedChatImages', residentId] });
+        // キャッシュを更新（取得側と同じキーを使用）
+        queryClient.invalidateQueries({ queryKey: ['carePhotos', residentId] });
       } else {
         throw new Error(response.error?.message || 'Sync failed');
       }

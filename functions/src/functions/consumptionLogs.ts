@@ -283,6 +283,10 @@ async function recordConsumptionLogHandler(
         0;
 
       const now = Timestamp.now();
+      // 残り対応: 今回指定があれば新しい値、なければ前回値を保持
+      const prevRemainingHandling = existingSummary.lastRemainingHandling;
+      const prevRemainingHandlingOther = existingSummary.lastRemainingHandlingOther;
+
       const newSummary = {
         totalServed: newTotalServed,
         totalServedQuantity: newTotalServedQty,
@@ -291,6 +295,11 @@ async function recordConsumptionLogHandler(
         lastServedDate: input.servedDate,
         lastServedBy: input.servedBy,
         lastRecordedAt: now.toDate().toISOString(),
+        // 残り対応（実績）
+        lastRemainingHandling: input.remainingHandling || prevRemainingHandling,
+        lastRemainingHandlingOther: input.remainingHandling === "other"
+          ? input.remainingHandlingOther
+          : (input.remainingHandling ? undefined : prevRemainingHandlingOther),
       };
 
       // ステータスを判定
@@ -946,6 +955,10 @@ async function correctDiscardedRecordHandler(
         Math.round((newTotalConsumedQty / newTotalServedQty) * 100) :
         0;
 
+      // 残り対応: 今回指定があれば新しい値、なければ前回値を保持
+      const prevRemainingHandling = existingSummary.lastRemainingHandling;
+      const prevRemainingHandlingOther = existingSummary.lastRemainingHandlingOther;
+
       const newSummary = {
         totalServed: newTotalServed,
         totalServedQuantity: newTotalServedQty,
@@ -953,6 +966,11 @@ async function correctDiscardedRecordHandler(
         avgConsumptionRate: newAvgRate,
         lastServedDate: input.servedDate,
         lastServedBy: input.servedBy,
+        // 残り対応（実績）
+        lastRemainingHandling: input.remainingHandling || prevRemainingHandling,
+        lastRemainingHandlingOther: input.remainingHandling === "other"
+          ? input.remainingHandlingOther
+          : (input.remainingHandling ? undefined : prevRemainingHandlingOther),
       };
 
       // === 5. ステータスを判定 ===

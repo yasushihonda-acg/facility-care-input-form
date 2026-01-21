@@ -25,7 +25,7 @@ import { ALERT_SEVERITY_COLORS, ALERT_SEVERITY_LABELS, ALERT_TYPE_LABELS } from 
 import type { AIConsumptionRecord } from '../../types/careItem';
 import { getTodayString } from '../../utils/scheduleUtils';
 
-// デモ用の入居者ID（将来は認証から取得）
+// 入居者ID（単一入居者専用アプリのため固定値）
 const DEMO_RESIDENT_ID = 'resident-001';
 
 type StatsTab = 'items' | 'consumption' | 'alerts';

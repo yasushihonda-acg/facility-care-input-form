@@ -246,6 +246,9 @@ export interface CareItem {
     lastServedDate?: string;     // 最終提供日
     lastServedBy?: string;       // 最終提供者
     lastRecordedAt?: string;     // 最終記録日時（ISO 8601）
+    // 残り対応（実績）- 最後に記録された残り対応
+    lastRemainingHandling?: 'discarded' | 'stored' | 'other';
+    lastRemainingHandlingOther?: string; // その他の場合の詳細
   };
 
   // ステータス・メタ情報

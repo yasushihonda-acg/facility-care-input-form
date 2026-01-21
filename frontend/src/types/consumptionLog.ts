@@ -202,3 +202,31 @@ export function createInitialConsumptionSummary(): ConsumptionSummary {
     avgConsumptionRate: 0,
   };
 }
+
+/**
+ * 残り対応の実績をラベルに変換（品物カード用・短縮形）
+ */
+export function formatRemainingHandlingLabel(
+  handling: RemainingHandling,
+  other?: string
+): string {
+  switch (handling) {
+    case 'discarded': return '🗑️ 破棄';
+    case 'stored': return '📦 保存';
+    case 'other': return `🏷️ ${other || 'その他'}`;
+  }
+}
+
+/**
+ * 残り対応の実績をラベルに変換（詳細表示用・フルラベル）
+ */
+export function formatRemainingHandlingLabelFull(
+  handling: RemainingHandling,
+  other?: string
+): string {
+  const option = REMAINING_HANDLING_OPTIONS.find(o => o.value === handling);
+  if (handling === 'other' && other) {
+    return `${option?.label || 'その他'}（${other}）`;
+  }
+  return option?.label || handling;
+}
