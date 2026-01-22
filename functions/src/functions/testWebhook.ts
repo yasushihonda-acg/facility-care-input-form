@@ -32,7 +32,7 @@ export const testWebhook = functions
     // CORS対応
     res.set("Access-Control-Allow-Origin", "*");
     res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-    res.set("Access-Control-Allow-Headers", "Content-Type");
+    res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
     // プリフライト
     if (req.method === "OPTIONS") {

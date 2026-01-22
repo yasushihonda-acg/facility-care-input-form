@@ -28,7 +28,7 @@ const STAFF_NOTES_COLLECTION = "staffNotes";
 function setCorsHeaders(res: Response): void {
   res.set("Access-Control-Allow-Origin", "*");
   res.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.set("Access-Control-Allow-Headers", "Content-Type");
+  res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
 }
 
 /**
