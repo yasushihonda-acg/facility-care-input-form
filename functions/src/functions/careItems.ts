@@ -153,7 +153,7 @@ async function submitCareItemHandler(
     // CORS対応
     res.set("Access-Control-Allow-Origin", "*");
     res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-    res.set("Access-Control-Allow-Headers", "Content-Type");
+    res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
     if (req.method === "OPTIONS") {
       res.status(204).send("");
@@ -307,7 +307,7 @@ async function getCareItemsHandler(
     // CORS対応
     res.set("Access-Control-Allow-Origin", "*");
     res.set("Access-Control-Allow-Methods", "GET, OPTIONS");
-    res.set("Access-Control-Allow-Headers", "Content-Type");
+    res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
     if (req.method === "OPTIONS") {
       res.status(204).send("");
@@ -339,6 +339,38 @@ async function getCareItemsHandler(
       limit: req.query.limit ? parseInt(req.query.limit as string, 10) : 500,
       offset: req.query.offset ? parseInt(req.query.offset as string, 10) : 0,
     };
+
+    // 日付パラメータのバリデーション
+    const isValidDateString = (str: string): boolean => {
+      const date = new Date(str);
+      return !isNaN(date.getTime());
+    };
+
+    if (params.startDate && !isValidDateString(params.startDate)) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: {
+          code: ErrorCodes.INVALID_REQUEST,
+          message: `Invalid startDate format: ${params.startDate}`,
+        },
+        timestamp,
+      };
+      res.status(400).json(response);
+      return;
+    }
+
+    if (params.endDate && !isValidDateString(params.endDate)) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: {
+          code: ErrorCodes.INVALID_REQUEST,
+          message: `Invalid endDate format: ${params.endDate}`,
+        },
+        timestamp,
+      };
+      res.status(400).json(response);
+      return;
+    }
 
     functions.logger.info("getCareItems started", params);
 
@@ -544,7 +576,7 @@ async function updateCareItemHandler(
     // CORS対応
     res.set("Access-Control-Allow-Origin", "*");
     res.set("Access-Control-Allow-Methods", "PUT, OPTIONS");
-    res.set("Access-Control-Allow-Headers", "Content-Type");
+    res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
     if (req.method === "OPTIONS") {
       res.status(204).send("");
@@ -633,10 +665,13 @@ async function updateCareItemHandler(
     functions.logger.info("updateCareItem success", {itemId});
 
     // Phase 58: 品物イベントログ（非同期・エラーでも処理続行）
+    // Phase 66: servingScheduleを追加（旧フィールドは後方互換のため残す）
     const fieldsToTrack = [
       "itemName", "category", "quantity", "unit", "expirationDate",
       "storageMethod", "servingMethod", "servingMethodDetail",
       "noteToStaff", "remainingHandlingInstruction",
+      "servingSchedule",
+      // 後方互換: 旧スケジュールフィールド
       "scheduleType", "scheduleDays", "specificDates", "scheduleTime",
     ];
     const changes = detectChanges(oldData, {...oldData, ...allowedUpdates}, fieldsToTrack);
@@ -716,7 +751,7 @@ async function deleteCareItemHandler(
     // CORS対応
     res.set("Access-Control-Allow-Origin", "*");
     res.set("Access-Control-Allow-Methods", "DELETE, OPTIONS");
-    res.set("Access-Control-Allow-Headers", "Content-Type");
+    res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
     if (req.method === "OPTIONS") {
       res.status(204).send("");
