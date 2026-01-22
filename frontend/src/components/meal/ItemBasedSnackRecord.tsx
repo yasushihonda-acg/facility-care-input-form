@@ -293,12 +293,6 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
     const discardedIds = new Set<string>(); // 重複防止用
 
     items.forEach((item) => {
-      // Phase 65: 消費完了した品物は残り対応タブに表示しない
-      // （10割提供で残量0になった品物は除外）
-      if (item.status === 'consumed') {
-        return;
-      }
-
       // Phase 49: status === 'discarded' の品物を追加（期限切れ廃棄など）
       if (item.status === 'discarded') {
         discarded.push(item);
@@ -307,6 +301,26 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
       }
 
       const logs = item.remainingHandlingLogs ?? [];
+
+      // 最新ログを取得（recordedAt降順でソート）
+      const sortedLogs = logs.length > 0
+        ? [...logs].sort(
+            (a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime()
+          )
+        : [];
+      const latestLog = sortedLogs[0];
+
+      // 破棄ログがある場合は破棄済みタブに表示（statusに関係なく）
+      if (latestLog?.handling === 'discarded' && !discardedIds.has(item.id)) {
+        discarded.push(item);
+        return;
+      }
+
+      // Phase 65: 消費完了した品物は保存済みタブに表示しない
+      // （破棄ログがない、かつ10割提供で残量0になった品物は除外）
+      if (item.status === 'consumed') {
+        return;
+      }
 
       // Phase 63/64: ログがない場合でも、記録があり残りがある場合はstored扱い
       // Phase 64: 日付に関係なく表示（翌日以降も保存済みタブに残す）
@@ -319,15 +333,8 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
         return;
       }
 
-      // 最新ログを取得（recordedAt降順でソート）
-      const sortedLogs = [...logs].sort(
-        (a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime()
-      );
-      const latestLog = sortedLogs[0];
-
-      if (latestLog.handling === 'discarded' && !discardedIds.has(item.id)) {
-        discarded.push(item);
-      } else if (latestLog.handling === 'stored') {
+      // 保存ログがある場合は保存済みタブに表示
+      if (latestLog?.handling === 'stored') {
         stored.push(item);
       }
     });
