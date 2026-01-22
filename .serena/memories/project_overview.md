@@ -45,7 +45,7 @@ facility-care-input-form/
 - **Sheet A（読取）**: `1Gf8QTbGyKB7rn5QQa5cYOg1NNYWMV8lzqySdbDkfG-w`
 - **Sheet B（書込）**: `1OrpUVoDfUECXCTrKOGKLwN_4OQ9dlg7cUTCPGLDGHV0`
 
-## 主要機能（Phase 62まで実装済み）
+## 主要機能（Phase 66まで実装済み）
 
 ### 家族向け
 - 品物管理（登録・編集・詳細・提供スケジュール）
