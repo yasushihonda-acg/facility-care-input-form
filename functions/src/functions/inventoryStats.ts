@@ -60,7 +60,11 @@ async function calculateInventorySummary(
   }
 
   const snapshot = await query.get();
-  const items = snapshot.docs.map((doc) => doc.data() as CareItem);
+  // Phase 65: doc.idを含めてマッピング（item.id欠落バグ修正）
+  const items = snapshot.docs.map((doc) => ({
+    ...doc.data(),
+    id: doc.id,
+  } as CareItem));
 
   // 各品物の最新消費ログを取得し、サマリーを構築
   const summaryItems: InventorySummaryItem[] = [];
@@ -195,7 +199,11 @@ async function calculateFoodStats(
   }
 
   const snapshot = await query.get();
-  const items = snapshot.docs.map((doc) => doc.data() as CareItem);
+  // Phase 65: doc.idを含めてマッピング（item.id欠落バグ修正）
+  const items = snapshot.docs.map((doc) => ({
+    ...doc.data(),
+    id: doc.id,
+  } as CareItem));
 
   // 品目名でグループ化して統計を計算
   const foodStatsMap = new Map<string, {

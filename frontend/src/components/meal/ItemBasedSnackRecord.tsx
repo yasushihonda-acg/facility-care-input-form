@@ -293,6 +293,12 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
     const discardedIds = new Set<string>(); // 重複防止用
 
     items.forEach((item) => {
+      // Phase 65: 消費完了した品物は残り対応タブに表示しない
+      // （10割提供で残量0になった品物は除外）
+      if (item.status === 'consumed') {
+        return;
+      }
+
       // Phase 49: status === 'discarded' の品物を追加（期限切れ廃棄など）
       if (item.status === 'discarded') {
         discarded.push(item);
