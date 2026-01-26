@@ -115,6 +115,9 @@ export function useCareItems(params: GetCareItemsParams = {}) {
         items: sortByExpirationFirst(response.data.items),
       };
     },
+    // Phase 67: 他スタッフの記録を反映するため30秒ごとに自動更新
+    // 在庫切れの品物がUIに反映されないキャッシュ問題を解決
+    refetchInterval: isDemo ? false : 30 * 1000,
   });
 }
 

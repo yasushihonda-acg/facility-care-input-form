@@ -7,11 +7,14 @@
 
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import { Layout } from '../../components/Layout';
 import { ProhibitionWarning } from '../../components/staff/ProhibitionWarning';
 import { StaffRecordDialog } from '../../components/staff/StaffRecordDialog';
 import { useCareItems } from '../../hooks/useCareItems';
 import { useDemoMode } from '../../hooks/useDemoMode';
+import { getCareItem } from '../../api';
+import type { CareItem } from '../../types/careItem';
 import {
   getCategoryIcon,
   getStatusLabel,
@@ -20,6 +23,7 @@ import {
   getDaysUntilExpiration,
   getStorageLabel,
   getServingMethodLabel,
+  isQuantitySkipped,
 } from '../../types/careItem';
 
 // 入居者ID（単一入居者専用アプリのため固定値）
@@ -28,6 +32,10 @@ const DEMO_RESIDENT_ID = 'resident-001';
 export function FamilyMessageDetail() {
   const { id } = useParams<{ id: string }>();
   const [showRecordModal, setShowRecordModal] = useState(false);
+  // Phase 67: ダイアログ用の最新品物データ
+  const [latestItem, setLatestItem] = useState<CareItem | null>(null);
+  // Phase 67: ボタンのローディング状態
+  const [isRecordLoading, setIsRecordLoading] = useState(false);
   const isDemo = useDemoMode();
   const pathPrefix = isDemo ? '/demo' : '';
 
@@ -74,6 +82,45 @@ export function FamilyMessageDetail() {
   const initialQty = item.quantity || 1;
   const remainingQty = item.remainingQuantity || 0;
   const consumedPercent = ((initialQty - remainingQty) / initialQty) * 100;
+
+  // Phase 67: 提供記録ボタンクリック時のハンドラ（最新データ取得 + 在庫チェック）
+  const handleRecordClick = async () => {
+    // デモモードではキャッシュデータをそのまま使用
+    if (isDemo) {
+      setLatestItem(item);
+      setShowRecordModal(true);
+      return;
+    }
+
+    setIsRecordLoading(true);
+    try {
+      // 最新の品物データを取得
+      const response = await getCareItem(item.id);
+      const fetchedItem = response.data;
+
+      if (!fetchedItem) {
+        toast.error('品物が見つかりません。画面を更新してください。');
+        return;
+      }
+
+      // 在庫チェック（数量管理しない品物はスキップ）
+      const skipQty = isQuantitySkipped(fetchedItem);
+      const currentQty = fetchedItem.currentQuantity ?? fetchedItem.remainingQuantity ?? fetchedItem.quantity ?? 0;
+      if (!skipQty && currentQty <= 0) {
+        toast.error('在庫がありません。他のスタッフが記録済みの可能性があります。');
+        return;
+      }
+
+      // 最新データでダイアログを開く
+      setLatestItem(fetchedItem);
+      setShowRecordModal(true);
+    } catch (error) {
+      console.error('品物データの取得に失敗しました:', error);
+      toast.error('データの取得に失敗しました。再度お試しください。');
+    } finally {
+      setIsRecordLoading(false);
+    }
+  };
 
   return (
     <Layout title={item.itemName} showBackButton>
@@ -265,24 +312,42 @@ export function FamilyMessageDetail() {
         {item.status !== 'consumed' && (
           <div className="fixed bottom-20 left-0 right-0 px-4 pb-4 bg-gradient-to-t from-gray-50 to-transparent pt-6">
             <button
-              onClick={() => setShowRecordModal(true)}
-              className="w-full py-4 bg-primary text-white rounded-lg font-bold text-lg shadow-lg hover:bg-primary-dark transition"
+              onClick={handleRecordClick}
+              disabled={isRecordLoading}
+              className="w-full py-4 bg-primary text-white rounded-lg font-bold text-lg shadow-lg hover:bg-primary-dark transition disabled:opacity-50 disabled:cursor-wait flex items-center justify-center gap-2"
             >
-              提供・摂食を記録する
+              {isRecordLoading ? (
+                <>
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  確認中...
+                </>
+              ) : (
+                '提供・摂食を記録する'
+              )}
             </button>
           </div>
         )}
 
         {/* Phase 15.3: 統一された提供・摂食記録ダイアログ */}
-        <StaffRecordDialog
-          isOpen={showRecordModal}
-          onClose={() => setShowRecordModal(false)}
-          item={item}
-          onSuccess={() => {
-            setShowRecordModal(false);
-          }}
-          isDemo={isDemo}
-        />
+        {/* Phase 67: 最新データ(latestItem)でダイアログを開く */}
+        {latestItem && (
+          <StaffRecordDialog
+            isOpen={showRecordModal}
+            onClose={() => {
+              setShowRecordModal(false);
+              setLatestItem(null);
+            }}
+            item={latestItem}
+            onSuccess={() => {
+              setShowRecordModal(false);
+              setLatestItem(null);
+            }}
+            isDemo={isDemo}
+          />
+        )}
       </div>
     </Layout>
   );
