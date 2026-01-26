@@ -22,7 +22,7 @@ import {
   migrateCategory,
 } from '../../types/careItem';
 import { StaffRecordDialog } from '../staff/StaffRecordDialog';
-import { getConsumptionLogs, getCareItems } from '../../api';
+import { getConsumptionLogs, getCareItems, getCareItem } from '../../api';
 import type { ConsumptionLog } from '../../types/consumptionLog';
 import { getDemoConsumptionLogsForItem } from '../../data/demo';
 import {
@@ -197,6 +197,8 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
   const [editingLog, setEditingLog] = useState<ConsumptionLog | null>(null);
   // 編集ボタンのローディング状態（どのアイテムがローディング中かを追跡）
   const [editLoadingItemId, setEditLoadingItemId] = useState<string | null>(null);
+  // Phase 67: 提供記録ボタンのローディング状態（在庫チェック中）
+  const [recordLoadingItemId, setRecordLoadingItemId] = useState<string | null>(null);
 
   // 廃棄確認ダイアログ
   const [discardTarget, setDiscardTarget] = useState<CareItem | null>(null);
@@ -430,11 +432,51 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
     );
   }
 
-  const handleRecordClick = (item: CareItem) => {
-    setSelectedItem(item);
-    setIsEditMode(false);
-    setEditSheetTimestamp(null);
-    setIsModalOpen(true);
+  // Phase 67: 提供記録ボタンクリック時のハンドラ（最新データ取得 + 在庫チェック）
+  const handleRecordClick = async (item: CareItem) => {
+    // デモモードではキャッシュデータをそのまま使用
+    if (isDemo) {
+      setSelectedItem(item);
+      setIsEditMode(false);
+      setEditSheetTimestamp(null);
+      setIsModalOpen(true);
+      return;
+    }
+
+    // ローディング開始
+    setRecordLoadingItemId(item.id);
+    try {
+      // 最新の品物データを取得
+      const response = await getCareItem(item.id);
+      const latestItem = response.data;
+
+      if (!latestItem) {
+        toast.error('品物が見つかりません。画面を更新してください。');
+        refetch();
+        return;
+      }
+
+      // 在庫チェック（数量管理しない品物はスキップ）
+      const skipQty = isQuantitySkipped(latestItem);
+      const currentQty = latestItem.currentQuantity ?? latestItem.remainingQuantity ?? latestItem.quantity ?? 0;
+      if (!skipQty && currentQty <= 0) {
+        toast.error('在庫がありません。他のスタッフが記録済みの可能性があります。');
+        refetch(); // リストを更新
+        return;
+      }
+
+      // 最新データでダイアログを開く
+      setSelectedItem(latestItem);
+      setIsEditMode(false);
+      setEditSheetTimestamp(null);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error('品物データの取得に失敗しました:', error);
+      toast.error('データの取得に失敗しました。再度お試しください。');
+    } finally {
+      // ローディング終了
+      setRecordLoadingItemId(null);
+    }
   };
 
   // 編集ボタンクリック時のハンドラ（水分記録編集用）
@@ -581,6 +623,7 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
                     highlight={isExpired(item) ? 'expired' : 'missed'}
                     onRecordClick={() => handleRecordClick(item)}
                     onDiscardClick={isExpired(item) ? () => setDiscardTarget(item) : undefined}
+                    isRecordLoading={recordLoadingItemId === item.id}
                   />
                 ))}
               </div>
@@ -601,6 +644,7 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
                     item={item}
                     highlight="today"
                     onRecordClick={() => handleRecordClick(item)}
+                    isRecordLoading={recordLoadingItemId === item.id}
                   />
                 ))}
               </div>
@@ -624,6 +668,7 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
                     // 水分カテゴリの品物のみ編集ボタンを表示
                     onEditClick={migrateCategory(item.category) === 'drink' ? () => handleEditClick(item) : undefined}
                     isEditLoading={editLoadingItemId === item.id}
+                    isRecordLoading={recordLoadingItemId === item.id}
                   />
                 ))}
               </div>
@@ -650,6 +695,7 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
                     item={item}
                     highlight="none"
                     onRecordClick={() => handleRecordClick(item)}
+                    isRecordLoading={recordLoadingItemId === item.id}
                   />
                 ))}
               </div>
@@ -717,6 +763,7 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
                       type="discarded"
                       showButtons={true}
                       onRecordClick={() => handleRecordClick(item)}
+                      isRecordLoading={recordLoadingItemId === item.id}
                     />
                   ))}
                   {/* Phase 63: さらに表示ボタン */}
@@ -760,6 +807,7 @@ export function ItemBasedSnackRecord({ residentId, onRecordComplete }: ItemBased
                     type="stored"
                     showButtons={true}
                     onRecordClick={() => handleRecordClick(item)}
+                    isRecordLoading={recordLoadingItemId === item.id}
                   />
                 ))
               ) : (
@@ -827,9 +875,11 @@ interface ItemCardProps {
   onEditClick?: () => void;
   /** 編集ボタンのローディング状態 */
   isEditLoading?: boolean;
+  /** Phase 67: 提供記録ボタンのローディング状態 */
+  isRecordLoading?: boolean;
 }
 
-function ItemCard({ item, highlight, onRecordClick, onDiscardClick, onEditClick, isEditLoading }: ItemCardProps) {
+function ItemCard({ item, highlight, onRecordClick, onDiscardClick, onEditClick, isEditLoading, isRecordLoading }: ItemCardProps) {
   const daysUntil = getDaysUntilExpiration(item);
   const skipQuantity = isQuantitySkipped(item);
   const remainingQty = skipQuantity ? undefined : (item.currentQuantity ?? item.remainingQuantity ?? item.quantity);
@@ -953,10 +1003,23 @@ function ItemCard({ item, highlight, onRecordClick, onDiscardClick, onEditClick,
           {!isRecorded && (
             <button
               onClick={onRecordClick}
-              className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-1"
+              disabled={isRecordLoading}
+              className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-wait"
             >
-              <span>🍪</span>
-              <span>提供記録</span>
+              {isRecordLoading ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  <span>確認中...</span>
+                </>
+              ) : (
+                <>
+                  <span>🍪</span>
+                  <span>提供記録</span>
+                </>
+              )}
             </button>
           )}
           {/* 編集ボタン（入力済み・水分記録の場合のみ） */}
@@ -1004,9 +1067,11 @@ interface RemainingItemCardProps {
   type: 'discarded' | 'stored';
   showButtons?: boolean;
   onRecordClick?: () => void;
+  /** Phase 67: 提供記録ボタンのローディング状態 */
+  isRecordLoading?: boolean;
 }
 
-function RemainingItemCard({ item, type, showButtons = true, onRecordClick }: RemainingItemCardProps) {
+function RemainingItemCard({ item, type, showButtons = true, onRecordClick, isRecordLoading }: RemainingItemCardProps) {
   const daysUntil = getDaysUntilExpiration(item);
   const skipQuantity = isQuantitySkipped(item);
   const remainingQty = skipQuantity ? undefined : (item.currentQuantity ?? item.remainingQuantity ?? item.quantity);
@@ -1167,10 +1232,23 @@ function RemainingItemCard({ item, type, showButtons = true, onRecordClick }: Re
           <div className="flex flex-col gap-2 ml-4">
             <button
               onClick={onRecordClick}
-              className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-1"
+              disabled={isRecordLoading}
+              className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-wait"
             >
-              <span>{type === 'discarded' ? '🔄' : '🍪'}</span>
-              <span>{type === 'discarded' ? '修正記録' : '提供記録'}</span>
+              {isRecordLoading ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  <span>確認中...</span>
+                </>
+              ) : (
+                <>
+                  <span>{type === 'discarded' ? '🔄' : '🍪'}</span>
+                  <span>{type === 'discarded' ? '修正記録' : '提供記録'}</span>
+                </>
+              )}
             </button>
           </div>
         )}
