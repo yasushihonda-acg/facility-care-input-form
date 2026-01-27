@@ -25,7 +25,7 @@ facility-care-input-form/
 ├── CLAUDE.md          # 開発ルール（必読）
 ├── frontend/          # React PWA
 │   ├── src/           # ソースコード
-│   └── e2e/           # E2Eテスト (Playwright)
+│   └── e2e/           # E2Eテスト (Playwright) - 514件
 ├── functions/         # Cloud Functions
 ├── docs/              # ドキュメント（5ファイル + archive/）
 └── gh-pages/          # GitHub Pages
@@ -45,11 +45,11 @@ facility-care-input-form/
 - **Sheet A（読取）**: `1Gf8QTbGyKB7rn5QQa5cYOg1NNYWMV8lzqySdbDkfG-w`
 - **Sheet B（書込）**: `1OrpUVoDfUECXCTrKOGKLwN_4OQ9dlg7cUTCPGLDGHV0`
 
-## 主要機能（Phase 67まで実装済み）
+## 主要機能（Phase 69まで実装済み）
 
 ### 家族向け
 - 品物管理（登録・編集・詳細・提供スケジュール）
-- 品物一括登録（Excelファイルから複数品物を一括登録）
+- 品物一括登録（Excel/画像から複数品物を一括登録、プレビュー編集・選択機能付き）
 - プリセット管理（検索・ソート・グループ化対応）
 - エビデンスモニター
 - 統計ダッシュボード・AI分析
@@ -65,6 +65,11 @@ facility-care-input-form/
 - ロールベースリダイレクト（家族専用/スタッフ専用）
 - PWA自動更新（version.json比較）
 - Google Chat画像同期
+
+## 最近の実装（Phase 68-69）
+- **Phase 68**: 画像からの品物一括登録（Gemini Vision API）
+- **Phase 68.1**: プレビュー画面での編集・選択機能
+- **Phase 69**: mealFormSettings認証強化（Firebase Auth）
 
 ## 同期スケジュール
 - **差分同期**: 毎時0分（新規レコードのみ）
@@ -82,6 +87,7 @@ facility-care-input-form/
 
 ## AI機能
 - **品物名正規化**: Gemini 2.5 Flash Lite（POST /normalizeItemName）
+- **画像解析**: Gemini 2.5 Flash（POST /analyzeScheduleImage）
 - **記録閲覧チャット**: Gemini 2.5 Flash（POST /chatWithRecords）
 - **階層的要約**: daily → weekly → monthly
 
