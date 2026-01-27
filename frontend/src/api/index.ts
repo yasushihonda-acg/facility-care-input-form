@@ -13,10 +13,23 @@ import type {
   ChatWithRecordsRequest,
   ChatWithRecordsResponse,
 } from '../types/chat';
+import { auth } from '../config/firebase';
 
 // エミュレーター接続時は VITE_API_BASE_URL を設定
 // 例: VITE_API_BASE_URL=http://127.0.0.1:5001/facility-care-input-form/asia-northeast1
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://asia-northeast1-facility-care-input-form.cloudfunctions.net';
+
+/**
+ * 現在のユーザーのFirebase ID Tokenを取得
+ * Phase 69: 認証が必要なAPIで使用
+ */
+async function getIdToken(): Promise<string> {
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error('ログインが必要です');
+  }
+  return currentUser.getIdToken();
+}
 
 export async function syncPlanData(options?: { incremental?: boolean }): Promise<ApiResponse<SyncPlanDataResponse>> {
   const response = await fetch(`${API_BASE}/syncPlanData`, {
@@ -106,14 +119,19 @@ export async function getMealFormSettings(): Promise<ApiResponse<MealFormSetting
 
 /**
  * 食事入力フォームのグローバル初期値設定を更新
- * admin=true クエリパラメータが必須
+ * Phase 69: Firebase Auth認証必須（管理者ドメインのみ許可）
  */
 export async function updateMealFormSettings(
   data: UpdateMealFormSettingsRequest
 ): Promise<ApiResponse<MealFormSettings>> {
-  const response = await fetch(`${API_BASE}/updateMealFormSettings?admin=true`, {
+  const idToken = await getIdToken();
+
+  const response = await fetch(`${API_BASE}/updateMealFormSettings`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${idToken}`,
+    },
     body: JSON.stringify(data),
   });
 
