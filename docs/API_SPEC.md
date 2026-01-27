@@ -104,6 +104,7 @@ https://asia-northeast1-facility-care-input-form.cloudfunctions.net
 | POST | `/aiAnalyze` | AI摂食傾向分析 | Phase 8.4.1 | ✅ |
 | POST | `/normalizeItemName` | 品物名正規化 | Phase 43.1 | ✅ |
 | POST | `/analyzeScheduleImage` | 画像から品物スケジュール解析 | Phase 68 | ✅ |
+| POST | `/notifyBulkImport` | 一括登録完了通知 | Phase 69.3 | ✅ |
 | POST | `/chatWithRecords` | 記録閲覧AIチャット | Phase 45 | ✅ |
 | GET | `/getSummaries` | 階層的要約を取得 | Phase 46 | ✅ |
 | POST | `/generateSummary` | 要約を手動生成 | Phase 46 | ✅ |
@@ -1387,18 +1388,28 @@ AI提案をプリセットとして保存します。
 
 ---
 
-### 4.31 POST /analyzeScheduleImage (Phase 68)
+### 4.31 POST /analyzeScheduleImage (Phase 68, Phase 69拡張)
 
 食事スケジュール表の画像からAIで品物情報を抽出します。Gemini 2.5 Flash（Vision API）を使用。
 
 **エンドポイント**: `POST /analyzeScheduleImage`
 
-**リクエストボディ**:
+**リクエストボディ**（2形式をサポート、後方互換）:
 
+**形式1: 単一画像（Phase 68）**
 | パラメータ | 型 | 必須 | 説明 |
 |-----------|-----|------|------|
 | `image` | string | Yes | Base64エンコードされた画像データ |
 | `mimeType` | string | Yes | 画像のMIMEタイプ（image/jpeg, image/png, image/webp） |
+
+**形式2: 複数画像（Phase 69）**
+| パラメータ | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `images` | array | Yes | 画像データの配列（最大5枚） |
+| `images[].image` | string | Yes | Base64エンコードされた画像データ |
+| `images[].mimeType` | string | Yes | 画像のMIMEタイプ |
+
+> 複数画像を送信すると、AIが横断的に解析し、出庫表等の補助情報を参考に品物を特定します。
 
 **成功レスポンス (200)**:
 ```json
@@ -1456,6 +1467,71 @@ AI提案をプリセットとして保存します。
 | 画像サイズ | 最大5MB |
 | 対応形式 | JPEG, PNG, WebP |
 | タイムアウト | 60秒 |
+
+---
+
+### 4.32 POST /notifyBulkImport (Phase 69.3)
+
+一括登録完了時のサマリ通知をGoogle Chatに送信します。個別通知のレート制限問題を解決するため導入。
+
+**エンドポイント**: `POST /notifyBulkImport`
+
+#### リクエストボディ
+
+```typescript
+interface NotifyBulkImportRequest {
+  webhookUrl: string;           // Google Chat Webhook URL
+  totalCount: number;           // 登録した品物の総数
+  itemNames: string[];          // 登録した品物名のリスト
+  importSource: 'excel' | 'image';  // 登録方法
+}
+```
+
+#### レスポンス
+
+**成功時（200）**:
+```json
+{
+  "success": true,
+  "message": "通知を送信しました"
+}
+```
+
+**失敗時（500）**:
+```json
+{
+  "success": false,
+  "error": "通知の送信に失敗しました"
+}
+```
+
+#### 送信されるメッセージ形式
+
+```
+📦 一括登録完了（{importSource}）
+{totalCount}件の品物を登録しました
+
+登録品目:
+• {itemName1}
+• {itemName2}
+...
+```
+
+#### リトライ戦略
+
+| 項目 | 値 |
+|------|-----|
+| 最大リトライ回数 | 3回 |
+| バックオフ方式 | 指数バックオフ（1s, 2s, 4s） |
+
+#### 導入背景（Phase 69）
+
+Phase 68の本番運用で発覚した問題を解決:
+
+| 問題 | 解決策 |
+|------|--------|
+| 個別通知のレート制限 | サマリ通知にバッチ化 |
+| 通知ロスト（48件→10件程度のみ送信） | 1リクエストで全件通知 |
 
 ---
 
@@ -1816,6 +1892,7 @@ interface UpdateHydrationRecordResponse {
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
+| 2026-01-28 | 1.25.0 | Phase 69: analyzeScheduleImage複数画像対応、notifyBulkImport API追加（一括登録通知バッチ化） |
 | 2026-01-27 | 1.24.0 | Phase 68: analyzeScheduleImage API追加（画像から品物スケジュール解析） |
 | 2026-01-11 | 1.23.0 | Phase 61: getAllConsumptionLogs/updateHydrationRecord API追加（水分記録編集） |
 | 2026-01-07 | 1.22.0 | Phase 59: correctDiscardedRecord API追加（破棄記録修正） |
