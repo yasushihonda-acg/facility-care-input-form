@@ -22,7 +22,7 @@ import {
   PlanData,
   ErrorCodes,
 } from "../types";
-import {generateTodaySummary} from "../services/summaryService";
+// import {generateTodaySummary} from "../services/summaryService"; // 無効化（ADR参照）
 
 /**
  * スプレッドシートの行データを汎用 PlanData にパース
@@ -170,12 +170,15 @@ async function syncPlanDataHandler(
 
     const syncDuration = Date.now() - startTime;
 
-    // Phase 46: 同期完了後に要約を自動生成（非同期で実行、エラーは無視）
-    generateTodaySummary().catch((e) => {
-      functions.logger.warn("Summary generation failed (non-blocking)", {
-        error: e instanceof Error ? e.message : "Unknown",
-      });
-    });
+    // Phase 46: 要約自動生成は無効化
+    // 理由: summaryServiceのtimestamp形式不一致により常に失敗する。
+    // フロントエンドで未使用のため、修正せず無効化。
+    // 詳細: docs/adr/0001-technical-debt-review.md (H2/M2延期の理由)
+    // generateTodaySummary().catch((e) => {
+    //   functions.logger.warn("Summary generation failed (non-blocking)", {
+    //     error: e instanceof Error ? e.message : "Unknown",
+    //   });
+    // });
 
     const responseData: SyncPlanDataResponse = {
       syncedSheets,
