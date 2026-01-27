@@ -100,6 +100,55 @@ export async function generateContentLite(prompt: string): Promise<string> {
   }
 }
 
+
+/**
+ * Gemini モデルを使用して画像付きテキスト生成（Vision API）
+ * Phase 68: 画像からの品物一括登録機能
+ */
+export async function generateContentWithImage(
+  prompt: string,
+  imageBase64: string,
+  mimeType: string
+): Promise<string> {
+  try {
+    const vertexAI = getVertexAI();
+    const model = vertexAI.getGenerativeModel({
+      model: MODEL_ID,
+      generationConfig: {
+        maxOutputTokens: 8192, // 画像解析は長い出力が必要
+        temperature: 0.2,
+        topP: 0.8,
+      },
+    });
+
+    const request = {
+      contents: [
+        {
+          role: "user" as const,
+          parts: [
+            {
+              inlineData: {
+                data: imageBase64,
+                mimeType: mimeType,
+              },
+            },
+            {text: prompt},
+          ],
+        },
+      ],
+    };
+
+    const result = await model.generateContent(request);
+    const response = result.response;
+    const text = response.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+    return text;
+  } catch (error) {
+    functions.logger.error("Gemini Vision API error:", error);
+    throw error;
+  }
+}
+
 /**
  * JSONレスポンスをパース
  * AI出力からJSONオブジェクトを抽出

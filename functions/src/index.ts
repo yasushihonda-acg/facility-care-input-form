@@ -90,6 +90,7 @@ export {aiAnalyze} from "./functions/aiAnalyze";
 export {normalizeItemName} from "./functions/normalizeItemName"; // Phase 43.1
 export {chatWithRecords} from "./functions/chatWithRecords"; // Phase 45
 export {getSummaries, generateSummary} from "./functions/summaries"; // Phase 46
+export {analyzeScheduleImage} from "./functions/analyzeScheduleImage"; // Phase 68
 
 // =============================================================================
 // プリセット統合（Phase 8.5）

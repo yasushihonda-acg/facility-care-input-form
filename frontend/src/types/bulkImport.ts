@@ -147,3 +147,63 @@ export const DROPDOWN_OPTIONS = {
   storageMethod: ['常温', '冷蔵', '冷凍'],
   handling: ['指定なし', '破棄してください', '保存してください'],
 } as const;
+
+// =============================================================================
+// 画像一括登録 (Phase 68)
+// =============================================================================
+
+/** 画像解析リクエスト */
+export interface AnalyzeScheduleImageRequest {
+  image: string; // base64エンコード
+  mimeType: 'image/jpeg' | 'image/png' | 'image/webp';
+}
+
+/** 画像から抽出された品物 */
+export interface ExtractedItem {
+  itemName: string;
+  category: ItemCategory;
+  quantity?: number;
+  unit?: string;
+  servingDate: string; // YYYY-MM-DD
+  servingTimeSlot: ServingTimeSlot;
+  servingMethodDetail?: ServingMethod;
+  noteToStaff?: string;
+  confidence: 'high' | 'medium' | 'low';
+}
+
+/** 画像解析メタデータ */
+export interface ImageAnalysisMetadata {
+  dateRange: {
+    start: string;
+    end: string;
+  };
+  confidence: 'high' | 'medium' | 'low';
+  warnings: string[];
+}
+
+/** 画像解析レスポンス */
+export interface AnalyzeScheduleImageResponse {
+  items: ExtractedItem[];
+  metadata: ImageAnalysisMetadata;
+}
+
+/** 画像一括登録用のパース済み品物 */
+export interface ParsedImageItem {
+  index: number;
+  extracted: ExtractedItem;
+  parsed: {
+    itemName: string;
+    category: ItemCategory;
+    quantity?: number;
+    unit: string;
+    servingMethod: ServingMethod;
+    servingDate: string;
+    servingTimeSlot: ServingTimeSlot;
+    noteToStaff?: string;
+  };
+  isDuplicate: boolean;
+  duplicateInfo?: {
+    existingItemId: string;
+    existingItemName: string;
+  };
+}
