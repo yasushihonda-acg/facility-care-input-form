@@ -9,7 +9,8 @@
     "build:test": "tsc -b && vite build --mode test",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:e2e": "npm run build:test && npm run preview -- --port 4173 &; npx playwright test; lsof -ti:4173 | xargs kill"
+    "test:e2e": "npm run build:test && npm run preview -- --port 4173 &; npx playwright test; lsof -ti:4173 | xargs kill",
+    "test:unit": "npx tsx src/utils/parallelImport.test.ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.18",
