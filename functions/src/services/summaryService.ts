@@ -21,31 +21,6 @@ const COLLECTIONS = {
   SUMMARIES: "plan_data_summaries",
 };
 
-// Phase 70: JST固定オフセット（Asia/Tokyo = UTC+9）
-const JST_OFFSET_MINUTES = 9 * 60;
-
-/**
- * Phase 70: 日付文字列（YYYY-MM-DD）をJST境界のTimestampに変換
- * @param dateStr 日付文字列（YYYY-MM-DD形式）
- * @param endOfDay true: 23:59:59、false: 00:00:00
- */
-function toJstDayBoundary(dateStr: string, endOfDay = false): Timestamp {
-  const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) throw new Error(`Invalid date string: ${dateStr}`);
-
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  const hour = endOfDay ? 23 : 0;
-  const minute = endOfDay ? 59 : 0;
-  const second = endOfDay ? 59 : 0;
-
-  // JSTをUTCに変換
-  const utcMs = Date.UTC(year, month - 1, day, hour, minute, second) -
-    JST_OFFSET_MINUTES * 60 * 1000;
-  return Timestamp.fromMillis(utcMs);
-}
-
 interface PlanRecord {
   date: string;
   sheetName: string;
@@ -122,49 +97,19 @@ function getPeriodRange(
 
 /**
  * 指定期間のレコードを取得
- * Phase 70: timestampAt（Firestore Timestamp型）を優先使用
  */
 async function getRecordsForPeriod(
   startDate: string,
   endDate: string
 ): Promise<PlanRecord[]> {
   const db = getFirestore();
-
-  // Phase 70: Timestamp型で期間検索（より正確）
-  const startAt = toJstDayBoundary(startDate, false);
-  const endAt = toJstDayBoundary(endDate, true);
-
   const snapshot = await db
     .collection(COLLECTIONS.PLAN_DATA)
-    .where("timestampAt", ">=", startAt)
-    .where("timestampAt", "<=", endAt)
-    .orderBy("timestampAt", "desc")
+    .where("timestamp", ">=", startDate)
+    .where("timestamp", "<=", endDate + "T23:59:59")
+    .orderBy("timestamp", "desc")
     .limit(2000)
     .get();
-
-  // timestampAtがない古いデータへのフォールバック
-  if (snapshot.empty) {
-    functions.logger.info("No records with timestampAt, falling back to string query", {
-      startDate,
-      endDate,
-    });
-    const fallbackSnapshot = await db
-      .collection(COLLECTIONS.PLAN_DATA)
-      .where("timestamp", ">=", startDate)
-      .where("timestamp", "<=", endDate + "T23:59:59")
-      .orderBy("timestamp", "desc")
-      .limit(2000)
-      .get();
-
-    return fallbackSnapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        date: String(data.timestamp || ""),
-        sheetName: String(data.sheetName || ""),
-        ...data.data as Record<string, unknown>,
-      };
-    });
-  }
 
   return snapshot.docs.map((doc) => {
     const data = doc.data();
