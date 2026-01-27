@@ -19,7 +19,10 @@ import {
 interface EditableFields {
   itemName?: string;
   category?: ItemCategory;
+  quantity?: number;
+  unit?: string;
   servingMethod?: ServingMethod;
+  servingDate?: string;
   servingTimeSlot?: ServingTimeSlot;
   noteToStaff?: string;
 }
@@ -141,6 +144,125 @@ function EditableTextCell({
   );
 }
 
+/** 編集可能数値セル */
+function EditableNumberCell({
+  value,
+  onSave,
+  disabled,
+  placeholder = '-',
+}: {
+  value: number | undefined;
+  onSave: (newValue: number | undefined) => void;
+  disabled?: boolean;
+  placeholder?: string;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(value?.toString() ?? '');
+
+  const handleSave = useCallback(() => {
+    setIsEditing(false);
+    const numValue = editValue === '' ? undefined : parseFloat(editValue);
+    if (numValue !== value) {
+      onSave(numValue);
+    }
+  }, [editValue, value, onSave]);
+
+  if (disabled) {
+    return <span className="text-gray-400 italic">{value ?? placeholder}</span>;
+  }
+
+  if (isEditing) {
+    return (
+      <input
+        type="number"
+        step="0.1"
+        min="0"
+        value={editValue}
+        onChange={(e) => setEditValue(e.target.value)}
+        onBlur={handleSave}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') handleSave();
+          if (e.key === 'Escape') {
+            setEditValue(value?.toString() ?? '');
+            setIsEditing(false);
+          }
+        }}
+        className="w-16 px-1 py-0.5 text-sm border border-blue-400 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+        autoFocus
+      />
+    );
+  }
+
+  return (
+    <button
+      onClick={() => setIsEditing(true)}
+      className="text-left w-full px-1 py-0.5 hover:bg-blue-50 rounded cursor-pointer group"
+      title="クリックして編集"
+    >
+      {value ?? <span className="text-gray-400 italic">{placeholder}</span>}
+      <span className="ml-1 text-gray-300 group-hover:text-blue-400 text-xs">✎</span>
+    </button>
+  );
+}
+
+/** 編集可能日付セル */
+function EditableDateCell({
+  value,
+  onSave,
+  disabled,
+  placeholder = '-',
+}: {
+  value: string | undefined;
+  onSave: (newValue: string) => void;
+  disabled?: boolean;
+  placeholder?: string;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(value ?? '');
+
+  const handleSave = useCallback(() => {
+    setIsEditing(false);
+    if (editValue !== value) {
+      onSave(editValue);
+    }
+  }, [editValue, value, onSave]);
+
+  if (disabled) {
+    return <span className="text-gray-400 italic">{value || placeholder}</span>;
+  }
+
+  if (isEditing) {
+    return (
+      <input
+        type="date"
+        value={editValue}
+        onChange={(e) => setEditValue(e.target.value)}
+        onBlur={handleSave}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') handleSave();
+          if (e.key === 'Escape') {
+            setEditValue(value ?? '');
+            setIsEditing(false);
+          }
+        }}
+        className="px-1 py-0.5 text-sm border border-blue-400 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+        autoFocus
+      />
+    );
+  }
+
+  return (
+    <button
+      onClick={() => setIsEditing(true)}
+      className="text-left w-full px-1 py-0.5 hover:bg-blue-50 rounded cursor-pointer group"
+      title="クリックして編集"
+    >
+      {value || <span className="text-gray-400 italic">{placeholder}</span>}
+      <span className="ml-1 text-gray-300 group-hover:text-blue-400 text-xs">✎</span>
+    </button>
+  );
+}
+
 /** 編集可能セレクトセル */
 function EditableSelectCell<T extends string>({
   value,
@@ -220,6 +342,7 @@ export function BulkImportPreview({
     );
   }
 
+  const categoryOptions = ['food', 'drink'] as const;
   const servingMethodOptions = ['as_is', 'cut', 'peeled', 'heated', 'other'] as const;
   const timeSlotOptions = ['breakfast', 'lunch', 'snack', 'dinner', 'anytime'] as const;
 
@@ -431,15 +554,40 @@ export function BulkImportPreview({
                   </td>
                   {/* カテゴリ */}
                   <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-600">
-                    {p.category ? CATEGORY_LABELS[p.category] : <span className="text-gray-400 italic">-</span>}
+                    {canEdit ? (
+                      <EditableSelectCell
+                        value={p.category}
+                        options={categoryOptions}
+                        labels={CATEGORY_LABELS}
+                        onSave={(v) => onUpdateItem(rowIdx, { category: v })}
+                      />
+                    ) : p.category ? (
+                      CATEGORY_LABELS[p.category]
+                    ) : (
+                      <span className="text-gray-400 italic">-</span>
+                    )}
                   </td>
                   {/* 数量 */}
                   <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-600">
-                    {p.quantity !== undefined ? p.quantity : <span className="text-gray-400 italic">-</span>}
+                    {canEdit ? (
+                      <EditableNumberCell
+                        value={p.quantity}
+                        onSave={(v) => onUpdateItem(rowIdx, { quantity: v })}
+                      />
+                    ) : (
+                      p.quantity !== undefined ? p.quantity : <span className="text-gray-400 italic">-</span>
+                    )}
                   </td>
                   {/* 単位 */}
                   <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-600">
-                    {p.unit || <span className="text-gray-400 italic">-</span>}
+                    {canEdit ? (
+                      <EditableTextCell
+                        value={p.unit ?? ''}
+                        onSave={(v) => onUpdateItem(rowIdx, { unit: v })}
+                      />
+                    ) : (
+                      p.unit || <span className="text-gray-400 italic">-</span>
+                    )}
                   </td>
                   {/* 提供方法 */}
                   <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-600">
@@ -458,7 +606,15 @@ export function BulkImportPreview({
                   </td>
                   {/* 提供日 */}
                   <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-600">
-                    {p.servingDate || <span className="text-gray-400 italic">未入力</span>}
+                    {canEdit ? (
+                      <EditableDateCell
+                        value={p.servingDate}
+                        onSave={(v) => onUpdateItem(rowIdx, { servingDate: v })}
+                        placeholder="未入力"
+                      />
+                    ) : (
+                      p.servingDate || <span className="text-gray-400 italic">未入力</span>
+                    )}
                   </td>
                   {/* タイミング */}
                   <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-600">
