@@ -249,6 +249,7 @@ function parseRow(row: Partial<ExcelTemplateRow>, rowIndex: number): ParsedBulkI
     errors,
     warnings,
     isDuplicate: false,
+    isSelected: true, // デフォルトで選択状態（重複チェック後に更新される）
   };
 }
 

@@ -1,9 +1,12 @@
 /**
  * 一括登録プレビューコンポーネント
  * パース結果の一覧表示とエラー・重複の表示
+ * Phase 68.1: 編集機能・チェックボックス選択機能を追加
  */
 
-import type { ParsedBulkItem } from '../../types/bulkImport';
+import { useState, useCallback } from 'react';
+import type { ParsedBulkItem, ParsedImageItem } from '../../types/bulkImport';
+import type { ServingMethod, ServingTimeSlot, ItemCategory } from '../../types/careItem';
 import {
   SERVING_TIME_SLOT_LABELS,
   CATEGORY_LABELS,
@@ -12,15 +15,29 @@ import {
   getRemainingHandlingInstructionLabel,
 } from '../../types/careItem';
 
+/** 編集可能フィールド */
+interface EditableFields {
+  itemName?: string;
+  category?: ItemCategory;
+  servingMethod?: ServingMethod;
+  servingTimeSlot?: ServingTimeSlot;
+  noteToStaff?: string;
+}
+
 interface BulkImportPreviewProps {
-  items: ParsedBulkItem[];
+  items: (ParsedBulkItem | ParsedImageItem)[];
   onRemoveItem?: (rowIndex: number) => void;
+  onUpdateItem?: (rowIndex: number, fields: EditableFields) => void;
+  onToggleSelect?: (rowIndex: number) => void;
+  onSelectAll?: () => void;
+  onDeselectAll?: () => void;
+  showSelection?: boolean;
 }
 
 type ItemStatus = 'valid' | 'error' | 'duplicate';
 
-function getItemStatus(item: ParsedBulkItem): ItemStatus {
-  if (item.errors.length > 0) return 'error';
+function getItemStatus(item: ParsedBulkItem | ParsedImageItem): ItemStatus {
+  if ('errors' in item && item.errors.length > 0) return 'error';
   if (item.isDuplicate) return 'duplicate';
   return 'valid';
 }
@@ -58,24 +75,166 @@ function getRowBgColor(status: ItemStatus): string {
   }
 }
 
-export function BulkImportPreview({ items, onRemoveItem }: BulkImportPreviewProps) {
-  const validCount = items.filter(item => item.errors.length === 0 && !item.isDuplicate).length;
-  const errorCount = items.filter(item => item.errors.length > 0).length;
+function getRowIndex(item: ParsedBulkItem | ParsedImageItem): number {
+  return 'rowIndex' in item ? item.rowIndex : item.index;
+}
+
+function isSelected(item: ParsedBulkItem | ParsedImageItem): boolean {
+  return item.isSelected ?? false;
+}
+
+/** 編集可能テキストセル */
+function EditableTextCell({
+  value,
+  onSave,
+  disabled,
+  placeholder = '-',
+}: {
+  value: string;
+  onSave: (newValue: string) => void;
+  disabled?: boolean;
+  placeholder?: string;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(value);
+
+  const handleSave = useCallback(() => {
+    setIsEditing(false);
+    if (editValue !== value) {
+      onSave(editValue);
+    }
+  }, [editValue, value, onSave]);
+
+  if (disabled) {
+    return <span className="text-gray-400 italic">{value || placeholder}</span>;
+  }
+
+  if (isEditing) {
+    return (
+      <input
+        type="text"
+        value={editValue}
+        onChange={(e) => setEditValue(e.target.value)}
+        onBlur={handleSave}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') handleSave();
+          if (e.key === 'Escape') {
+            setEditValue(value);
+            setIsEditing(false);
+          }
+        }}
+        className="w-full px-1 py-0.5 text-sm border border-blue-400 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+        autoFocus
+      />
+    );
+  }
+
+  return (
+    <button
+      onClick={() => setIsEditing(true)}
+      className="text-left w-full px-1 py-0.5 hover:bg-blue-50 rounded cursor-pointer group"
+      title="クリックして編集"
+    >
+      {value || <span className="text-gray-400 italic">{placeholder}</span>}
+      <span className="ml-1 text-gray-300 group-hover:text-blue-400 text-xs">✎</span>
+    </button>
+  );
+}
+
+/** 編集可能セレクトセル */
+function EditableSelectCell<T extends string>({
+  value,
+  options,
+  labels,
+  onSave,
+  disabled,
+}: {
+  value: T | undefined;
+  options: readonly T[];
+  labels: Record<T, string>;
+  onSave: (newValue: T) => void;
+  disabled?: boolean;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+
+  if (disabled || !value) {
+    return <span className="text-gray-400 italic">{value ? labels[value] : '-'}</span>;
+  }
+
+  if (isEditing) {
+    return (
+      <select
+        value={value}
+        onChange={(e) => {
+          onSave(e.target.value as T);
+          setIsEditing(false);
+        }}
+        onBlur={() => setIsEditing(false)}
+        className="text-sm border border-blue-400 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+        autoFocus
+      >
+        {options.map((opt) => (
+          <option key={opt} value={opt}>
+            {labels[opt]}
+          </option>
+        ))}
+      </select>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => setIsEditing(true)}
+      className="text-left px-1 py-0.5 hover:bg-blue-50 rounded cursor-pointer group"
+      title="クリックして編集"
+    >
+      {labels[value]}
+      <span className="ml-1 text-gray-300 group-hover:text-blue-400 text-xs">▼</span>
+    </button>
+  );
+}
+
+export function BulkImportPreview({
+  items,
+  onRemoveItem,
+  onUpdateItem,
+  onToggleSelect,
+  onSelectAll,
+  onDeselectAll,
+  showSelection = true,
+}: BulkImportPreviewProps) {
+  const validCount = items.filter(item => getItemStatus(item) === 'valid').length;
+  const errorCount = items.filter(item => getItemStatus(item) === 'error').length;
   const duplicateCount = items.filter(item => item.isDuplicate).length;
-  const warningCount = items.filter(item => item.warnings && item.warnings.length > 0).length;
+  const warningCount = items.filter(item => 'warnings' in item && item.warnings && item.warnings.length > 0).length;
+  const selectedCount = items.filter(item => getItemStatus(item) === 'valid' && isSelected(item)).length;
+
+  const allValidSelected = validCount > 0 && selectedCount === validCount;
+  const someSelected = selectedCount > 0 && selectedCount < validCount;
 
   if (items.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
-        データがありません。Excelファイルにデータを入力してください。
+        データがありません。ファイルにデータを入力してください。
       </div>
     );
   }
+
+  const servingMethodOptions = ['as_is', 'cut', 'peeled', 'heated', 'other'] as const;
+  const timeSlotOptions = ['breakfast', 'lunch', 'snack', 'dinner', 'anytime'] as const;
 
   return (
     <div className="space-y-4">
       {/* サマリー */}
       <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg">
+        {showSelection && (
+          <div className="flex items-center gap-2 mr-4 pr-4 border-r border-gray-300">
+            <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-500 text-white text-sm font-bold rounded-full">
+              {selectedCount}
+            </span>
+            <span className="text-gray-700">選択中</span>
+          </div>
+        )}
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center justify-center w-6 h-6 bg-green-500 text-white text-sm font-bold rounded-full">
             {validCount}
@@ -108,11 +267,51 @@ export function BulkImportPreview({ items, onRemoveItem }: BulkImportPreviewProp
         )}
       </div>
 
+      {/* 一括選択ボタン */}
+      {showSelection && onSelectAll && onDeselectAll && (
+        <div className="flex gap-2">
+          <button
+            onClick={onSelectAll}
+            disabled={allValidSelected}
+            className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            すべて選択
+          </button>
+          <button
+            onClick={onDeselectAll}
+            disabled={selectedCount === 0}
+            className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            選択解除
+          </button>
+        </div>
+      )}
+
       {/* テーブル */}
       <div className="overflow-x-auto border rounded-lg max-h-96">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 sticky top-0 z-10">
             <tr>
+              {showSelection && onToggleSelect && (
+                <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                  <input
+                    type="checkbox"
+                    checked={allValidSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = someSelected;
+                    }}
+                    onChange={() => {
+                      if (allValidSelected) {
+                        onDeselectAll?.();
+                      } else {
+                        onSelectAll?.();
+                      }
+                    }}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    title="すべて選択/解除"
+                  />
+                </th>
+              )}
               <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                 行
               </th>
@@ -140,18 +339,24 @@ export function BulkImportPreview({ items, onRemoveItem }: BulkImportPreviewProp
               <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                 タイミング
               </th>
-              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                賞味期限
-              </th>
-              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                保存方法
-              </th>
+              {'expirationDate' in (items[0]?.parsed ?? {}) && (
+                <>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    賞味期限
+                  </th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    保存方法
+                  </th>
+                </>
+              )}
               <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                 申し送り
               </th>
-              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                処置
-              </th>
+              {'remainingHandlingInstruction' in (items[0]?.parsed ?? {}) && (
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                  処置
+                </th>
+              )}
               {onRemoveItem && (
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                   操作
@@ -163,11 +368,27 @@ export function BulkImportPreview({ items, onRemoveItem }: BulkImportPreviewProp
             {items.map((item) => {
               const status = getItemStatus(item);
               const p = item.parsed;
+              const rowIdx = getRowIndex(item);
+              const selected = isSelected(item);
+              const canEdit = status === 'valid' && onUpdateItem;
+
               return (
-                <tr key={item.rowIndex} className={getRowBgColor(status)}>
+                <tr key={rowIdx} className={`${getRowBgColor(status)} ${!selected && status === 'valid' ? 'opacity-50' : ''}`}>
+                  {/* チェックボックス */}
+                  {showSelection && onToggleSelect && (
+                    <td className="px-3 py-2 text-center">
+                      <input
+                        type="checkbox"
+                        checked={selected}
+                        disabled={status !== 'valid'}
+                        onChange={() => onToggleSelect(rowIdx)}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 disabled:opacity-30"
+                      />
+                    </td>
+                  )}
                   {/* 行番号 */}
                   <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
-                    {item.rowIndex}
+                    {rowIdx}
                   </td>
                   {/* 状態 */}
                   <td className="px-3 py-2 whitespace-nowrap">
@@ -176,7 +397,7 @@ export function BulkImportPreview({ items, onRemoveItem }: BulkImportPreviewProp
                     >
                       {getStatusLabel(status)}
                     </span>
-                    {status === 'error' && item.errors.length > 0 && (
+                    {status === 'error' && 'errors' in item && item.errors.length > 0 && (
                       <div className="mt-1 text-xs text-red-600 max-w-48">
                         {item.errors.map((err, i) => (
                           <div key={i}>{err.message}</div>
@@ -188,7 +409,7 @@ export function BulkImportPreview({ items, onRemoveItem }: BulkImportPreviewProp
                         既存: {item.duplicateInfo.existingItemName}
                       </div>
                     )}
-                    {item.warnings && item.warnings.length > 0 && (
+                    {'warnings' in item && item.warnings && item.warnings.length > 0 && (
                       <div className="mt-1 text-xs text-orange-600 max-w-48">
                         {item.warnings.map((warn, i) => (
                           <div key={i}>⚠️ {warn.message}</div>
@@ -197,8 +418,16 @@ export function BulkImportPreview({ items, onRemoveItem }: BulkImportPreviewProp
                     )}
                   </td>
                   {/* 品物名 */}
-                  <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
-                    {p.itemName || <span className="text-gray-400 italic">未入力</span>}
+                  <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900 min-w-32">
+                    {canEdit ? (
+                      <EditableTextCell
+                        value={p.itemName}
+                        onSave={(v) => onUpdateItem(rowIdx, { itemName: v })}
+                        placeholder="未入力"
+                      />
+                    ) : (
+                      p.itemName || <span className="text-gray-400 italic">未入力</span>
+                    )}
                   </td>
                   {/* カテゴリ */}
                   <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-600">
@@ -214,7 +443,18 @@ export function BulkImportPreview({ items, onRemoveItem }: BulkImportPreviewProp
                   </td>
                   {/* 提供方法 */}
                   <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-600">
-                    {p.servingMethod ? SERVING_METHOD_LABELS[p.servingMethod] : <span className="text-gray-400 italic">-</span>}
+                    {canEdit ? (
+                      <EditableSelectCell
+                        value={p.servingMethod}
+                        options={servingMethodOptions}
+                        labels={SERVING_METHOD_LABELS}
+                        onSave={(v) => onUpdateItem(rowIdx, { servingMethod: v })}
+                      />
+                    ) : p.servingMethod ? (
+                      SERVING_METHOD_LABELS[p.servingMethod]
+                    ) : (
+                      <span className="text-gray-400 italic">-</span>
+                    )}
                   </td>
                   {/* 提供日 */}
                   <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-600">
@@ -222,29 +462,52 @@ export function BulkImportPreview({ items, onRemoveItem }: BulkImportPreviewProp
                   </td>
                   {/* タイミング */}
                   <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-600">
-                    {p.servingTimeSlot ? SERVING_TIME_SLOT_LABELS[p.servingTimeSlot] : <span className="text-gray-400 italic">未入力</span>}
+                    {canEdit ? (
+                      <EditableSelectCell
+                        value={p.servingTimeSlot}
+                        options={timeSlotOptions}
+                        labels={SERVING_TIME_SLOT_LABELS}
+                        onSave={(v) => onUpdateItem(rowIdx, { servingTimeSlot: v })}
+                      />
+                    ) : p.servingTimeSlot ? (
+                      SERVING_TIME_SLOT_LABELS[p.servingTimeSlot]
+                    ) : (
+                      <span className="text-gray-400 italic">未入力</span>
+                    )}
                   </td>
-                  {/* 賞味期限 */}
-                  <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-600">
-                    {p.expirationDate || <span className="text-gray-400 italic">-</span>}
-                  </td>
-                  {/* 保存方法 */}
-                  <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-600">
-                    {p.storageMethod ? STORAGE_METHOD_LABELS[p.storageMethod] : <span className="text-gray-400 italic">-</span>}
-                  </td>
+                  {/* 賞味期限（Excelのみ） */}
+                  {'expirationDate' in p && (
+                    <>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-600">
+                        {p.expirationDate || <span className="text-gray-400 italic">-</span>}
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-600">
+                        {p.storageMethod ? STORAGE_METHOD_LABELS[p.storageMethod] : <span className="text-gray-400 italic">-</span>}
+                      </td>
+                    </>
+                  )}
                   {/* 申し送り */}
                   <td className="px-3 py-2 text-sm text-gray-600 max-w-32 truncate" title={p.noteToStaff}>
-                    {p.noteToStaff || <span className="text-gray-400 italic">-</span>}
+                    {canEdit ? (
+                      <EditableTextCell
+                        value={p.noteToStaff ?? ''}
+                        onSave={(v) => onUpdateItem(rowIdx, { noteToStaff: v })}
+                      />
+                    ) : (
+                      p.noteToStaff || <span className="text-gray-400 italic">-</span>
+                    )}
                   </td>
-                  {/* 処置 */}
-                  <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-600">
-                    {getRemainingHandlingInstructionLabel(p.remainingHandlingInstruction)}
-                  </td>
+                  {/* 処置（Excelのみ） */}
+                  {'remainingHandlingInstruction' in p && (
+                    <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-600">
+                      {getRemainingHandlingInstructionLabel(p.remainingHandlingInstruction)}
+                    </td>
+                  )}
                   {/* 操作 */}
                   {onRemoveItem && (
                     <td className="px-3 py-2 whitespace-nowrap">
                       <button
-                        onClick={() => onRemoveItem(item.rowIndex)}
+                        onClick={() => onRemoveItem(rowIdx)}
                         className="text-gray-400 hover:text-red-500 transition-colors"
                         title="この行を除外"
                       >
@@ -270,7 +533,7 @@ export function BulkImportPreview({ items, onRemoveItem }: BulkImportPreviewProp
       <div className="text-sm text-gray-500 space-y-1">
         <p>
           <span className="inline-block w-3 h-3 bg-green-100 rounded mr-1"></span>
-          有効: 登録可能な品物です
+          有効: 登録可能な品物です（クリックで内容を編集できます）
         </p>
         <p>
           <span className="inline-block w-3 h-3 bg-red-100 rounded mr-1"></span>

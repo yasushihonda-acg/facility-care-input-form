@@ -15,7 +15,8 @@ import { ImageUploader } from '../../components/family/ImageUploader';
 import { BulkImportPreview } from '../../components/family/BulkImportPreview';
 import { BulkImportConfirmDialog } from '../../components/family/BulkImportConfirmDialog';
 import { downloadTemplate } from '../../utils/excelParser';
-import type { ParsedBulkItem } from '../../types/bulkImport';
+import type { ParsedBulkItem, ParsedImageItem } from '../../types/bulkImport';
+import type { EditableItemFields } from '../../hooks/useBulkImport';
 
 // 入居者ID・ユーザーID（単一入居者専用アプリのため固定値）
 const DEMO_RESIDENT_ID = 'resident-001';
@@ -61,39 +62,27 @@ export function BulkItemImport() {
   const importResult = currentImport.importResult;
   const error = currentImport.error;
 
-  // 画像からの品物をParsedBulkItem形式に変換（プレビュー表示用）
-  const parsedItemsForPreview: ParsedBulkItem[] = useMemo(() => {
+  // プレビュー用の品物リスト（Excel/画像共通で使えるよう型を合わせる）
+  const parsedItemsForPreview: (ParsedBulkItem | ParsedImageItem)[] = useMemo(() => {
     if (importSource === 'excel') {
       return excelImport.parsedItems;
     }
-    // 画像の場合はParsedImageItemをParsedBulkItemに変換
-    return imageImport.parsedItems.map(item => ({
-      rowIndex: item.index,
-      raw: {},
-      parsed: {
-        itemName: item.parsed.itemName,
-        category: item.parsed.category,
-        quantity: item.parsed.quantity,
-        unit: item.parsed.unit,
-        servingMethod: item.parsed.servingMethod,
-        servingDate: item.parsed.servingDate,
-        servingTimeSlot: item.parsed.servingTimeSlot,
-        noteToStaff: item.parsed.noteToStaff,
-      },
-      errors: [],
-      warnings: [],
-      isDuplicate: item.isDuplicate,
-      duplicateInfo: item.duplicateInfo,
-    }));
+    return imageImport.parsedItems;
   }, [importSource, excelImport.parsedItems, imageImport.parsedItems]);
 
-  const validItemsCount = importSource === 'excel'
-    ? excelImport.validItems.length
-    : imageImport.validItems.length;
+  // 選択された品物数（登録対象）
+  const selectedItemsCount = importSource === 'excel'
+    ? excelImport.selectedItems.length
+    : imageImport.selectedItems.length;
 
   const duplicateItemsCount = importSource === 'excel'
     ? excelImport.duplicateItems.length
     : imageImport.duplicateItems.length;
+
+  // 未選択の品物数
+  const unselectedCount = importSource === 'excel'
+    ? excelImport.validItems.length - excelImport.selectedItems.length
+    : imageImport.validItems.length - imageImport.selectedItems.length;
 
   // タブ切り替え
   const handleSourceChange = useCallback((source: ImportSource) => {
@@ -167,6 +156,42 @@ export function BulkItemImport() {
       excelImport.removeItem(rowIndex);
     } else {
       imageImport.removeItem(rowIndex);
+    }
+  }, [importSource, excelImport, imageImport]);
+
+  // 品物の編集
+  const handleUpdateItem = useCallback((rowIndex: number, fields: EditableItemFields) => {
+    if (importSource === 'excel') {
+      excelImport.updateItem(rowIndex, fields);
+    } else {
+      imageImport.updateItem(rowIndex, fields);
+    }
+  }, [importSource, excelImport, imageImport]);
+
+  // 選択切り替え
+  const handleToggleSelect = useCallback((rowIndex: number) => {
+    if (importSource === 'excel') {
+      excelImport.toggleSelect(rowIndex);
+    } else {
+      imageImport.toggleSelect(rowIndex);
+    }
+  }, [importSource, excelImport, imageImport]);
+
+  // 全選択
+  const handleSelectAll = useCallback(() => {
+    if (importSource === 'excel') {
+      excelImport.selectAll();
+    } else {
+      imageImport.selectAll();
+    }
+  }, [importSource, excelImport, imageImport]);
+
+  // 全選択解除
+  const handleDeselectAll = useCallback(() => {
+    if (importSource === 'excel') {
+      excelImport.deselectAll();
+    } else {
+      imageImport.deselectAll();
     }
   }, [importSource, excelImport, imageImport]);
 
@@ -414,10 +439,20 @@ export function BulkItemImport() {
             )}
 
             <div className="bg-white border rounded-lg p-4">
-              <h2 className="font-medium text-gray-900 mb-4">プレビュー</h2>
+              <h2 className="font-medium text-gray-900 mb-4">
+                プレビュー
+                <span className="ml-2 text-sm font-normal text-gray-500">
+                  （クリックで内容を編集できます）
+                </span>
+              </h2>
               <BulkImportPreview
                 items={parsedItemsForPreview}
                 onRemoveItem={handleRemoveItem}
+                onUpdateItem={handleUpdateItem}
+                onToggleSelect={handleToggleSelect}
+                onSelectAll={handleSelectAll}
+                onDeselectAll={handleDeselectAll}
+                showSelection={true}
               />
             </div>
 
@@ -431,10 +466,10 @@ export function BulkItemImport() {
               </button>
               <button
                 onClick={handleOpenConfirm}
-                disabled={validItemsCount === 0}
+                disabled={selectedItemsCount === 0}
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {validItemsCount}件を登録する
+                {selectedItemsCount}件を登録する
               </button>
             </div>
           </div>
@@ -498,8 +533,8 @@ export function BulkItemImport() {
         {/* 確認ダイアログ */}
         <BulkImportConfirmDialog
           isOpen={showConfirmDialog}
-          itemCount={validItemsCount}
-          skipCount={duplicateItemsCount}
+          itemCount={selectedItemsCount}
+          skipCount={duplicateItemsCount + unselectedCount}
           onConfirm={handleConfirmImport}
           onCancel={handleCloseConfirm}
           isImporting={isImporting}

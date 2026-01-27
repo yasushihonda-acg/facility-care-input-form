@@ -16,12 +16,25 @@ interface UseBulkImportOptions {
   isDemo?: boolean;
 }
 
+/** 品物の編集可能フィールド */
+export interface EditableItemFields {
+  itemName?: string;
+  category?: 'food' | 'drink';
+  quantity?: number;
+  unit?: string;
+  servingMethod?: 'as_is' | 'cut' | 'peeled' | 'heated' | 'other';
+  servingDate?: string;
+  servingTimeSlot?: 'breakfast' | 'lunch' | 'snack' | 'dinner' | 'anytime';
+  noteToStaff?: string;
+}
+
 interface UseBulkImportReturn {
   // 状態
   parsedItems: ParsedBulkItem[];
   validItems: ParsedBulkItem[];
   errorItems: ParsedBulkItem[];
   duplicateItems: ParsedBulkItem[];
+  selectedItems: ParsedBulkItem[];
   isLoading: boolean;
   isImporting: boolean;
   importResult: BulkImportResult | null;
@@ -31,6 +44,10 @@ interface UseBulkImportReturn {
   parseFile: (file: File) => Promise<void>;
   importItems: () => Promise<BulkImportResult>;
   removeItem: (rowIndex: number) => void;
+  updateItem: (rowIndex: number, fields: EditableItemFields) => void;
+  toggleSelect: (rowIndex: number) => void;
+  selectAll: () => void;
+  deselectAll: () => void;
   reset: () => void;
 }
 
@@ -91,6 +108,12 @@ export function useBulkImport({
     [parsedItems]
   );
 
+  // 選択された品物（登録対象）
+  const selectedItems = useMemo(
+    () => validItems.filter(item => item.isSelected),
+    [validItems]
+  );
+
   // ファイルパース
   const parseFile = useCallback(
     async (file: File) => {
@@ -101,10 +124,10 @@ export function useBulkImport({
       try {
         const items = await parseExcelFile(file);
 
-        // 重複チェック
+        // 重複チェック + 選択状態を初期化
         const itemsWithDuplicateCheck = items.map(item => {
           if (item.errors.length > 0) {
-            return item; // エラーがある場合は重複チェックしない
+            return { ...item, isSelected: false }; // エラーがある場合は選択解除
           }
           const { isDuplicate, duplicateInfo } = checkBulkItemDuplicate(
             item.parsed.itemName,
@@ -112,7 +135,7 @@ export function useBulkImport({
             item.parsed.servingTimeSlot,
             existingItems
           );
-          return { ...item, isDuplicate, duplicateInfo };
+          return { ...item, isDuplicate, duplicateInfo, isSelected: !isDuplicate };
         });
 
         setParsedItems(itemsWithDuplicateCheck);
@@ -126,12 +149,13 @@ export function useBulkImport({
     [existingItems]
   );
 
-  // 一括登録
+  // 一括登録（選択された品物のみ）
   const importItems = useCallback(async (): Promise<BulkImportResult> => {
     setIsImporting(true);
     setError(null);
 
-    const itemsToImport = validItems;
+    const itemsToImport = selectedItems;
+    const skippedBySelection = validItems.filter(item => !item.isSelected);
     const results: BulkImportItemResult[] = [];
 
     try {
@@ -194,8 +218,15 @@ export function useBulkImport({
         results.push(...taskResults);
       }
 
-      // スキップ分を追加
+      // スキップ分を追加（重複＋未選択）
       for (const item of duplicateItems) {
+        results.push({
+          rowIndex: item.rowIndex,
+          itemName: item.parsed.itemName,
+          status: 'skipped',
+        });
+      }
+      for (const item of skippedBySelection) {
         results.push({
           rowIndex: item.rowIndex,
           itemName: item.parsed.itemName,
@@ -204,7 +235,7 @@ export function useBulkImport({
       }
 
       const result: BulkImportResult = {
-        total: itemsToImport.length + duplicateItems.length,
+        total: itemsToImport.length + duplicateItems.length + skippedBySelection.length,
         success: results.filter(r => r.status === 'success').length,
         failed: results.filter(r => r.status === 'failed').length,
         skipped: results.filter(r => r.status === 'skipped').length,
@@ -219,11 +250,66 @@ export function useBulkImport({
     } finally {
       setIsImporting(false);
     }
-  }, [validItems, duplicateItems, residentId, userId, isDemo]);
+  }, [selectedItems, validItems, duplicateItems, residentId, userId, isDemo]);
 
   // 行を除外
   const removeItem = useCallback((rowIndex: number) => {
     setParsedItems(prev => prev.filter(item => item.rowIndex !== rowIndex));
+  }, []);
+
+  // 品物の編集
+  const updateItem = useCallback((rowIndex: number, fields: EditableItemFields) => {
+    setParsedItems(prev => prev.map(item => {
+      if (item.rowIndex !== rowIndex) return item;
+
+      const updatedParsed = { ...item.parsed };
+
+      if (fields.itemName !== undefined) updatedParsed.itemName = fields.itemName;
+      if (fields.category !== undefined) updatedParsed.category = fields.category;
+      if (fields.quantity !== undefined) updatedParsed.quantity = fields.quantity;
+      if (fields.unit !== undefined) updatedParsed.unit = fields.unit;
+      if (fields.servingMethod !== undefined) updatedParsed.servingMethod = fields.servingMethod;
+      if (fields.servingDate !== undefined) updatedParsed.servingDate = fields.servingDate;
+      if (fields.servingTimeSlot !== undefined) updatedParsed.servingTimeSlot = fields.servingTimeSlot;
+      if (fields.noteToStaff !== undefined) updatedParsed.noteToStaff = fields.noteToStaff;
+
+      // 品物名・提供日・タイミングが変わったら重複を再チェック
+      const needsDuplicateRecheck =
+        fields.itemName !== undefined ||
+        fields.servingDate !== undefined ||
+        fields.servingTimeSlot !== undefined;
+
+      if (needsDuplicateRecheck) {
+        const { isDuplicate, duplicateInfo } = checkBulkItemDuplicate(
+          updatedParsed.itemName,
+          updatedParsed.servingDate,
+          updatedParsed.servingTimeSlot,
+          existingItems
+        );
+        return { ...item, parsed: updatedParsed, isDuplicate, duplicateInfo };
+      }
+
+      return { ...item, parsed: updatedParsed };
+    }));
+  }, [existingItems]);
+
+  // 選択切り替え
+  const toggleSelect = useCallback((rowIndex: number) => {
+    setParsedItems(prev => prev.map(item =>
+      item.rowIndex === rowIndex ? { ...item, isSelected: !item.isSelected } : item
+    ));
+  }, []);
+
+  // 全選択（エラー・重複以外）
+  const selectAll = useCallback(() => {
+    setParsedItems(prev => prev.map(item =>
+      (item.errors.length > 0 || item.isDuplicate) ? item : { ...item, isSelected: true }
+    ));
+  }, []);
+
+  // 全選択解除
+  const deselectAll = useCallback(() => {
+    setParsedItems(prev => prev.map(item => ({ ...item, isSelected: false })));
   }, []);
 
   // リセット
@@ -240,6 +326,7 @@ export function useBulkImport({
     validItems,
     errorItems,
     duplicateItems,
+    selectedItems,
     isLoading,
     isImporting,
     importResult,
@@ -247,6 +334,10 @@ export function useBulkImport({
     parseFile,
     importItems,
     removeItem,
+    updateItem,
+    toggleSelect,
+    selectAll,
+    deselectAll,
     reset,
   };
 }
