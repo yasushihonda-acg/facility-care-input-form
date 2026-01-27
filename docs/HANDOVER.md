@@ -1,6 +1,6 @@
 # 引き継ぎドキュメント
 
-> 最終更新: 2025-01-27
+> 最終更新: 2025-01-28
 
 ## クイックスタート（5分で開発開始）
 
@@ -256,5 +256,80 @@ Phase 1〜62まで完了。詳細は `git log` を参照。
 - **refactor**: タスク機能を完全削除 - sentDateスキーマ変更による不具合解消、品物一覧・Chat Webhookで代替
 - **Phase 59**: 修正記録フォームのフォールバック修正 - 廃棄済み品物（status: consumed + remainingHandlingLogs: discarded）の修正記録が正しく動作するように。残り数量表示・提供数初期値・バリデーション・API選択ロジックを修正。Firestoreインデックス追加（consumption_logs, item_events）
 - **feat(bulk-import)**: Excel一括登録機能 - Excelファイルから複数品物を一括登録。テンプレートダウンロード（ドロップダウン付き）、バリデーション、重複チェック、自動修正機能
+- **Phase 68**: 画像一括登録 - 食事スケジュール表の写真からAI（Gemini）が品物を抽出して一括登録
+- **Phase 69**: 画像一括登録の複数画像対応・バグ修正（下記詳細参照）
 
 E2Eテスト: 506件定義
+
+---
+
+## Phase 69: 一括登録バグ修正と技術的教訓
+
+### 発見された問題
+
+Phase 68の本番運用中、以下の深刻な問題が発見された:
+
+| 問題 | 症状 | 原因 |
+|------|------|------|
+| **通知ロスト** | 48件登録→38件の通知が送信されなかった | 自作pLimitのasync/await処理バグ |
+| **レート制限** | 個別通知が10件程度しか届かない | Google Chat APIの同時実行制限 |
+| **エラー握りつぶし** | 失敗してもUIに反映されない | fire-and-forget パターン |
+
+### 修正内容（PR #293〜#297）
+
+| Phase | 修正内容 | PR |
+|-------|---------|-----|
+| 69.1 | 自作pLimit → npm `p-limit` に置換 | #293 |
+| 69.2 | 通知のawait化・指数バックオフリトライ | #294 |
+| 69.3 | 個別通知 → サマリ通知にバッチ化 | #295 |
+| 69.4 | 並列実行の単体テスト追加 | #296 |
+| 69.5 | 失敗品物の再送機能追加 | #297 |
+
+### 技術的教訓
+
+#### 1. 標準ライブラリの優先
+```
+❌ 自作のpLimit実装（async/awaitのスコープ問題でバグ発生）
+✅ npm p-limit（7.2.0）を使用
+```
+**教訓**: 並列実行制御のような基本的な処理は、十分にテストされたnpmパッケージを使用する。自作は意図しないバグの温床。
+
+#### 2. Fire-and-forget は禁止
+```typescript
+// ❌ 悪い例: 通知の成否が不明
+sendToGoogleChat(webhookUrl, message);  // awaitなし
+
+// ✅ 良い例: awaitで確実に完了を待つ
+const result = await sendToGoogleChat(webhookUrl, message);
+```
+**教訓**: 外部APIコールは必ずawaitし、成功/失敗を捕捉する。
+
+#### 3. 外部APIへのバッチ化
+```
+❌ 48件の品物 → 48件のWebhook送信 → レート制限でほとんど失敗
+✅ 48件の品物 → 1件のサマリ通知 → 確実に配信
+```
+**教訓**: 一括操作時は個別通知ではなくサマリ通知を送信する。
+
+#### 4. リトライ戦略の実装
+```typescript
+// 指数バックオフでリトライ（1s, 2s, 4s...）
+async function exponentialBackoff(attempt: number, baseDelayMs = 1000) {
+  const delay = baseDelayMs * Math.pow(2, attempt);
+  await new Promise(resolve => setTimeout(resolve, delay));
+}
+```
+**教訓**: ネットワーク系の処理は必ずリトライロジックを実装する。
+
+### 単体テストの追加
+
+`frontend/src/utils/parallelImport.test.ts` に並列実行テストを追加:
+```bash
+npm run test:unit   # 4テストケース
+```
+
+### 今後の注意事項
+
+1. **一括操作のテスト**: 本番で大量データを扱う前に、10件以上でテスト
+2. **外部API連携**: 必ずawait + try/catch + リトライ
+3. **自作ユーティリティ**: npmに代替があれば使わない
