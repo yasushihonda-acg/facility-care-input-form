@@ -52,7 +52,9 @@ Accepted / Superseded / Rejected
 
 ## 現在のADR
 
-（新規作成時にここにリストを追加）
+| ID | タイトル | Status | 作成日 |
+|----|---------|--------|--------|
+| [0001](./0001-technical-debt-review.md) | 技術的負債レビュー（2025年1月） | Accepted | 2025-01-27 |
 
 ## 参考
 
