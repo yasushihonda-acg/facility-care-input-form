@@ -175,7 +175,7 @@ function EditableNumberCell({
     return (
       <input
         type="number"
-        step="0.1"
+        step="1"
         min="0"
         value={editValue}
         onChange={(e) => setEditValue(e.target.value)}
