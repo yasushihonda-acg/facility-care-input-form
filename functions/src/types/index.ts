@@ -706,6 +706,8 @@ export interface SubmitCareItemRequest {
   residentId: string;
   userId: string;
   item: CareItemInput;
+  /** 通知をスキップするか（一括登録時にtrue） */
+  skipNotification?: boolean;
 }
 
 /** 品物登録レスポンス */

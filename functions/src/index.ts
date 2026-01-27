@@ -72,6 +72,7 @@ export {
   getCareItems,
   updateCareItem,
   deleteCareItem,
+  notifyBulkImport, // Phase 69.3: 一括登録完了通知
 } from "./functions/careItems";
 
 // =============================================================================

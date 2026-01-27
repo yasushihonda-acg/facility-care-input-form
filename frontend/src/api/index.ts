@@ -253,21 +253,71 @@ export type { CareItem, CareItemInput };
 
 /**
  * 品物を登録（家族用）
+ * @param residentId 入居者ID
+ * @param userId ユーザーID
+ * @param item 品物データ
+ * @param options オプション（skipNotification: 個別通知をスキップ）
  */
 export async function submitCareItem(
   residentId: string,
   userId: string,
-  item: CareItemInput
+  item: CareItemInput,
+  options?: { skipNotification?: boolean }
 ): Promise<ApiResponse<SubmitCareItemResponse>> {
   const response = await fetch(`${API_BASE}/submitCareItem`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ residentId, userId, item }),
+    body: JSON.stringify({
+      residentId,
+      userId,
+      item,
+      skipNotification: options?.skipNotification,
+    }),
   });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.error?.message || `Submit failed: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 一括登録完了通知データ型（Phase 69.3）
+ */
+export interface BulkImportNotifyData {
+  total: number;
+  success: number;
+  failed: number;
+  skipped: number;
+  items: Array<{ itemName: string; status: 'success' | 'failed' | 'skipped' }>;
+}
+
+/**
+ * 一括登録完了通知レスポンス
+ */
+export interface NotifyBulkImportResponse {
+  sent: boolean;
+}
+
+/**
+ * 一括登録完了通知を送信（Phase 69.3）
+ * 個別通知をスキップした一括登録後に呼び出し、サマリ通知を送信
+ */
+export async function notifyBulkImport(
+  userId: string,
+  data: BulkImportNotifyData
+): Promise<ApiResponse<NotifyBulkImportResponse>> {
+  const response = await fetch(`${API_BASE}/notifyBulkImport`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, data }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Notify failed: ${response.statusText}`);
   }
 
   return response.json();

@@ -6,7 +6,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import pLimit from 'p-limit';
-import { analyzeScheduleImages, submitCareItem } from '../api';
+import { analyzeScheduleImages, submitCareItem, notifyBulkImport } from '../api';
 import type { ImageData } from '../api';
 import { checkBulkItemDuplicate } from '../utils/duplicateCheck';
 import type { CareItem, CareItemInput } from '../types/careItem';
@@ -308,6 +308,7 @@ export function useImageBulkImport({
       } else {
         // 本番モード: 並列でAPI呼び出し（同時5件制限）
         // npm p-limit を使用（自作実装のバグを回避）
+        // Phase 69.3: 個別通知をスキップし、最後にサマリ通知を送信
         const limit = pLimit(5);
         const taskPromises = itemsToImport.map(item => limit(async (): Promise<BulkImportItemResult> => {
           try {
@@ -325,7 +326,10 @@ export function useImageBulkImport({
               noteToStaff: item.parsed.noteToStaff,
             };
 
-            const response = await submitCareItem(residentId, userId, careItemInput);
+            // skipNotification: true で個別通知をスキップ
+            const response = await submitCareItem(residentId, userId, careItemInput, {
+              skipNotification: true,
+            });
 
             return {
               rowIndex: item.index,
@@ -370,6 +374,26 @@ export function useImageBulkImport({
         skipped: results.filter(r => r.status === 'skipped').length,
         results,
       };
+
+      // Phase 69.3: 一括登録完了通知（サマリ）を送信
+      // デモモードでなく、成功が1件以上ある場合のみ
+      if (!isDemo && result.success > 0) {
+        try {
+          await notifyBulkImport(userId, {
+            total: result.total,
+            success: result.success,
+            failed: result.failed,
+            skipped: result.skipped,
+            items: results.map(r => ({
+              itemName: r.itemName,
+              status: r.status,
+            })),
+          });
+        } catch (notifyErr) {
+          // 通知失敗は登録結果に影響しない
+          console.warn('Bulk import notification failed:', notifyErr);
+        }
+      }
 
       setImportResult(result);
       return result;

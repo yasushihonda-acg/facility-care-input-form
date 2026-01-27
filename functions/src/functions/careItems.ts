@@ -31,7 +31,9 @@ import {
 import {
   sendToGoogleChat,
   formatCareItemNotification,
+  formatBulkImportNotification,
   CareItemNotifyData,
+  BulkImportNotifyData,
 } from "../services/googleChatService";
 import {logItemEvent, detectChanges} from "./itemEvents";
 
@@ -188,7 +190,7 @@ async function submitCareItemHandler(
       return;
     }
 
-    const {residentId, userId, item} = validation.data;
+    const {residentId, userId, item, skipNotification} = validation.data;
 
     functions.logger.info("submitCareItem started", {
       residentId,
@@ -246,29 +248,32 @@ async function submitCareItemHandler(
       functions.logger.warn("submitCareItem event logging failed:", err);
     });
 
-    // Phase 30: 家族操作通知（Phase 69.2: await + リトライで信頼性向上）
-    try {
-      const settingsDoc = await db.collection("settings").doc("mealFormDefaults").get();
-      const settings = settingsDoc.exists ? (settingsDoc.data() as MealFormSettings) : null;
+    // Phase 30: 家族操作通知（Phase 69.3: 一括登録時はスキップ可能）
+    // skipNotification=trueの場合は個別通知をスキップ（一括登録で後からサマリ通知を送る）
+    if (!skipNotification) {
+      try {
+        const settingsDoc = await db.collection("settings").doc("mealFormDefaults").get();
+        const settings = settingsDoc.exists ? (settingsDoc.data() as MealFormSettings) : null;
 
-      if (settings?.familyNotifyWebhookUrl) {
-        const notifyData: CareItemNotifyData = {
-          itemName: item.itemName,
-          category: item.category,
-          quantity: item.quantity,
-          unit: item.unit,
-          expirationDate: item.expirationDate,
-          noteToStaff: item.noteToStaff,
-        };
-        const message = formatCareItemNotification("register", notifyData, userId);
-        // awaitで通知完了を待機（リトライ機能付き）
-        const notifyResult = await sendToGoogleChat(settings.familyNotifyWebhookUrl, message);
-        if (!notifyResult) {
-          functions.logger.warn("submitCareItem notification failed after retries");
+        if (settings?.familyNotifyWebhookUrl) {
+          const notifyData: CareItemNotifyData = {
+            itemName: item.itemName,
+            category: item.category,
+            quantity: item.quantity,
+            unit: item.unit,
+            expirationDate: item.expirationDate,
+            noteToStaff: item.noteToStaff,
+          };
+          const message = formatCareItemNotification("register", notifyData, userId);
+          // awaitで通知完了を待機（リトライ機能付き）
+          const notifyResult = await sendToGoogleChat(settings.familyNotifyWebhookUrl, message);
+          if (!notifyResult) {
+            functions.logger.warn("submitCareItem notification failed after retries");
+          }
         }
+      } catch (notifyError) {
+        functions.logger.warn("submitCareItem notification setup failed:", notifyError);
       }
-    } catch (notifyError) {
-      functions.logger.warn("submitCareItem notification setup failed:", notifyError);
     }
 
     const responseData: SubmitCareItemResponse = {
@@ -870,6 +875,126 @@ async function deleteCareItemHandler(
 }
 
 // =============================================================================
+// Phase 69.3: 一括登録完了通知
+// =============================================================================
+
+/**
+ * notifyBulkImport: 一括登録完了時のサマリ通知
+ * 個別通知をスキップした一括登録後に呼び出す
+ */
+async function notifyBulkImportHandler(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const timestamp = new Date().toISOString();
+
+  try {
+    // CORS対応
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+    if (req.method === "OPTIONS") {
+      res.status(204).send("");
+      return;
+    }
+
+    if (req.method !== "POST") {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: {
+          code: ErrorCodes.INVALID_REQUEST,
+          message: "Method not allowed. Use POST.",
+        },
+        timestamp,
+      };
+      res.status(405).json(response);
+      return;
+    }
+
+    const body = req.body as Record<string, unknown>;
+    const userId = body.userId as string;
+    const data = body.data as BulkImportNotifyData;
+
+    if (!userId) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: {
+          code: ErrorCodes.MISSING_REQUIRED_FIELD,
+          message: "userId is required",
+        },
+        timestamp,
+      };
+      res.status(400).json(response);
+      return;
+    }
+
+    if (!data || typeof data.total !== "number") {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: {
+          code: ErrorCodes.MISSING_REQUIRED_FIELD,
+          message: "data is required with total, success, failed, skipped fields",
+        },
+        timestamp,
+      };
+      res.status(400).json(response);
+      return;
+    }
+
+    functions.logger.info("notifyBulkImport started", {
+      userId,
+      total: data.total,
+      success: data.success,
+      failed: data.failed,
+      skipped: data.skipped,
+    });
+
+    // Webhook URLを取得
+    const db = getFirestore();
+    const settingsDoc = await db.collection("settings").doc("mealFormDefaults").get();
+    const settings = settingsDoc.exists ? (settingsDoc.data() as MealFormSettings) : null;
+
+    if (!settings?.familyNotifyWebhookUrl) {
+      functions.logger.info("[notifyBulkImport] Webhook URL not configured, skipping");
+      const response: ApiResponse<{sent: boolean}> = {
+        success: true,
+        data: {sent: false},
+        timestamp,
+      };
+      res.status(200).json(response);
+      return;
+    }
+
+    // サマリメッセージを生成して送信
+    const message = formatBulkImportNotification(data, userId);
+    const notifyResult = await sendToGoogleChat(settings.familyNotifyWebhookUrl, message);
+
+    functions.logger.info("notifyBulkImport completed", {
+      sent: notifyResult,
+    });
+
+    const response: ApiResponse<{sent: boolean}> = {
+      success: true,
+      data: {sent: notifyResult},
+      timestamp,
+    };
+    res.status(200).json(response);
+  } catch (error) {
+    functions.logger.error("notifyBulkImport error", error);
+    const response: ApiResponse<null> = {
+      success: false,
+      error: {
+        code: ErrorCodes.INTERNAL_ERROR,
+        message: error instanceof Error ? error.message : "Unknown error",
+      },
+      timestamp,
+    };
+    res.status(500).json(response);
+  }
+}
+
+// =============================================================================
 // Cloud Functions エクスポート
 // =============================================================================
 
@@ -908,3 +1033,12 @@ export const deleteCareItem = functions
     serviceAccount: FUNCTIONS_CONFIG.SERVICE_ACCOUNT,
   })
   .https.onRequest(deleteCareItemHandler);
+
+export const notifyBulkImport = functions
+  .region(FUNCTIONS_CONFIG.REGION)
+  .runWith({
+    timeoutSeconds: 30,
+    memory: "256MB",
+    serviceAccount: FUNCTIONS_CONFIG.SERVICE_ACCOUNT,
+  })
+  .https.onRequest(notifyBulkImportHandler);
