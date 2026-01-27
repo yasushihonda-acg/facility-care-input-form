@@ -228,7 +228,7 @@ export function useImageBulkImport({
             parsed: {
               itemName: item.itemName,
               category: item.category,
-              quantity: item.quantity,
+              quantity: item.quantity ?? 1, // デフォルト値: 1
               unit: item.unit ?? '個',
               servingMethod,
               servingDate: item.servingDate,
