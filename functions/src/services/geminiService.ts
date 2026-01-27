@@ -180,7 +180,7 @@ export async function generateContentWithImages(
     const model = vertexAI.getGenerativeModel({
       model: MODEL_ID,
       generationConfig: {
-        maxOutputTokens: 8192, // 複数画像解析は長い出力が必要
+        maxOutputTokens: 16384, // 複数画像解析は非常に長い出力が必要（MAX_TOKENS対策）
         temperature: 0.2,
         topP: 0.8,
       },
