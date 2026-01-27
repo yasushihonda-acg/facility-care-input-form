@@ -349,3 +349,84 @@ export function formatNoRecordNotification(
 
   return lines.join("\n");
 }
+
+// =============================================================================
+// Phase 69.3: 一括登録サマリ通知
+// =============================================================================
+
+/**
+ * 一括登録結果データ型
+ */
+export interface BulkImportNotifyData {
+  total: number;
+  success: number;
+  failed: number;
+  skipped: number;
+  items: Array<{itemName: string; status: "success" | "failed" | "skipped"}>;
+}
+
+/**
+ * 一括登録サマリ通知メッセージを生成
+ *
+ * @param data - 一括登録結果
+ * @param userId - 操作者ID
+ */
+export function formatBulkImportNotification(
+  data: BulkImportNotifyData,
+  userId: string
+): string {
+  const now = new Date();
+  const jstTime = now.toLocaleString("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+
+  const lines = [
+    "#品物一括登録📦",
+    "",
+    "【登録結果】",
+    `成功: ${data.success}件`,
+  ];
+
+  if (data.failed > 0) {
+    lines.push(`失敗: ${data.failed}件 ⚠️`);
+  }
+  if (data.skipped > 0) {
+    lines.push(`スキップ（重複）: ${data.skipped}件`);
+  }
+
+  // 成功した品物の一覧（最大10件）
+  const successItems = data.items.filter((i) => i.status === "success");
+  if (successItems.length > 0) {
+    lines.push("");
+    lines.push("【登録品物】");
+    const displayItems = successItems.slice(0, 10);
+    displayItems.forEach((item) => {
+      lines.push(`・${item.itemName}`);
+    });
+    if (successItems.length > 10) {
+      lines.push(`...他 ${successItems.length - 10}件`);
+    }
+  }
+
+  // 失敗した品物の一覧
+  const failedItems = data.items.filter((i) => i.status === "failed");
+  if (failedItems.length > 0) {
+    lines.push("");
+    lines.push("【登録失敗】");
+    failedItems.forEach((item) => {
+      lines.push(`・${item.itemName}`);
+    });
+  }
+
+  lines.push("");
+  lines.push(`登録者: ${userId}`);
+  lines.push(`時刻: ${jstTime}`);
+
+  return lines.join("\n");
+}
