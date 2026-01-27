@@ -1,10 +1,10 @@
 /**
  * 画像アップロードコンポーネント (Phase 68)
- * ドラッグ&ドロップとクリック選択に対応
+ * ドラッグ&ドロップ、クリック選択、クリップボード貼り付け、カメラ撮影に対応
  * 画像プレビュー機能付き
  */
 
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 
 interface ImageUploaderProps {
   onImageSelected: (base64: string, mimeType: string) => void;
@@ -25,6 +25,8 @@ export function ImageUploader({
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const validateFile = useCallback((file: File): boolean => {
     // MIMEタイプチェック
@@ -115,13 +117,59 @@ export function ImageUploader({
     [handleFile]
   );
 
+  // カメラボタンクリック
+  const handleCameraClick = useCallback(() => {
+    if (!disabled && !isLoading) {
+      cameraInputRef.current?.click();
+    }
+  }, [disabled, isLoading]);
+
+  // クリップボード貼り付け処理
+  const handlePaste = useCallback(
+    (e: ClipboardEvent) => {
+      if (disabled || isLoading || preview) return;
+
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) {
+            handleFile(file);
+          }
+          break;
+        }
+      }
+    },
+    [disabled, isLoading, preview, handleFile]
+  );
+
+  // グローバルペーストイベントの登録
+  useEffect(() => {
+    const handleGlobalPaste = (e: ClipboardEvent) => {
+      // コンテナがフォーカスされているか、アクティブな入力フィールドがない場合に処理
+      const activeElement = document.activeElement;
+      const isInputFocused = activeElement instanceof HTMLInputElement ||
+                            activeElement instanceof HTMLTextAreaElement;
+
+      if (!isInputFocused) {
+        handlePaste(e);
+      }
+    };
+
+    document.addEventListener('paste', handleGlobalPaste);
+    return () => document.removeEventListener('paste', handleGlobalPaste);
+  }, [handlePaste]);
+
   const handleClearPreview = useCallback(() => {
     setPreview(null);
     setError(null);
   }, []);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" ref={containerRef}>
       {preview ? (
         // プレビュー表示
         <div className="relative">
@@ -173,6 +221,16 @@ export function ImageUploader({
             className="hidden"
             disabled={disabled || isLoading}
           />
+          {/* カメラ撮影用input（モバイル向け） */}
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            capture="environment"
+            onChange={handleInputChange}
+            className="hidden"
+            disabled={disabled || isLoading}
+          />
 
           <div className="flex flex-col items-center gap-2">
             <svg
@@ -193,9 +251,38 @@ export function ImageUploader({
                 スケジュール表の画像をアップロード
               </p>
               <p className="text-gray-500 text-sm">
-                または <span className="text-green-600 underline">クリックして選択</span>
+                クリックして選択、ドラッグ&ドロップ、または<br />
+                <span className="text-green-600 font-medium">Ctrl+V / ⌘+V で貼り付け</span>
               </p>
             </div>
+
+            {/* カメラ撮影ボタン */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCameraClick();
+              }}
+              className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              disabled={disabled || isLoading}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+              カメラで撮影
+            </button>
+
             <p className="text-xs text-gray-400 mt-2">
               対応形式: JPEG, PNG, WebP（最大{MAX_SIZE_MB}MB）
             </p>

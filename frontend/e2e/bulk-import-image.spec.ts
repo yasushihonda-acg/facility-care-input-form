@@ -94,8 +94,8 @@ test.describe('画像一括登録機能', () => {
     const dummyPngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
     const dummyPngBuffer = Buffer.from(dummyPngBase64, 'base64');
 
-    // ファイル入力を取得してファイルを設定
-    const fileInput = page.locator('input[type="file"]');
+    // ファイル入力を取得してファイルを設定（capture属性なしの通常のファイル選択用）
+    const fileInput = page.locator('input[type="file"]:not([capture])');
     await fileInput.setInputFiles({
       name: 'test-schedule.png',
       mimeType: 'image/png',
@@ -120,7 +120,7 @@ test.describe('画像一括登録機能', () => {
     const dummyPngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
     const dummyPngBuffer = Buffer.from(dummyPngBase64, 'base64');
 
-    const fileInput = page.locator('input[type="file"]');
+    const fileInput = page.locator('input[type="file"]:not([capture])');
     await fileInput.setInputFiles({
       name: 'test-schedule.png',
       mimeType: 'image/png',
@@ -146,7 +146,7 @@ test.describe('画像一括登録機能', () => {
     const dummyPngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
     const dummyPngBuffer = Buffer.from(dummyPngBase64, 'base64');
 
-    const fileInput = page.locator('input[type="file"]');
+    const fileInput = page.locator('input[type="file"]:not([capture])');
     await fileInput.setInputFiles({
       name: 'test-schedule.png',
       mimeType: 'image/png',
