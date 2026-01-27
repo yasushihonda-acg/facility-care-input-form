@@ -35,7 +35,7 @@ export function BulkItemImport() {
   const existingItems = useMemo(() => careItemsData?.items ?? [], [careItemsData]);
 
   // 共通状態
-  const [importSource, setImportSource] = useState<ImportSource>('excel');
+  const [importSource, setImportSource] = useState<ImportSource>('image');
   const [step, setStep] = useState<PageStep>('upload');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
