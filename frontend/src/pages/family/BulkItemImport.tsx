@@ -1,6 +1,6 @@
 /**
  * 品物一括登録ページ
- * Excelファイルから複数の品物を一括で登録する機能
+ * Excel/画像から複数の品物を一括で登録する機能
  */
 
 import { useState, useCallback, useMemo } from 'react';
@@ -9,15 +9,19 @@ import { Layout } from '../../components/Layout';
 import { useCareItems } from '../../hooks/useCareItems';
 import { useDemoMode } from '../../hooks/useDemoMode';
 import { useBulkImport } from '../../hooks/useBulkImport';
+import { useImageBulkImport } from '../../hooks/useImageBulkImport';
 import { ExcelUploader } from '../../components/family/ExcelUploader';
+import { ImageUploader } from '../../components/family/ImageUploader';
 import { BulkImportPreview } from '../../components/family/BulkImportPreview';
 import { BulkImportConfirmDialog } from '../../components/family/BulkImportConfirmDialog';
 import { downloadTemplate } from '../../utils/excelParser';
+import type { ParsedBulkItem } from '../../types/bulkImport';
 
 // 入居者ID・ユーザーID（単一入居者専用アプリのため固定値）
 const DEMO_RESIDENT_ID = 'resident-001';
 const DEMO_USER_ID = 'family-001';
 
+type ImportSource = 'excel' | 'image';
 type PageStep = 'upload' | 'preview' | 'complete';
 
 export function BulkItemImport() {
@@ -29,36 +33,94 @@ export function BulkItemImport() {
   const { data: careItemsData } = useCareItems({ residentId: DEMO_RESIDENT_ID });
   const existingItems = useMemo(() => careItemsData?.items ?? [], [careItemsData]);
 
-  // 一括登録フック
-  const {
-    parsedItems,
-    validItems,
-    duplicateItems,
-    isLoading,
-    isImporting,
-    importResult,
-    error,
-    parseFile,
-    importItems,
-    removeItem,
-    reset,
-  } = useBulkImport({
+  // 共通状態
+  const [importSource, setImportSource] = useState<ImportSource>('excel');
+  const [step, setStep] = useState<PageStep>('upload');
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
+  // Excel一括登録フック
+  const excelImport = useBulkImport({
     residentId: DEMO_RESIDENT_ID,
     userId: DEMO_USER_ID,
     existingItems,
     isDemo,
   });
 
-  const [step, setStep] = useState<PageStep>('upload');
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  // 画像一括登録フック
+  const imageImport = useImageBulkImport({
+    residentId: DEMO_RESIDENT_ID,
+    userId: DEMO_USER_ID,
+    existingItems,
+    isDemo,
+  });
 
-  // ファイル選択時
-  const handleFileSelected = useCallback(
+  // 現在のソースに応じた状態を取得
+  const currentImport = importSource === 'excel' ? excelImport : imageImport;
+  const isLoading = importSource === 'excel' ? excelImport.isLoading : imageImport.isAnalyzing;
+  const isImporting = currentImport.isImporting;
+  const importResult = currentImport.importResult;
+  const error = currentImport.error;
+
+  // 画像からの品物をParsedBulkItem形式に変換（プレビュー表示用）
+  const parsedItemsForPreview: ParsedBulkItem[] = useMemo(() => {
+    if (importSource === 'excel') {
+      return excelImport.parsedItems;
+    }
+    // 画像の場合はParsedImageItemをParsedBulkItemに変換
+    return imageImport.parsedItems.map(item => ({
+      rowIndex: item.index,
+      raw: {},
+      parsed: {
+        itemName: item.parsed.itemName,
+        category: item.parsed.category,
+        quantity: item.parsed.quantity,
+        unit: item.parsed.unit,
+        servingMethod: item.parsed.servingMethod,
+        servingDate: item.parsed.servingDate,
+        servingTimeSlot: item.parsed.servingTimeSlot,
+        noteToStaff: item.parsed.noteToStaff,
+      },
+      errors: [],
+      warnings: [],
+      isDuplicate: item.isDuplicate,
+      duplicateInfo: item.duplicateInfo,
+    }));
+  }, [importSource, excelImport.parsedItems, imageImport.parsedItems]);
+
+  const validItemsCount = importSource === 'excel'
+    ? excelImport.validItems.length
+    : imageImport.validItems.length;
+
+  const duplicateItemsCount = importSource === 'excel'
+    ? excelImport.duplicateItems.length
+    : imageImport.duplicateItems.length;
+
+  // タブ切り替え
+  const handleSourceChange = useCallback((source: ImportSource) => {
+    if (step === 'upload') {
+      setImportSource(source);
+      excelImport.reset();
+      imageImport.reset();
+    }
+  }, [step, excelImport, imageImport]);
+
+  // Excelファイル選択時
+  const handleExcelSelected = useCallback(
     async (file: File) => {
-      await parseFile(file);
+      await excelImport.parseFile(file);
       setStep('preview');
     },
-    [parseFile]
+    [excelImport]
+  );
+
+  // 画像選択時
+  const handleImageSelected = useCallback(
+    async (base64: string, mimeType: string) => {
+      await imageImport.analyzeImage(base64, mimeType);
+      // analyzeImage完了後、常にプレビュー画面に遷移（エラーは画面上で表示される）
+      setStep('preview');
+    },
+    [imageImport]
   );
 
   // テンプレートダウンロード
@@ -79,24 +141,34 @@ export function BulkItemImport() {
   // 登録実行
   const handleConfirmImport = useCallback(async () => {
     try {
-      await importItems();
+      await currentImport.importItems();
       setShowConfirmDialog(false);
       setStep('complete');
     } catch {
       // エラーはフック内で処理される
     }
-  }, [importItems]);
+  }, [currentImport]);
 
   // やり直し
   const handleRetry = useCallback(() => {
-    reset();
+    excelImport.reset();
+    imageImport.reset();
     setStep('upload');
-  }, [reset]);
+  }, [excelImport, imageImport]);
 
   // 品物一覧に戻る
   const handleGoToItems = useCallback(() => {
     navigate(`${basePath}/family/items`);
   }, [navigate, basePath]);
+
+  // 行を除外
+  const handleRemoveItem = useCallback((rowIndex: number) => {
+    if (importSource === 'excel') {
+      excelImport.removeItem(rowIndex);
+    } else {
+      imageImport.removeItem(rowIndex);
+    }
+  }, [importSource, excelImport, imageImport]);
 
   return (
     <Layout>
@@ -114,7 +186,7 @@ export function BulkItemImport() {
           </Link>
           <h1 className="text-2xl font-bold text-gray-900">品物の一括登録</h1>
           <p className="text-gray-600 mt-1">
-            Excelファイルから複数の品物を一度に登録できます
+            Excelファイルまたは画像から複数の品物を一度に登録できます
           </p>
         </div>
 
@@ -180,41 +252,130 @@ export function BulkItemImport() {
           </div>
         )}
 
+        {/* 画像解析の警告表示 */}
+        {importSource === 'image' && imageImport.metadata && imageImport.metadata.warnings.length > 0 && (
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex items-start gap-2 text-yellow-700">
+              <svg className="w-5 h-5 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <div>
+                <p className="font-medium">画像解析の注意</p>
+                <ul className="text-sm mt-1 list-disc list-inside">
+                  {imageImport.metadata.warnings.map((w, i) => (
+                    <li key={i}>{w}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Step 1: アップロード */}
         {step === 'upload' && (
           <div className="space-y-6">
-            {/* テンプレートダウンロード */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h2 className="font-medium text-blue-900 mb-2">Step 1: テンプレートをダウンロード</h2>
-              <p className="text-blue-800 text-sm mb-3">
-                まず入力用のExcelテンプレートをダウンロードし、品物情報を入力してください。
-              </p>
-              <button
-                onClick={handleDownloadTemplate}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                  />
-                </svg>
-                テンプレートをダウンロード
-              </button>
-            </div>
+            {/* ソース選択タブ */}
+            <div className="bg-white border rounded-lg overflow-hidden">
+              <div className="flex border-b">
+                <button
+                  onClick={() => handleSourceChange('excel')}
+                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                    importSource === 'excel'
+                      ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Excelファイル
+                  </div>
+                </button>
+                <button
+                  onClick={() => handleSourceChange('image')}
+                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                    importSource === 'image'
+                      ? 'bg-green-50 text-green-700 border-b-2 border-green-500'
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    画像から読み取り
+                  </div>
+                </button>
+              </div>
 
-            {/* ファイルアップロード */}
-            <div className="bg-white border rounded-lg p-4">
-              <h2 className="font-medium text-gray-900 mb-2">Step 2: Excelファイルをアップロード</h2>
-              <p className="text-gray-600 text-sm mb-4">
-                入力済みのExcelファイルをアップロードしてください。
-              </p>
-              <ExcelUploader
-                onFileSelected={handleFileSelected}
-                isLoading={isLoading}
-              />
+              <div className="p-4">
+                {importSource === 'excel' ? (
+                  // Excelアップロード
+                  <div className="space-y-4">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h2 className="font-medium text-blue-900 mb-2">Step 1: テンプレートをダウンロード</h2>
+                      <p className="text-blue-800 text-sm mb-3">
+                        まず入力用のExcelテンプレートをダウンロードし、品物情報を入力してください。
+                      </p>
+                      <button
+                        onClick={handleDownloadTemplate}
+                        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                          />
+                        </svg>
+                        テンプレートをダウンロード
+                      </button>
+                    </div>
+
+                    <div>
+                      <h2 className="font-medium text-gray-900 mb-2">Step 2: Excelファイルをアップロード</h2>
+                      <p className="text-gray-600 text-sm mb-4">
+                        入力済みのExcelファイルをアップロードしてください。
+                      </p>
+                      <ExcelUploader
+                        onFileSelected={handleExcelSelected}
+                        isLoading={isLoading}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  // 画像アップロード
+                  <div className="space-y-4">
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <h2 className="font-medium text-green-900 mb-2">画像から品物を読み取り</h2>
+                      <p className="text-green-800 text-sm">
+                        食事スケジュール表の写真をアップロードすると、AIが品物情報を自動で抽出します。
+                        手書きのメモや印刷された表にも対応しています。
+                      </p>
+                    </div>
+
+                    <ImageUploader
+                      onImageSelected={handleImageSelected}
+                      isLoading={isLoading}
+                    />
+
+                    <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-600">
+                      <p className="font-medium text-gray-700 mb-1">読み取りのヒント</p>
+                      <ul className="list-disc list-inside space-y-0.5">
+                        <li>表全体が写るように撮影してください</li>
+                        <li>文字が鮮明に見える明るい場所で撮影してください</li>
+                        <li>斜めからではなく、真上から撮影すると精度が上がります</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -222,11 +383,41 @@ export function BulkItemImport() {
         {/* Step 2: プレビュー */}
         {step === 'preview' && (
           <div className="space-y-6">
+            {/* 信頼度表示（画像の場合） */}
+            {importSource === 'image' && imageImport.metadata && (
+              <div className={`p-3 rounded-lg text-sm ${
+                imageImport.metadata.confidence === 'high'
+                  ? 'bg-green-50 text-green-700'
+                  : imageImport.metadata.confidence === 'medium'
+                  ? 'bg-yellow-50 text-yellow-700'
+                  : 'bg-red-50 text-red-700'
+              }`}>
+                <div className="flex items-center gap-2">
+                  {imageImport.metadata.confidence === 'high' ? (
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                  <span>
+                    読み取り精度: {
+                      imageImport.metadata.confidence === 'high' ? '高' :
+                      imageImport.metadata.confidence === 'medium' ? '中' : '低'
+                    }
+                    {imageImport.metadata.confidence !== 'high' && '（内容をご確認ください）'}
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div className="bg-white border rounded-lg p-4">
               <h2 className="font-medium text-gray-900 mb-4">プレビュー</h2>
               <BulkImportPreview
-                items={parsedItems}
-                onRemoveItem={removeItem}
+                items={parsedItemsForPreview}
+                onRemoveItem={handleRemoveItem}
               />
             </div>
 
@@ -236,14 +427,14 @@ export function BulkItemImport() {
                 onClick={handleRetry}
                 className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
               >
-                ファイルを選び直す
+                {importSource === 'excel' ? 'ファイルを選び直す' : '画像を選び直す'}
               </button>
               <button
                 onClick={handleOpenConfirm}
-                disabled={validItems.length === 0}
+                disabled={validItemsCount === 0}
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {validItems.length}件を登録する
+                {validItemsCount}件を登録する
               </button>
             </div>
           </div>
@@ -279,7 +470,7 @@ export function BulkItemImport() {
                     .filter(r => r.status === 'failed')
                     .map(r => (
                       <li key={r.rowIndex}>
-                        行{r.rowIndex}: {r.itemName} - {r.error}
+                        {importSource === 'excel' ? `行${r.rowIndex}` : `品物${r.rowIndex + 1}`}: {r.itemName} - {r.error}
                       </li>
                     ))}
                 </ul>
@@ -307,8 +498,8 @@ export function BulkItemImport() {
         {/* 確認ダイアログ */}
         <BulkImportConfirmDialog
           isOpen={showConfirmDialog}
-          itemCount={validItems.length}
-          skipCount={duplicateItems.length}
+          itemCount={validItemsCount}
+          skipCount={duplicateItemsCount}
           onConfirm={handleConfirmImport}
           onCancel={handleCloseConfirm}
           isImporting={isImporting}

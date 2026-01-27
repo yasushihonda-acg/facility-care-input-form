@@ -1684,3 +1684,33 @@ export async function dismissAlert(
   return response.json();
 }
 
+// =============================================================================
+// 画像解析 API（Phase 68）
+// =============================================================================
+
+import type {
+  AnalyzeScheduleImageRequest,
+  AnalyzeScheduleImageResponse,
+} from '../types/bulkImport';
+
+/**
+ * 画像から品物スケジュールを解析
+ * Gemini Vision APIで食事スケジュール画像を解析
+ */
+export async function analyzeScheduleImage(
+  data: AnalyzeScheduleImageRequest
+): Promise<ApiResponse<AnalyzeScheduleImageResponse>> {
+  const response = await fetch(`${API_BASE}/analyzeScheduleImage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to analyze image: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
