@@ -5,6 +5,7 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
+import pLimit from 'p-limit';
 import { analyzeScheduleImages, submitCareItem } from '../api';
 import type { ImageData } from '../api';
 import { checkBulkItemDuplicate } from '../utils/duplicateCheck';
@@ -118,31 +119,6 @@ function generateDemoExtractedItems(): ExtractedItem[] {
       confidence: 'medium',
     },
   ];
-}
-
-/** 同時実行数制限付きPromise並列実行 */
-async function pLimit<T>(
-  tasks: (() => Promise<T>)[],
-  limit: number
-): Promise<T[]> {
-  const results: T[] = [];
-  const executing = new Set<Promise<void>>();
-
-  for (const task of tasks) {
-    const p = task().then(result => {
-      results.push(result);
-      executing.delete(p);
-    });
-
-    executing.add(p);
-
-    if (executing.size >= limit) {
-      await Promise.race(executing);
-    }
-  }
-
-  await Promise.all(executing);
-  return results;
 }
 
 export function useImageBulkImport({
@@ -331,7 +307,9 @@ export function useImageBulkImport({
         }
       } else {
         // 本番モード: 並列でAPI呼び出し（同時5件制限）
-        const tasks = itemsToImport.map(item => async (): Promise<BulkImportItemResult> => {
+        // npm p-limit を使用（自作実装のバグを回避）
+        const limit = pLimit(5);
+        const taskPromises = itemsToImport.map(item => limit(async (): Promise<BulkImportItemResult> => {
           try {
             const careItemInput: CareItemInput = {
               itemName: item.parsed.itemName,
@@ -363,9 +341,9 @@ export function useImageBulkImport({
               error: err instanceof Error ? err.message : '登録に失敗しました',
             };
           }
-        });
+        }));
 
-        const taskResults = await pLimit(tasks, 5);
+        const taskResults = await Promise.all(taskPromises);
         results.push(...taskResults);
       }
 
