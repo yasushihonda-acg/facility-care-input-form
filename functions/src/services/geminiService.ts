@@ -140,7 +140,25 @@ export async function generateContentWithImage(
 
     const result = await model.generateContent(request);
     const response = result.response;
-    const text = response.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+    // デバッグ: 応答の詳細をログ出力
+    const candidate = response.candidates?.[0];
+    functions.logger.info("Gemini Vision response details", {
+      candidatesCount: response.candidates?.length ?? 0,
+      finishReason: candidate?.finishReason,
+      safetyRatings: candidate?.safetyRatings,
+      hasContent: !!candidate?.content,
+      partsCount: candidate?.content?.parts?.length ?? 0,
+    });
+
+    // finishReasonがSAFETYの場合は警告
+    if (candidate?.finishReason === "SAFETY") {
+      functions.logger.warn("Gemini response blocked by safety filter", {
+        safetyRatings: candidate.safetyRatings,
+      });
+    }
+
+    const text = candidate?.content?.parts?.[0]?.text || "";
 
     return text;
   } catch (error) {
