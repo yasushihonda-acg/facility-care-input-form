@@ -287,8 +287,14 @@ export interface GetPlanDataResponse {
  */
 export interface PlanData {
   sheetName: string;
-  /** A列: タイムスタンプ */
+  /** A列: タイムスタンプ（文字列形式 - レガシー互換） */
   timestamp: string;
+  /**
+   * タイムスタンプ（Firestore Timestamp型）
+   * Phase 70で追加: 正規のTimestamp型でクエリ・ソートに使用
+   * 文字列timestampから変換して保存
+   */
+  timestampAt?: Timestamp;
   /** B列: 入力者名（スタッフ） */
   staffName: string;
   /** C列: 利用者名（一部シートはD列） */
@@ -2080,9 +2086,19 @@ export interface PlanDataSummary {
   id: string; // "2025-12" (月次) / "2025-W52" (週次) / "2025-12-29" (日次)
   type: SummaryType;
 
-  // 対象範囲
+  // 対象範囲（文字列形式 - レガシー互換）
   periodStart: string; // ISO日付
   periodEnd: string;
+  /**
+   * Phase 70で追加: 期間開始（Firestore Timestamp型）
+   * クエリ・ソートに使用
+   */
+  periodStartAt?: Timestamp;
+  /**
+   * Phase 70で追加: 期間終了（Firestore Timestamp型）
+   * クエリ・ソートに使用
+   */
+  periodEndAt?: Timestamp;
 
   // 要約内容
   summary: string;
