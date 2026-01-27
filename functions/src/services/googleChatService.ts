@@ -92,45 +92,98 @@ export function formatMealRecordMessage(record: MealRecordForChat): string {
 }
 
 /**
+ * 指数バックオフでスリープ
+ * @param attempt - 試行回数（0始まり）
+ * @param baseDelayMs - 基本遅延時間（ミリ秒）
+ */
+async function exponentialBackoff(attempt: number, baseDelayMs = 1000): Promise<void> {
+  const delay = baseDelayMs * Math.pow(2, attempt);
+  await new Promise((resolve) => setTimeout(resolve, delay));
+}
+
+/**
  * Google Chat WebhookにPOSTリクエストを送信
+ * リトライ機能付き（429/5xx エラー時に指数バックオフ）
  *
  * @param webhookUrl - Google Chat Webhook URL
  * @param message - 送信するメッセージ本文
+ * @param options - オプション設定
  * @returns 送信成功した場合はtrue、失敗した場合はfalse
  */
 export async function sendToGoogleChat(
   webhookUrl: string,
-  message: string
+  message: string,
+  options: { maxRetries?: number; timeoutMs?: number } = {}
 ): Promise<boolean> {
+  const {maxRetries = 3, timeoutMs = 5000} = options;
+
   // URLの基本検証
   if (!webhookUrl || !webhookUrl.startsWith("https://chat.googleapis.com/")) {
     functions.logger.warn("[GoogleChat] Invalid webhook URL:", webhookUrl);
     return false;
   }
 
-  try {
-    const response = await fetch(webhookUrl, {
-      method: "POST",
-      headers: {"Content-Type": "application/json; charset=UTF-8"},
-      body: JSON.stringify({text: message}),
-    });
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      // AbortControllerでタイムアウトを実装
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-    if (response.ok) {
-      functions.logger.info("[GoogleChat] Message sent successfully");
-      return true;
-    } else {
+      const response = await fetch(webhookUrl, {
+        method: "POST",
+        headers: {"Content-Type": "application/json; charset=UTF-8"},
+        body: JSON.stringify({text: message}),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        functions.logger.info("[GoogleChat] Message sent successfully");
+        return true;
+      }
+
+      // 429 (Rate Limit) または 5xx (Server Error) はリトライ対象
+      const isRetryable = response.status === 429 || response.status >= 500;
+
+      if (isRetryable && attempt < maxRetries) {
+        functions.logger.warn(`[GoogleChat] Retryable error (attempt ${attempt + 1}/${maxRetries + 1}):`, {
+          status: response.status,
+          statusText: response.statusText,
+        });
+        await exponentialBackoff(attempt);
+        continue;
+      }
+
+      // リトライ不可または最終試行
       const errorText = await response.text();
       functions.logger.error("[GoogleChat] Send failed:", {
         status: response.status,
         statusText: response.statusText,
         error: errorText,
+        attempt: attempt + 1,
       });
       return false;
+    } catch (error) {
+      // タイムアウトまたはネットワークエラー
+      const isTimeout = error instanceof Error && error.name === "AbortError";
+
+      if (attempt < maxRetries) {
+        const errType = isTimeout ? "Timeout" : "Network error";
+        functions.logger.warn(
+          `[GoogleChat] ${errType} (attempt ${attempt + 1}/${maxRetries + 1}):`,
+          error
+        );
+        await exponentialBackoff(attempt);
+        continue;
+      }
+
+      functions.logger.error("[GoogleChat] Send error after retries:", error);
+      return false;
     }
-  } catch (error) {
-    functions.logger.error("[GoogleChat] Send error:", error);
-    return false;
   }
+
+  return false;
 }
 
 /**

@@ -246,7 +246,7 @@ async function submitCareItemHandler(
       functions.logger.warn("submitCareItem event logging failed:", err);
     });
 
-    // Phase 30: 家族操作通知（非同期・エラーでも処理続行）
+    // Phase 30: 家族操作通知（Phase 69.2: await + リトライで信頼性向上）
     try {
       const settingsDoc = await db.collection("settings").doc("mealFormDefaults").get();
       const settings = settingsDoc.exists ? (settingsDoc.data() as MealFormSettings) : null;
@@ -261,9 +261,11 @@ async function submitCareItemHandler(
           noteToStaff: item.noteToStaff,
         };
         const message = formatCareItemNotification("register", notifyData, userId);
-        sendToGoogleChat(settings.familyNotifyWebhookUrl, message).catch((err) => {
-          functions.logger.warn("submitCareItem notification failed:", err);
-        });
+        // awaitで通知完了を待機（リトライ機能付き）
+        const notifyResult = await sendToGoogleChat(settings.familyNotifyWebhookUrl, message);
+        if (!notifyResult) {
+          functions.logger.warn("submitCareItem notification failed after retries");
+        }
       }
     } catch (notifyError) {
       functions.logger.warn("submitCareItem notification setup failed:", notifyError);
@@ -707,9 +709,10 @@ async function updateCareItemHandler(
           noteToStaff: updatedItem.noteToStaff,
         };
         const message = formatCareItemNotification("update", notifyData, updatedItem.userId);
-        sendToGoogleChat(settings.familyNotifyWebhookUrl, message).catch((err) => {
-          functions.logger.warn("updateCareItem notification failed:", err);
-        });
+        const notifyResult = await sendToGoogleChat(settings.familyNotifyWebhookUrl, message);
+        if (!notifyResult) {
+          functions.logger.warn("updateCareItem notification failed after retries");
+        }
       }
     } catch (notifyError) {
       functions.logger.warn("updateCareItem notification setup failed:", notifyError);
@@ -838,9 +841,10 @@ async function deleteCareItemHandler(
           unit: deletedItem.unit,
         };
         const message = formatCareItemNotification("delete", notifyData, deletedItem.userId);
-        sendToGoogleChat(settings.familyNotifyWebhookUrl, message).catch((err) => {
-          functions.logger.warn("deleteCareItem notification failed:", err);
-        });
+        const notifyResult = await sendToGoogleChat(settings.familyNotifyWebhookUrl, message);
+        if (!notifyResult) {
+          functions.logger.warn("deleteCareItem notification failed after retries");
+        }
       }
     } catch (notifyError) {
       functions.logger.warn("deleteCareItem notification error:", notifyError);
