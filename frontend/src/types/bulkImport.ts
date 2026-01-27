@@ -151,14 +151,35 @@ export const DROPDOWN_OPTIONS = {
 } as const;
 
 // =============================================================================
-// 画像一括登録 (Phase 68)
+// 画像一括登録 (Phase 68, Phase 69: 複数画像対応)
 // =============================================================================
 
-/** 画像解析リクエスト */
-export interface AnalyzeScheduleImageRequest {
+/** 単一画像データ */
+export interface ImageData {
   image: string; // base64エンコード
   mimeType: 'image/jpeg' | 'image/png' | 'image/webp';
 }
+
+/** 旧形式: 単一画像リクエスト（後方互換用） */
+export interface LegacyAnalyzeScheduleImageRequest {
+  image: string;
+  mimeType: 'image/jpeg' | 'image/png' | 'image/webp';
+}
+
+/** 新形式: 複数画像リクエスト */
+export interface MultiImageAnalyzeScheduleImageRequest {
+  images: ImageData[];
+}
+
+/** 画像解析リクエスト（ユニオン型：旧形式・新形式どちらも対応） */
+export type AnalyzeScheduleImageRequest =
+  | LegacyAnalyzeScheduleImageRequest
+  | MultiImageAnalyzeScheduleImageRequest;
+
+// 定数
+export const MAX_IMAGES = 5;
+export const MAX_TOTAL_SIZE_MB = 15;
+export const SINGLE_IMAGE_MAX_SIZE_MB = 5;
 
 /** 画像から抽出された品物 */
 export interface ExtractedItem {

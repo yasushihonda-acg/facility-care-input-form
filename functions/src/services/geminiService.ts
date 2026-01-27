@@ -168,6 +168,83 @@ export async function generateContentWithImage(
 }
 
 /**
+ * Gemini モデルを使用して複数画像付きテキスト生成（Vision API）
+ * Phase 69: 複数画像からの品物一括登録機能
+ */
+export async function generateContentWithImages(
+  prompt: string,
+  images: Array<{base64: string; mimeType: string}>
+): Promise<string> {
+  try {
+    const vertexAI = getVertexAI();
+    const model = vertexAI.getGenerativeModel({
+      model: MODEL_ID,
+      generationConfig: {
+        maxOutputTokens: 8192, // 複数画像解析は長い出力が必要
+        temperature: 0.2,
+        topP: 0.8,
+      },
+    });
+
+    // 画像ごとにラベルを付けてパーツを構築
+    // Codex推奨: Image N ラベルで順序を明示
+    const parts: Array<{text: string} | {inlineData: {data: string; mimeType: string}}> = [];
+
+    for (let i = 0; i < images.length; i++) {
+      // 画像ラベル
+      parts.push({text: `--- Image ${i + 1} ---`});
+      // 画像データ
+      parts.push({
+        inlineData: {
+          data: images[i].base64,
+          mimeType: images[i].mimeType,
+        },
+      });
+    }
+
+    // プロンプトを最後に追加
+    parts.push({text: prompt});
+
+    const request = {
+      contents: [
+        {
+          role: "user" as const,
+          parts,
+        },
+      ],
+    };
+
+    const result = await model.generateContent(request);
+    const response = result.response;
+
+    // デバッグ: 応答の詳細をログ出力
+    const candidate = response.candidates?.[0];
+    functions.logger.info("Gemini Vision (multi-image) response details", {
+      candidatesCount: response.candidates?.length ?? 0,
+      imageCount: images.length,
+      finishReason: candidate?.finishReason,
+      safetyRatings: candidate?.safetyRatings,
+      hasContent: !!candidate?.content,
+      partsCount: candidate?.content?.parts?.length ?? 0,
+    });
+
+    // finishReasonがSAFETYの場合は警告
+    if (candidate?.finishReason === "SAFETY") {
+      functions.logger.warn("Gemini response blocked by safety filter", {
+        safetyRatings: candidate.safetyRatings,
+      });
+    }
+
+    const text = candidate?.content?.parts?.[0]?.text || "";
+
+    return text;
+  } catch (error) {
+    functions.logger.error("Gemini Vision API (multi-image) error:", error);
+    throw error;
+  }
+}
+
+/**
  * JSONレスポンスをパース
  * AI出力からJSONオブジェクトを抽出
  */

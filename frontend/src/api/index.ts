@@ -1709,11 +1709,15 @@ export async function dismissAlert(
 import type {
   AnalyzeScheduleImageRequest,
   AnalyzeScheduleImageResponse,
+  ImageData,
 } from '../types/bulkImport';
+
+export type { ImageData };
 
 /**
  * 画像から品物スケジュールを解析
  * Gemini Vision APIで食事スケジュール画像を解析
+ * Phase 69: 複数画像対応
  */
 export async function analyzeScheduleImage(
   data: AnalyzeScheduleImageRequest
@@ -1730,5 +1734,15 @@ export async function analyzeScheduleImage(
   }
 
   return response.json();
+}
+
+/**
+ * 複数画像から品物スケジュールを解析（新形式）
+ * Phase 69: 複数画像対応
+ */
+export async function analyzeScheduleImages(
+  images: ImageData[]
+): Promise<ApiResponse<AnalyzeScheduleImageResponse>> {
+  return analyzeScheduleImage({ images });
 }
 

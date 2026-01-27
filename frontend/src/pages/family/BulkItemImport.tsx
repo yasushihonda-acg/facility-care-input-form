@@ -15,7 +15,7 @@ import { ImageUploader } from '../../components/family/ImageUploader';
 import { BulkImportPreview } from '../../components/family/BulkImportPreview';
 import { BulkImportConfirmDialog } from '../../components/family/BulkImportConfirmDialog';
 import { downloadTemplate } from '../../utils/excelParser';
-import type { ParsedBulkItem, ParsedImageItem } from '../../types/bulkImport';
+import type { ParsedBulkItem, ParsedImageItem, ImageData } from '../../types/bulkImport';
 import type { EditableItemFields } from '../../hooks/useBulkImport';
 
 // 入居者ID・ユーザーID（単一入居者専用アプリのため固定値）
@@ -102,14 +102,25 @@ export function BulkItemImport() {
     [excelImport]
   );
 
-  // 画像選択時
-  const handleImageSelected = useCallback(
-    async (base64: string, mimeType: string) => {
-      await imageImport.analyzeImage(base64, mimeType);
-      // analyzeImage完了後、常にプレビュー画面に遷移（エラーは画面上で表示される）
+  // 複数画像選択時（Phase 69）
+  const [selectedImages, setSelectedImages] = useState<ImageData[]>([]);
+
+  const handleImagesSelected = useCallback(
+    (images: ImageData[]) => {
+      setSelectedImages(images);
+    },
+    []
+  );
+
+  // 画像解析実行
+  const handleAnalyzeImages = useCallback(
+    async () => {
+      if (selectedImages.length === 0) return;
+      await imageImport.analyzeImages(selectedImages);
+      // analyzeImages完了後、常にプレビュー画面に遷移（エラーは画面上で表示される）
       setStep('preview');
     },
-    [imageImport]
+    [imageImport, selectedImages]
   );
 
   // テンプレートダウンロード
@@ -142,6 +153,7 @@ export function BulkItemImport() {
   const handleRetry = useCallback(() => {
     excelImport.reset();
     imageImport.reset();
+    setSelectedImages([]);
     setStep('upload');
   }, [excelImport, imageImport]);
 
@@ -386,9 +398,24 @@ export function BulkItemImport() {
                     </div>
 
                     <ImageUploader
-                      onImageSelected={handleImageSelected}
+                      onImagesSelected={handleImagesSelected}
                       isLoading={isLoading}
                     />
+
+                    {/* 解析ボタン */}
+                    {selectedImages.length > 0 && !isLoading && (
+                      <div className="flex justify-center">
+                        <button
+                          onClick={handleAnalyzeImages}
+                          className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center gap-2"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                          </svg>
+                          {selectedImages.length}枚の画像を解析する
+                        </button>
+                      </div>
+                    )}
 
                     <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-600">
                       <p className="font-medium text-gray-700 mb-1">読み取りのヒント</p>
@@ -396,6 +423,7 @@ export function BulkItemImport() {
                         <li>表全体が写るように撮影してください</li>
                         <li>文字が鮮明に見える明るい場所で撮影してください</li>
                         <li>斜めからではなく、真上から撮影すると精度が上がります</li>
+                        <li><span className="text-green-600 font-medium">複数の画像</span>をまとめて登録すると、出庫表の情報を参考にして正確に読み取れます</li>
                       </ul>
                     </div>
                   </div>

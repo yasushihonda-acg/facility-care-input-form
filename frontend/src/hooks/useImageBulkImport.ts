@@ -1,10 +1,12 @@
 /**
  * 画像一括登録用カスタムフック (Phase 68)
+ * Phase 69: 複数画像対応
  * 画像からの品物抽出と一括登録を管理
  */
 
 import { useState, useCallback, useMemo } from 'react';
-import { analyzeScheduleImage, submitCareItem } from '../api';
+import { analyzeScheduleImages, submitCareItem } from '../api';
+import type { ImageData } from '../api';
 import { checkBulkItemDuplicate } from '../utils/duplicateCheck';
 import type { CareItem, CareItemInput } from '../types/careItem';
 import type {
@@ -47,6 +49,9 @@ interface UseImageBulkImportReturn {
   error: string | null;
 
   // アクション
+  /** 複数画像を解析（Phase 69） */
+  analyzeImages: (images: ImageData[]) => Promise<void>;
+  /** 後方互換: 単一画像を解析 */
   analyzeImage: (base64: string, mimeType: string) => Promise<void>;
   importItems: () => Promise<BulkImportResult>;
   removeItem: (index: number) => void;
@@ -173,14 +178,42 @@ export function useImageBulkImport({
     [validItems]
   );
 
-  // 画像解析
-  const analyzeImage = useCallback(
-    async (base64: string, mimeType: string) => {
+  /**
+   * 抽出結果内の重複を検出
+   * 同一日付・同一時間帯・同一品目の組み合わせが重複しているかチェック
+   */
+  const checkInternalDuplicates = useCallback(
+    (items: ExtractedItem[]): Set<number> => {
+      const seen = new Map<string, number>(); // key -> first index
+      const duplicateIndices = new Set<number>();
+
+      items.forEach((item, index) => {
+        const key = `${item.itemName}|${item.servingDate}|${item.servingTimeSlot}`;
+        if (seen.has(key)) {
+          // 後のインデックスを重複としてマーク
+          duplicateIndices.add(index);
+        } else {
+          seen.set(key, index);
+        }
+      });
+
+      return duplicateIndices;
+    },
+    []
+  );
+
+  // 複数画像解析（Phase 69）
+  const analyzeImagesImpl = useCallback(
+    async (images: ImageData[]) => {
       setIsAnalyzing(true);
       setError(null);
       setImportResult(null);
 
       try {
+        if (images.length === 0) {
+          throw new Error('画像を選択してください');
+        }
+
         let items: ExtractedItem[];
         let analysisMetadata: ImageAnalysisMetadata;
 
@@ -193,14 +226,11 @@ export function useImageBulkImport({
           analysisMetadata = {
             dateRange: { start: today, end: nextWeek },
             confidence: 'high',
-            warnings: [],
+            warnings: images.length > 1 ? [`${images.length}枚の画像を解析しました`] : [],
           };
         } else {
-          // 本番モード: API呼び出し
-          const response = await analyzeScheduleImage({
-            image: base64,
-            mimeType: mimeType as 'image/jpeg' | 'image/png' | 'image/webp',
-          });
+          // 本番モード: API呼び出し（複数画像対応）
+          const response = await analyzeScheduleImages(images);
 
           if (!response.success || !response.data) {
             throw new Error('画像の解析に失敗しました');
@@ -210,17 +240,23 @@ export function useImageBulkImport({
           analysisMetadata = response.data.metadata;
         }
 
+        // 抽出結果内の重複を検出
+        const internalDuplicates = checkInternalDuplicates(items);
+
         // ParsedImageItemに変換
         const parsed: ParsedImageItem[] = items.map((item, index) => {
           const servingMethod = convertServingMethod(item.servingMethodDetail);
 
-          // 重複チェック
-          const { isDuplicate, duplicateInfo } = checkBulkItemDuplicate(
+          // 既存品物との重複チェック
+          const { isDuplicate: isExistingDuplicate, duplicateInfo } = checkBulkItemDuplicate(
             item.itemName,
             item.servingDate,
             item.servingTimeSlot,
             existingItems
           );
+
+          // 抽出結果内の重複
+          const isInternalDuplicate = internalDuplicates.has(index);
 
           return {
             index,
@@ -235,9 +271,13 @@ export function useImageBulkImport({
               servingTimeSlot: item.servingTimeSlot,
               noteToStaff: item.noteToStaff,
             },
-            isDuplicate,
-            duplicateInfo,
-            isSelected: true, // デフォルトで選択状態
+            // 既存品物との重複 または 抽出結果内の重複
+            isDuplicate: isExistingDuplicate || isInternalDuplicate,
+            duplicateInfo: isExistingDuplicate ? duplicateInfo : isInternalDuplicate ? {
+              existingItemId: '',
+              existingItemName: `抽出結果内で重複（${item.itemName}）`,
+            } : undefined,
+            isSelected: !isExistingDuplicate && !isInternalDuplicate, // 重複でなければ選択状態
           };
         });
 
@@ -256,7 +296,18 @@ export function useImageBulkImport({
         setIsAnalyzing(false);
       }
     },
-    [existingItems, isDemo]
+    [existingItems, isDemo, checkInternalDuplicates]
+  );
+
+  // 後方互換: 単一画像解析
+  const analyzeImage = useCallback(
+    async (base64: string, mimeType: string) => {
+      await analyzeImagesImpl([{
+        image: base64,
+        mimeType: mimeType as 'image/jpeg' | 'image/png' | 'image/webp',
+      }]);
+    },
+    [analyzeImagesImpl]
   );
 
   // 一括登録（選択された品物のみ）
@@ -435,7 +486,8 @@ export function useImageBulkImport({
     isImporting,
     importResult,
     error,
-    analyzeImage,
+    analyzeImages: analyzeImagesImpl,
+    analyzeImage, // 後方互換
     importItems,
     removeItem,
     updateItem,

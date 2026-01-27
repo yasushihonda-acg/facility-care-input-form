@@ -1,29 +1,40 @@
 /**
  * 画像アップロードコンポーネント (Phase 68)
+ * Phase 69: 複数画像対応
  * ドラッグ&ドロップ、クリック選択、クリップボード貼り付け、カメラ撮影に対応
- * 画像プレビュー機能付き
+ * 画像プレビュー機能付き（グリッド表示）
  */
 
 import { useRef, useState, useCallback, useEffect } from 'react';
+import type { ImageData } from '../../types/bulkImport';
+import { MAX_IMAGES, SINGLE_IMAGE_MAX_SIZE_MB } from '../../types/bulkImport';
 
 interface ImageUploaderProps {
-  onImageSelected: (base64: string, mimeType: string) => void;
+  /** 複数画像選択時のコールバック */
+  onImagesSelected: (images: ImageData[]) => void;
+  /** 最大アップロード枚数（デフォルト: 5） */
+  maxImages?: number;
   disabled?: boolean;
   isLoading?: boolean;
 }
 
 const VALID_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_SIZE_MB = 5;
-const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+const MAX_SIZE_BYTES = SINGLE_IMAGE_MAX_SIZE_MB * 1024 * 1024;
+
+interface PreviewImage extends ImageData {
+  id: string; // 一意識別子
+  previewUrl: string; // DataURL（プレビュー用）
+}
 
 export function ImageUploader({
-  onImageSelected,
+  onImagesSelected,
+  maxImages = MAX_IMAGES,
   disabled = false,
   isLoading = false,
 }: ImageUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [previews, setPreviews] = useState<PreviewImage[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -37,38 +48,84 @@ export function ImageUploader({
 
     // ファイルサイズチェック
     if (file.size > MAX_SIZE_BYTES) {
-      setError(`画像サイズは${MAX_SIZE_MB}MB以下にしてください`);
+      setError(`画像サイズは${SINGLE_IMAGE_MAX_SIZE_MB}MB以下にしてください`);
       return false;
     }
 
-    setError(null);
     return true;
   }, []);
 
-  const handleFile = useCallback(
-    async (file: File) => {
+  // 画像をBase64に変換してプレビューに追加
+  const addFile = useCallback(
+    async (file: File): Promise<PreviewImage | null> => {
       if (!validateFile(file)) {
-        return;
+        return null;
       }
 
-      // FileをBase64に変換
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        // data:image/jpeg;base64,xxx の形式から base64部分のみ抽出
-        const base64 = result.split(',')[1];
-        const mimeType = file.type as 'image/jpeg' | 'image/png' | 'image/webp';
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          // data:image/jpeg;base64,xxx の形式から base64部分のみ抽出
+          const base64 = result.split(',')[1];
+          const mimeType = file.type as 'image/jpeg' | 'image/png' | 'image/webp';
 
-        // プレビュー用にフルDataURLを保持
-        setPreview(result);
-        onImageSelected(base64, mimeType);
-      };
-      reader.onerror = () => {
-        setError('画像の読み込みに失敗しました');
-      };
-      reader.readAsDataURL(file);
+          const previewImage: PreviewImage = {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+            image: base64,
+            mimeType,
+            previewUrl: result,
+          };
+
+          resolve(previewImage);
+        };
+        reader.onerror = () => {
+          setError('画像の読み込みに失敗しました');
+          resolve(null);
+        };
+        reader.readAsDataURL(file);
+      });
     },
-    [validateFile, onImageSelected]
+    [validateFile]
+  );
+
+  // 複数ファイルを処理
+  const handleFiles = useCallback(
+    async (files: FileList | File[]) => {
+      const fileArray = Array.from(files);
+      const remainingSlots = maxImages - previews.length;
+
+      if (fileArray.length > remainingSlots) {
+        setError(`最大${maxImages}枚までアップロードできます（残り${remainingSlots}枚）`);
+        // 追加可能な枚数分だけ処理
+        fileArray.splice(remainingSlots);
+        if (fileArray.length === 0) return;
+      }
+
+      setError(null);
+
+      const newPreviews: PreviewImage[] = [];
+      for (const file of fileArray) {
+        const preview = await addFile(file);
+        if (preview) {
+          newPreviews.push(preview);
+        }
+      }
+
+      if (newPreviews.length > 0) {
+        setPreviews((prev) => {
+          const updated = [...prev, ...newPreviews];
+          // コールバックで親に通知
+          const imageData: ImageData[] = updated.map(({ image, mimeType }) => ({
+            image,
+            mimeType,
+          }));
+          onImagesSelected(imageData);
+          return updated;
+        });
+      }
+    },
+    [maxImages, previews.length, addFile, onImagesSelected]
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -93,10 +150,10 @@ export function ImageUploader({
 
       const files = e.dataTransfer.files;
       if (files.length > 0) {
-        handleFile(files[0]);
+        handleFiles(files);
       }
     },
-    [disabled, isLoading, handleFile]
+    [disabled, isLoading, handleFiles]
   );
 
   const handleClick = useCallback(() => {
@@ -109,12 +166,12 @@ export function ImageUploader({
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files;
       if (files && files.length > 0) {
-        handleFile(files[0]);
+        handleFiles(files);
       }
       // 同じファイルを再選択できるようにリセット
       e.target.value = '';
     },
-    [handleFile]
+    [handleFiles]
   );
 
   // カメラボタンクリック
@@ -124,26 +181,31 @@ export function ImageUploader({
     }
   }, [disabled, isLoading]);
 
-  // クリップボード貼り付け処理
+  // クリップボード貼り付け処理（画像追加）
   const handlePaste = useCallback(
     (e: ClipboardEvent) => {
-      if (disabled || isLoading || preview) return;
+      if (disabled || isLoading) return;
+      if (previews.length >= maxImages) return;
 
       const items = e.clipboardData?.items;
       if (!items) return;
 
+      const imageFiles: File[] = [];
       for (const item of items) {
         if (item.type.startsWith('image/')) {
           e.preventDefault();
           const file = item.getAsFile();
           if (file) {
-            handleFile(file);
+            imageFiles.push(file);
           }
-          break;
         }
       }
+
+      if (imageFiles.length > 0) {
+        handleFiles(imageFiles);
+      }
     },
-    [disabled, isLoading, preview, handleFile]
+    [disabled, isLoading, previews.length, maxImages, handleFiles]
   );
 
   // グローバルペーストイベントの登録
@@ -151,8 +213,9 @@ export function ImageUploader({
     const handleGlobalPaste = (e: ClipboardEvent) => {
       // コンテナがフォーカスされているか、アクティブな入力フィールドがない場合に処理
       const activeElement = document.activeElement;
-      const isInputFocused = activeElement instanceof HTMLInputElement ||
-                            activeElement instanceof HTMLTextAreaElement;
+      const isInputFocused =
+        activeElement instanceof HTMLInputElement ||
+        activeElement instanceof HTMLTextAreaElement;
 
       if (!isInputFocused) {
         handlePaste(e);
@@ -163,43 +226,110 @@ export function ImageUploader({
     return () => document.removeEventListener('paste', handleGlobalPaste);
   }, [handlePaste]);
 
-  const handleClearPreview = useCallback(() => {
-    setPreview(null);
+  // 個別画像の削除
+  const handleRemoveImage = useCallback(
+    (id: string) => {
+      setPreviews((prev) => {
+        const updated = prev.filter((p) => p.id !== id);
+        // コールバックで親に通知
+        const imageData: ImageData[] = updated.map(({ image, mimeType }) => ({
+          image,
+          mimeType,
+        }));
+        onImagesSelected(imageData);
+        return updated;
+      });
+      setError(null);
+    },
+    [onImagesSelected]
+  );
+
+  // 全画像クリア
+  const handleClearAll = useCallback(() => {
+    setPreviews([]);
+    onImagesSelected([]);
     setError(null);
-  }, []);
+  }, [onImagesSelected]);
+
+  const canAddMore = previews.length < maxImages;
 
   return (
     <div className="space-y-4" ref={containerRef}>
-      {preview ? (
-        // プレビュー表示
-        <div className="relative">
-          <img
-            src={preview}
-            alt="アップロード画像プレビュー"
-            className="w-full max-h-64 object-contain rounded-lg border border-gray-200"
-          />
-          {!isLoading && (
-            <button
-              onClick={handleClearPreview}
-              className="absolute top-2 right-2 p-1 bg-gray-800/70 hover:bg-gray-800 rounded-full text-white transition-colors"
-              aria-label="画像を削除"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          )}
+      {previews.length > 0 ? (
+        // プレビュー表示（グリッド）
+        <div className="space-y-3">
+          {/* 選択中の画像グリッド */}
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+            {previews.map((preview, index) => (
+              <div key={preview.id} className="relative group aspect-square">
+                <img
+                  src={preview.previewUrl}
+                  alt={`アップロード画像 ${index + 1}`}
+                  className="w-full h-full object-cover rounded-lg border border-gray-200"
+                />
+                {/* 画像番号バッジ */}
+                <div className="absolute top-1 left-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded">
+                  {index + 1}
+                </div>
+                {/* 削除ボタン */}
+                {!isLoading && (
+                  <button
+                    onClick={() => handleRemoveImage(preview.id)}
+                    className="absolute top-1 right-1 p-1 bg-gray-800/70 hover:bg-red-600 rounded-full text-white transition-colors opacity-0 group-hover:opacity-100"
+                    aria-label={`画像${index + 1}を削除`}
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            ))}
+
+            {/* 追加ボタン（枠） */}
+            {canAddMore && !isLoading && (
+              <button
+                onClick={handleClick}
+                className="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:border-green-500 hover:text-green-500 hover:bg-green-50 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                <span className="text-xs mt-1">追加</span>
+              </button>
+            )}
+          </div>
+
+          {/* ステータスバー */}
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-600">
+              {previews.length}枚選択中
+              {canAddMore && <span className="text-gray-400 ml-1">（最大{maxImages}枚）</span>}
+            </span>
+            {!isLoading && (
+              <button
+                onClick={handleClearAll}
+                className="text-gray-500 hover:text-red-600 transition-colors"
+              >
+                すべてクリア
+              </button>
+            )}
+          </div>
+
+          {/* ローディングオーバーレイ */}
           {isLoading && (
-            <div className="absolute inset-0 bg-white/70 flex items-center justify-center rounded-lg">
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                <p className="text-gray-700 font-medium">画像を解析中...</p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center justify-center gap-3">
+                <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                <p className="text-blue-700 font-medium">
+                  {previews.length}枚の画像を解析中...
+                </p>
               </div>
             </div>
           )}
         </div>
       ) : (
-        // アップロードエリア
+        // アップロードエリア（画像なし）
         <div
           onClick={handleClick}
           onDragOver={handleDragOver}
@@ -217,6 +347,7 @@ export function ImageUploader({
             ref={inputRef}
             type="file"
             accept="image/jpeg,image/png,image/webp"
+            multiple
             onChange={handleInputChange}
             className="hidden"
             disabled={disabled || isLoading}
@@ -252,7 +383,7 @@ export function ImageUploader({
               </p>
               <p className="text-gray-500 text-sm">
                 クリックして選択、ドラッグ&ドロップ、または<br />
-                <span className="text-green-600 font-medium">Ctrl+V / ⌘+V で貼り付け</span>
+                <span className="text-green-600 font-medium">Ctrl+V / Command+V で貼り付け</span>
               </p>
             </div>
 
@@ -284,9 +415,24 @@ export function ImageUploader({
             </button>
 
             <p className="text-xs text-gray-400 mt-2">
-              対応形式: JPEG, PNG, WebP（最大{MAX_SIZE_MB}MB）
+              対応形式: JPEG, PNG, WebP（各{SINGLE_IMAGE_MAX_SIZE_MB}MB以下、最大{maxImages}枚）
             </p>
           </div>
+        </div>
+      )}
+
+      {/* ヒントメッセージ */}
+      {previews.length > 0 && previews.length < maxImages && !isLoading && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
+          <p className="font-medium flex items-center gap-1">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+            複数画像での読み取り
+          </p>
+          <p className="mt-1">
+            パックジュース出庫表などの補助情報があれば一緒に追加すると、より正確に読み取れます。
+          </p>
         </div>
       )}
 

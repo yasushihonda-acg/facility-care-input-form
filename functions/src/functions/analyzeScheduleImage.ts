@@ -1,21 +1,56 @@
 /**
  * 画像からの品物抽出API (Phase 68)
  * Gemini Vision APIで食事スケジュール画像を解析
+ * Phase 69: 複数画像対応
  * @see docs/API_SPEC.md
  */
 
 import * as functions from "firebase-functions";
 import {FUNCTIONS_CONFIG} from "../config/sheets";
-import {generateContentWithImage, parseJsonResponse} from "../services/geminiService";
+import {
+  generateContentWithImage,
+  generateContentWithImages,
+  parseJsonResponse,
+} from "../services/geminiService";
 import {buildAnalyzeSchedulePrompt} from "../prompts/analyzeSchedule";
 
 /**
- * 画像解析リクエスト
+ * 単一画像データ
  */
-interface AnalyzeScheduleImageRequest {
+interface ImageData {
   image: string; // base64エンコード
   mimeType: "image/jpeg" | "image/png" | "image/webp";
 }
+
+/**
+ * 旧形式: 単一画像リクエスト（後方互換用）
+ */
+interface LegacyAnalyzeScheduleImageRequest {
+  image: string;
+  mimeType: "image/jpeg" | "image/png" | "image/webp";
+}
+
+/**
+ * 新形式: 複数画像リクエスト
+ */
+interface MultiImageAnalyzeScheduleImageRequest {
+  images: ImageData[];
+}
+
+/**
+ * 画像解析リクエスト（ユニオン型：旧形式・新形式どちらも受け入れ）
+ */
+type AnalyzeScheduleImageRequest =
+  | LegacyAnalyzeScheduleImageRequest
+  | MultiImageAnalyzeScheduleImageRequest;
+
+// 定数
+const MAX_IMAGES = 5;
+const MAX_TOTAL_SIZE_MB = 15;
+const MAX_TOTAL_SIZE_BYTES = MAX_TOTAL_SIZE_MB * 1024 * 1024;
+const SINGLE_IMAGE_MAX_SIZE_MB = 5;
+const SINGLE_IMAGE_MAX_SIZE_BYTES = SINGLE_IMAGE_MAX_SIZE_MB * 1024 * 1024;
+const BASE64_OVERHEAD = 1.37; // base64エンコードによるサイズ増加係数
 
 /**
  * 抽出された品物
@@ -118,6 +153,26 @@ function parseGeminiResponse(
 }
 
 /**
+ * リクエストが新形式（複数画像）かどうか判定
+ */
+function isMultiImageRequest(
+  body: AnalyzeScheduleImageRequest
+): body is MultiImageAnalyzeScheduleImageRequest {
+  return "images" in body && Array.isArray(body.images);
+}
+
+/**
+ * リクエストからImageData配列を取得（旧形式・新形式を統一）
+ */
+function normalizeToImageArray(body: AnalyzeScheduleImageRequest): ImageData[] {
+  if (isMultiImageRequest(body)) {
+    return body.images;
+  }
+  // 旧形式: 単一画像を配列に変換
+  return [{image: body.image, mimeType: body.mimeType}];
+}
+
+/**
  * 画像解析ハンドラー
  */
 async function analyzeScheduleImageHandler(
@@ -143,45 +198,96 @@ async function analyzeScheduleImageHandler(
   }
 
   const timestamp = new Date().toISOString();
+  const validMimeTypes = ["image/jpeg", "image/png", "image/webp"];
 
   try {
-    const {image, mimeType} = req.body as AnalyzeScheduleImageRequest;
+    const body = req.body as AnalyzeScheduleImageRequest;
 
-    // バリデーション
-    if (!image || !mimeType) {
+    // リクエスト形式の判定と正規化
+    const images = normalizeToImageArray(body);
+
+    // バリデーション: 画像が1枚以上あるか
+    if (images.length === 0) {
       res.status(400).json({
         success: false,
         error: {
           code: "INVALID_REQUEST",
-          message: "image and mimeType are required",
+          message: "At least one image is required",
         },
         timestamp,
       });
       return;
     }
 
-    // MIMEタイプのチェック
-    const validMimeTypes = ["image/jpeg", "image/png", "image/webp"];
-    if (!validMimeTypes.includes(mimeType)) {
+    // バリデーション: 最大枚数チェック
+    if (images.length > MAX_IMAGES) {
       res.status(400).json({
         success: false,
         error: {
-          code: "INVALID_MIME_TYPE",
-          message: "mimeType must be image/jpeg, image/png, or image/webp",
+          code: "TOO_MANY_IMAGES",
+          message: `Maximum ${MAX_IMAGES} images allowed`,
         },
         timestamp,
       });
       return;
     }
 
-    // 画像サイズのチェック（base64は約1.37倍になる、5MB制限）
-    const maxBase64Length = 5 * 1024 * 1024 * 1.37;
-    if (image.length > maxBase64Length) {
+    // 各画像のバリデーション
+    let totalSize = 0;
+    for (let i = 0; i < images.length; i++) {
+      const img = images[i];
+
+      // 必須フィールドチェック
+      if (!img.image || !img.mimeType) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: "INVALID_REQUEST",
+            message: `Image ${i + 1}: image and mimeType are required`,
+          },
+          timestamp,
+        });
+        return;
+      }
+
+      // MIMEタイプチェック
+      if (!validMimeTypes.includes(img.mimeType)) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: "INVALID_MIME_TYPE",
+            message: `Image ${i + 1}: mimeType must be image/jpeg, image/png, or image/webp`,
+          },
+          timestamp,
+        });
+        return;
+      }
+
+      // 単一画像サイズチェック
+      const maxBase64Length = SINGLE_IMAGE_MAX_SIZE_BYTES * BASE64_OVERHEAD;
+      if (img.image.length > maxBase64Length) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: "IMAGE_TOO_LARGE",
+            message: `Image ${i + 1}: size must be less than ${SINGLE_IMAGE_MAX_SIZE_MB}MB`,
+          },
+          timestamp,
+        });
+        return;
+      }
+
+      totalSize += img.image.length;
+    }
+
+    // 合計サイズチェック
+    const maxTotalBase64Length = MAX_TOTAL_SIZE_BYTES * BASE64_OVERHEAD;
+    if (totalSize > maxTotalBase64Length) {
       res.status(400).json({
         success: false,
         error: {
-          code: "IMAGE_TOO_LARGE",
-          message: "Image size must be less than 5MB",
+          code: "TOTAL_SIZE_TOO_LARGE",
+          message: `Total image size must be less than ${MAX_TOTAL_SIZE_MB}MB`,
         },
         timestamp,
       });
@@ -189,8 +295,9 @@ async function analyzeScheduleImageHandler(
     }
 
     functions.logger.info("analyzeScheduleImage request", {
-      mimeType,
-      imageSizeKB: Math.round(image.length / 1024),
+      imageCount: images.length,
+      totalSizeKB: Math.round(totalSize / 1024),
+      mimeTypes: images.map((img) => img.mimeType),
     });
 
     // 今日の日付を取得（日本時間）
@@ -200,8 +307,23 @@ async function analyzeScheduleImageHandler(
     const today = jstDate.toISOString().split("T")[0];
 
     // Gemini Vision APIで解析
-    const prompt = buildAnalyzeSchedulePrompt(today);
-    const rawResult = await generateContentWithImage(prompt, image, mimeType);
+    const prompt = buildAnalyzeSchedulePrompt(today, images.length);
+
+    let rawResult: string;
+    if (images.length === 1) {
+      // 単一画像: 既存関数を使用（後方互換）
+      rawResult = await generateContentWithImage(
+        prompt,
+        images[0].image,
+        images[0].mimeType
+      );
+    } else {
+      // 複数画像: 新関数を使用
+      rawResult = await generateContentWithImages(
+        prompt,
+        images.map((img) => ({base64: img.image, mimeType: img.mimeType}))
+      );
+    }
 
     functions.logger.info("Gemini raw response", {
       responseLength: rawResult.length,
