@@ -126,21 +126,18 @@ async function pLimit<T>(
   limit: number
 ): Promise<T[]> {
   const results: T[] = [];
-  const executing: Promise<void>[] = [];
+  const executing = new Set<Promise<void>>();
 
   for (const task of tasks) {
-    const p = Promise.resolve().then(() => task()).then(result => {
+    const p = task().then(result => {
       results.push(result);
+      executing.delete(p);
     });
 
-    executing.push(p);
+    executing.add(p);
 
-    if (executing.length >= limit) {
+    if (executing.size >= limit) {
       await Promise.race(executing);
-      executing.splice(
-        executing.findIndex(e => e === p),
-        1
-      );
     }
   }
 
