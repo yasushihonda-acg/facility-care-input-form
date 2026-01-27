@@ -15,61 +15,6 @@ import * as crypto from "crypto";
 import {COLLECTIONS} from "../config/sheets";
 import {PlanData} from "../types";
 
-// =============================================================================
-// Phase 70: Timestamp変換ユーティリティ
-// =============================================================================
-
-/**
- * JST固定オフセット（Asia/Tokyo = UTC+9）
- * Firestoreに保存する際はUTCに変換する必要がある
- */
-const JST_OFFSET_MINUTES = 9 * 60;
-
-/**
- * 記録データのtimestamp文字列をDateに変換
- * 対応形式:
- * - "YYYY/MM/DD HH:mm:ss" (Google Sheets形式)
- * - "YYYY/MM/DD HH:mm"
- * - "YYYY-MM-DD HH:mm:ss" (ISO形式)
- * - "YYYY-MM-DD"
- *
- * @param timestamp タイムスタンプ文字列
- * @returns Date（UTC）、パース失敗時はnull
- */
-export function parsePlanTimestampToDate(timestamp: string): Date | null {
-  if (!timestamp) return null;
-  const trimmed = timestamp.trim();
-
-  // YYYY/MM/DD または YYYY-MM-DD 形式（時刻は任意）
-  const match = trimmed.match(
-    /^(\d{4})[/-](\d{1,2})[/-](\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/
-  );
-  if (!match) return null;
-
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  const hour = Number(match[4] ?? "0");
-  const minute = Number(match[5] ?? "0");
-  const second = Number(match[6] ?? "0");
-
-  // 入力はJSTなのでUTCに変換
-  const utcMs = Date.UTC(year, month - 1, day, hour, minute, second) -
-    JST_OFFSET_MINUTES * 60 * 1000;
-  return new Date(utcMs);
-}
-
-/**
- * 記録データのtimestamp文字列をFirestore Timestampに変換
- *
- * @param timestamp タイムスタンプ文字列
- * @returns Firestore Timestamp、パース失敗時はnull
- */
-export function parsePlanTimestampToFirestoreTimestamp(timestamp: string): Timestamp | null {
-  const date = parsePlanTimestampToDate(timestamp);
-  return date ? Timestamp.fromDate(date) : null;
-}
-
 /**
  * Firestore インスタンスを取得
  */
@@ -99,17 +44,14 @@ function chunkArray<T>(array: T[], size: number): T[][] {
 
 /**
  * タイムスタンプ文字列から年月を抽出
- * 対応形式（Phase 70で拡張）:
- * - "2024/12/15 09:00" → { year: 2024, month: 12 }
- * - "2024-12-15" → { year: 2024, month: 12 }
+ * 形式: "2024/12/15 09:00" → { year: 2024, month: 12 }
  *
  * @param timestamp タイムスタンプ文字列
  * @returns { year, month } または null
  */
 export function extractYearMonth(timestamp: string): { year: number; month: number } | null {
   if (!timestamp) return null;
-  // YYYY/MM または YYYY-MM 両形式に対応
-  const match = timestamp.match(/^(\d{4})[/-](\d{1,2})/);
+  const match = timestamp.match(/^(\d{4})\/(\d{1,2})/);
   if (!match) return null;
   return {
     year: parseInt(match[1], 10),
@@ -226,13 +168,10 @@ export async function syncPlanDataFull(
       const docRef = collection.doc(docId);
       // 年月を抽出
       const yearMonth = extractYearMonth(record.timestamp);
-      // Phase 70: timestampAt（Firestore Timestamp型）を追加
-      const timestampAt = parsePlanTimestampToFirestoreTimestamp(record.timestamp);
       batch.set(docRef, {
         ...record,
         sheetName,
         syncedAt,
-        timestampAt: timestampAt || null,
         year: yearMonth?.year || null,
         month: yearMonth?.month || null,
       });
@@ -306,14 +245,11 @@ export async function syncPlanDataIncremental(
       const docRef = collection.doc(docId);
       // 年月を抽出
       const yearMonth = extractYearMonth(record.timestamp);
-      // Phase 70: timestampAt（Firestore Timestamp型）を追加
-      const timestampAt = parsePlanTimestampToFirestoreTimestamp(record.timestamp);
       // merge: true で既存なら上書き、なければ新規作成
       batch.set(docRef, {
         ...record,
         sheetName,
         syncedAt,
-        timestampAt: timestampAt || null,
         year: yearMonth?.year || null,
         month: yearMonth?.month || null,
       }, {merge: true});
@@ -401,9 +337,8 @@ export async function getPlanData(
     query = query.where("month", "==", options.month);
   }
 
-  // Phase 70: timestampAt（Firestore Timestamp型）でソート
-  // バックフィル完了後はtimestampAtのみ使用
-  query = query.orderBy("timestampAt", "desc");
+  // タイムスタンプ降順でソート
+  query = query.orderBy("timestamp", "desc");
 
   // 取得件数制限（年月指定時は無制限）
   if (!hasYearFilter) {
@@ -440,8 +375,7 @@ export async function getPlanData(
     if (options.sheetName) {
       fallbackQuery = fallbackQuery.where("sheetName", "==", options.sheetName);
     }
-    // Phase 70: フォールバック時もtimestampAtを使用
-    fallbackQuery = fallbackQuery.orderBy("timestampAt", "desc");
+    fallbackQuery = fallbackQuery.orderBy("timestamp", "desc");
 
     const fallbackSnapshot = await fallbackQuery.get();
     records = [];
