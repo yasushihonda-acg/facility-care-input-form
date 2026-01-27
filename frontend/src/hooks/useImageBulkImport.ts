@@ -43,9 +43,11 @@ interface UseImageBulkImportReturn {
   validItems: ParsedImageItem[];
   duplicateItems: ParsedImageItem[];
   selectedItems: ParsedImageItem[];
+  failedItems: BulkImportItemResult[]; // Phase 69.5: 失敗した品物
   metadata: ImageAnalysisMetadata | null;
   isAnalyzing: boolean;
   isImporting: boolean;
+  isRetrying: boolean; // Phase 69.5: 再送中フラグ
   importResult: BulkImportResult | null;
   error: string | null;
 
@@ -55,6 +57,8 @@ interface UseImageBulkImportReturn {
   /** 後方互換: 単一画像を解析 */
   analyzeImage: (base64: string, mimeType: string) => Promise<void>;
   importItems: () => Promise<BulkImportResult>;
+  /** Phase 69.5: 失敗した品物を再送 */
+  retryFailedItems: () => Promise<BulkImportResult | null>;
   removeItem: (index: number) => void;
   updateItem: (index: number, fields: EditableItemFields) => void;
   toggleSelect: (index: number) => void;
@@ -131,6 +135,7 @@ export function useImageBulkImport({
   const [metadata, setMetadata] = useState<ImageAnalysisMetadata | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false); // Phase 69.5
   const [importResult, setImportResult] = useState<BulkImportResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -149,6 +154,12 @@ export function useImageBulkImport({
   const selectedItems = useMemo(
     () => validItems.filter(item => item.isSelected),
     [validItems]
+  );
+
+  // Phase 69.5: 失敗した品物
+  const failedItems = useMemo(
+    () => importResult?.results.filter(r => r.status === 'failed') ?? [],
+    [importResult]
   );
 
   /**
@@ -405,6 +416,114 @@ export function useImageBulkImport({
     }
   }, [selectedItems, validItems, duplicateItems, residentId, userId, isDemo]);
 
+  // Phase 69.5: 失敗した品物を再送
+  const retryFailedItems = useCallback(async (): Promise<BulkImportResult | null> => {
+    if (!importResult || failedItems.length === 0) {
+      return null;
+    }
+
+    setIsRetrying(true);
+    setError(null);
+
+    try {
+      // 失敗した品物に対応するparsedItemsを取得
+      const failedIndices = new Set(failedItems.map(f => f.rowIndex));
+      const itemsToRetry = parsedItems.filter(p => failedIndices.has(p.index));
+
+      if (itemsToRetry.length === 0) {
+        return null;
+      }
+
+      const limit = pLimit(5);
+      const retryResults: BulkImportItemResult[] = [];
+
+      const taskPromises = itemsToRetry.map(item => limit(async (): Promise<BulkImportItemResult> => {
+        try {
+          const careItemInput: CareItemInput = {
+            itemName: item.parsed.itemName,
+            category: item.parsed.category,
+            quantity: item.parsed.quantity,
+            unit: item.parsed.unit,
+            servingMethod: item.parsed.servingMethod,
+            servingSchedule: {
+              type: 'once',
+              date: item.parsed.servingDate,
+              timeSlot: item.parsed.servingTimeSlot,
+            },
+            noteToStaff: item.parsed.noteToStaff,
+          };
+
+          const response = await submitCareItem(residentId, userId, careItemInput, {
+            skipNotification: true,
+          });
+
+          return {
+            rowIndex: item.index,
+            itemName: item.parsed.itemName,
+            status: 'success',
+            itemId: response.data?.itemId,
+          };
+        } catch (err) {
+          return {
+            rowIndex: item.index,
+            itemName: item.parsed.itemName,
+            status: 'failed',
+            error: err instanceof Error ? err.message : '登録に失敗しました',
+          };
+        }
+      }));
+
+      const taskResults = await Promise.all(taskPromises);
+      retryResults.push(...taskResults);
+
+      // 既存の結果と統合（失敗→成功に更新、または失敗のまま）
+      const updatedResults = importResult.results.map(r => {
+        if (r.status === 'failed') {
+          const retryResult = retryResults.find(rr => rr.rowIndex === r.rowIndex);
+          if (retryResult) {
+            return retryResult;
+          }
+        }
+        return r;
+      });
+
+      const updatedImportResult: BulkImportResult = {
+        total: updatedResults.length,
+        success: updatedResults.filter(r => r.status === 'success').length,
+        failed: updatedResults.filter(r => r.status === 'failed').length,
+        skipped: updatedResults.filter(r => r.status === 'skipped').length,
+        results: updatedResults,
+      };
+
+      // 再送で新たに成功した場合はサマリ通知
+      const newSuccessCount = retryResults.filter(r => r.status === 'success').length;
+      if (!isDemo && newSuccessCount > 0) {
+        try {
+          await notifyBulkImport(userId, {
+            total: retryResults.length,
+            success: newSuccessCount,
+            failed: retryResults.filter(r => r.status === 'failed').length,
+            skipped: 0,
+            items: retryResults.map(r => ({
+              itemName: r.itemName,
+              status: r.status,
+            })),
+          });
+        } catch (notifyErr) {
+          console.warn('Retry notification failed:', notifyErr);
+        }
+      }
+
+      setImportResult(updatedImportResult);
+      return updatedImportResult;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '再送に失敗しました');
+      return null;
+    } finally {
+      setIsRetrying(false);
+    }
+  }, [importResult, failedItems, parsedItems, residentId, userId, isDemo]);
+
   // 行を除外
   const removeItem = useCallback((index: number) => {
     setParsedItems(prev => prev.filter(item => item.index !== index));
@@ -471,6 +590,7 @@ export function useImageBulkImport({
     setMetadata(null);
     setIsAnalyzing(false);
     setIsImporting(false);
+    setIsRetrying(false); // Phase 69.5
     setImportResult(null);
     setError(null);
   }, []);
@@ -480,14 +600,17 @@ export function useImageBulkImport({
     validItems,
     duplicateItems,
     selectedItems,
+    failedItems, // Phase 69.5
     metadata,
     isAnalyzing,
     isImporting,
+    isRetrying, // Phase 69.5
     importResult,
     error,
     analyzeImages: analyzeImagesImpl,
     analyzeImage, // 後方互換
     importItems,
+    retryFailedItems, // Phase 69.5
     removeItem,
     updateItem,
     toggleSelect,
