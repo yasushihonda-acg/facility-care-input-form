@@ -103,6 +103,7 @@ https://asia-northeast1-facility-care-input-form.cloudfunctions.net
 | POST | `/aiSuggest` | AI品物入力補助 | Phase 8.4 | ⚠️ 未使用 |
 | POST | `/aiAnalyze` | AI摂食傾向分析 | Phase 8.4.1 | ✅ |
 | POST | `/normalizeItemName` | 品物名正規化 | Phase 43.1 | ✅ |
+| POST | `/analyzeScheduleImage` | 画像から品物スケジュール解析 | Phase 68 | ✅ |
 | POST | `/chatWithRecords` | 記録閲覧AIチャット | Phase 45 | ✅ |
 | GET | `/getSummaries` | 階層的要約を取得 | Phase 46 | ✅ |
 | POST | `/generateSummary` | 要約を手動生成 | Phase 46 | ✅ |
@@ -1386,6 +1387,78 @@ AI提案をプリセットとして保存します。
 
 ---
 
+### 4.31 POST /analyzeScheduleImage (Phase 68)
+
+食事スケジュール表の画像からAIで品物情報を抽出します。Gemini 2.5 Flash（Vision API）を使用。
+
+**エンドポイント**: `POST /analyzeScheduleImage`
+
+**リクエストボディ**:
+
+| パラメータ | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `image` | string | Yes | Base64エンコードされた画像データ |
+| `mimeType` | string | Yes | 画像のMIMEタイプ（image/jpeg, image/png, image/webp） |
+
+**成功レスポンス (200)**:
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "itemName": "バナナ",
+        "category": "food",
+        "quantity": 1,
+        "unit": "本",
+        "servingDate": "2026-01-28",
+        "servingTimeSlot": "snack",
+        "servingMethodDetail": "cut",
+        "noteToStaff": "皮をむいて一口大に",
+        "confidence": "high"
+      }
+    ],
+    "metadata": {
+      "dateRange": {
+        "start": "2026-01-28",
+        "end": "2026-01-29"
+      },
+      "confidence": "high",
+      "warnings": []
+    }
+  },
+  "timestamp": "2026-01-27T10:00:00.000Z"
+}
+```
+
+**レスポンスフィールド**:
+
+| フィールド | 型 | 説明 |
+|-----------|-----|------|
+| `items` | array | 抽出された品物一覧 |
+| `items[].itemName` | string | 品物名 |
+| `items[].category` | string | カテゴリ（"food" / "drink"） |
+| `items[].quantity` | number? | 数量 |
+| `items[].unit` | string? | 単位 |
+| `items[].servingDate` | string | 提供日（YYYY-MM-DD） |
+| `items[].servingTimeSlot` | string | 提供タイミング（breakfast/lunch/snack/dinner） |
+| `items[].servingMethodDetail` | string? | 提供方法（as_is/cut/peeled/heated） |
+| `items[].noteToStaff` | string? | スタッフへの注意事項 |
+| `items[].confidence` | string | 信頼度（high/medium/low） |
+| `metadata.dateRange` | object | 画像内の日付範囲 |
+| `metadata.confidence` | string | 全体の信頼度 |
+| `metadata.warnings` | array | 警告メッセージ |
+
+**制限事項**:
+
+| 項目 | 制限 |
+|------|------|
+| 画像サイズ | 最大5MB |
+| 対応形式 | JPEG, PNG, WebP |
+| タイムアウト | 60秒 |
+
+---
+
 ## 5. 型定義・サンプルコード
 
 ### 5.1 TypeScript型定義
@@ -1743,6 +1816,7 @@ interface UpdateHydrationRecordResponse {
 
 | 日付 | バージョン | 変更内容 |
 |------|------------|----------|
+| 2026-01-27 | 1.24.0 | Phase 68: analyzeScheduleImage API追加（画像から品物スケジュール解析） |
 | 2026-01-11 | 1.23.0 | Phase 61: getAllConsumptionLogs/updateHydrationRecord API追加（水分記録編集） |
 | 2026-01-07 | 1.22.0 | Phase 59: correctDiscardedRecord API追加（破棄記録修正） |
 | 2026-01-04 | 1.21.1 | syncChatImages: orphan削除条件を修正（fullSync+year指定時のみ）、staffName制限事項を追記 |

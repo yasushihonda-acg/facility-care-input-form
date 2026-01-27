@@ -165,7 +165,7 @@ firebase deploy --only functions --debug
 | 品物詳細 | `/family/items/:id` | 品物の詳細表示 |
 | 品物編集 | `/family/items/:id/edit` | 品物の編集 |
 | 品物登録 | `/family/items/new` | 新規品物の登録フォーム |
-| 品物一括登録 | `/family/items/bulk-import` | Excelファイルから複数品物を一括登録 |
+| 品物一括登録 | `/family/items/bulk-import` | Excel/画像から複数品物を一括登録（AI解析対応） |
 | プリセット | `/family/presets` | よく送る品物の組み合わせ保存 |
 | エビデンス確認 | `/family/evidence/:date` | 日別エビデンス確認 |
 
