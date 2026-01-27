@@ -115,7 +115,7 @@ export async function sendToGoogleChat(
   message: string,
   options: { maxRetries?: number; timeoutMs?: number } = {}
 ): Promise<boolean> {
-  const { maxRetries = 3, timeoutMs = 5000 } = options;
+  const {maxRetries = 3, timeoutMs = 5000} = options;
 
   // URLの基本検証
   if (!webhookUrl || !webhookUrl.startsWith("https://chat.googleapis.com/")) {
@@ -169,7 +169,11 @@ export async function sendToGoogleChat(
       const isTimeout = error instanceof Error && error.name === "AbortError";
 
       if (attempt < maxRetries) {
-        functions.logger.warn(`[GoogleChat] ${isTimeout ? "Timeout" : "Network error"} (attempt ${attempt + 1}/${maxRetries + 1}):`, error);
+        const errType = isTimeout ? "Timeout" : "Network error";
+        functions.logger.warn(
+          `[GoogleChat] ${errType} (attempt ${attempt + 1}/${maxRetries + 1}):`,
+          error
+        );
         await exponentialBackoff(attempt);
         continue;
       }
