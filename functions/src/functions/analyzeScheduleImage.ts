@@ -76,16 +76,16 @@ function parseGeminiResponse(
 
     // servingTimeSlotの正規化
     const validTimeSlots = ["breakfast", "lunch", "snack", "dinner"];
-    const timeSlot = validTimeSlots.includes(item.servingTimeSlot)
-      ? item.servingTimeSlot
-      : "snack";
+    const timeSlot = validTimeSlots.includes(item.servingTimeSlot) ?
+      item.servingTimeSlot :
+      "snack";
 
     // servingMethodDetailの正規化
     const validMethods = ["as_is", "cut", "peeled", "heated"];
     const method = item.servingMethodDetail &&
-      validMethods.includes(item.servingMethodDetail)
-      ? item.servingMethodDetail
-      : "as_is";
+      validMethods.includes(item.servingMethodDetail) ?
+      item.servingMethodDetail :
+      "as_is";
 
     validItems.push({
       itemName: item.itemName,

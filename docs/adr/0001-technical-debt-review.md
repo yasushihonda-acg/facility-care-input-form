@@ -14,7 +14,7 @@ AI駆動開発を継続する上で、コードベースの品質・セキュリ
 
 | ID | 問題 | 対象ファイル | 対応方針 | 対応Phase |
 |----|------|-------------|----------|-----------|
-| H1 | `admin=true`クエリで認証なしで設定変更可能 | `mealFormSettings.ts:101-140` | Firebase Auth認証を追加 | Phase 69 |
+| H1 | `admin=true`クエリで認証なしで設定変更可能 | `mealFormSettings.ts:101-140` | ✅ Firebase Auth認証を追加 | Phase 69（完了） |
 | H2 | timestamp形式の不整合（YYYY-MM-DD vs YYYY/MM/DD HH:mm:ss） | `summaryService.ts:101-112` | 保存時にISO形式に統一 | Phase 70 |
 | H3 | `keys/sa-key.json`の存在 | `keys/` | ✅ .gitignoreで管理済み | 対応不要 |
 
@@ -59,9 +59,10 @@ AI駆動開発を継続する上で、コードベースの品質・セキュリ
 
 ## 関連Issue
 
-- [ ] #271: H1 - mealFormSettings認証追加
+- [x] #271: H1 - mealFormSettings認証追加（Phase 69で完了）
 - [ ] #272: H2/M2 - timestamp形式統一
 
 ## 更新履歴
 
+- 2025-01-27: H1完了（Phase 69 - Firebase Auth認証追加）
 - 2025-01-27: 初版作成（Codexレビュー結果に基づく）

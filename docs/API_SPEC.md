@@ -381,11 +381,12 @@ GET /getMealFormSettings
 #### リクエスト
 
 ```http
-POST /updateMealFormSettings?admin=true
+POST /updateMealFormSettings
 Content-Type: application/json
+Authorization: Bearer <Firebase ID Token>
 ```
 
-> **注意**: `admin=true` クエリパラメータが必須です。
+> **注意**: Phase 69でセキュリティ強化。Firebase Auth認証が必須で、`@aozora-cg.com`ドメインのユーザーのみ更新可能です。
 
 ```json
 {
