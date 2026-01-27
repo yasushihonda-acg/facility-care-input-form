@@ -81,6 +81,8 @@ export interface ParsedBulkItem {
     existingItemId: string;
     existingItemName: string;
   };
+  /** 登録対象として選択されているか（デフォルト: true） */
+  isSelected: boolean;
 }
 
 /** 一括登録の結果 */
@@ -206,4 +208,6 @@ export interface ParsedImageItem {
     existingItemId: string;
     existingItemName: string;
   };
+  /** 登録対象として選択されているか（デフォルト: true） */
+  isSelected: boolean;
 }

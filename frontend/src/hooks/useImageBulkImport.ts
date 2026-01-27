@@ -22,11 +22,24 @@ interface UseImageBulkImportOptions {
   isDemo?: boolean;
 }
 
+/** 品物の編集可能フィールド */
+export interface EditableItemFields {
+  itemName?: string;
+  category?: 'food' | 'drink';
+  quantity?: number;
+  unit?: string;
+  servingMethod?: 'as_is' | 'cut' | 'peeled' | 'heated' | 'other';
+  servingDate?: string;
+  servingTimeSlot?: 'breakfast' | 'lunch' | 'snack' | 'dinner' | 'anytime';
+  noteToStaff?: string;
+}
+
 interface UseImageBulkImportReturn {
   // 状態
   parsedItems: ParsedImageItem[];
   validItems: ParsedImageItem[];
   duplicateItems: ParsedImageItem[];
+  selectedItems: ParsedImageItem[];
   metadata: ImageAnalysisMetadata | null;
   isAnalyzing: boolean;
   isImporting: boolean;
@@ -37,6 +50,10 @@ interface UseImageBulkImportReturn {
   analyzeImage: (base64: string, mimeType: string) => Promise<void>;
   importItems: () => Promise<BulkImportResult>;
   removeItem: (index: number) => void;
+  updateItem: (index: number, fields: EditableItemFields) => void;
+  toggleSelect: (index: number) => void;
+  selectAll: () => void;
+  deselectAll: () => void;
   reset: () => void;
 }
 
@@ -150,6 +167,12 @@ export function useImageBulkImport({
     [parsedItems]
   );
 
+  // 選択された品物（登録対象）
+  const selectedItems = useMemo(
+    () => validItems.filter(item => item.isSelected),
+    [validItems]
+  );
+
   // 画像解析
   const analyzeImage = useCallback(
     async (base64: string, mimeType: string) => {
@@ -214,6 +237,7 @@ export function useImageBulkImport({
             },
             isDuplicate,
             duplicateInfo,
+            isSelected: true, // デフォルトで選択状態
           };
         });
 
@@ -235,12 +259,13 @@ export function useImageBulkImport({
     [existingItems, isDemo]
   );
 
-  // 一括登録
+  // 一括登録（選択された品物のみ）
   const importItems = useCallback(async (): Promise<BulkImportResult> => {
     setIsImporting(true);
     setError(null);
 
-    const itemsToImport = validItems;
+    const itemsToImport = selectedItems;
+    const skippedBySelection = validItems.filter(item => !item.isSelected);
     const results: BulkImportItemResult[] = [];
 
     try {
@@ -296,8 +321,15 @@ export function useImageBulkImport({
         results.push(...taskResults);
       }
 
-      // スキップ分を追加
+      // スキップ分を追加（重複＋未選択）
       for (const item of duplicateItems) {
+        results.push({
+          rowIndex: item.index,
+          itemName: item.parsed.itemName,
+          status: 'skipped',
+        });
+      }
+      for (const item of skippedBySelection) {
         results.push({
           rowIndex: item.index,
           itemName: item.parsed.itemName,
@@ -306,7 +338,7 @@ export function useImageBulkImport({
       }
 
       const result: BulkImportResult = {
-        total: itemsToImport.length + duplicateItems.length,
+        total: itemsToImport.length + duplicateItems.length + skippedBySelection.length,
         success: results.filter(r => r.status === 'success').length,
         failed: results.filter(r => r.status === 'failed').length,
         skipped: results.filter(r => r.status === 'skipped').length,
@@ -321,11 +353,66 @@ export function useImageBulkImport({
     } finally {
       setIsImporting(false);
     }
-  }, [validItems, duplicateItems, residentId, userId, isDemo]);
+  }, [selectedItems, validItems, duplicateItems, residentId, userId, isDemo]);
 
   // 行を除外
   const removeItem = useCallback((index: number) => {
     setParsedItems(prev => prev.filter(item => item.index !== index));
+  }, []);
+
+  // 品物の編集
+  const updateItem = useCallback((index: number, fields: EditableItemFields) => {
+    setParsedItems(prev => prev.map(item => {
+      if (item.index !== index) return item;
+
+      const updatedParsed = { ...item.parsed };
+
+      if (fields.itemName !== undefined) updatedParsed.itemName = fields.itemName;
+      if (fields.category !== undefined) updatedParsed.category = fields.category;
+      if (fields.quantity !== undefined) updatedParsed.quantity = fields.quantity;
+      if (fields.unit !== undefined) updatedParsed.unit = fields.unit;
+      if (fields.servingMethod !== undefined) updatedParsed.servingMethod = fields.servingMethod;
+      if (fields.servingDate !== undefined) updatedParsed.servingDate = fields.servingDate;
+      if (fields.servingTimeSlot !== undefined) updatedParsed.servingTimeSlot = fields.servingTimeSlot;
+      if (fields.noteToStaff !== undefined) updatedParsed.noteToStaff = fields.noteToStaff;
+
+      // 品物名・提供日・タイミングが変わったら重複を再チェック
+      const needsDuplicateRecheck =
+        fields.itemName !== undefined ||
+        fields.servingDate !== undefined ||
+        fields.servingTimeSlot !== undefined;
+
+      if (needsDuplicateRecheck) {
+        const { isDuplicate, duplicateInfo } = checkBulkItemDuplicate(
+          updatedParsed.itemName,
+          updatedParsed.servingDate,
+          updatedParsed.servingTimeSlot,
+          existingItems
+        );
+        return { ...item, parsed: updatedParsed, isDuplicate, duplicateInfo };
+      }
+
+      return { ...item, parsed: updatedParsed };
+    }));
+  }, [existingItems]);
+
+  // 選択切り替え
+  const toggleSelect = useCallback((index: number) => {
+    setParsedItems(prev => prev.map(item =>
+      item.index === index ? { ...item, isSelected: !item.isSelected } : item
+    ));
+  }, []);
+
+  // 全選択
+  const selectAll = useCallback(() => {
+    setParsedItems(prev => prev.map(item =>
+      item.isDuplicate ? item : { ...item, isSelected: true }
+    ));
+  }, []);
+
+  // 全選択解除
+  const deselectAll = useCallback(() => {
+    setParsedItems(prev => prev.map(item => ({ ...item, isSelected: false })));
   }, []);
 
   // リセット
@@ -342,6 +429,7 @@ export function useImageBulkImport({
     parsedItems,
     validItems,
     duplicateItems,
+    selectedItems,
     metadata,
     isAnalyzing,
     isImporting,
@@ -350,6 +438,10 @@ export function useImageBulkImport({
     analyzeImage,
     importItems,
     removeItem,
+    updateItem,
+    toggleSelect,
+    selectAll,
+    deselectAll,
     reset,
   };
 }
