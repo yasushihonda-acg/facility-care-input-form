@@ -343,11 +343,17 @@
                         <span class="w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center text-sm">2</span>
                         連携機能
                     </h2>
-                    <div class="grid md:grid-cols-3 gap-4">
+                    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div class="bg-white rounded-lg shadow p-5 border-l-4 border-green-500">
                             <div class="text-2xl mb-2">💬</div>
                             <h3 class="font-semibold mb-1">Google Chat通知</h3>
                             <p class="text-gray-600 text-sm">食事記録入力時にWebhookで自動通知。重要フラグ付きは別チャンネルにも通知。</p>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-5 border-l-4 border-green-500">
+                            <div class="text-2xl mb-2">⚠️</div>
+                            <h3 class="font-semibold mb-1">入力無し通知</h3>
+                            <p class="text-gray-600 text-sm">毎日21時に記録をチェック。<strong>食事・水分の両方が未入力</strong>の場合のみ通知送信。</p>
+                            <span class="inline-block mt-2 bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs">Phase 30</span>
                         </div>
                         <div class="bg-white rounded-lg shadow p-5 border-l-4 border-green-500">
                             <div class="text-2xl mb-2">📷</div>
