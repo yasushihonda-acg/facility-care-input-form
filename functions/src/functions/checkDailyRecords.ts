@@ -89,14 +89,14 @@ export const checkDailyRecords = functions
     const hasMealRecord = logData?.hasMealRecord ?? false;
     const hasHydrationRecord = logData?.hasHydrationRecord ?? false;
 
-    // 両方とも記録がある場合は通知不要
-    if (hasMealRecord && hasHydrationRecord) {
-      functions.logger.info("checkDailyRecords: All records present", {
+    // どちらかの記録がある場合は通知不要（両方ない場合のみ通知）
+    if (hasMealRecord || hasHydrationRecord) {
+      functions.logger.info("checkDailyRecords: Some records present", {
         date: today,
         hasMealRecord,
         hasHydrationRecord,
       });
-      return {notified: false, reason: "all_records_present"};
+      return {notified: false, reason: "some_records_present"};
     }
 
     // 通知送信
