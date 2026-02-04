@@ -317,6 +317,21 @@ export function formatCareItemNotification(
 }
 
 /**
+ * 入力無し通知を送信すべきかを判定
+ *
+ * @param hasMealRecord - 食事記録があるか
+ * @param hasHydrationRecord - 水分記録があるか
+ * @returns true = 通知すべき（両方ない場合）
+ */
+export function shouldSendNoRecordNotification(
+  hasMealRecord: boolean,
+  hasHydrationRecord: boolean
+): boolean {
+  // どちらかの記録があれば通知不要（両方ない場合のみ通知）
+  return !hasMealRecord && !hasHydrationRecord;
+}
+
+/**
  * 入力無し通知メッセージを生成
  *
  * @param date - 対象日付 (YYYY-MM-DD)
