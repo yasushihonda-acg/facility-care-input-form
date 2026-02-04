@@ -16,6 +16,7 @@ import {getDailyRecordLog} from "../services/dailyRecordLogService";
 import {
   sendToGoogleChat,
   formatNoRecordNotification,
+  shouldSendNoRecordNotification,
 } from "../services/googleChatService";
 import {getTodayString} from "../utils/scheduleUtils";
 
@@ -89,8 +90,8 @@ export const checkDailyRecords = functions
     const hasMealRecord = logData?.hasMealRecord ?? false;
     const hasHydrationRecord = logData?.hasHydrationRecord ?? false;
 
-    // どちらかの記録がある場合は通知不要（両方ない場合のみ通知）
-    if (hasMealRecord || hasHydrationRecord) {
+    // 通知が必要か判定（両方ない場合のみ通知）
+    if (!shouldSendNoRecordNotification(hasMealRecord, hasHydrationRecord)) {
       functions.logger.info("checkDailyRecords: Some records present", {
         date: today,
         hasMealRecord,
