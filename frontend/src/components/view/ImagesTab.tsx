@@ -110,10 +110,14 @@ export function ImagesTab({ year, month }: ImagesTabProps) {
     settings,
   } = useSyncedChatImages();
 
-  // 年月フィルタ適用 + uploadedAt降順ソート（ギャラリー・タイムライン共通）
-  const filteredPhotos = filterByYearMonth(photos, year, month).sort((a, b) =>
-    new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
-  );
+  // 年月フィルタ適用 + 日付降順ソート（ギャラリー・タイムライン共通）
+  // date（撮影日）を第1キー、uploadedAt（登録日時）を第2キーでソート
+  // Chat同期画像はuploadedAtが同期時刻のため、dateでのソートが必須
+  const filteredPhotos = filterByYearMonth(photos, year, month).sort((a, b) => {
+    const dateCmp = parseDate(b.date).getTime() - parseDate(a.date).getTime();
+    if (dateCmp !== 0) return dateCmp;
+    return new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime();
+  });
 
   // トークン再取得
   const handleRefreshToken = async () => {
