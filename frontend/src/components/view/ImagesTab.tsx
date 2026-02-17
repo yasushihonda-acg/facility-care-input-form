@@ -62,7 +62,8 @@ function formatDateTime(dateStr: string): string {
 }
 
 /**
- * 日付でグループ化（新しい日付順、各グループ内もuploadedAt降順）
+ * 日付でグループ化（新しい日付順）
+ * 注: 入力photosは事前にuploadedAt降順ソート済みを前提とする
  */
 function groupByDate(photos: CarePhoto[]): [string, CarePhoto[]][] {
   const groups = new Map<string, CarePhoto[]>();
@@ -79,13 +80,6 @@ function groupByDate(photos: CarePhoto[]): [string, CarePhoto[]][] {
       groups.set(key, []);
     }
     groups.get(key)!.push(photo);
-  }
-
-  // 各グループ内をuploadedAt降順でソート
-  for (const photoList of groups.values()) {
-    photoList.sort((a, b) =>
-      new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
-    );
   }
 
   // 日付グループを新しい順にソート
@@ -116,8 +110,10 @@ export function ImagesTab({ year, month }: ImagesTabProps) {
     settings,
   } = useSyncedChatImages();
 
-  // 年月フィルタ適用
-  const filteredPhotos = filterByYearMonth(photos, year, month);
+  // 年月フィルタ適用 + uploadedAt降順ソート（ギャラリー・タイムライン共通）
+  const filteredPhotos = filterByYearMonth(photos, year, month).sort((a, b) =>
+    new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
+  );
 
   // トークン再取得
   const handleRefreshToken = async () => {
