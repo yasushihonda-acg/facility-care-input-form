@@ -62,9 +62,9 @@ function formatDateTime(dateStr: string): string {
 }
 
 /**
- * 日付でグループ化
+ * 日付でグループ化（新しい日付順、各グループ内もuploadedAt降順）
  */
-function groupByDate(photos: CarePhoto[]): Map<string, CarePhoto[]> {
+function groupByDate(photos: CarePhoto[]): [string, CarePhoto[]][] {
   const groups = new Map<string, CarePhoto[]>();
 
   for (const photo of photos) {
@@ -81,7 +81,19 @@ function groupByDate(photos: CarePhoto[]): Map<string, CarePhoto[]> {
     groups.get(key)!.push(photo);
   }
 
-  return groups;
+  // 各グループ内をuploadedAt降順でソート
+  for (const photoList of groups.values()) {
+    photoList.sort((a, b) =>
+      new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
+    );
+  }
+
+  // 日付グループを新しい順にソート
+  return Array.from(groups.entries()).sort((a, b) => {
+    const dateA = parseDate(a[1][0].date);
+    const dateB = parseDate(b[1][0].date);
+    return dateB.getTime() - dateA.getTime();
+  });
 }
 
 export function ImagesTab({ year, month }: ImagesTabProps) {
@@ -338,7 +350,7 @@ function TimelineView({ photos, onSelect }: PhotoViewProps) {
 
   return (
     <div className="space-y-6">
-      {Array.from(grouped.entries()).map(([dateStr, datePhotos]) => (
+      {grouped.map(([dateStr, datePhotos]) => (
         <div key={dateStr}>
           <h3 className="text-sm font-semibold text-gray-700 mb-2 sticky top-0 bg-white py-1">
             📅 {dateStr}
